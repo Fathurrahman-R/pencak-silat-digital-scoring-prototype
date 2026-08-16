@@ -12,7 +12,7 @@
 | Fase 2 — Pendaftaran & Timbang Badan | ✅ Selesai |
 | Fase 2b — Biaya, Invoice & Pembayaran | 🟡 Selesai kecuali integrasi Midtrans (menunggu kredensial sandbox) |
 | Fase 3 — Bagan & Jadwal | ✅ Selesai |
-| Fase 4 — Mesin Scoring Tanding | ⬜ Belum dimulai |
+| Fase 4 — Mesin Scoring Tanding | 🟡 Engine + broadcasting + HTTP selesai; panel operator/wasit/dewan-juri dan PWA juri belum |
 | Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
 | Fase 6 — Overlay Siaran vMix | ⬜ Belum dimulai |
@@ -562,23 +562,23 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T3.5 | Penjadwalan partai ke gelanggang + urutan tayang | ✅ `JadwalController` + `PenjadwalPartai`, deteksi bentrok antar-gelanggang |
 | T3.6 | Penugasan juri/wasit/dewan juri per partai | ✅ `AparatController`, jumlah juri mengikuti setelan peraturan |
 
-## EPIC 4 — Mesin Scoring Tanding (inti, paling berisiko) ⬜
+## EPIC 4 — Mesin Scoring Tanding (inti, paling berisiko) 🟡
 
 | ID | Task | Status |
 |---|---|---|
-| T4.1 | Migrasi & model: judge_inputs, score_events, penalties, match_rounds, match_results | ⬜ |
-| T4.2 | `MatchTimer` — state babak server-authoritative + broadcast tick | ⬜ |
-| T4.3 | `ConsensusEvaluator` — window, ambang, juri distinct, dedup, penguncian transaksi | ⬜ |
-| T4.4 | Event & channel broadcast (private per gelanggang, public untuk live) | ⬜ |
+| T4.1 | Migrasi & model: judge_inputs, score_events, penalties, match_rounds | ✅ Tanpa `match_results` terpisah — skor dihitung on-the-fly, `ratified_at`/`ratified_by` ditambah ke `matches` |
+| T4.2 | `MatchTimer` — state babak server-authoritative + broadcast tick | 🟡 Timer selesai; broadcast per state-change (bukan tiap 250ms) — lihat catatan di Bagian 5 |
+| T4.3 | `ConsensusEvaluator` — window, ambang, juri distinct, dedup, penguncian transaksi | ✅ TDD, 8 test, menemukan bug presisi milidetik Eloquent |
+| T4.4 | Event & channel broadcast (private per gelanggang, public untuk live) | ✅ 5 event `ShouldBroadcastNow`, `ArenaChannelAuthorizer` |
 | T4.5 | PWA juri: papan tombol, manifest, service worker, wake lock, indikator koneksi | ⬜ |
-| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ⬜ |
-| T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ⬜ |
-| T4.8 | `TandingScoreCalculator` — skor per babak, hukuman, penentuan pemenang | ⬜ |
-| T4.9 | Panel dewan juri: verifikasi, koreksi bernotulen, pengesahan hasil | ⬜ |
-| T4.10 | Resync state penuh saat reconnect untuk semua panel | ⬜ |
-| T4.11 | Tangga hukuman Pasal 11 | ⬜ |
-| T4.12 | Hitungan teknik | ⬜ |
-| T4.13 | Pemecah seri menang angka lima tingkat, tawaran WMP | ⬜ |
+| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ⬜ Endpoint HTTP-nya sudah ada, halaman Blade-nya belum |
+| T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ⬜ Endpoint HTTP-nya sudah ada, halaman Blade-nya belum |
+| T4.8 | `TandingScoreCalculator` — skor per babak, hukuman, penentuan pemenang | ✅ |
+| T4.9 | Panel dewan juri: verifikasi, koreksi bernotulen, pengesahan hasil | ⬜ Endpoint HTTP-nya sudah ada (sahkan, batal nilai/hukuman), halaman Blade-nya belum |
+| T4.10 | Resync state penuh saat reconnect untuk semua panel | ✅ `GET .../partai/{match}` |
+| T4.11 | Tangga hukuman Pasal 11 | ✅ |
+| T4.12 | Hitungan teknik | ✅ |
+| T4.13 | Pemecah seri menang angka lima tingkat, tawaran WMP | ✅ |
 
 ## EPIC 4B — VAR & Pengajuan Keberatan ⬜
 
@@ -768,47 +768,48 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Test: deteksi bentrok jadwal (beda gelanggang berdekatan ditolak, gelanggang sama/jarak jauh diterima)
 - [x] Test: jumlah juri yang tidak sesuai setelan peraturan ditolak, wasit tidak boleh merangkap juri
 
-## Fase 4 — Mesin Scoring Tanding ⬜ Belum dimulai
+## Fase 4 — Mesin Scoring Tanding 🟡 Engine + HTTP + broadcasting selesai; panel & PWA belum
 
-> Kerjakan dengan test lebih dulu.
+> Dikerjakan dengan test lebih dulu (TDD), sesuai rencana. Engine (commit `ee0a37c`) dan lapisan HTTP/broadcasting (commit `d01710f`) sudah jalan dan teruji end-to-end lewat HTTP; yang belum cuma antarmukanya.
 
-- [ ] Migrasi `judge_inputs` (`match_id`, `round`, `judge_user_id`, `corner`, `point_type`, `server_ts`, `client_ts`, `score_event_id`, `rejected_reason`)
-- [ ] Index gabungan `(match_id, round, corner, point_type, server_ts)`
-- [ ] Migrasi `score_events`, `penalties`, `match_rounds`, `match_results`
-- [ ] Test `ConsensusEvaluator` sebelum implementasi (9 kasus, lihat PRD §Kriteria Selesai / Fase 4 asli)
-- [ ] Implementasi `ConsensusEvaluator`
-- [ ] `MatchTimer`: mulai/jeda/lanjut/reset/babak berikutnya/akhiri
-- [ ] Broadcast tick ~250 ms, interpolasi klien
-- [ ] Event broadcast: `JudgeInputReceived`, `ScoreAwarded`, `PenaltyIssued`, `TimerTicked`, `MatchStateChanged`
-- [ ] Channel `presence-arena.{id}` (private) dan `public-live.{arena}` (public)
+- [x] Migrasi `judge_inputs` (`match_id`, `round`, `judge_user_id`, `corner`, `point_type`, `server_ts`, `client_ts`, `score_event_id`, `rejected_reason`)
+- [x] Index gabungan `(match_id, round, corner, point_type, server_ts)`
+- [x] Migrasi `score_events`, `penalties`, `match_rounds` — **tanpa** `match_results` terpisah; `ratified_at`/`ratified_by` langsung di `matches`, skor dihitung on-the-fly
+- [x] Migrasi tambahan `technical_counts` (tidak ada di rencana awal, ternyata perlu untuk hitungan teknik Pasal 11.6.g.2/3)
+- [x] Test `ConsensusEvaluator` sebelum implementasi (9 kasus + 1 tambahan bug regresi)
+- [x] Implementasi `ConsensusEvaluator` — menemukan & memperbaiki bug nyata: format tanggal bawaan Eloquent memangkas milidetik saat menyimpan, bikin window 2 detik tidak berarti apa-apa untuk input dalam detik yang sama
+- [x] `MatchTimer`: mulai/jeda/lanjut/reset/babak berikutnya/akhiri (`akhiriPartai` juga memanggil `PromosiPemenang`, menutup promosi bagan otomatis untuk partai sungguhan, bukan cuma bye)
+- [ ] ~~Broadcast tick ~250 ms~~ — **diganti sengaja**: broadcast per perubahan state timer (mulai/jeda/lanjut/selesai), klien hitung mundur sendiri dari `started_at`/`accumulated_ms`. Tick 250ms terus-menerus butuh proses latar yang hidup abadi, di luar cakupan siklus request/response. Didiskusikan dan disetujui user sebelum dikerjakan.
+- [x] Event broadcast: `JudgeInputReceived` (privat saja — identitas juri), `ScoreAwarded`, `PenaltyIssued`, `TimerTicked`, `MatchStateChanged` (privat + publik)
+- [x] Channel `arena.{id}` (private, klien minta `presence-arena.{id}`) dan `public-live.{arena}` (public, tanpa entri di channels.php — otomatis publik karena tidak berawalan private-/presence-)
 - [ ] PWA juri: manifest, service worker, ikon, fullscreen
 - [ ] Papan tombol juri: target sentuh nyaman satu tangan
 - [ ] Umpan balik instan saat tombol ditekan
 - [ ] Wake lock
 - [ ] Indikator koneksi; putus → tombol nonaktif + indikator merah
-- [ ] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk
-- [ ] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan
-- [ ] Sanksi menyimpan sebab: tingkat pelanggaran + keterangan wasit
-- [ ] Kolom `scope` pada `penalties`: peringatan per partai, tidak reset
-- [ ] Pembinaan akumulatif tanpa bedakan jenis pelanggaran
-- [ ] 2 pembinaan → pelanggaran ringan berikutnya naik jadi Teguran
-- [ ] Pelanggaran sedang → Teguran langsung; berat → Peringatan I langsung
-- [ ] Teguran ketiga → dinaikkan jadi Peringatan I (dipaksa server)
-- [ ] Peringatan III → otomatis diskualifikasi & akhiri partai
-- [ ] Hitungan teknik: 9 → Teguran I; 3 hitungan berturut → menang teknik; 10 → menang mutlak
-- [ ] Tawaran menang WMP saat selisih 30 (babak II/III) atau 20 (Usia Dini)
-- [ ] Pemecah seri menang angka lima tingkat (Pasal 11.6.g)
-- [ ] Test: 2 pembinaan + pelanggaran ringan → Teguran I `−1`
-- [ ] Test: pelanggaran berat langsung → Peringatan I `−5`
-- [ ] Test: teguran ketiga → Peringatan I, bukan teguran
-- [ ] Test: peringatan tidak reset antar babak
-- [ ] Test: Peringatan III → diskualifikasi & akhiri partai
-- [ ] Penyelesaian partai dengan sebab khusus: KO, TKO, WMP, mutlak, undur diri, cedera, WO
-- [ ] `TandingScoreCalculator`
-- [ ] Panel dewan juri: tinjau, koreksi via baris pembatal + alasan, sahkan hasil
-- [ ] Endpoint `GET /api/match/{id}/state` untuk resync
-- [ ] Semua panel resync tiap Echo tersambung kembali
-- [ ] Test: partai penuh 3 babak dari mulai sampai disahkan → skor benar
+- [ ] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk *(endpoint HTTP sudah ada — `timer.mulai/jeda/lanjut/reset/selesai-babak`, `akhiri`)*
+- [ ] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan *(endpoint HTTP sudah ada — `hukuman`, `hitungan`)*
+- [x] Sanksi menyimpan sebab: tingkat pelanggaran + keterangan wasit (`violation_level`, `note`)
+- [x] Peringatan (`penalties.tier=peringatan`) berlaku sepanjang partai, tidak pernah reset antar babak
+- [x] Pembinaan akumulatif tanpa bedakan jenis pelanggaran (reset hanya saat memicu eskalasi ke Teguran)
+- [x] 2 pembinaan → pelanggaran ringan berikutnya naik jadi Teguran
+- [x] Pelanggaran sedang → Teguran langsung; berat → Peringatan I langsung
+- [x] Teguran ketiga → dinaikkan jadi Peringatan I (dipaksa server)
+- [x] Peringatan III → otomatis diskualifikasi & akhiri partai (`TanggaHukuman::jatuhkanPeringatan` memanggil `MatchTimer::akhiriPartai`)
+- [x] Hitungan teknik: 9 → Teguran I; 3 hitungan berturut → menang teknik; 10 → menang mutlak (`HitunganTeknik`, tiga akibat bisa bertumpuk pada hitungan yang sama)
+- [x] Tawaran menang WMP saat selisih 30 (babak II/III) atau 20 (Usia Dini) — `TandingScoreCalculator::cekTawaranWmp()`, tawaran bukan otomatis mengakhiri
+- [x] Pemecah seri menang angka lima tingkat (Pasal 11.6.g) — `babak_tambahan` bukan hasil komputasi, ia menunggu babak ekstra benar-benar dimainkan (dicek dari jumlah `match_rounds` melebihi normal golongan) baru lanjut ke `berat_badan_teringan`
+- [x] Test: 2 pembinaan + pelanggaran ringan → Teguran I `−1`
+- [x] Test: pelanggaran berat langsung → Peringatan I `−5`
+- [x] Test: teguran ketiga → Peringatan I, bukan teguran
+- [x] Test: peringatan tidak reset antar babak
+- [x] Test: Peringatan III → diskualifikasi & akhiri partai
+- [x] Penyelesaian partai dengan sebab khusus lewat endpoint `akhiri` (angka/teknik/mutlak/wmp/undur_diri/cedera/wo); diskualifikasi otomatis lewat tangga hukuman/hitungan teknik
+- [x] `TandingScoreCalculator`
+- [ ] Panel dewan juri: tinjau, koreksi via baris pembatal + alasan, sahkan hasil *(endpoint HTTP sudah ada — `sahkan`, `nilai.batal`, `hukuman.batal`; halaman Blade belum)*
+- [x] Endpoint `GET .../partai/{match}` untuk resync (bukan `/api/match/{id}/state` — mengikuti pola route admin yang sudah ada, bukan API terpisah)
+- [ ] Semua panel resync tiap Echo tersambung kembali *(menunggu panel dibangun)*
+- [x] Test: partai penuh 1 babak dari mulai sampai diakhiri dan disahkan → status dan skor benar (lewat `PartaiScoringControllerTest`, 16 test end-to-end HTTP)
 
 ## Fase 4b — VAR & Pengajuan Keberatan ⬜ Belum dimulai
 
@@ -939,9 +940,18 @@ Bagian terakhir Fase 3 yang sempat tertunda oleh permintaan `/goal`. Tiga potong
 - [x] Nav baru: grup "Pertandingan" (Bagan, Jadwal) di sidebar; halaman Aparat diakses lewat tautan dari baris partai di halaman Jadwal, tidak lewat nav sendiri.
 - [x] 29 test baru (`BracketGeneratorTest` +8, `BracketControllerTest`, `PenjadwalPartaiTest`, `JadwalControllerTest`, `AparatControllerTest`), semuanya hijau bersama seluruh suite.
 
+## Fase 4 — Mesin scoring Tanding, bagian yang sudah dikerjakan (ringkasan)
+
+Dikerjakan atas permintaan langsung ("fase 4 dulu, mesin scoring Tanding"), dipecah jadi dua commit:
+
+- **`ee0a37c`** — Engine murni: 6 kelas domain di `App\Support\Scoring` (ConsensusEvaluator, MatchTimer, TanggaHukuman, HitunganTeknik, TandingScoreCalculator, plus CatatInputJuri di commit berikutnya), 6 enum, 4 model baru, 5 migrasi. TDD penuh — test ditulis sebelum implementasi untuk ConsensusEvaluator, menemukan bug nyata (presisi milidetik Eloquent, lihat di atas).
+- **`d01710f`** — Lapisan pengiriman: 5 event broadcast, `ArenaChannelAuthorizer`, `PartaiScoringController` dengan 11 endpoint (resync + timer + nilai + hukuman + hitungan + akhiri + sahkan + 2 pembatalan). Sempat berhenti sebentar untuk konfirmasi user soal keputusan TimerTicked (lihat catatan di atas) sebelum lanjut.
+
+User diberi pilihan lanjut sekaligus / HTTP dulu / berhenti setelah engine selesai — memilih **"Endpoint HTTP dulu saja"**, jadi panel Blade (operator/wasit/dewan juri) dan PWA juri (Task #35, #36) sengaja belum dikerjakan.
+
 ---
 
 ## Yang Perlu Diputuskan / Menunggu User
 
 1. **Kredensial Midtrans sandbox** (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`) — untuk lanjut Fase 2b bagian pembayaran. Ini satu-satunya penghalang murni Fase 2b.
-2. **Arah lanjutan**: Fase 4 (mesin scoring Tanding — `ConsensusEvaluator`, timer server, panel juri PWA) adalah kelanjutan alami sesuai urutan rencana, tapi ukurannya besar dan berisiko tinggi (real-time, konsensus juri, tangga hukuman Pasal 11). Alternatif: Fase 7 (kategori Jurus) lebih sederhana dan tidak butuh Reverb/PWA. Menunggu arahan user sebelum memilih.
+2. **Lanjut ke panel operator/wasit/dewan-juri dan PWA juri** (Task #35, #36) — endpoint HTTP-nya sudah lengkap dan teruji, tinggal antarmukanya. Ini pekerjaan besar lagi (real-time Echo, desain gelanggang, PWA), menunggu konfirmasi user untuk mulai.
