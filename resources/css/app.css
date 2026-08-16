@@ -402,8 +402,17 @@
 /* Kaca: hanya untuk lapisan yang mengambang di atas latar bertekstur —
    sidebar, topbar, hero, kartu metrik. Tidak pernah untuk tabel atau form. */
 @utility glass {
-    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    /* Urutannya menentukan, bukan gaya penulisan: versi berawalan HARUS lebih
+       dulu, properti standar terakhir.
+
+       Saat ditulis terbalik, Lightning CSS menciutkan pasangan ini dan hanya
+       menyisakan `-webkit-backdrop-filter` di berkas terbangun. Chrome sudah
+       lama melepas nama berawalan itu, jadi hasilnya `backdrop-filter: none` —
+       kacanya tidak pernah benar-benar mengabur, dan yang tersisa cuma persegi
+       tembus pandang. Cacat ini tidak kelihatan dari kode sumber, hanya dari
+       hasil build. */
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
