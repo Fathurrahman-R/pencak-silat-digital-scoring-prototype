@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignSystemController;
@@ -218,6 +219,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Update));
                     Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Update));
                     Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                });
+
+            Route::controller(VerificationController::class)
+                ->prefix('{tournament}/verifikasi')
+                ->name('verifikasi.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('pendaftaran', ResourceAction::View));
+                    Route::post('/{registration}/setujui', 'setujui')->name('setujui')->middleware('resource:'.rk('pendaftaran', ResourceAction::Approve));
+                    Route::post('/{registration}/tolak', 'tolak')->name('tolak')->middleware('resource:'.rk('pendaftaran', ResourceAction::Reject));
+                    Route::post('/{registration}/tinjau-ulang', 'tinjauUlang')->name('tinjau-ulang')->middleware('resource:'.rk('pendaftaran', ResourceAction::Approve));
                 });
 
             Route::controller(TreasuryController::class)

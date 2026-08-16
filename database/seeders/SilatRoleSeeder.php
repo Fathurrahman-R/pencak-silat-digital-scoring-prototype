@@ -131,6 +131,35 @@ class SilatRoleSeeder extends Seeder
                 ],
             ],
             [
+                'name' => 'sekretaris-pertandingan',
+                'label' => 'Sekretaris Pertandingan',
+                'description' => 'Menerima pendaftaran kontingen, memeriksa berkas peserta, dan mengesahkan keikutsertaannya. Petugas Teknis, Pasal 13.',
+                'grants' => [
+                    'turnamen' => $lihat,
+                    'kontingen' => $ubah,
+                    'atlet' => $ubah,
+
+                    /*
+                     * Approve dan Reject dipisahkan dari Update. Menyunting
+                     * data pendaftaran dan mengesahkan keikutsertaan adalah dua
+                     * kewenangan yang berbeda, dan yang kedua menentukan siapa
+                     * berhak naik gelanggang.
+                     */
+                    'pendaftaran' => [
+                        ResourceAction::View, ResourceAction::Update,
+                        ResourceAction::Approve, ResourceAction::Reject,
+                        ResourceAction::Export,
+                    ],
+
+                    'invoice' => $lihat,
+                    'kelas-tanding' => $lihat,
+                    'nomor-jurus' => $lihat,
+                    'bagan' => $lihat,
+                    'jadwal' => $lihat,
+                    'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
+                ],
+            ],
+            [
                 'name' => 'petugas-timbang',
                 'label' => 'Petugas Timbang Badan',
                 'description' => 'Mencatat berat badan dan menentukan lolos atau gugurnya atlet terhadap kelas yang diikuti.',
