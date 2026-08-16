@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -305,6 +306,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->group(function () {
                     Route::get('/', 'show')->name('show')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::View));
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
+                });
+
+            /*
+             * Mesin scoring Tanding. `akhiri` dijaga resource Manage
+             * (bukan Update seperti kendali timer biasa) karena mengakhiri
+             * partai itu tindakan sekali jalan yang tidak bisa dibatalkan
+             * lewat tombol yang sama. `sahkan` dan pembatalan nilai/hukuman
+             * dijaga resource hasil-partai -- wewenang dewan juri, bukan
+             * operator gelanggang.
+             */
+            Route::controller(PartaiScoringController::class)
+                ->prefix('{tournament}/partai/{match}')
+                ->name('partai.')
+                ->group(function () {
+                    Route::get('/', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::View));
+
+                    Route::post('/timer/mulai', 'mulaiBabak')->name('timer.mulai')->middleware('resource:'.rk('partai', ResourceAction::Update));
+                    Route::post('/timer/jeda', 'jeda')->name('timer.jeda')->middleware('resource:'.rk('partai', ResourceAction::Update));
+                    Route::post('/timer/lanjut', 'lanjutkan')->name('timer.lanjut')->middleware('resource:'.rk('partai', ResourceAction::Update));
+                    Route::post('/timer/reset', 'reset')->name('timer.reset')->middleware('resource:'.rk('partai', ResourceAction::Update));
+                    Route::post('/timer/selesai-babak', 'selesaikanBabak')->name('timer.selesai-babak')->middleware('resource:'.rk('partai', ResourceAction::Update));
+
+                    Route::post('/akhiri', 'akhiri')->name('akhiri')->middleware('resource:'.rk('partai', ResourceAction::Manage));
+                    Route::post('/sahkan', 'sahkan')->name('sahkan')->middleware('resource:'.rk('hasil-partai', ResourceAction::Approve));
+
+                    Route::post('/nilai', 'nilai')->name('nilai')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+                    Route::post('/nilai/{scoreEvent}/batal', 'batalkanNilai')->name('nilai.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
+
+                    Route::post('/hukuman', 'hukuman')->name('hukuman')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
+                    Route::post('/hukuman/{penalty}/batal', 'batalkanHukuman')->name('hukuman.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
+                    Route::post('/hitungan', 'hitungan')->name('hitungan')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
                 });
         });
 
