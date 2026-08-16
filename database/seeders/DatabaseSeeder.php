@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ResourceSeeder::class,
             RoleSeeder::class,
+            SilatResourceSeeder::class,
+            SilatRoleSeeder::class,
         ]);
 
         $superAdmin = $this->account('Super Admin', 'super@example.com', config('resources.super_admin_role'));
