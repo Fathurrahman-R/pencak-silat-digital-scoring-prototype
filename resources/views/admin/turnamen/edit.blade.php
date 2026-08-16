@@ -6,6 +6,13 @@
 <x-layouts.admin :heading="$tournament->name"
                  :breadcrumb="['Kejuaraan' => route('admin.turnamen.index'), $tournament->name => null]">
     <x-slot:actions>
+        @resource(rk('peraturan-turnamen', ResourceAction::View))
+            <x-ui.button :href="route('admin.turnamen.peraturan.edit', $tournament)" variant="secondary" size="sm">
+                <x-ui.icon name="scale" class="h-4 w-4" />
+                Setelan peraturan
+            </x-ui.button>
+        @endresource
+
         @resource(rk('gelanggang', ResourceAction::View))
             <x-ui.button :href="route('admin.turnamen.gelanggang.index', $tournament)" variant="secondary" size="sm">
                 <x-ui.icon name="layout-grid" class="h-4 w-4" />

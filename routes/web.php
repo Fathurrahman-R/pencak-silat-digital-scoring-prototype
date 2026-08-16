@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TournamentController;
+use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignSystemController;
@@ -141,6 +142,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/{tournament}/status', 'updateStatus')->name('status')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
             Route::post('/bulk-destroy', 'bulkDestroy')->name('bulk-destroy')->middleware('resource:'.rk('turnamen', ResourceAction::Delete));
             Route::delete('/{tournament}', 'destroy')->name('destroy')->middleware('resource:'.rk('turnamen', ResourceAction::Delete));
+
+            /*
+             * Setelan peraturan punya resource key sendiri: yang boleh
+             * menyunting jadwal kejuaraan belum tentu boleh mengubah nilai
+             * teknik dan tangga hukuman.
+             */
+            Route::controller(TournamentRuleController::class)
+                ->prefix('{tournament}/peraturan')
+                ->name('peraturan.')
+                ->group(function () {
+                    Route::get('/', 'edit')->name('edit')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::View));
+                    Route::put('/', 'update')->name('update')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::Update));
+                    Route::post('/reset', 'reset')->name('reset')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::Update));
+                });
 
             Route::controller(ArenaController::class)
                 ->prefix('{tournament}/gelanggang')

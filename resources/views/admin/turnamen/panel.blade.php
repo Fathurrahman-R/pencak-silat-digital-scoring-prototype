@@ -72,5 +72,12 @@
                 Gelanggang
             </x-ui.button>
         @endresource
+
+        @resource(rk('peraturan-turnamen', ResourceAction::View))
+            <x-ui.button :href="route('admin.turnamen.peraturan.edit', $tournament)" variant="secondary" size="sm">
+                <x-ui.icon name="scale" class="size-4" />
+                Peraturan
+            </x-ui.button>
+        @endresource
     </div>
 </div>
