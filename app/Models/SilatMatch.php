@@ -109,6 +109,21 @@ class SilatMatch extends Model
         return $this->hasMany(TechnicalCount::class, 'match_id');
     }
 
+    public function protestCards(): HasMany
+    {
+        return $this->hasMany(ProtestCard::class, 'match_id');
+    }
+
+    public function varReviews(): HasMany
+    {
+        return $this->hasMany(VarReview::class, 'match_id');
+    }
+
+    public function managerProtests(): HasMany
+    {
+        return $this->hasMany(ManagerProtest::class, 'match_id');
+    }
+
     public function ratifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ratified_by');

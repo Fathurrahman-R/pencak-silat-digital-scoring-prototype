@@ -67,6 +67,13 @@
                             </x-ui.button>
                         @endresource
 
+                        @resource(rk('var', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.partai.keberatan', [$tournament, $partai])"
+                                         variant="secondary" size="xs">
+                                Keberatan
+                            </x-ui.button>
+                        @endresource
+
                         @resource(rk('jadwal', ResourceAction::Assign))
                             <div class="flex gap-1">
                                 <form method="POST" action="{{ route('admin.turnamen.jadwal.urutkan', [$tournament, $partai]) }}">

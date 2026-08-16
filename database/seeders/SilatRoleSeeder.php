@@ -70,8 +70,12 @@ class SilatRoleSeeder extends Seeder
                     'penugasan-aparat' => [ResourceAction::View, ResourceAction::Assign],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
-                    'var' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
-                    'protes-manajer' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
+                    // Ketua Pertandingan menampung protes VAR maupun Protes
+                    // Manajer atas nama pelatih (keduanya diajukan pelatih di
+                    // gelanggang, bukan lewat akun sistem sendiri), lalu
+                    // memutus tingkat pertama Protes Manajer.
+                    'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                    'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
                 ],
             ],
@@ -96,7 +100,7 @@ class SilatRoleSeeder extends Seeder
                     'partai' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,
-                    'var' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
+                    'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                 ],
             ],
             [
@@ -128,6 +132,9 @@ class SilatRoleSeeder extends Seeder
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Print],
+                    // Operator paling dekat dengan meja pelatih -- bisa
+                    // memasukkan protes VAR ke sistem, tapi tidak memutusnya.
+                    'var' => [ResourceAction::View, ResourceAction::Create],
                 ],
             ],
             [

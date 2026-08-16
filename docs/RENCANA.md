@@ -13,7 +13,7 @@
 | Fase 2b — Biaya, Invoice & Pembayaran | 🟡 Selesai kecuali integrasi Midtrans (menunggu kredensial sandbox) |
 | Fase 3 — Bagan & Jadwal | ✅ Selesai |
 | Fase 4 — Mesin Scoring Tanding | ✅ Selesai penuh |
-| Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
+| Fase 4b — VAR & Keberatan | ✅ Selesai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
 | Fase 6 — Overlay Siaran vMix | 🟡 Selesai kecuali uji nyata vMix Pro (T6.8, butuh perangkat lunak vMix sungguhan) |
 | Fase 7 — Kategori Jurus | ⬜ Belum dimulai |
@@ -580,16 +580,16 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T4.12 | Hitungan teknik | ✅ |
 | T4.13 | Pemecah seri menang angka lima tingkat, tawaran WMP | ✅ |
 
-## EPIC 4B — VAR & Pengajuan Keberatan ⬜
+## EPIC 4B — VAR & Pengajuan Keberatan ✅
 
 | ID | Task | Status |
 |---|---|---|
-| T4B.1 | Migrasi & model: protest_cards, var_reviews, manager_protests | ⬜ |
-| T4B.2 | Jatah kartu protes pelatih dan pencatatan pemakaiannya | ⬜ |
-| T4B.3 | Penandaan kejadian disengketakan beserta stempel waktu pertandingan | ⬜ |
-| T4B.4 | Panel Wasit Komisi Protes dengan hitung mundur 5 menit dan hasil Sah/Tidak Sah | ⬜ |
-| T4B.5 | Dampak hasil VAR ke skor lewat baris pembatal | ⬜ |
-| T4B.6 | Protes Manajer berjenjang beserta tenggatnya sampai banding final | ⬜ |
+| T4B.1 | Migrasi & model: protest_cards, var_reviews, manager_protests | ✅ |
+| T4B.2 | Jatah kartu protes pelatih dan pencatatan pemakaiannya | ✅ `PengajuanProtes`, 2 kartu per sudut per partai, terpisah merah/biru |
+| T4B.3 | Penandaan kejadian disengketakan beserta stempel waktu pertandingan | ✅ kolom `kejadian` + rujukan opsional ke `score_event_id`/`penalty_id` |
+| T4B.4 | Panel Wasit Komisi Protes dengan hitung mundur 5 menit dan hasil Sah/Tidak Sah | ✅ `silat.keberatan`, `sisaDetik()`/`lewatTenggat()` — lewat tenggat tidak mengunci tombol, hanya peringatan (naskah mengarahkan ke verifikasi juri, bukan membatalkan protes) |
+| T4B.5 | Dampak hasil VAR ke skor lewat baris pembatal | ✅ `KeputusanVar` memakai pola `voided_at`/`voided_by`/`void_reason` yang sama dengan koreksi dewan juri |
+| T4B.6 | Protes Manajer berjenjang beserta tenggatnya sampai banding final | ✅ `PengajuanProtesManajer`/`KeputusanProtesManajer`, banding hanya bisa diajukan setelah tingkat pertama diputuskan, `ManagerProtest::final()` |
 
 ## EPIC 5 — Live Score Publik & Tunneling ⬜
 
@@ -811,17 +811,20 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Semua panel resync penuh tiap aksi sukses (bukan menunggu Echo) dan tiap event Reverb diterima — lihat catatan bug #1 dan #3 di ringkasan Fase 4 di bawah
 - [x] Test: partai penuh 1 babak dari mulai sampai diakhiri dan disahkan → status dan skor benar (lewat `PartaiScoringControllerTest`, 21 test end-to-end HTTP + 6 test halaman panel)
 
-## Fase 4b — VAR & Pengajuan Keberatan ⬜ Belum dimulai
+## Fase 4b — VAR & Pengajuan Keberatan ✅ Selesai
 
-- [ ] Migrasi `protest_cards`, `var_reviews`, `manager_protests`
-- [ ] Jatah kartu pelatih: 2 Tanding, 1 Jurus; sisa kartu tampil di panel & papan skor
-- [ ] Pengajuan protes menandai kejadian + stempel waktu pertandingan
-- [ ] Panel Wasit Komisi Protes: countdown 5 menit, hasil Sah/Tidak Sah, pencatat keputusan
-- [ ] Lewat tenggat → verifikasi juri dipimpin Ketua Pertandingan
-- [ ] Hasil VAR mengubah skor via baris pembatal
-- [ ] Protes Manajer berjenjang + tenggat, banding ke Delegasi Teknik final
-- [ ] Test: kartu protes habis, pengajuan berikutnya ditolak
-- [ ] Test: hasil VAR "Tidak Sah" membatalkan nilai tanpa hapus `judge_inputs`
+> Kartu protes Jurus (1 per penampilan) belum dipakai di mana pun karena kategori Jurus sendiri belum dibangun (Fase 7) -- skema `protest_cards`/`var_reviews` sudah generik lewat `match_id`, jadi tidak perlu migrasi ulang begitu Jurus dibangun, tapi alur pengajuannya (`PengajuanProtes`) untuk sekarang hanya dipakai jalur Tanding.
+
+- [x] Migrasi `protest_cards`, `var_reviews`, `manager_protests`
+- [x] Jatah kartu pelatih: 2 Tanding per sudut per partai (bukan per babak — berlaku sepanjang tiga babak sesuai naskah)
+- [x] Pengajuan protes menandai kejadian + rujukan opsional ke nilai/hukuman yang disengketakan
+- [x] Panel Wasit Komisi Protes (`silat.keberatan`): countdown 5 menit, hasil Sah/Tidak Sah, pencatat keputusan — diverifikasi lewat browser end-to-end (ajukan → keputusan Sah tercatat, kartu berkurang)
+- [x] Lewat tenggat → ditampilkan sebagai peringatan visual (`lewat_tenggat`), bukan mengunci tombol, karena proses verifikasi juri lanjutan di luar cakupan sistem digital ini
+- [x] Hasil VAR mengubah skor via baris pembatal (`voided_at`/`voided_by`/`void_reason`, pola sama koreksi dewan juri)
+- [x] Protes Manajer berjenjang + tenggat dari `config('scoring.protes_manajer')`, banding hanya bisa diajukan setelah tingkat pertama diputuskan, keputusan banding final (`ManagerProtest::final()`)
+- [x] Test: kartu protes habis, pengajuan berikutnya ditolak
+- [x] Test: hasil VAR "Tidak Sah" membatalkan nilai dan hukuman tanpa hapus `judge_inputs`
+- [x] Resource key `var`/`protes-manajer` sudah ada sejak Fase 0 (`SilatResourceSeeder`); grant `Create` ditambahkan ke `ketua-pertandingan`, `wasit-komisi-protes`, dan `operator-it` di `SilatRoleSeeder` karena sebelumnya tidak ada peran yang bisa mengajukan protes sama sekali (hanya bisa `Approve`/`Reject`)
 
 ## Fase 5 — Live Score Publik & Tunneling ⬜ Belum dimulai
 

@@ -93,6 +93,17 @@ class PartaiScoringController extends Controller
         ]);
     }
 
+    public function keberatan(Tournament $tournament, SilatMatch $match): View
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        return view('silat.keberatan', [
+            'tournament' => $tournament,
+            'match' => $match->load('bracket.weightClass'),
+            'config' => $this->konfigPanel($tournament, $match),
+        ]);
+    }
+
     public function juri(Tournament $tournament, SilatMatch $match): View
     {
         $this->pastikanMilik($tournament, $match);
@@ -150,6 +161,11 @@ class PartaiScoringController extends Controller
             'hitungan' => route('admin.turnamen.partai.hitungan', [$tournament, $match]),
             'nilaiBatal' => route('admin.turnamen.partai.nilai.batal', [$tournament, $match, '__ID__']),
             'hukumanBatal' => route('admin.turnamen.partai.hukuman.batal', [$tournament, $match, '__ID__']),
+            'varAjukan' => route('admin.turnamen.partai.keberatan.var.ajukan', [$tournament, $match]),
+            'varPutuskan' => route('admin.turnamen.partai.keberatan.var.putuskan', [$tournament, $match, '__ID__']),
+            'protesManajerAjukan' => route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$tournament, $match]),
+            'protesManajerBanding' => route('admin.turnamen.partai.keberatan.protes-manajer.banding', [$tournament, $match, '__ID__']),
+            'protesManajerPutuskan' => route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$tournament, $match, '__ID__']),
         ];
     }
 
@@ -428,6 +444,46 @@ class PartaiScoringController extends Controller
                 'role' => $o->role, 'number' => $o->number, 'name' => $o->user->name, 'user_id' => $o->user_id,
             ]),
             'riwayat' => $this->riwayat($match),
+            'keberatan' => $this->keberatanArray($match),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function keberatanArray(SilatMatch $match): array
+    {
+        $kartu = $match->protestCards()->get()->keyBy(fn ($k) => $k->corner->value);
+        $sisaKartu = fn (string $corner) => $kartu->has($corner)
+            ? $kartu[$corner]->sisaKartu()
+            : config('scoring.var.kartu_protes.tanding');
+
+        $varReviews = $match->varReviews()->with(['pemutus'])->latest('id')->limit(20)->get()->map(fn ($v) => [
+            'id' => $v->id,
+            'round' => $v->round,
+            'corner' => $v->corner->value,
+            'kejadian' => $v->kejadian,
+            'diajukan_at' => $v->diajukan_at->toIso8601String(),
+            'tenggat_at' => $v->tenggat_at->toIso8601String(),
+            'sisa_detik' => $v->sisaDetik(),
+            'lewat_tenggat' => $v->lewatTenggat(),
+            'keputusan' => $v->keputusan,
+            'catatan' => $v->catatan,
+        ]);
+
+        $protesManajer = $match->managerProtests()->latest('id')->get()->map(fn ($p) => [
+            'id' => $p->id,
+            'level' => $p->level,
+            'parent_id' => $p->parent_id,
+            'diajukan_at' => $p->diajukan_at->toIso8601String(),
+            'tenggat_keputusan_at' => $p->tenggat_keputusan_at->toIso8601String(),
+            'keputusan' => $p->keputusan,
+            'catatan' => $p->catatan,
+            'final' => $p->final(),
+        ]);
+
+        return [
+            'kartu' => ['merah' => $sisaKartu('red'), 'biru' => $sisaKartu('blue')],
+            'var_reviews' => $varReviews,
+            'protes_manajer' => $protesManajer,
         ];
     }
 

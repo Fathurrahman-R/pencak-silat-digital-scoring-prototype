@@ -140,6 +140,7 @@ Alpine.data('partaiPanel', (cfg) => ({
     peraturan: { jumlah_juri: 3, ambang_sepakat: 2, window_konsensus_ms: 2000, jumlah_babak: 3 },
     officials: [],
     riwayat: [],
+    keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
     pesan: null,
     galat: null,
     indikator: { red: [], blue: [] },
@@ -346,6 +347,31 @@ Alpine.data('partaiPanel', (cfg) => ({
         return this.kirim(this.cfg.hukumanBatal.replace('__ID__', id), { alasan });
     },
 
+    /** Pelatih mengangkat kartu meminta tinjauan video -- Pasal 15.2.a. */
+    ajukanVar(corner, kejadian, scoreEventId = null, penaltyId = null) {
+        return this.kirim(this.cfg.varAjukan, {
+            babak: this.match.current_round, corner, kejadian,
+            score_event_id: scoreEventId, penalty_id: penaltyId,
+        });
+    },
+
+    /** Wasit Komisi Protes menetapkan Sah atau Tidak Sah dalam tenggat 5 menit. */
+    putuskanVar(id, keputusan, catatan) {
+        return this.kirim(this.cfg.varPutuskan.replace('__ID__', id), { keputusan, catatan: catatan || null });
+    },
+
+    ajukanProtesManajer(catatan) {
+        return this.kirim(this.cfg.protesManajerAjukan, { catatan: catatan || null });
+    },
+
+    bandingProtesManajer(id, catatan) {
+        return this.kirim(this.cfg.protesManajerBanding.replace('__ID__', id), { catatan: catatan || null });
+    },
+
+    putuskanProtesManajer(id, keputusan, catatan) {
+        return this.kirim(this.cfg.protesManajerPutuskan.replace('__ID__', id), { keputusan, catatan: catatan || null });
+    },
+
     _terapkan(data) {
         this.match = data.match;
         this.rounds = data.rounds;
@@ -355,6 +381,7 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.peraturan = data.peraturan;
         this.officials = data.officials;
         this.riwayat = data.riwayat;
+        this.keberatan = data.keberatan;
         this._petaJuri = Object.fromEntries(
             data.officials.filter((o) => o.role === 'juri').map((o) => [o.user_id, o.number]),
         );

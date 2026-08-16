@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PartaiScoringController;
+use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -324,6 +325,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/operator', 'operator')->name('operator')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
                     Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
+                    Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/juri/manifest.webmanifest', 'manifest')->name('juri.manifest')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
 
@@ -342,6 +344,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/hukuman', 'hukuman')->name('hukuman')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
                     Route::post('/hukuman/{penalty}/batal', 'batalkanHukuman')->name('hukuman.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
                     Route::post('/hitungan', 'hitungan')->name('hitungan')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
+                });
+
+            /*
+             * Keberatan: VAR (Pasal 15) dan Protes Manajer (Pasal 15 ayat 4).
+             * `var.ajukan` dijaga Create karena siapa pun yang mengoperasikan
+             * gelanggang bisa memasukkan protes atas permintaan pelatih;
+             * `var.putuskan` dijaga Approve/Reject -- wewenang Wasit Komisi
+             * Protes, Pengawas/Dewan Wasit Juri, atau Ketua Pertandingan saja.
+             */
+            Route::controller(VarController::class)
+                ->prefix('{tournament}/partai/{match}/keberatan')
+                ->name('partai.keberatan.')
+                ->group(function () {
+                    Route::post('/var', 'ajukan')->name('var.ajukan')->middleware('resource:'.rk('var', ResourceAction::Create));
+                    Route::post('/var/{varReview}/putuskan', 'putuskan')->name('var.putuskan')->middleware('resource:'.rk('var', ResourceAction::Approve));
+
+                    Route::post('/protes-manajer', 'ajukanManajer')->name('protes-manajer.ajukan')->middleware('resource:'.rk('protes-manajer', ResourceAction::Create));
+                    Route::post('/protes-manajer/{managerProtest}/banding', 'banding')->name('protes-manajer.banding')->middleware('resource:'.rk('protes-manajer', ResourceAction::Create));
+                    Route::post('/protes-manajer/{managerProtest}/putuskan', 'putuskanManajer')->name('protes-manajer.putuskan')->middleware('resource:'.rk('protes-manajer', ResourceAction::Approve));
                 });
         });
 
