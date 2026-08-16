@@ -39,11 +39,11 @@ class ResourceServiceProvider extends ServiceProvider
     /**
      * Tiga directive, semuanya memakai resource key yang sama dengan route:
      *
-     *   @resource('posts.update') ... @endresource
+     *   @resource('turnamen.update') ... @endresource
      *
-     *   @anyresource(['posts.update', 'posts.publish']) ... @endanyresource
+     *   @anyresource(['turnamen.update', 'turnamen.delete']) ... @endanyresource
      *
-     *   @allresource(['posts.view', 'posts.export']) ... @endallresource
+     *   @allresource(['turnamen.view', 'turnamen.export']) ... @endallresource
      *
      * Blade::if ikut menyediakan bentuk @else... dan @unless... untuk ketiganya.
      *

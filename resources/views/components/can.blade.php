@@ -7,9 +7,9 @@
 {{--
     Menyembunyikan sepotong UI kalau pengguna tidak punya resource key-nya.
 
-        <x-can resource="posts.delete"> ... </x-can>
-        <x-can :any="['posts.update', 'posts.publish']"> ... </x-can>
-        <x-can :all="['posts.view', 'posts.export']"> ... </x-can>
+        <x-can resource="turnamen.delete"> ... </x-can>
+        <x-can :any="['turnamen.update', 'turnamen.delete']"> ... </x-can>
+        <x-can :all="['turnamen.view', 'turnamen.export']"> ... </x-can>
 
     Ini murni soal tampilan. Route dan controller tetap harus dijaga sendiri —
     menyembunyikan tombol bukan pengamanan.

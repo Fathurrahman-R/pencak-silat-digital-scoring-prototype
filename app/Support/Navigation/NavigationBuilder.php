@@ -2,6 +2,8 @@
 
 namespace App\Support\Navigation;
 
+use App\Http\Middleware\IngatTurnamenAktif;
+use App\Models\Tournament;
 use App\Support\Resources\ResourceGate;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,20 @@ class NavigationBuilder
     }
 
     /**
+     * Kejuaraan yang sedang dibuka, kalau ada.
+     *
+     * Diambil ulang dari basis data tiap kali, bukan disalin ke sesi, supaya
+     * nama yang berubah atau kejuaraan yang dihapus tidak meninggalkan sisa di
+     * menu.
+     */
+    public function turnamenAktif(): ?Tournament
+    {
+        $id = session(IngatTurnamenAktif::KUNCI);
+
+        return $id ? Tournament::find($id) : null;
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $items
      * @return array<int, array<string, mixed>>
      */
@@ -36,6 +52,15 @@ class NavigationBuilder
                 continue;
             }
 
+            /*
+             * Item yang butuh kejuaraan aktif tidak bisa dibentuk alamatnya
+             * sebelum ada kejuaraan yang dibuka, jadi disembunyikan seluruhnya
+             * — bukan ditampilkan sebagai tautan mati.
+             */
+            if (($item['butuh_turnamen'] ?? false) && $this->turnamenAktif() === null) {
+                continue;
+            }
+
             $children = $this->filter($item['children'] ?? []);
 
             if (isset($item['children']) && $children === []) {
@@ -43,7 +68,7 @@ class NavigationBuilder
             }
 
             $result[] = [
-                'label' => $item['label'],
+                'label' => $this->label($item),
                 'icon' => $item['icon'] ?? null,
                 'url' => $this->url($item),
                 'active' => $this->isActive($item, $children),
@@ -66,6 +91,18 @@ class NavigationBuilder
         return true;
     }
 
+    /**
+     * Label yang boleh berupa nama kejuaraan yang sedang dibuka.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function label(array $item): string
+    {
+        return ($item['label_turnamen'] ?? false)
+            ? ($this->turnamenAktif()?->name ?? $item['label'])
+            : $item['label'];
+    }
+
     /** @param  array<string, mixed>  $item */
     private function url(array $item): ?string
     {
@@ -73,11 +110,23 @@ class NavigationBuilder
             return $item['url'];
         }
 
-        if (isset($item['route']) && Route::has($item['route'])) {
-            return route($item['route'], $item['route_params'] ?? []);
+        if (! isset($item['route']) || ! Route::has($item['route'])) {
+            return null;
         }
 
-        return null;
+        $params = $item['route_params'] ?? [];
+
+        if ($item['butuh_turnamen'] ?? false) {
+            $tournament = $this->turnamenAktif();
+
+            if ($tournament === null) {
+                return null;
+            }
+
+            $params = ['tournament' => $tournament, ...$params];
+        }
+
+        return route($item['route'], $params);
     }
 
     /**

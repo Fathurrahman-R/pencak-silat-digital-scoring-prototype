@@ -24,6 +24,8 @@
         @endresource
     </x-slot:actions>
 
+    @include('admin.kontingen.tabs')
+
     <div class="space-y-6">
         @if ($errors->any())
             <x-ui.alert variant="danger" title="Pendaftaran ditolak">
@@ -109,34 +111,24 @@
                       class="space-y-4">
                     @csrf
 
-                    <div>
-                        <x-ui.label for="atlet-tanding" required>Atlet</x-ui.label>
-                        <select name="athlete_id" id="atlet-tanding" x-model="atlet" required
-                                class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
-                            <option value="">Pilih atlet…</option>
-                            @foreach ($athletes as $athlete)
-                                <option value="{{ $athlete->id }}">
-                                    {{ $athlete->name }} — {{ $athlete->jenis_kelamin->label() }},
-                                    {{ $athlete->golonganUsia($tournament)?->label() ?? 'di luar golongan' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <x-ui.select name="athlete_id" id="atlet-tanding" label="Atlet" required
+                                 placeholder="Pilih atlet…" x-model="atlet"
+                                 :options="$athletes->mapWithKeys(fn ($a) => [
+                                     $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
+                                         .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
+                                 ])->all()" />
 
-                    <div>
-                        <x-ui.label for="kelas-tanding" required>Kelas</x-ui.label>
-                        <select name="weight_class_id" id="kelas-tanding" required
-                                class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
-                            <template x-for="k in kelas" :key="k.id">
-                                <option :value="k.id" x-text="k.label"></option>
-                            </template>
-                        </select>
+                    <x-ui.select name="weight_class_id" id="kelas-tanding" label="Kelas" required
+                                 hint="Hanya kelas yang cocok dengan gender, golongan usia, dan berat klaim atlet terpilih.">
+                        <template x-for="k in kelas" :key="k.id">
+                            <option :value="k.id" x-text="k.label"></option>
+                        </template>
+                    </x-ui.select>
 
-                        <p class="mt-1.5 text-xs text-ink-muted" x-show="atlet && kelas.length === 0">
-                            Tidak ada kelas yang cocok. Golongan usianya mungkin tidak memakai kelas
-                            berat, atau berat klaimnya di luar seluruh tangga kelas.
-                        </p>
-                    </div>
+                    <p class="text-xs text-warning" x-show="atlet && kelas.length === 0" x-cloak>
+                        Tidak ada kelas yang cocok. Golongan usianya mungkin tidak memakai kelas
+                        berat, atau berat klaimnya di luar seluruh tangga kelas.
+                    </p>
                 </form>
             </div>
 
@@ -153,36 +145,18 @@
                   class="space-y-4">
                 @csrf
 
-                <div>
-                    <x-ui.label for="nomor-jurus" required>Nomor</x-ui.label>
-                    <select name="jurus_event_id" id="nomor-jurus" required
-                            class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
-                        <option value="">Pilih nomor…</option>
-                        @foreach ($nomorJurus as $nomor)
-                            <option value="{{ $nomor->id }}">
-                                {{ $nomor->nama() }} ({{ $nomor->jenis->jumlahPesilat() }} pesilat)
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                <x-ui.select name="jurus_event_id" id="nomor-jurus" label="Nomor" required
+                             placeholder="Pilih nomor…"
+                             :options="$nomorJurus->mapWithKeys(fn ($n) => [
+                                 $n->id => $n->nama().' ('.$n->jenis->jumlahPesilat().' pesilat)',
+                             ])->all()" />
 
-                <div>
-                    <x-ui.label for="pesilat-jurus" required>Pesilat</x-ui.label>
-                    <select name="athlete_ids[]" id="pesilat-jurus" multiple size="8" required
-                            class="mt-1.5 w-full rounded-md border border-line bg-surface-inset px-3 py-2 text-base2 text-ink">
-                        @foreach ($athletes as $athlete)
-                            <option value="{{ $athlete->id }}">
-                                {{ $athlete->name }} — {{ $athlete->jenis_kelamin->label() }},
-                                {{ $athlete->golonganUsia($tournament)?->label() ?? 'di luar golongan' }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    <p class="mt-1.5 text-xs text-ink-muted">
-                        Tahan Ctrl untuk memilih lebih dari satu. Ganda diisi dua pesilat, Regu tiga,
-                        dan seluruhnya harus dari kontingen yang sama.
-                    </p>
-                </div>
+                <x-ui.select name="athlete_ids" id="pesilat-jurus" label="Pesilat" required multiple size="8"
+                             hint="Tahan Ctrl untuk memilih lebih dari satu. Ganda diisi dua pesilat, Regu tiga, dan seluruhnya harus dari kontingen yang sama."
+                             :options="$athletes->mapWithKeys(fn ($a) => [
+                                 $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
+                                     .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
+                             ])->all()" />
             </form>
 
             <x-slot:footer>

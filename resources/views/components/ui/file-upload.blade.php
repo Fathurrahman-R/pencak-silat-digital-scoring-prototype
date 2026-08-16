@@ -3,6 +3,10 @@
     'label' => null,
     'hint' => null,
     'accept' => null,
+
+    // Ditandai di label, sejalan dengan input, select, dan textarea. Tanpa ini
+    // berkas wajib tampak sama saja dengan yang boleh dikosongkan.
+    'required' => false,
 ])
 
 @php
@@ -13,7 +17,7 @@
 
 <div x-data="{ fileName: '' }">
     @if ($label)
-        <x-ui.label :for="$id" :invalid="$invalid">{{ $label }}</x-ui.label>
+        <x-ui.label :for="$id" :required="$required" :invalid="$invalid">{{ $label }}</x-ui.label>
     @endif
 
     {{-- Tombol dan nama berkas dipisah supaya keduanya tetap terbaca; tampilan
@@ -37,6 +41,7 @@
                name="{{ $name }}"
                class="sr-only"
                x-on:change="fileName = $event.target.files[0]?.name ?? ''"
+               @required($required)
                @if ($accept) accept="{{ $accept }}" @endif
                @if ($invalid) aria-invalid="true" aria-describedby="{{ $id }}-error" @endif
                {{ $attributes }}>

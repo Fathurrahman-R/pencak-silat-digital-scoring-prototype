@@ -12,6 +12,8 @@
                      $contingent->name => route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent]),
                      'Tagihan' => null,
                  ]">
+    @include('admin.kontingen.tabs')
+
     <div class="space-y-6">
         @if ($errors->any())
             <x-ui.alert variant="danger" title="Tagihan tidak bisa diproses">

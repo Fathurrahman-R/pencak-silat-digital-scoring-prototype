@@ -21,6 +21,8 @@
         @endresource
     </x-slot:actions>
 
+    @include('admin.kontingen.tabs')
+
     <div class="space-y-6">
         <form method="GET" class="max-w-sm">
             <x-ui.input name="q" label="" :value="request('q')" placeholder="Cari nama atlet…" />
@@ -152,16 +154,10 @@
                                                  ->mapWithKeys(fn (JenisBerkas $j) => [$j->value => $j->label()])
                                                  ->all()" required />
 
-                                <div>
-                                    <x-ui.label :for="'berkas-file-'.$athlete->id">Berkas</x-ui.label>
-                                    <input type="file" name="berkas" id="berkas-file-{{ $athlete->id }}"
-                                           accept=".jpg,.jpeg,.png,.pdf" required
-                                           class="mt-1.5 block w-full text-base2 text-ink file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-inset file:px-3 file:py-1.5 file:text-ink">
-                                    <p class="mt-1.5 text-xs text-ink-muted">
-                                        JPG, PNG, atau PDF. Paling besar 4 MB. Mengunggah jenis yang sama
-                                        akan menggantikan berkas sebelumnya.
-                                    </p>
-                                </div>
+                                <x-ui.file-upload name="berkas" label="Berkas" required
+                                                  :id="'berkas-file-'.$athlete->id"
+                                                  accept=".jpg,.jpeg,.png,.pdf"
+                                                  hint="JPG, PNG, atau PDF. Paling besar 4 MB. Mengunggah jenis yang sama akan menggantikan berkas sebelumnya." />
 
                                 <x-ui.button type="submit" size="sm">Unggah</x-ui.button>
                             </form>

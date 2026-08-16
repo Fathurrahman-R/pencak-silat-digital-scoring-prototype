@@ -1,7 +1,7 @@
 <x-layouts.admin :heading="'Ubah resource '.$resource->key"
                  :breadcrumb="['Resource' => route('admin.resources.index'), $resource->key => route('admin.resources.show', $resource), 'Ubah' => null]">
     <x-ui.alert variant="info" class="mb-6">
-        Mengganti nama resource mengubah bentuk key-nya (mis. <code>posts.view</code> jadi <code>artikel.view</code>),
+        Mengganti nama resource mengubah bentuk key-nya (mis. <code>turnamen.view</code> jadi <code>kejuaraan.view</code>),
         tapi tidak mengubah nama permission yang ada di baliknya. Perbarui juga pemakaian key-nya di kode.
     </x-ui.alert>
 

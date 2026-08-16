@@ -35,17 +35,23 @@ class RoleSeeder extends Seeder
 
         $admin->syncPermissions($this->permissionsFor([
             'users' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
-            'posts' => ResourceAction::cases(),
         ]));
 
         $user = Role::firstOrCreate(
             ['name' => 'user', 'guard_name' => 'web'],
-            ['label' => 'Pengguna', 'description' => 'Akses baca untuk modul konten.'],
+            ['label' => 'Pengguna', 'description' => 'Bisa masuk, belum memegang kewenangan apa pun.'],
         );
 
-        $user->syncPermissions($this->permissionsFor([
-            'posts' => [ResourceAction::View],
-        ]));
+        /*
+         * Sengaja tanpa permission. Ini peran dasar bagi orang yang sudah punya
+         * akun tetapi belum ditugaskan sebagai aparat atau official — memberinya
+         * kewenangan bawaan berarti setiap akun baru langsung bisa melihat data
+         * peserta sebelum ada yang memutuskan demikian.
+         *
+         * Peran domain pencak silat didaftarkan terpisah di SilatRoleSeeder,
+         * yang berjalan setelah resource domainnya ada.
+         */
+        $user->syncPermissions([]);
     }
 
     /**

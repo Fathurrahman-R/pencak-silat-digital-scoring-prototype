@@ -125,13 +125,10 @@
                                             :id="'paid-at-'.$invoice->id"
                                             :value="now()->format('Y-m-d\TH:i')" />
 
-                                <div>
-                                    <x-ui.label :for="'proof-'.$invoice->id" required>Bukti pembayaran</x-ui.label>
-                                    <input type="file" name="proof" id="proof-{{ $invoice->id }}"
-                                           accept=".jpg,.jpeg,.png,.pdf" required
-                                           class="mt-1.5 block w-full text-base2 text-ink file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-inset file:px-3 file:py-1.5 file:text-ink">
-                                    <p class="mt-1.5 text-xs text-ink-muted">JPG, PNG, atau PDF. Paling besar 4 MB.</p>
-                                </div>
+                                <x-ui.file-upload name="proof" label="Bukti pembayaran" required
+                                                  :id="'proof-'.$invoice->id"
+                                                  accept=".jpg,.jpeg,.png,.pdf"
+                                                  hint="JPG, PNG, atau PDF. Paling besar 4 MB." />
                             </form>
 
                             <x-slot:footer>

@@ -5,57 +5,11 @@
 
 <x-layouts.admin :heading="$tournament->name"
                  :breadcrumb="['Kejuaraan' => route('admin.turnamen.index'), $tournament->name => null]">
-    <x-slot:actions>
-        @resource(rk('peraturan-turnamen', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.peraturan.edit', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="scale" class="h-4 w-4" />
-                Setelan peraturan
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('kontingen', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.kontingen.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="users" class="h-4 w-4" />
-                Kontingen
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('pendaftaran', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.verifikasi.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="clipboard-check" class="h-4 w-4" />
-                Verifikasi
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('invoice', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.bendahara.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="wallet" class="h-4 w-4" />
-                Bendahara
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('tarif', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.tarif.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="receipt" class="h-4 w-4" />
-                Tarif
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('timbang-badan', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.timbang.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="scale-3d" class="h-4 w-4" />
-                Timbang badan
-            </x-ui.button>
-        @endresource
-
-        @resource(rk('gelanggang', ResourceAction::View))
-            <x-ui.button :href="route('admin.turnamen.gelanggang.index', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="layout-grid" class="h-4 w-4" />
-                Gelanggang ({{ $tournament->arenas_count }})
-            </x-ui.button>
-        @endresource
-    </x-slot:actions>
-
+    {{--
+        Deretan tombol pindah halaman sudah tidak ada di sini. Seluruh bagian
+        kejuaraan berdiri sebagai submenu sidebar, jadi berpindah dari timbang
+        badan ke verifikasi tidak perlu melewati halaman ini lebih dulu.
+    --}}
     <div class="space-y-6">
         <div class="grid gap-4 sm:grid-cols-3">
             <x-ui.stat label="Gelanggang" :value="$tournament->arenas_count" />

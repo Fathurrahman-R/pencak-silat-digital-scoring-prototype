@@ -23,13 +23,9 @@ class DatabaseSeeder extends Seeder
             SilatRoleSeeder::class,
         ]);
 
-        $superAdmin = $this->account('Super Admin', 'super@example.com', config('resources.super_admin_role'));
+        $this->account('Super Admin', 'super@example.com', config('resources.super_admin_role'));
         $this->account('Administrator', 'admin@example.com', 'admin');
         $this->account('Pengguna Biasa', 'user@example.com', 'user');
-
-        if (app()->environment('local')) {
-            Post::factory(30)->create(['user_id' => $superAdmin->id]);
-        }
     }
 
     private function account(string $name, string $email, string $role): User

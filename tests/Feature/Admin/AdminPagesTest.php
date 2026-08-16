@@ -1,14 +1,16 @@
 <?php
 
-use App\Models\Post;
 use App\Models\Resource;
 use App\Models\Role;
+use App\Models\Tournament;
 use App\Models\User;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\SilatResourceSeeder;
+use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class]);
+    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
 
     $this->superAdmin = User::factory()->create(['email_verified_at' => now()])
         ->assignRole(config('resources.super_admin_role'));
@@ -28,13 +30,13 @@ it('membuka semua halaman panel admin', function (string $route) {
     'admin.resources.index',
     'admin.resources.create',
     'admin.mappings.index',
-    'admin.posts.index',
-    'admin.posts.create',
+    'admin.turnamen.index',
+    'admin.turnamen.create',
 ]);
 
 it('membuka halaman detail dan ubah', function () {
-    $resource = Resource::where('key', 'posts')->firstOrFail();
-    $post = Post::factory()->create(['user_id' => $this->superAdmin->id]);
+    $resource = Resource::where('key', 'turnamen')->firstOrFail();
+    $tournament = Tournament::factory()->create();
     $permission = $resource->mappings->first()->permission;
     $role = Role::where('name', 'admin')->firstOrFail();
 
@@ -45,7 +47,7 @@ it('membuka halaman detail dan ubah', function () {
     $this->get(route('admin.permissions.edit', $permission))->assertOk();
     $this->get(route('admin.roles.edit', $role))->assertOk();
     $this->get(route('admin.users.edit', $this->superAdmin))->assertOk();
-    $this->get(route('admin.posts.edit', $post))->assertOk();
+    $this->get(route('admin.turnamen.edit', $tournament))->assertOk();
 });
 
 it('membuka halaman auth untuk tamu', function (string $route) {

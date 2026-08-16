@@ -269,12 +269,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 });
         });
 
-        // Modul contoh. Otorisasinya lewat policy (PostPolicy), bukan middleware,
-        // untuk menunjukkan cara kedua memakai resource key yang sama.
-        Route::resource('posts', PostController::class)->except('show');
-        Route::get('posts-export', [PostController::class, 'export'])->name('posts.export');
-        Route::get('posts/{post}/panel', [PostController::class, 'panel'])->name('posts.panel');
-        Route::post('posts-bulk-destroy', [PostController::class, 'bulkDestroy'])->name('posts.bulk-destroy');
     });
 });
 

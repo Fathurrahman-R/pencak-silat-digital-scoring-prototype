@@ -55,7 +55,10 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Turnamen',
                 'group' => 'Penyelenggaraan',
                 'description' => 'Kejuaraan beserta tanggal, tempat, dan statusnya.',
-                'actions' => [...$crud, ResourceAction::Manage],
+                // Export dipakai tombol ekspor CSV di daftar kejuaraan. Tanpa
+                // aksi ini, key `turnamen.export` tidak punya pemetaan dan
+                // rutenya menolak semua orang kecuali super admin.
+                'actions' => [...$crud, ResourceAction::Manage, ResourceAction::Export],
                 'locked' => true,
             ],
             [

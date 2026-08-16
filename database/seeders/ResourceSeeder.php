@@ -88,14 +88,6 @@ class ResourceSeeder extends Seeder
                 'actions' => [ResourceAction::View, ResourceAction::Update],
                 'locked' => true,
             ],
-            [
-                'key' => 'posts',
-                'label' => 'Artikel',
-                'group' => 'Konten',
-                'description' => 'Modul contoh yang dipakai sebagai cetakan modul baru.',
-                'actions' => [...$crud, ResourceAction::Publish, ResourceAction::Export],
-                'locked' => false,
-            ],
         ];
     }
 }

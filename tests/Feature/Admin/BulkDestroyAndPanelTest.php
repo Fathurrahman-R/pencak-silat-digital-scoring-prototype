@@ -1,16 +1,18 @@
 <?php
 
 use App\Models\Permission;
-use App\Models\Post;
 use App\Models\Resource;
 use App\Models\Role;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Resources\ResourceManager;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\SilatResourceSeeder;
+use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class]);
+    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
 
     $this->superAdmin = User::factory()->create(['email_verified_at' => now()])
         ->assignRole(config('resources.super_admin_role'));
@@ -83,25 +85,25 @@ it('melindungi role terkunci dari bulk destroy', function () {
     $this->assertDatabaseMissing('roles', ['id' => $extra->id]);
 });
 
-it('menghapus beberapa artikel sekaligus lewat bulk destroy', function () {
-    $posts = Post::factory()->count(2)->create(['user_id' => $this->superAdmin->id]);
+it('menghapus beberapa kejuaraan sekaligus lewat bulk destroy', function () {
+    $tournaments = Tournament::factory()->count(2)->create();
 
     $this->actingAs($this->superAdmin)
-        ->post(route('admin.posts.bulk-destroy'), ['ids' => $posts->pluck('id')->all()])
-        ->assertRedirect(route('admin.posts.index'));
+        ->post(route('admin.turnamen.bulk-destroy'), ['ids' => $tournaments->pluck('id')->all()])
+        ->assertRedirect(route('admin.turnamen.index'));
 
-    foreach ($posts as $post) {
-        $this->assertSoftDeleted('posts', ['id' => $post->id]);
+    foreach ($tournaments as $tournament) {
+        $this->assertSoftDeleted('tournaments', ['id' => $tournament->id]);
     }
 });
 
-it('membuka panel detail artikel', function () {
-    $post = Post::factory()->create(['user_id' => $this->superAdmin->id]);
+it('membuka panel detail kejuaraan', function () {
+    $tournament = Tournament::factory()->create();
 
     $this->actingAs($this->superAdmin)
-        ->get(route('admin.posts.panel', $post))
+        ->get(route('admin.turnamen.panel', $tournament))
         ->assertOk()
-        ->assertSee($post->title);
+        ->assertSee($tournament->name);
 });
 
 it('membuka panel detail role', function () {

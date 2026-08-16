@@ -11,15 +11,15 @@ use Illuminate\Contracts\Auth\Access\Authorizable;
  *
  * Turunkan kelas ini lalu sebutkan nama resource-nya sekali:
  *
- *   class PostPolicy extends BaseResourcePolicy
+ *   class TournamentPolicy extends BaseResourcePolicy
  *   {
  *       protected function resource(): string
  *       {
- *           return 'posts';
+ *           return 'turnamen';
  *       }
  *   }
  *
- * Setelah itu $this->authorize('update', $post) dan @can('update', $post)
+ * Setelah itu $this->authorize('update', $tournament) dan @can('update', $tournament)
  * berjalan seperti biasa, tapi keputusannya tetap datang dari pemetaan
  * resource key di database.
  */

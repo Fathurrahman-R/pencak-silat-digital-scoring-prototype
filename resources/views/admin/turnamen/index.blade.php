@@ -77,13 +77,8 @@
 
                 <x-ui.table.cell align="right">
                     <div class="flex justify-end gap-1" data-row-action>
-                        @resource(rk('gelanggang', ResourceAction::View))
-                            <x-ui.button :href="route('admin.turnamen.gelanggang.index', $tournament)"
-                                         variant="secondary" size="xs" title="Gelanggang">
-                                <x-ui.icon name="layout-grid" class="h-4 w-4" />
-                            </x-ui.button>
-                        @endresource
-
+                        {{-- Membuka kejuaraan menjadikannya kejuaraan aktif,
+                             dan seluruh bagiannya muncul di sidebar. --}}
                         @resource(rk('turnamen', ResourceAction::Update))
                             <x-ui.button :href="route('admin.turnamen.edit', $tournament)"
                                          variant="secondary" size="xs" title="Ubah">

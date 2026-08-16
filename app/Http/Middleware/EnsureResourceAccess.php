@@ -10,9 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Menjaga route dengan resource key.
  *
- *   ->middleware('resource:posts.view')                 satu key
- *   ->middleware('resource:posts.update|posts.publish') salah satu cukup (ATAU)
- *   ->middleware('resource:posts.view,posts.export')    harus punya keduanya (DAN)
+ *   ->middleware('resource:turnamen.view')                 satu key
+ *   ->middleware('resource:turnamen.update|turnamen.delete') salah satu cukup (ATAU)
+ *   ->middleware('resource:turnamen.view,turnamen.export')  harus punya keduanya (DAN)
  *
  * Ringkasnya: koma berarti DAN, garis tegak berarti ATAU. Keduanya boleh
  * dipakai bersamaan — tiap segmen yang dipisah koma wajib terpenuhi, dan
