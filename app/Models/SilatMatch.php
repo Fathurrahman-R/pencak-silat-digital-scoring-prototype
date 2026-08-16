@@ -35,6 +35,9 @@ class SilatMatch extends Model
         'winner_registration_id',
         'win_reason',
         'status',
+        'current_round',
+        'ratified_at',
+        'ratified_by',
         'arena_id',
         'order_in_arena',
         'scheduled_at',
@@ -45,6 +48,8 @@ class SilatMatch extends Model
         return [
             'round' => 'integer',
             'position' => 'integer',
+            'current_round' => 'integer',
+            'ratified_at' => 'datetime',
             'scheduled_at' => 'datetime',
         ];
     }
@@ -77,6 +82,62 @@ class SilatMatch extends Model
     public function officials(): HasMany
     {
         return $this->hasMany(MatchOfficial::class, 'match_id');
+    }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(MatchRound::class, 'match_id');
+    }
+
+    public function judgeInputs(): HasMany
+    {
+        return $this->hasMany(JudgeInput::class, 'match_id');
+    }
+
+    public function scoreEvents(): HasMany
+    {
+        return $this->hasMany(ScoreEvent::class, 'match_id');
+    }
+
+    public function penalties(): HasMany
+    {
+        return $this->hasMany(Penalty::class, 'match_id');
+    }
+
+    public function technicalCounts(): HasMany
+    {
+        return $this->hasMany(TechnicalCount::class, 'match_id');
+    }
+
+    public function ratifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'ratified_by');
+    }
+
+    /** Babak scoring (1/2/3) yang sedang berjalan -- bukan babak bagan. */
+    public function babakAktif(): ?MatchRound
+    {
+        if ($this->current_round === null) {
+            return null;
+        }
+
+        return $this->rounds()->where('round', $this->current_round)->first();
+    }
+
+    public function disahkan(): bool
+    {
+        return $this->ratified_at !== null;
+    }
+
+    /** Juri bertugas untuk partai ini, terurut nomor. */
+    public function juriBertugas()
+    {
+        return $this->officials()->where('role', MatchOfficial::ROLE_JURI)->orderBy('number')->get();
+    }
+
+    public function wasitBertugas(): ?MatchOfficial
+    {
+        return $this->officials()->where('role', MatchOfficial::ROLE_WASIT)->first();
     }
 
     /** Kedua sudut terisi, jadi partainya memang akan dipertandingkan. */
