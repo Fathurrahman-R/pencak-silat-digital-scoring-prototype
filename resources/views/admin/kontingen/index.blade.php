@@ -56,6 +56,13 @@
                             </x-ui.button>
                         @endresource
 
+                        @resource(rk('invoice', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.kontingen.tagihan.show', [$tournament, $contingent])"
+                                         variant="secondary" size="xs" title="Tagihan">
+                                <x-ui.icon name="receipt" class="h-4 w-4" />
+                            </x-ui.button>
+                        @endresource
+
                         @resource(rk('pendaftaran', ResourceAction::View))
                             <x-ui.button :href="route('admin.turnamen.kontingen.pendaftaran.index', [$tournament, $contingent])"
                                          variant="secondary" size="xs" title="Pendaftaran nomor">

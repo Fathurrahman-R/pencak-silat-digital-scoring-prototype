@@ -156,6 +156,31 @@ it('mengajukan pendaftaran saat berkas sudah lengkap', function () {
         ->submitted_at->not->toBeNull();
 });
 
+/*
+ * Begitu sesi pembayaran dibuat, pendaftaran dibekukan. Tanpa ini, yang dibayar
+ * bisa berbeda dari yang ditagih: official menekan bayar untuk satu nominal,
+ * menambah atlet, lalu uang nominal lama yang masuk.
+ */
+it('menolak menambah pendaftaran saat tagihan sedang menunggu pembayaran', function () {
+    App\Models\FeeSchedule::factory()->for($this->tournament)->create(['amount' => 150_000]);
+
+    $pertama = pesilatDewasa($this->kontingen);
+    $pendaftaran = Registration::factory()->for($this->kontingen)->create(['weight_class_id' => $this->kelasC->id]);
+    $pendaftaran->athletes()->attach($pertama);
+
+    $builder = new App\Support\Keuangan\InvoiceBuilder;
+    (new App\Actions\Keuangan\KelolaInvoice($builder))->kunci($builder->untuk($this->kontingen));
+
+    $this->actingAs($this->admin)
+        ->post("/admin/turnamen/{$this->tournament->id}/kontingen/{$this->kontingen->id}/pendaftaran/tanding", [
+            'athlete_id' => pesilatDewasa($this->kontingen, ['weight_claim' => 57.0])->id,
+            'weight_class_id' => $this->kelasC->id,
+        ])
+        ->assertSessionHasErrors('pendaftaran');
+
+    expect($this->kontingen->registrations()->count())->toBe(1);
+});
+
 it('menutup pendaftaran kontingen lain dari official', function () {
     $official = User::factory()->create();
     $official->syncRoles(['official-kontingen']);

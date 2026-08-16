@@ -60,6 +60,7 @@ class RegistrationController extends Controller
     public function storeTanding(Request $request, Tournament $tournament, Contingent $contingent): RedirectResponse
     {
         $this->pastikanBolehAkses($contingent);
+        $this->pastikanTidakBeku($contingent);
 
         $data = $request->validate([
             'athlete_id' => ['required', 'integer'],
@@ -90,6 +91,7 @@ class RegistrationController extends Controller
     public function storeJurus(Request $request, Tournament $tournament, Contingent $contingent): RedirectResponse
     {
         $this->pastikanBolehAkses($contingent);
+        $this->pastikanTidakBeku($contingent);
 
         $data = $request->validate([
             'jurus_event_id' => ['required', 'integer'],
@@ -181,5 +183,28 @@ class RegistrationController extends Controller
     private function pastikanMilik(Contingent $contingent, Registration $registration): void
     {
         abort_unless($registration->contingent_id === $contingent->id, 404);
+    }
+
+    /**
+     * Pendaftaran dibekukan begitu sesi pembayaran dibuat.
+     *
+     * Ditolak dengan pesan, bukan dengan halaman galat, karena ini keadaan yang
+     * wajar dan bisa diperbaiki sendiri official — tinggal batalkan sesi
+     * pembayarannya kalau memang masih mau menambah atlet.
+     */
+    private function pastikanTidakBeku(Contingent $contingent): void
+    {
+        if (! $contingent->pendaftaranBeku()) {
+            return;
+        }
+
+        $status = $contingent->invoice->status->label();
+
+        throw ValidationException::withMessages([
+            'pendaftaran' => [
+                "Pendaftaran dibekukan karena tagihan berstatus {$status}. "
+                .'Batalkan sesi pembayaran lebih dulu bila masih ingin menambah peserta.',
+            ],
+        ]);
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contingent extends Model
@@ -44,9 +45,27 @@ class Contingent extends Model
         return $this->hasMany(Registration::class);
     }
 
+    /** Satu tagihan per kontingen per kejuaraan. */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
     public function documents(): HasManyThrough
     {
         return $this->hasManyThrough(RegistrationDocument::class, Athlete::class);
+    }
+
+    /**
+     * Apakah pendaftaran kontingen ini sedang dibekukan tagihan.
+     *
+     * Begitu sesi pembayaran dibuat, isi tagihan terkunci — menambah atau
+     * menghapus pendaftaran sesudah itu membuat yang dibayar tidak sama dengan
+     * yang ditagih.
+     */
+    public function pendaftaranBeku(): bool
+    {
+        return $this->invoice?->status->membekukanPendaftaran() ?? false;
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

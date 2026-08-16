@@ -63,6 +63,11 @@ class Tournament extends Model
         return $this->hasMany(Contingent::class);
     }
 
+    public function feeSchedules(): HasMany
+    {
+        return $this->hasMany(FeeSchedule::class);
+    }
+
     /**
      * Setelan peraturan yang berlaku, dijamin ada.
      *

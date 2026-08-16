@@ -4,6 +4,8 @@ use App\Enums\ResourceAction;
 use App\Http\Controllers\Admin\ArenaController;
 use App\Http\Controllers\Admin\AthleteController;
 use App\Http\Controllers\Admin\ContingentController;
+use App\Http\Controllers\Admin\FeeScheduleController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -205,6 +207,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/jurus', 'storeJurus')->name('jurus')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
                     Route::post('/{registration}/ajukan', 'submit')->name('ajukan')->middleware('resource:'.rk('pendaftaran', ResourceAction::Update));
                     Route::delete('/{registration}', 'destroy')->name('destroy')->middleware('resource:'.rk('pendaftaran', ResourceAction::Delete));
+                });
+
+            Route::controller(FeeScheduleController::class)
+                ->prefix('{tournament}/tarif')
+                ->name('tarif.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('tarif', ResourceAction::View));
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                    Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                    Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                });
+
+            Route::controller(InvoiceController::class)
+                ->prefix('{tournament}/kontingen/{contingent}/tagihan')
+                ->name('kontingen.tagihan.')
+                ->group(function () {
+                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('invoice', ResourceAction::View));
+                    Route::post('/kunci', 'kunci')->name('kunci')->middleware('resource:'.rk('invoice', ResourceAction::Update));
+                    Route::post('/batal', 'batal')->name('batal')->middleware('resource:'.rk('invoice', ResourceAction::Update));
                 });
 
             Route::controller(WeightInController::class)

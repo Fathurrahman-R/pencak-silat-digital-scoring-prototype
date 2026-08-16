@@ -20,6 +20,13 @@
             </x-ui.button>
         @endresource
 
+        @resource(rk('tarif', ResourceAction::View))
+            <x-ui.button :href="route('admin.turnamen.tarif.index', $tournament)" variant="secondary" size="sm">
+                <x-ui.icon name="receipt" class="h-4 w-4" />
+                Tarif
+            </x-ui.button>
+        @endresource
+
         @resource(rk('timbang-badan', ResourceAction::View))
             <x-ui.button :href="route('admin.turnamen.timbang.index', $tournament)" variant="secondary" size="sm">
                 <x-ui.icon name="scale-3d" class="h-4 w-4" />
