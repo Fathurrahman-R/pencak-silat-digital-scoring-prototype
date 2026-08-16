@@ -1,0 +1,195 @@
+@php use App\Enums\ResourceAction; @endphp
+
+<x-layouts.admin heading="Pendaftaran nomor"
+                 :description="$contingent->name.' · '.$tournament->name"
+                 :breadcrumb="[
+                     'Kejuaraan' => route('admin.turnamen.index'),
+                     $tournament->name => route('admin.turnamen.edit', $tournament),
+                     'Kontingen' => route('admin.turnamen.kontingen.index', $tournament),
+                     $contingent->name => route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent]),
+                     'Pendaftaran' => null,
+                 ]">
+    <x-slot:actions>
+        @resource(rk('pendaftaran', ResourceAction::Create))
+            <x-ui.button type="button" variant="secondary" size="sm"
+                         x-on:click="$dispatch('modal-open', 'daftar-jurus')">
+                <x-ui.icon name="drama" class="h-4 w-4" />
+                Daftarkan nomor jurus
+            </x-ui.button>
+
+            <x-ui.button type="button" size="sm" x-on:click="$dispatch('modal-open', 'daftar-tanding')">
+                <x-ui.icon name="plus" class="h-4 w-4" />
+                Daftarkan kelas tanding
+            </x-ui.button>
+        @endresource
+    </x-slot:actions>
+
+    <div class="space-y-6">
+        @if ($errors->any())
+            <x-ui.alert variant="danger" title="Pendaftaran ditolak">
+                <ul class="list-inside list-disc space-y-1">
+                    @foreach ($errors->all() as $pesan)
+                        <li>{{ $pesan }}</li>
+                    @endforeach
+                </ul>
+            </x-ui.alert>
+        @endif
+
+        <x-ui.card>
+            @forelse ($registrations as $registration)
+                <div class="flex flex-wrap items-start gap-4 border-b border-line py-4 last:border-0">
+                    <div class="min-w-[260px] flex-1">
+                        <p class="font-medium text-ink">{{ $registration->namaNomor() }}</p>
+                        <p class="text-xs text-ink-muted">
+                            {{ $registration->athletes->pluck('name')->implode(', ') }}
+                        </p>
+                    </div>
+
+                    <x-ui.badge :variant="$registration->status->variant()">
+                        {{ $registration->status->label() }}
+                    </x-ui.badge>
+
+                    <div class="flex gap-1">
+                        @if ($registration->status->bolehDisuntingKontingen())
+                            @resource(rk('pendaftaran', ResourceAction::Update))
+                                <form method="POST"
+                                      action="{{ route('admin.turnamen.kontingen.pendaftaran.ajukan', [$tournament, $contingent, $registration]) }}">
+                                    @csrf
+                                    <x-ui.button type="submit" size="xs" variant="secondary">Ajukan</x-ui.button>
+                                </form>
+                            @endresource
+                        @endif
+
+                        @resource(rk('pendaftaran', ResourceAction::Delete))
+                            <x-ui.button type="button" variant="secondary" size="xs" title="Batalkan"
+                                         x-on:click="$dispatch('modal-open', 'batal-daftar-{{ $registration->id }}')">
+                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
+                            </x-ui.button>
+
+                            <x-ui.modal :id="'batal-daftar-'.$registration->id" title="Batalkan pendaftaran" size="sm">
+                                Batalkan pendaftaran <strong>{{ $registration->namaNomor() }}</strong>?
+
+                                <x-slot:footer>
+                                    <x-ui.button variant="secondary" type="button"
+                                                 x-on:click="$dispatch('modal-close', 'batal-daftar-{{ $registration->id }}')">Tidak</x-ui.button>
+
+                                    <form method="POST"
+                                          action="{{ route('admin.turnamen.kontingen.pendaftaran.destroy', [$tournament, $contingent, $registration]) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <x-ui.button variant="danger" type="submit">Batalkan</x-ui.button>
+                                    </form>
+                                </x-slot:footer>
+                            </x-ui.modal>
+                        @endresource
+                    </div>
+                </div>
+            @empty
+                <x-ui.empty-state title="Belum ada pendaftaran nomor"
+                                  description="Kelas tanding yang ditawarkan sudah disaring menurut gender, golongan usia, dan berat klaim tiap atlet." />
+            @endforelse
+        </x-ui.card>
+    </div>
+
+    @resource(rk('pendaftaran', ResourceAction::Create))
+        {{--
+            Kelas disaring di sisi klien dari peta yang sudah dihitung server
+            per atlet. Membiarkan official memilih dari 174 kelas lalu ditolak
+            validasi adalah cara tercepat membuat orang berhenti memakai
+            sistemnya.
+        --}}
+        <x-ui.modal id="daftar-tanding" title="Daftarkan kelas tanding" size="md">
+            <div x-data="{
+                    peta: {{ Js::from($kelasPerAtlet) }},
+                    atlet: '',
+                    get kelas() { return this.peta[this.atlet] ?? [] },
+                 }">
+                <form method="POST" id="daftar-tanding-form"
+                      action="{{ route('admin.turnamen.kontingen.pendaftaran.tanding', [$tournament, $contingent]) }}"
+                      class="space-y-4">
+                    @csrf
+
+                    <div>
+                        <x-ui.label for="atlet-tanding" required>Atlet</x-ui.label>
+                        <select name="athlete_id" id="atlet-tanding" x-model="atlet" required
+                                class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
+                            <option value="">Pilih atlet…</option>
+                            @foreach ($athletes as $athlete)
+                                <option value="{{ $athlete->id }}">
+                                    {{ $athlete->name }} — {{ $athlete->jenis_kelamin->label() }},
+                                    {{ $athlete->golonganUsia($tournament)?->label() ?? 'di luar golongan' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <x-ui.label for="kelas-tanding" required>Kelas</x-ui.label>
+                        <select name="weight_class_id" id="kelas-tanding" required
+                                class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
+                            <template x-for="k in kelas" :key="k.id">
+                                <option :value="k.id" x-text="k.label"></option>
+                            </template>
+                        </select>
+
+                        <p class="mt-1.5 text-xs text-ink-muted" x-show="atlet && kelas.length === 0">
+                            Tidak ada kelas yang cocok. Golongan usianya mungkin tidak memakai kelas
+                            berat, atau berat klaimnya di luar seluruh tangga kelas.
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" type="button"
+                             x-on:click="$dispatch('modal-close', 'daftar-tanding')">Batal</x-ui.button>
+                <x-ui.button type="submit" form="daftar-tanding-form">Daftarkan</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+
+        <x-ui.modal id="daftar-jurus" title="Daftarkan nomor jurus" size="md">
+            <form method="POST" id="daftar-jurus-form"
+                  action="{{ route('admin.turnamen.kontingen.pendaftaran.jurus', [$tournament, $contingent]) }}"
+                  class="space-y-4">
+                @csrf
+
+                <div>
+                    <x-ui.label for="nomor-jurus" required>Nomor</x-ui.label>
+                    <select name="jurus_event_id" id="nomor-jurus" required
+                            class="mt-1.5 h-[var(--control-h)] w-full rounded-md border border-line bg-surface-inset px-3 text-base2 text-ink">
+                        <option value="">Pilih nomor…</option>
+                        @foreach ($nomorJurus as $nomor)
+                            <option value="{{ $nomor->id }}">
+                                {{ $nomor->nama() }} ({{ $nomor->jenis->jumlahPesilat() }} pesilat)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <x-ui.label for="pesilat-jurus" required>Pesilat</x-ui.label>
+                    <select name="athlete_ids[]" id="pesilat-jurus" multiple size="8" required
+                            class="mt-1.5 w-full rounded-md border border-line bg-surface-inset px-3 py-2 text-base2 text-ink">
+                        @foreach ($athletes as $athlete)
+                            <option value="{{ $athlete->id }}">
+                                {{ $athlete->name }} — {{ $athlete->jenis_kelamin->label() }},
+                                {{ $athlete->golonganUsia($tournament)?->label() ?? 'di luar golongan' }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <p class="mt-1.5 text-xs text-ink-muted">
+                        Tahan Ctrl untuk memilih lebih dari satu. Ganda diisi dua pesilat, Regu tiga,
+                        dan seluruhnya harus dari kontingen yang sama.
+                    </p>
+                </div>
+            </form>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" type="button"
+                             x-on:click="$dispatch('modal-close', 'daftar-jurus')">Batal</x-ui.button>
+                <x-ui.button type="submit" form="daftar-jurus-form">Daftarkan</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endresource
+</x-layouts.admin>

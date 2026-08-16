@@ -56,6 +56,13 @@
                             </x-ui.button>
                         @endresource
 
+                        @resource(rk('pendaftaran', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.kontingen.pendaftaran.index', [$tournament, $contingent])"
+                                         variant="secondary" size="xs" title="Pendaftaran nomor">
+                                <x-ui.icon name="clipboard-list" class="h-4 w-4" />
+                            </x-ui.button>
+                        @endresource
+
                         @resource(rk('kontingen', ResourceAction::Update))
                             <x-ui.button :href="route('admin.turnamen.kontingen.edit', [$tournament, $contingent])"
                                          variant="secondary" size="xs" title="Ubah">

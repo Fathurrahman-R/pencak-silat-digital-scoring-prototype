@@ -8,10 +8,12 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
+use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\ProfileController;
@@ -192,6 +194,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/{athlete}/berkas', 'storeDocument')->name('berkas.store')->middleware('resource:'.rk('atlet', ResourceAction::Update));
                     Route::get('/{athlete}/berkas/{document}', 'showDocument')->name('berkas.show')->middleware('resource:'.rk('atlet', ResourceAction::View));
                     Route::delete('/{athlete}/berkas/{document}', 'destroyDocument')->name('berkas.destroy')->middleware('resource:'.rk('atlet', ResourceAction::Update));
+                });
+
+            Route::controller(RegistrationController::class)
+                ->prefix('{tournament}/kontingen/{contingent}/pendaftaran')
+                ->name('kontingen.pendaftaran.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('pendaftaran', ResourceAction::View));
+                    Route::post('/tanding', 'storeTanding')->name('tanding')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
+                    Route::post('/jurus', 'storeJurus')->name('jurus')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
+                    Route::post('/{registration}/ajukan', 'submit')->name('ajukan')->middleware('resource:'.rk('pendaftaran', ResourceAction::Update));
+                    Route::delete('/{registration}', 'destroy')->name('destroy')->middleware('resource:'.rk('pendaftaran', ResourceAction::Delete));
+                });
+
+            Route::controller(WeightInController::class)
+                ->prefix('{tournament}/timbang')
+                ->name('timbang.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('timbang-badan', ResourceAction::View));
+                    Route::post('/{registration}', 'store')->name('store')->middleware('resource:'.rk('timbang-badan', ResourceAction::Create));
                 });
 
             Route::controller(ArenaController::class)
