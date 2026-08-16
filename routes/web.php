@@ -35,6 +35,14 @@ if (config('design-system.enabled')) {
             Route::get('/pola', 'patterns')->name('patterns');
             Route::get('/layar/{screen}', 'screen')->name('screen');
         });
+
+    /*
+     * Peraga design system gelanggang. Sejajar dengan /design-system milik
+     * admin, tapi memakai bundel dan token yang benar-benar terpisah — halaman
+     * ini tidak memuat app.css sama sekali, sehingga kalau ada token silat yang
+     * bocor ke RizzxxUI (atau sebaliknya), akan langsung kelihatan di sini.
+     */
+    Route::view('/design-system/gelanggang', 'silat.peraga')->name('design-system.gelanggang');
 }
 
 Route::middleware(['auth', 'verified'])->group(function () {

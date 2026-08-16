@@ -1,0 +1,183 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design system gelanggang
+   ---------------------------------------------------------------------------
+   Lapisan terpisah dari RizzxxUI, dipakai panel gelanggang, halaman live score
+   publik, dan overlay siaran vMix. Halaman admin tidak pernah memuat berkas
+   ini, sehingga token RizzxxUI tidak mungkin ikut berubah.
+
+   Bentuknya mengikuti konvensi papan skor pencak silat yang sudah dikenal:
+   dua blok warna sudut, angka putih besar, timer di tengah, indikator juri
+   berupa titik. Tidak ada ornamen, tidak ada gradien.
+
+   Beda mendasar dari RizzxxUI: papan skor TIDAK punya mode terang. Warnanya
+   tetap gelap di segala kondisi, karena dibaca dari jarak jauh di gelanggang
+   dan dilapiskan di atas gambar kamera saat siaran. Karena itu tidak ada
+   `data-theme` di sini, dan itu disengaja.
+--------------------------------------------------------------------------- */
+
+/* Font ikut di-bundle, bukan diambil dari CDN. Gelanggang sering tanpa
+   internet, dan overlay vMix tidak boleh menunggu permintaan jaringan apa pun.
+   Sora tidak dipakai di sini: papan skor hanya butuh satu wajah antarmuka dan
+   satu wajah angka. */
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+@source '../views/components/silat/**/*.blade.php';
+@source '../views/layouts/silat.blade.php';
+@source '../views/layouts/overlay.blade.php';
+@source '../views/silat/**/*.blade.php';
+@source '../views/overlay/**/*.blade.php';
+
+/* ---------------------------------------------------------------------------
+   Token mentah
+--------------------------------------------------------------------------- */
+
+:root {
+    /* Sudut. Merah dan biru bukan pilihan gaya — keduanya ditetapkan peraturan
+       sebagai identitas sudut pesilat, jadi tidak boleh ditukar atau diganti
+       nuansanya sampai sulit dibedakan dari jauh. */
+    --silat-merah: #d42027;
+    --silat-merah-dalam: #7a1418;
+    --silat-biru: #12439e;
+    --silat-biru-dalam: #0c2a63;
+
+    /* Kroma papan. Gelap netral, bukan hitam pekat, supaya blok merah dan biru
+       tidak terlihat "mengambang" di atasnya. */
+    --silat-latar: #0b0b0c;
+    --silat-panel: #131316;
+    --silat-garis: #2a2a2c;
+    --silat-mati: #2e2e33;
+
+    --silat-teks: #ffffff;
+    --silat-teks-redup: #8a8a90;
+    --silat-teks-samar: #6e6e76;
+
+    /* Emas hanya untuk pemenang dan medali. Sengaja satu-satunya warna di luar
+       merah, biru, dan abu — begitu dipakai untuk hal lain, ia berhenti berarti
+       "juara". */
+    --silat-emas: #c9a227;
+
+    /* Hukuman. Pembinaan sengaja dibuat paling redup: ia tidak mengurangi
+       nilai, dan kalau tampil sekuat teguran, penonton akan salah membacanya
+       sebagai sanksi. */
+    --silat-pembinaan: #6b6b73;
+    --silat-teguran: #d98324;
+    --silat-peringatan: #d42027;
+
+    /* Ukuran. Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat
+       lama, jadi 64px adalah batas bawah yang tidak boleh ditawar. */
+    --silat-sentuh-min: 64px;
+    --silat-radius: 6px;
+
+    /* Kanvas overlay vMix dikunci, bukan responsif. Overlay siaran bukan
+       halaman web biasa. */
+    --silat-overlay-lebar: 1920px;
+    --silat-overlay-tinggi: 1080px;
+}
+
+@theme inline {
+    --color-silat-merah: var(--silat-merah);
+    --color-silat-merah-dalam: var(--silat-merah-dalam);
+    --color-silat-biru: var(--silat-biru);
+    --color-silat-biru-dalam: var(--silat-biru-dalam);
+
+    --color-silat-latar: var(--silat-latar);
+    --color-silat-panel: var(--silat-panel);
+    --color-silat-garis: var(--silat-garis);
+    --color-silat-mati: var(--silat-mati);
+
+    --color-silat-teks: var(--silat-teks);
+    --color-silat-teks-redup: var(--silat-teks-redup);
+    --color-silat-teks-samar: var(--silat-teks-samar);
+    --color-silat-emas: var(--silat-emas);
+
+    --color-silat-pembinaan: var(--silat-pembinaan);
+    --color-silat-teguran: var(--silat-teguran);
+    --color-silat-peringatan: var(--silat-peringatan);
+
+    --font-silat: 'Space Grotesk Variable', system-ui, sans-serif;
+    --font-silat-angka: 'IBM Plex Mono', ui-monospace, monospace;
+
+    --radius-silat: var(--silat-radius);
+}
+
+/* ---------------------------------------------------------------------------
+   Dasar
+--------------------------------------------------------------------------- */
+
+@layer base {
+    .silat {
+        font-family: var(--font-silat);
+        color: var(--silat-teks);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Panggung papan skor: panel gelanggang dan halaman live score publik. */
+    .silat-panggung {
+        background: var(--silat-latar);
+        min-height: 100vh;
+    }
+
+    /*
+     * Semua angka memakai numeral tabular. Tanpa ini, lebar digit berubah saat
+     * skor berganti dari 9 ke 10 dan angkanya terlihat bergoyang — sangat
+     * kentara di siaran, dan mengganggu justru pada momen paling ditonton.
+     */
+    .silat-angka {
+        font-family: var(--font-silat-angka);
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+        letter-spacing: -0.02em;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   Overlay siaran
+--------------------------------------------------------------------------- */
+
+@layer components {
+    /*
+     * Kanvas overlay untuk Web Browser Input vMix. Latar wajib benar-benar
+     * transparan supaya alpha channel bekerja; satu deklarasi background yang
+     * terlewat akan muncul sebagai kotak hitam menutupi gambar kamera.
+     */
+    .silat-overlay {
+        width: var(--silat-overlay-lebar);
+        height: var(--silat-overlay-tinggi);
+        background: transparent;
+        overflow: hidden;
+    }
+
+    /*
+     * Kilatan singkat saat nilai baru terbit. Sengaja hanya menganimasikan
+     * opacity: transform dan filter memaksa repaint bidang lebar, dan browser
+     * engine di dalam vMix berebut CPU dengan encoder streaming.
+     */
+    .silat-kilat {
+        animation: silat-kilat 420ms ease-out 1;
+    }
+
+    @keyframes silat-kilat {
+        0% {
+            opacity: 0.15;
+        }
+        35% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    /* Overlay menyala berjam-jam tanpa dimuat ulang. Hormati preferensi
+       pengurangan gerak, dan matikan animasi kalau perangkat memintanya. */
+    @media (prefers-reduced-motion: reduce) {
+        .silat-kilat {
+            animation: none;
+        }
+    }
+}
