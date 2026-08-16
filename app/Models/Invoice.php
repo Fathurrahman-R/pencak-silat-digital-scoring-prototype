@@ -42,6 +42,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class);
     }
 
+    public function manualPayments(): HasMany
+    {
+        return $this->hasMany(ManualPayment::class)->latest('paid_at');
+    }
+
     public function lunas(): bool
     {
         return $this->status === StatusInvoice::Lunas;

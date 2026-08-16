@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
+use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
@@ -217,6 +218,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Update));
                     Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Update));
                     Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                });
+
+            Route::controller(TreasuryController::class)
+                ->prefix('{tournament}/bendahara')
+                ->name('bendahara.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('invoice', ResourceAction::View));
+                    Route::get('/export', 'export')->name('export')->middleware('resource:'.rk('invoice', ResourceAction::Export));
+                    Route::post('/{invoice}/lunas', 'tandaiLunas')->name('lunas')->middleware('resource:'.rk('invoice', ResourceAction::Approve));
+                    Route::get('/{invoice}/bukti/{pembayaran}', 'bukti')->name('bukti')->middleware('resource:'.rk('invoice', ResourceAction::View));
                 });
 
             Route::controller(InvoiceController::class)

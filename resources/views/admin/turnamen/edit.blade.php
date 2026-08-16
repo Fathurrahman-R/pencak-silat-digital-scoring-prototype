@@ -20,6 +20,13 @@
             </x-ui.button>
         @endresource
 
+        @resource(rk('invoice', ResourceAction::View))
+            <x-ui.button :href="route('admin.turnamen.bendahara.index', $tournament)" variant="secondary" size="sm">
+                <x-ui.icon name="wallet" class="h-4 w-4" />
+                Bendahara
+            </x-ui.button>
+        @endresource
+
         @resource(rk('tarif', ResourceAction::View))
             <x-ui.button :href="route('admin.turnamen.tarif.index', $tournament)" variant="secondary" size="sm">
                 <x-ui.icon name="receipt" class="h-4 w-4" />
