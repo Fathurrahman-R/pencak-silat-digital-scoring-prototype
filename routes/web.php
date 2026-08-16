@@ -2,6 +2,8 @@
 
 use App\Enums\ResourceAction;
 use App\Http\Controllers\Admin\ArenaController;
+use App\Http\Controllers\Admin\AthleteController;
+use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -155,6 +157,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/', 'edit')->name('edit')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::View));
                     Route::put('/', 'update')->name('update')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::Update));
                     Route::post('/reset', 'reset')->name('reset')->middleware('resource:'.rk('peraturan-turnamen', ResourceAction::Update));
+                });
+
+            /*
+             * Kontingen dan atlet.
+             *
+             * Satu set halaman melayani dua peran sekaligus: panitia yang
+             * melihat semua kontingen, dan official yang hanya melihat
+             * miliknya. Pembatasannya di ScopesContingents, bukan di route,
+             * supaya tidak ada dua tampilan yang harus dijaga sinkron.
+             */
+            Route::controller(ContingentController::class)
+                ->prefix('{tournament}/kontingen')
+                ->name('kontingen.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('kontingen', ResourceAction::View));
+                    Route::get('/create', 'create')->name('create')->middleware('resource:'.rk('kontingen', ResourceAction::Create));
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('kontingen', ResourceAction::Create));
+                    Route::get('/{contingent}/panel', 'panel')->name('panel')->middleware('resource:'.rk('kontingen', ResourceAction::View));
+                    Route::get('/{contingent}/edit', 'edit')->name('edit')->middleware('resource:'.rk('kontingen', ResourceAction::Update));
+                    Route::put('/{contingent}', 'update')->name('update')->middleware('resource:'.rk('kontingen', ResourceAction::Update));
+                    Route::delete('/{contingent}', 'destroy')->name('destroy')->middleware('resource:'.rk('kontingen', ResourceAction::Delete));
+                });
+
+            Route::controller(AthleteController::class)
+                ->prefix('{tournament}/kontingen/{contingent}/atlet')
+                ->name('kontingen.atlet.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('atlet', ResourceAction::View));
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('atlet', ResourceAction::Create));
+                    Route::put('/{athlete}', 'update')->name('update')->middleware('resource:'.rk('atlet', ResourceAction::Update));
+                    Route::delete('/{athlete}', 'destroy')->name('destroy')->middleware('resource:'.rk('atlet', ResourceAction::Delete));
+
+                    Route::post('/{athlete}/berkas', 'storeDocument')->name('berkas.store')->middleware('resource:'.rk('atlet', ResourceAction::Update));
+                    Route::get('/{athlete}/berkas/{document}', 'showDocument')->name('berkas.show')->middleware('resource:'.rk('atlet', ResourceAction::View));
+                    Route::delete('/{athlete}/berkas/{document}', 'destroyDocument')->name('berkas.destroy')->middleware('resource:'.rk('atlet', ResourceAction::Update));
                 });
 
             Route::controller(ArenaController::class)

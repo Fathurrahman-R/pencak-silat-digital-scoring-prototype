@@ -13,6 +13,13 @@
             </x-ui.button>
         @endresource
 
+        @resource(rk('kontingen', ResourceAction::View))
+            <x-ui.button :href="route('admin.turnamen.kontingen.index', $tournament)" variant="secondary" size="sm">
+                <x-ui.icon name="users" class="h-4 w-4" />
+                Kontingen
+            </x-ui.button>
+        @endresource
+
         @resource(rk('gelanggang', ResourceAction::View))
             <x-ui.button :href="route('admin.turnamen.gelanggang.index', $tournament)" variant="secondary" size="sm">
                 <x-ui.icon name="layout-grid" class="h-4 w-4" />

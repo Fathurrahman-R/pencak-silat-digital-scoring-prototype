@@ -156,6 +156,14 @@ class SilatRoleSeeder extends Seeder
                 'label' => 'Official Kontingen',
                 'description' => 'Mendaftarkan atlet kontingennya sendiri, mengunggah berkas, dan membayar tagihan.',
                 'grants' => [
+                    /*
+                     * Hanya melihat kontingen, tidak mengubahnya. Nama dan
+                     * kontak kontingen ditetapkan panitia saat pendaftaran
+                     * kontingen diterima, dan ketiadaan hak ubah di sini pula
+                     * yang membatasi official hanya pada kontingennya sendiri —
+                     * lihat App\Http\Controllers\Concerns\ScopesContingents.
+                     */
+                    'kontingen' => $lihat,
                     'atlet' => $ubah,
                     'pendaftaran' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Delete],
                     'invoice' => $lihat,
