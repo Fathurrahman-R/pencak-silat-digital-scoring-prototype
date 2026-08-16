@@ -1,11 +1,13 @@
 <?php
 
 use App\Enums\ResourceAction;
+use App\Http\Controllers\Admin\ArenaController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignSystemController;
@@ -116,6 +118,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{mapping}', 'update')->name('update')->middleware('resource:'.rk('mappings', ResourceAction::Update));
             Route::delete('/{mapping}', 'destroy')->name('destroy')->middleware('resource:'.rk('mappings', ResourceAction::Update));
             Route::post('/auto', 'autoMap')->name('auto')->middleware('resource:'.rk('mappings', ResourceAction::Update));
+        });
+
+        /*
+        |----------------------------------------------------------------------
+        | Kejuaraan dan gelanggang
+        |----------------------------------------------------------------------
+        |
+        | Gelanggang bersarang di bawah kejuaraan karena memang tidak pernah
+        | berdiri sendiri, dan dijaga resource key-nya sendiri: panitia yang
+        | boleh menyusun jadwal gelanggang belum tentu boleh membuat kejuaraan.
+        |
+        */
+        Route::controller(TournamentController::class)->prefix('turnamen')->name('turnamen.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('resource:'.rk('turnamen', ResourceAction::View));
+            Route::get('/create', 'create')->name('create')->middleware('resource:'.rk('turnamen', ResourceAction::Create));
+            Route::post('/', 'store')->name('store')->middleware('resource:'.rk('turnamen', ResourceAction::Create));
+            Route::get('/export', 'export')->name('export')->middleware('resource:'.rk('turnamen', ResourceAction::Export));
+            Route::get('/{tournament}/panel', 'panel')->name('panel')->middleware('resource:'.rk('turnamen', ResourceAction::View));
+            Route::get('/{tournament}/edit', 'edit')->name('edit')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
+            Route::put('/{tournament}', 'update')->name('update')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
+            Route::patch('/{tournament}/status', 'updateStatus')->name('status')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
+            Route::post('/bulk-destroy', 'bulkDestroy')->name('bulk-destroy')->middleware('resource:'.rk('turnamen', ResourceAction::Delete));
+            Route::delete('/{tournament}', 'destroy')->name('destroy')->middleware('resource:'.rk('turnamen', ResourceAction::Delete));
+
+            Route::controller(ArenaController::class)
+                ->prefix('{tournament}/gelanggang')
+                ->name('gelanggang.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('gelanggang', ResourceAction::View));
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('gelanggang', ResourceAction::Create));
+                    Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
+                    Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
+                });
         });
 
         // Modul contoh. Otorisasinya lewat policy (PostPolicy), bukan middleware,

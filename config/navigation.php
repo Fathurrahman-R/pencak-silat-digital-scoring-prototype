@@ -26,6 +26,19 @@ return [
     ],
 
     [
+        'label' => 'Penyelenggaraan',
+        'icon' => 'trophy',
+        'children' => [
+            [
+                'label' => 'Kejuaraan',
+                'route' => 'admin.turnamen.index',
+                'resource' => rk('turnamen', ResourceAction::View),
+                'active' => 'admin/turnamen*',
+            ],
+        ],
+    ],
+
+    [
         'label' => 'Konten',
         'icon' => 'file-text',
         'children' => [
