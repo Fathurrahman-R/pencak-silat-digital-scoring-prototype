@@ -94,3 +94,33 @@ it('menolak juri membuka panel wasit', function () {
         ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
         ->assertForbidden();
 });
+
+it('menampilkan panel juri lengkap dengan tautan manifest PWA', function () {
+    $juri = ($this->buatUser)('juri');
+
+    $this->actingAs($juri)
+        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertSee('partaiPanel', false)
+        ->assertSee('rel="manifest"', false)
+        ->assertSee(route('admin.turnamen.partai.juri.manifest', [$this->tournament, $this->match]), false);
+});
+
+it('menolak wasit membuka panel juri -- itu bukan resource penilaian.create miliknya', function () {
+    $wasit = ($this->buatUser)('wasit');
+
+    $this->actingAs($wasit)
+        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->assertForbidden();
+});
+
+it('menyajikan manifest PWA per partai dengan start_url menunjuk balik ke partai itu', function () {
+    $juri = ($this->buatUser)('juri');
+
+    $this->actingAs($juri)
+        ->get(route('admin.turnamen.partai.juri.manifest', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('start_url', route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->assertJsonPath('display', 'fullscreen');
+});

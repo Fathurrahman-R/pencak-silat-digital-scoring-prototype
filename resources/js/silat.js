@@ -148,14 +148,44 @@ Alpine.data('partaiPanel', (cfg) => ({
     _tickAnchorMs: 0,
     _tickAt: 0,
     _rafId: null,
+    wakeLock: null,
 
     async init() {
         await this.muatUlang();
         this._pasangEcho();
+        this._kunciLayar();
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this._kunciLayar();
+            }
+        });
     },
 
     destroy() {
         this._hentikanInterpolasi();
+    },
+
+    /**
+     * Layar tidak boleh tidur sementara panel gelanggang terbuka -- juri
+     * yang layarnya mati di tengah babak berarti tombolnya tidak bisa
+     * ditekan sampai dibangunkan lagi. Gagal diam-diam kalau browser
+     * menolak (lazim terjadi kalau tab sedang tidak fokus); dicoba lagi
+     * begitu tab terlihat lagi lewat listener visibilitychange di init().
+     */
+    async _kunciLayar() {
+        if (!('wakeLock' in navigator)) {
+            return;
+        }
+
+        try {
+            this.wakeLock = await navigator.wakeLock.request('screen');
+            this.wakeLock.addEventListener('release', () => {
+                this.wakeLock = null;
+            });
+        } catch (e) {
+            // Diam -- dicoba lagi saat tab kembali terlihat.
+        }
     },
 
     /** Dipakai tampilan jam -- MM:SS dari sisaMsTampil, yang diinterpolasi lokal antara dua siaran timer. */
@@ -286,6 +316,17 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     sahkan() {
         return this.kirim(this.cfg.sahkan);
+    },
+
+    /**
+     * Juri mengirim satu nilai. Babak selalu diambil dari state yang
+     * sedang berjalan di server (bukan dari tebakan lokal) -- kalau babak
+     * yang sedang aktif berbeda dari yang dikira juri, server yang
+     * memutuskan dan menolaknya dengan alasan jelas, bukan JS diam-diam
+     * mengirim ke babak yang salah.
+     */
+    kirimNilai(corner, jenis) {
+        return this.kirim(this.cfg.nilai, { babak: this.match.current_round, corner, jenis });
     },
 
     kirimHukuman(corner, tingkat, catatan) {

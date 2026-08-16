@@ -93,6 +93,44 @@ class PartaiScoringController extends Controller
         ]);
     }
 
+    public function juri(Tournament $tournament, SilatMatch $match): View
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        return view('silat.juri', [
+            'tournament' => $tournament,
+            'match' => $match->load('bracket.weightClass'),
+            'config' => $this->konfigPanel($tournament, $match),
+            'manifestUrl' => route('admin.turnamen.partai.juri.manifest', [$tournament, $match]),
+        ]);
+    }
+
+    /**
+     * Manifest PWA dibuat per partai, bukan berkas statis -- `start_url`
+     * menunjuk balik ke partai yang sedang dibuka juri, supaya "Tambahkan ke
+     * layar utama" yang dilakukan di gelanggang tertentu memang membuka
+     * gelanggang itu lagi, bukan halaman generik.
+     */
+    public function manifest(Tournament $tournament, SilatMatch $match): JsonResponse
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        return response()->json([
+            'name' => 'Panel Juri — '.$match->bracket->weightClass->name,
+            'short_name' => 'Juri',
+            'description' => 'Papan tombol juri untuk penilaian pertandingan Tanding.',
+            'start_url' => route('admin.turnamen.partai.juri', [$tournament, $match]),
+            'scope' => route('admin.turnamen.partai.juri', [$tournament, $match]),
+            'display' => 'fullscreen',
+            'orientation' => 'portrait',
+            'background_color' => '#0b0b0c',
+            'theme_color' => '#0b0b0c',
+            'icons' => [
+                ['src' => '/icons/juri.svg', 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any maskable'],
+            ],
+        ])->header('Content-Type', 'application/manifest+json');
+    }
+
     /** Alamat resync + seluruh aksi, dikirim ke panel Alpine lewat @js(...) -- JS tidak pernah menyusun route Laravel sendiri. */
     private function konfigPanel(Tournament $tournament, SilatMatch $match): array
     {
@@ -107,6 +145,7 @@ class PartaiScoringController extends Controller
             'timerSelesai' => route('admin.turnamen.partai.timer.selesai-babak', [$tournament, $match]),
             'akhiri' => route('admin.turnamen.partai.akhiri', [$tournament, $match]),
             'sahkan' => route('admin.turnamen.partai.sahkan', [$tournament, $match]),
+            'nilai' => route('admin.turnamen.partai.nilai', [$tournament, $match]),
             'hukuman' => route('admin.turnamen.partai.hukuman', [$tournament, $match]),
             'hitungan' => route('admin.turnamen.partai.hitungan', [$tournament, $match]),
             'nilaiBatal' => route('admin.turnamen.partai.nilai.batal', [$tournament, $match, '__ID__']),

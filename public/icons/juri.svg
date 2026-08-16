@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <!--
+        Ikon PWA panel juri. Vektor, satu berkas untuk semua ukuran (sizes
+        "any" di manifest) -- tidak ada alat rasterisasi PNG di lingkungan
+        ini, dan target pemakaiannya (Android Chrome, "Tambahkan ke layar
+        utama") membaca SVG dengan baik. iOS Safari kurang mulus dengan ikon
+        SVG untuk home screen; itu keterbatasan yang disadari, bukan alpa --
+        prioritasnya Android karena itu perangkat yang lazim dipegang juri di
+        gelanggang.
+    -->
+    <clipPath id="bulat"><rect width="512" height="512" rx="96"/></clipPath>
+    <g clip-path="url(#bulat)">
+        <rect x="0" y="0" width="256" height="512" fill="#d42027"/>
+        <rect x="256" y="0" width="256" height="512" fill="#12439e"/>
+        <circle cx="256" cy="256" r="96" fill="#0b0b0c"/>
+        <circle cx="256" cy="256" r="96" fill="none" stroke="#ffffff" stroke-width="10"/>
+        <text x="256" y="292" font-family="Space Grotesk, Arial, sans-serif" font-size="128" font-weight="700"
+              text-anchor="middle" fill="#ffffff">P</text>
+    </g>
+</svg>
