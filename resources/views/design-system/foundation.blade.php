@@ -279,8 +279,9 @@
 
         <p class="mt-2.5 text-[13.5px] text-ink-muted">
             Resep kaca ada di satu utility: <code class="font-mono text-[12.5px]">.glass</code> —
-            blur 16px, saturate 160%, tint, border 1px, shadow. Selalu di atas latar bertekstur; di atas warna rata,
-            kaca cuma jadi abu-abu.
+            blur 16px, saturate 160%, tint, border 1px, shadow. Dipakai hanya oleh sidebar dan topbar, yang memang
+            berdiri di atas latar bertekstur; di atas warna rata kaca cuma jadi abu-abu, dan isi halaman yang
+            ditumpuk di atasnya jadi lebih sulit dibaca.
         </p>
 
         <p class="mt-1.5 text-[13.5px] text-ink-muted">
@@ -315,7 +316,7 @@
             <div class="glass rounded-lg p-5">
                 <div class="font-mono text-xs text-ink-muted">glass</div>
                 <div class="mt-1.5 font-display text-[15px] font-semibold text-ink">Mengambang</div>
-                <p class="mt-1 text-[13px] text-ink-secondary">Sidebar, hero, kartu metrik</p>
+                <p class="mt-1 text-[13px] text-ink-secondary">Hanya sidebar dan topbar</p>
             </div>
         </div>
 

@@ -1,6 +1,6 @@
 <x-layouts.admin heading="Tambah permission"
                  :breadcrumb="['Permission' => route('admin.permissions.index'), 'Tambah' => null]">
-    <form method="POST" action="{{ route('admin.permissions.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.permissions.store') }}" class="space-y-4">
         @csrf
 
         @include('admin.permissions.form')

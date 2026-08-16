@@ -2,7 +2,7 @@
                  description="Data akun, keamanan, dan foto profil."
                  :breadcrumb="['Profil' => null]">
     <div class="grid gap-6 lg:grid-cols-3">
-        <div class="space-y-6 lg:col-span-2">
+        <div class="space-y-4 lg:col-span-2">
             <x-ui.card title="Data profil">
                 <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
                     @csrf
@@ -68,7 +68,7 @@
             </x-ui.card>
         </div>
 
-        <div class="space-y-6">
+        <div class="space-y-4">
             <x-ui.card title="Foto profil">
                 <div class="flex flex-col items-center gap-4">
                     <x-ui.avatar :user="$user" size="xl" />

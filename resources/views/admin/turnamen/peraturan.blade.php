@@ -31,7 +31,7 @@
         @endif
     </x-slot:actions>
 
-    <div class="space-y-6">
+    <div class="space-y-4">
         @if ($terkunci)
             <x-ui.alert variant="warning" title="Setelan terkunci">
                 Kejuaraan sudah {{ strtolower($tournament->status->label()) }}. Setelan peraturan tidak
@@ -47,11 +47,21 @@
         @endif
 
         <form method="POST" action="{{ route('admin.turnamen.peraturan.update', $tournament) }}"
-              class="space-y-6" @disabled($terkunci)>
+              class="space-y-4" @disabled($terkunci)>
             @csrf
             @method('PUT')
 
-            <fieldset @disabled($terkunci) class="space-y-6">
+            {{--
+                Tujuh kartu bertumpuk satu kolom membuat halaman ini sepanjang
+                tiga layar padahal separuh lebarnya kosong. Di layar lebar
+                kartunya mengalir dua kolom.
+
+                Multi-kolom, bukan grid: tinggi tiap kartu berbeda jauh, dan
+                grid akan menyejajarkan barisnya sehingga kartu pendek
+                meninggalkan lubang di bawahnya.
+            --}}
+            <fieldset @disabled($terkunci)
+                      class="gap-4 xl:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
                 <x-ui.card title="Komposisi wasit juri">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <x-ui.input type="number" name="jumlah_juri_tanding" label="Juri kategori Tanding"

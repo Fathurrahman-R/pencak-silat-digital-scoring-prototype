@@ -16,7 +16,7 @@
         @endresource
     </x-slot:actions>
 
-    <div class="space-y-6">
+    <div class="space-y-4">
         <x-ui.alert variant="info" title="Kode gelanggang dipakai di alamat siaran">
             Kode inilah yang muncul di alamat halaman siaran langsung dan overlay vMix, jadi
             sebaiknya pendek dan tidak diubah lagi setelah kejuaraan berjalan.
@@ -24,8 +24,8 @@
 
         <x-ui.card>
             @forelse ($arenas as $arena)
-                <div class="flex items-center gap-4 border-b border-line py-3 last:border-0">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 font-mono text-sm text-ink">
+                <div class="flex items-center gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-inset font-mono text-sm text-ink">
                         {{ $arena->code }}
                     </div>
 

@@ -118,7 +118,7 @@
             <div class="rounded-md border border-line bg-surface-raised p-4">
                 <h4 class="font-display text-[15px] font-semibold text-ink">Utility yang perlu diingat</h4>
                 <ul class="mt-2.5 space-y-1.5 text-[13.5px] text-ink-secondary">
-                    <li><code class="font-mono text-[12.5px]">glass</code> — panel mengambang di atas latar bertekstur</li>
+                    <li><code class="font-mono text-[12.5px]">glass</code> — khusus dua panel shell: sidebar dan topbar</li>
                     <li><code class="font-mono text-[12.5px]">mat-raised</code> / <code class="font-mono text-[12.5px]">mat-well</code> / <code class="font-mono text-[12.5px]">mat-press</code> — material</li>
                     <li><code class="font-mono text-[12.5px]">bg-grid</code> / <code class="font-mono text-[12.5px]">bg-noise</code> / <code class="font-mono text-[12.5px]">bg-glow</code> — lapisan latar</li>
                     <li><code class="font-mono text-[12.5px]">num</code> — angka mono dengan digit tabular</li>

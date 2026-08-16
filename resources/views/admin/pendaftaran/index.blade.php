@@ -26,20 +26,10 @@
 
     @include('admin.kontingen.tabs')
 
-    <div class="space-y-6">
-        @if ($errors->any())
-            <x-ui.alert variant="danger" title="Pendaftaran ditolak">
-                <ul class="list-inside list-disc space-y-1">
-                    @foreach ($errors->all() as $pesan)
-                        <li>{{ $pesan }}</li>
-                    @endforeach
-                </ul>
-            </x-ui.alert>
-        @endif
-
+    <div class="space-y-4">
         <x-ui.card>
             @forelse ($registrations as $registration)
-                <div class="flex flex-wrap items-start gap-4 border-b border-line py-4 last:border-0">
+                <div class="flex flex-wrap items-start gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[260px] flex-1">
                         <p class="font-medium text-ink">{{ $registration->namaNomor() }}</p>
                         <p class="text-xs text-ink-muted">
@@ -100,16 +90,20 @@
             validasi adalah cara tercepat membuat orang berhenti memakai
             sistemnya.
         --}}
-        <x-ui.modal id="daftar-tanding" title="Daftarkan kelas tanding" size="md">
+        <x-ui.modal id="daftar-tanding" title="Daftarkan kelas tanding" size="md"
+                    :open="request()->filled('atlet') || ($errors->any() && old('_form') === 'daftar-tanding')">
             <div x-data="{
                     peta: {{ Js::from($kelasPerAtlet) }},
-                    atlet: '',
+                    atlet: @js((string) old('athlete_id', request('atlet', ''))),
                     get kelas() { return this.peta[this.atlet] ?? [] },
                  }">
                 <form method="POST" id="daftar-tanding-form"
                       action="{{ route('admin.turnamen.kontingen.pendaftaran.tanding', [$tournament, $contingent]) }}"
                       class="space-y-4">
                     @csrf
+                    {{-- Penanda formulir pengirim, supaya hanya modal yang gagal
+                         yang terbuka kembali. --}}
+                    <input type="hidden" name="_form" value="daftar-tanding">
 
                     <x-ui.select name="athlete_id" id="atlet-tanding" label="Atlet" required
                                  placeholder="Pilih atlet…" x-model="atlet"
@@ -139,11 +133,13 @@
             </x-slot:footer>
         </x-ui.modal>
 
-        <x-ui.modal id="daftar-jurus" title="Daftarkan nomor jurus" size="md">
+        <x-ui.modal id="daftar-jurus" title="Daftarkan nomor jurus" size="md"
+                    :open="$errors->any() && old('_form') === 'daftar-jurus'">
             <form method="POST" id="daftar-jurus-form"
                   action="{{ route('admin.turnamen.kontingen.pendaftaran.jurus', [$tournament, $contingent]) }}"
                   class="space-y-4">
                 @csrf
+                <input type="hidden" name="_form" value="daftar-jurus">
 
                 <x-ui.select name="jurus_event_id" id="nomor-jurus" label="Nomor" required
                              placeholder="Pilih nomor…"

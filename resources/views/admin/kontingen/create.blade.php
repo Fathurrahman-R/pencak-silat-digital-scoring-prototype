@@ -6,7 +6,7 @@
                      'Kontingen' => route('admin.turnamen.kontingen.index', $tournament),
                      'Baru' => null,
                  ]">
-    <form method="POST" action="{{ route('admin.turnamen.kontingen.store', $tournament) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.turnamen.kontingen.store', $tournament) }}" class="space-y-4">
         @csrf
 
         @include('admin.kontingen.form')

@@ -21,13 +21,7 @@
         @endresource
     </x-slot:actions>
 
-    <div class="space-y-6">
-        @if ($errors->any())
-            <x-ui.alert variant="danger" title="Pembayaran tidak tercatat">
-                {{ $errors->first() }}
-            </x-ui.alert>
-        @endif
-
+    <div class="space-y-4">
         {{--
             Ringkasan dihitung dari seluruh tagihan, bukan dari yang sedang
             tersaring. Bendahara yang menyaring "menunggu pembayaran" tetap
@@ -40,23 +34,25 @@
             <x-ui.stat label="Belum lunas" :value="$ringkasan['belum']" />
         </div>
 
-        <div class="flex flex-wrap gap-2">
-            <x-ui.button :href="route('admin.turnamen.bendahara.index', $tournament)"
-                         :variant="$status === '' ? 'primary' : 'secondary'" size="sm">
-                Semua
-            </x-ui.button>
-
-            @foreach ($statuses as $nilai => $label)
-                <x-ui.button :href="route('admin.turnamen.bendahara.index', [$tournament, 'status' => $nilai])"
-                             :variant="$status === $nilai ? 'primary' : 'secondary'" size="sm">
-                    {{ $label }}
+        {{-- Penyaring tinggal di kepala kartu yang disaringnya: satu benda,
+             bukan dua potong yang kebetulan bertumpuk. --}}
+        <x-ui.card title="Tagihan kontingen">
+            <x-slot:actions>
+                <x-ui.button :href="route('admin.turnamen.bendahara.index', $tournament)"
+                             :variant="$status === '' ? 'primary' : 'secondary'" size="sm">
+                    Semua
                 </x-ui.button>
-            @endforeach
-        </div>
 
-        <x-ui.card>
+                @foreach ($statuses as $nilai => $label)
+                    <x-ui.button :href="route('admin.turnamen.bendahara.index', [$tournament, 'status' => $nilai])"
+                                 :variant="$status === $nilai ? 'primary' : 'secondary'" size="sm">
+                        {{ $label }}
+                    </x-ui.button>
+                @endforeach
+            </x-slot:actions>
+
             @forelse ($invoices as $invoice)
-                <div class="flex flex-wrap items-center gap-4 border-b border-line py-4 last:border-0">
+                <div class="flex flex-wrap items-center gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[220px] flex-1">
                         <p class="font-medium text-ink">{{ $invoice->contingent->name }}</p>
                         <p class="font-mono text-xs text-ink-muted">{{ $invoice->number }}</p>

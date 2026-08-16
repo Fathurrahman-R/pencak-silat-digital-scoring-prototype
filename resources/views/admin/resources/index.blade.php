@@ -45,7 +45,7 @@
         </x-slot:toolbar>
 
         @forelse ($resources as $resource)
-            <x-ui.table.row :id="$resource->is_locked ? null : $resource->id" selectable>
+            <x-ui.table.row :id="$resource->is_locked ? null : $resource->id">
                 <x-ui.table.cell header>
                     <div class="flex items-center gap-2">
                         <a href="{{ route('admin.resources.show', $resource) }}" class="hover:underline">

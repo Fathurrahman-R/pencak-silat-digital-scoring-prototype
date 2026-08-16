@@ -5,7 +5,7 @@
         tapi tidak mengubah nama permission yang ada di baliknya. Perbarui juga pemakaian key-nya di kode.
     </x-ui.alert>
 
-    <form method="POST" action="{{ route('admin.resources.update', $resource) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.resources.update', $resource) }}" class="space-y-4">
         @csrf
         @method('PUT')
 

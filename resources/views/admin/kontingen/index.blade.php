@@ -24,7 +24,7 @@
         </x-slot:toolbar>
 
         @forelse ($contingents as $contingent)
-            <x-ui.table.row :id="$contingent->id" :panel="route('admin.turnamen.kontingen.panel', [$tournament, $contingent])">
+            <x-ui.table.row :panel="route('admin.turnamen.kontingen.panel', [$tournament, $contingent])">
                 <x-ui.table.cell header>
                     {{ $contingent->name }}
                     @if ($contingent->contact_name)

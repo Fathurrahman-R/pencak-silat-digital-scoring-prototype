@@ -10,6 +10,9 @@ use App\Models\Athlete;
 use App\Models\Contingent;
 use App\Models\RegistrationDocument;
 use App\Models\Tournament;
+use App\Support\Pendaftaran\DaftarkanPeserta;
+use App\Support\Pendaftaran\PendaftaranDitolak;
+use App\Support\Pendaftaran\PeriksaKelayakan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +34,11 @@ class AthleteController extends Controller
      */
     private const DISK = 'local';
 
+    public function __construct(
+        private readonly PeriksaKelayakan $periksa,
+        private readonly DaftarkanPeserta $daftarkan,
+    ) {}
+
     public function index(Tournament $tournament, Contingent $contingent): View
     {
         $this->pastikanBolehAkses($contingent);
@@ -45,18 +53,50 @@ class AthleteController extends Controller
                 ->orderBy('name')
                 ->paginate(25)
                 ->withQueryString(),
+
+            /*
+             * Hanya nomor perorangan yang bisa ditawarkan di formulir atlet
+             * baru: Ganda dan Regu butuh dua sampai tiga pesilat yang belum
+             * tentu sudah ada saat atlet pertama diketik.
+             */
+            'nomorJurusPerorangan' => $tournament->jurusEvents()
+                ->aktif()
+                ->get()
+                ->filter(fn ($nomor) => $nomor->jenis->jumlahPesilat() === 1)
+                ->values(),
         ]);
     }
 
+    /**
+     * Menyimpan atlet, sekalian mendaftarkan nomornya bila diminta.
+     *
+     * Mendaftar adalah kelanjutan wajar dari menambahkan atlet, jadi keduanya
+     * satu formulir. Kelas tandingnya tidak perlu dipilih: jenis kelamin,
+     * golongan usia, dan berat badan yang baru diisi sudah menentukan satu
+     * kelas. Yang tidak bisa ditentukan sendiri dilaporkan sebagai catatan —
+     * atletnya tetap tersimpan, karena kesalahan memilih nomor bukan alasan
+     * untuk membuang data identitas yang sudah benar.
+     */
     public function store(StoreAthleteRequest $request, Tournament $tournament, Contingent $contingent): RedirectResponse
     {
         $this->pastikanBolehAkses($contingent);
 
+        $pilihan = $request->validate([
+            'daftar_tanding' => ['boolean'],
+            'jurus_event_id' => ['nullable', 'integer'],
+        ], attributes: ['jurus_event_id' => 'Nomor jurus']);
+
         $athlete = $contingent->athletes()->create($request->validated());
 
-        return redirect()
+        [$terdaftar, $catatan] = $this->daftarkanSekalian($tournament, $contingent, $athlete, $pilihan);
+
+        $redirect = redirect()
             ->route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent])
-            ->with('success', "Atlet “{$athlete->name}” ditambahkan.");
+            ->with('success', $terdaftar === []
+                ? "Atlet “{$athlete->name}” ditambahkan."
+                : "Atlet “{$athlete->name}” ditambahkan dan terdaftar di ".implode(', ', $terdaftar).'.');
+
+        return $catatan === [] ? $redirect : $redirect->with('warning', implode(' ', $catatan));
     }
 
     public function update(StoreAthleteRequest $request, Tournament $tournament, Contingent $contingent, Athlete $athlete): RedirectResponse
@@ -154,5 +194,66 @@ class AthleteController extends Controller
     private function pastikanMilik(Contingent $contingent, Athlete $athlete): void
     {
         abort_unless($athlete->contingent_id === $contingent->id, 404);
+    }
+
+    /**
+     * @param  array{daftar_tanding?: bool, jurus_event_id?: int|null}  $pilihan
+     * @return array{0: list<string>, 1: list<string>} nomor yang berhasil, lalu catatan yang gagal
+     */
+    private function daftarkanSekalian(Tournament $tournament, Contingent $contingent, Athlete $athlete, array $pilihan): array
+    {
+        $daftarTanding = (bool) ($pilihan['daftar_tanding'] ?? false);
+        $nomorJurusId = $pilihan['jurus_event_id'] ?? null;
+
+        if (! $daftarTanding && $nomorJurusId === null) {
+            return [[], []];
+        }
+
+        if ($contingent->pendaftaranBeku()) {
+            return [[], [
+                'Nomornya belum didaftarkan karena tagihan kontingen berstatus '
+                .$contingent->invoice->status->label()
+                .'. Batalkan sesi pembayaran lebih dulu, lalu daftarkan nomornya.',
+            ]];
+        }
+
+        $terdaftar = [];
+        $catatan = [];
+
+        if ($daftarTanding) {
+            $cocok = $this->periksa->kelasYangCocok($athlete, $contingent);
+
+            if ($cocok->count() === 1) {
+                try {
+                    $this->daftarkan->tanding($contingent, $cocok->first(), $athlete);
+                    $terdaftar[] = $cocok->first()->name;
+                } catch (PendaftaranDitolak $ditolak) {
+                    $catatan = [...$catatan, ...$ditolak->alasan];
+                }
+            } elseif ($cocok->isEmpty()) {
+                $catatan[] = 'Tidak ada kelas tanding yang cocok dengan jenis kelamin, golongan usia, '
+                    .'dan berat badan atlet ini, jadi kelas tandingnya belum didaftarkan.';
+            } else {
+                $catatan[] = 'Ada '.$cocok->count().' kelas tanding yang cocok, jadi kelasnya perlu '
+                    .'dipilih sendiri di halaman Pendaftaran nomor.';
+            }
+        }
+
+        if ($nomorJurusId !== null) {
+            $nomor = $tournament->jurusEvents()->find($nomorJurusId);
+
+            if ($nomor === null) {
+                $catatan[] = 'Nomor jurus yang dipilih tidak ada di kejuaraan ini.';
+            } else {
+                try {
+                    $this->daftarkan->jurus($contingent, $nomor, collect([$athlete]));
+                    $terdaftar[] = $nomor->nama();
+                } catch (PendaftaranDitolak $ditolak) {
+                    $catatan = [...$catatan, ...$ditolak->alasan];
+                }
+            }
+        }
+
+        return [$terdaftar, $catatan];
     }
 }

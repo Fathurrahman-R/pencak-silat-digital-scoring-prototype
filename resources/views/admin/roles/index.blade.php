@@ -38,7 +38,6 @@
 
         @forelse ($roles as $role)
             <x-ui.table.row :id="$role->is_locked || $role->isSuperAdmin() ? null : $role->id"
-                            selectable
                             :panel="route('admin.roles.panel', $role)">
                 <x-ui.table.cell header>
                     <div class="flex items-center gap-2">

@@ -10,49 +10,57 @@
         kejuaraan berdiri sebagai submenu sidebar, jadi berpindah dari timbang
         badan ke verifikasi tidak perlu melewati halaman ini lebih dulu.
     --}}
-    <div class="space-y-6">
-        <div class="grid gap-4 sm:grid-cols-3">
-            <x-ui.stat label="Gelanggang" :value="$tournament->arenas_count" />
-            <x-ui.stat label="Kelas tanding" :value="$tournament->weight_classes_count" />
-            <x-ui.stat label="Nomor jurus" :value="$tournament->jurus_events_count" />
-        </div>
-
+    <div class="space-y-4">
+        {{-- Status dan angka ringkas berdiri di satu baris: keduanya cuma
+             sebaris nilai, dan memberi masing-masing satu kartu penuh
+             menghabiskan tinggi layar sebelum formulirnya terlihat. --}}
         <x-ui.card title="Status kejuaraan">
-            <div class="flex flex-wrap items-center gap-4">
+            <x-slot:actions>
+                @resource(rk('turnamen', ResourceAction::Update))
+                    @foreach ($tournament->status->transisiSah() as $tujuan)
+                        <form method="POST" action="{{ route('admin.turnamen.status', $tournament) }}">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $tujuan->value }}">
+
+                            <x-ui.button type="submit"
+                                         :variant="$tujuan === StatusTurnamen::Berjalan ? 'primary' : 'secondary'"
+                                         size="sm">
+                                Tandai {{ $tujuan->label() }}
+                            </x-ui.button>
+                        </form>
+                    @endforeach
+                @endresource
+            </x-slot:actions>
+
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
                 <x-ui.badge :variant="$tournament->status->variant()">{{ $tournament->status->label() }}</x-ui.badge>
 
-                @if ($tournament->status->bolehUbahAturan())
-                    <p class="text-base2 text-ink-secondary">
+                <p class="max-w-[70ch] flex-1 text-base2 text-ink-secondary">
+                    @if ($tournament->status->bolehUbahAturan())
                         Setelan peraturan masih bisa diubah. Begitu kejuaraan dijalankan, setelannya
                         terkunci — partai yang sudah dinilai tidak boleh berubah dasar perhitungannya.
-                    </p>
-                @else
-                    <p class="text-base2 text-ink-secondary">
+                    @else
                         Setelan peraturan terkunci dan tidak bisa dikembalikan ke draf.
-                    </p>
-                @endif
+                    @endif
+                </p>
 
-                @resource(rk('turnamen', ResourceAction::Update))
-                    <div class="ms-auto flex gap-2">
-                        @foreach ($tournament->status->transisiSah() as $tujuan)
-                            <form method="POST" action="{{ route('admin.turnamen.status', $tournament) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="status" value="{{ $tujuan->value }}">
-
-                                <x-ui.button type="submit"
-                                             :variant="$tujuan === StatusTurnamen::Berjalan ? 'primary' : 'secondary'"
-                                             size="sm">
-                                    Tandai {{ $tujuan->label() }}
-                                </x-ui.button>
-                            </form>
-                        @endforeach
-                    </div>
-                @endresource
+                <div class="flex shrink-0 gap-5 border-line ps-5 sm:border-s">
+                    @foreach ([
+                        'Gelanggang' => $tournament->arenas_count,
+                        'Kelas tanding' => $tournament->weight_classes_count,
+                        'Nomor jurus' => $tournament->jurus_events_count,
+                    ] as $label => $jumlah)
+                        <div>
+                            <div class="eyebrow">{{ $label }}</div>
+                            <div class="num text-[15px] font-semibold text-ink">{{ $jumlah }}</div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </x-ui.card>
 
-        <form method="POST" action="{{ route('admin.turnamen.update', $tournament) }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.turnamen.update', $tournament) }}" class="space-y-4">
             @csrf
             @method('PUT')
 

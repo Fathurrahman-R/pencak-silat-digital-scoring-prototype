@@ -1,6 +1,6 @@
 <x-layouts.admin heading="Kejuaraan baru"
                  :breadcrumb="['Kejuaraan' => route('admin.turnamen.index'), 'Baru' => null]">
-    <form method="POST" action="{{ route('admin.turnamen.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.turnamen.store') }}" class="space-y-4">
         @csrf
 
         <x-ui.alert variant="info" title="Kelas dan nomor terisi otomatis">

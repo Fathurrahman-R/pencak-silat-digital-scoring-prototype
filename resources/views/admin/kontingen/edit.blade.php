@@ -6,7 +6,7 @@
                      'Kontingen' => route('admin.turnamen.kontingen.index', $tournament),
                      $contingent->name => null,
                  ]">
-    <form method="POST" action="{{ route('admin.turnamen.kontingen.update', [$tournament, $contingent]) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.turnamen.kontingen.update', [$tournament, $contingent]) }}" class="space-y-4">
         @csrf
         @method('PUT')
 

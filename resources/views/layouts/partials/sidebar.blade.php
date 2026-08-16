@@ -89,7 +89,13 @@
                             @if ($item['icon'])
                                 <x-ui.icon :name="$item['icon']" class="size-[17px] shrink-0" />
                             @endif
-                            <span class="flex-1 truncate text-start" data-rail="hide">{{ $item['label'] }}</span>
+                            <span class="min-w-0 flex-1 text-start" data-rail="hide">
+                                <span class="block truncate">{{ $item['label'] }}</span>
+
+                                @if ($item['caption'])
+                                    <span class="block truncate text-[10.5px] leading-tight text-ink-muted">{{ $item['caption'] }}</span>
+                                @endif
+                            </span>
                             <span class="flex shrink-0 transition-transform duration-200" data-rail="hide"
                                   :class="expanded && 'rotate-180'">
                                 <x-ui.icon name="chevron-down" class="size-3.5" />

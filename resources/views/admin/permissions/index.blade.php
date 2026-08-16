@@ -50,7 +50,7 @@
         </x-slot:toolbar>
 
         @forelse ($permissions as $permission)
-            <x-ui.table.row :id="$permission->is_locked ? null : $permission->id" selectable>
+            <x-ui.table.row :id="$permission->is_locked ? null : $permission->id">
                 <x-ui.table.cell header>
                     <div class="flex items-center gap-2">
                         <code>{{ $permission->name }}</code>

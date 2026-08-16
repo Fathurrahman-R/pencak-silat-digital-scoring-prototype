@@ -7,14 +7,17 @@
 ])
 
 {{--
-    Panel kepercayaan untuk sisi kaca layar auth split — kutipan pelanggan +
+    Panel kepercayaan untuk sisi kiri layar auth split — kutipan pelanggan +
     metrik ringkas. Isinya contoh; ganti dengan testimoni dan angka asli
     sebelum rilis, sama seperti data faktur contoh di halaman lain boilerplate
     ini.
+
+    Permukaannya solid: kaca hanya dipakai dua panel shell aplikasi (sidebar
+    dan topbar), tidak di kartu isi.
 --}}
 
 <div class="relative">
-    <div class="glass rounded-xl p-7">
+    <div class="rounded-xl border border-line bg-surface-raised p-6 shadow-lift">
         <x-ui.icon name="quote" class="size-5 text-accent" />
         <p class="mt-3.5 font-display text-lg leading-snug font-medium tracking-tight text-ink">{{ $quote }}</p>
 

@@ -8,6 +8,8 @@ use App\Enums\ResourceAction;
  * Kunci yang dikenali per item:
  *   label            teks yang ditampilkan
  *   label_turnamen   pakai nama kejuaraan aktif sebagai label
+ *   caption          baris kecil di bawah label; menjelaskan label yang isinya
+ *                    berganti-ganti (mis. nama kejuaraan)
  *   icon             nama ikon di komponen <x-ui.icon>
  *   route            nama route tujuan (dilewati kalau route belum terdaftar)
  *   url              alternatif route untuk tautan luar
@@ -44,6 +46,7 @@ return [
     [
         'label' => 'Kejuaraan aktif',
         'label_turnamen' => true,
+        'caption' => 'Kejuaraan aktif',
         'icon' => 'flag',
         'butuh_turnamen' => true,
         'children' => [

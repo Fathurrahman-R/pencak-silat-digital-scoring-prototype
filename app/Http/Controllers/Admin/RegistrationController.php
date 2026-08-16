@@ -11,18 +11,22 @@ use App\Models\JurusEvent;
 use App\Models\Registration;
 use App\Models\Tournament;
 use App\Models\WeightClass;
+use App\Support\Pendaftaran\DaftarkanPeserta;
+use App\Support\Pendaftaran\PendaftaranDitolak;
 use App\Support\Pendaftaran\PeriksaKelayakan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RegistrationController extends Controller
 {
     use ScopesContingents;
 
-    public function __construct(private readonly PeriksaKelayakan $periksa) {}
+    public function __construct(
+        private readonly PeriksaKelayakan $periksa,
+        private readonly DaftarkanPeserta $daftarkan,
+    ) {}
 
     public function index(Tournament $tournament, Contingent $contingent): View
     {
@@ -70,20 +74,11 @@ class RegistrationController extends Controller
         $athlete = $contingent->athletes()->findOrFail($data['athlete_id']);
         $kelas = $tournament->weightClasses()->findOrFail($data['weight_class_id']);
 
-        $hasil = $this->periksa->untukKelasTanding($kelas, [$athlete]);
-
-        if ($hasil->ditolakSemua()) {
-            throw ValidationException::withMessages(['weight_class_id' => $hasil->alasan]);
+        try {
+            $this->daftarkan->tanding($contingent, $kelas, $athlete);
+        } catch (PendaftaranDitolak $ditolak) {
+            throw ValidationException::withMessages(['weight_class_id' => $ditolak->alasan]);
         }
-
-        DB::transaction(function () use ($contingent, $kelas, $athlete) {
-            $pendaftaran = $contingent->registrations()->create([
-                'weight_class_id' => $kelas->id,
-                'status' => StatusPendaftaran::Draf,
-            ]);
-
-            $pendaftaran->athletes()->attach($athlete, ['position' => 1]);
-        });
 
         return back()->with('success', "{$athlete->name} terdaftar di {$kelas->name}.");
     }
@@ -106,22 +101,11 @@ class RegistrationController extends Controller
         // sampai ke pemeriksaan kelayakan.
         $athletes = $contingent->athletes()->whereIn('id', $data['athlete_ids'])->get();
 
-        $hasil = $this->periksa->untukNomorJurus($nomor, $athletes);
-
-        if ($hasil->ditolakSemua()) {
-            throw ValidationException::withMessages(['jurus_event_id' => $hasil->alasan]);
+        try {
+            $this->daftarkan->jurus($contingent, $nomor, $athletes);
+        } catch (PendaftaranDitolak $ditolak) {
+            throw ValidationException::withMessages(['jurus_event_id' => $ditolak->alasan]);
         }
-
-        DB::transaction(function () use ($contingent, $nomor, $athletes) {
-            $pendaftaran = $contingent->registrations()->create([
-                'jurus_event_id' => $nomor->id,
-                'status' => StatusPendaftaran::Draf,
-            ]);
-
-            foreach ($athletes->values() as $urutan => $athlete) {
-                $pendaftaran->athletes()->attach($athlete, ['position' => $urutan + 1]);
-            }
-        });
 
         return back()->with('success', "Pendaftaran {$nomor->nama()} tersimpan.");
     }

@@ -6,7 +6,7 @@
         </x-ui.alert>
     @endif
 
-    <form method="POST" action="{{ route('admin.roles.update', $role) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.roles.update', $role) }}" class="space-y-4">
         @csrf
         @method('PUT')
 

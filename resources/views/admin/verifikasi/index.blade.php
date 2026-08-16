@@ -11,40 +11,35 @@
                      $tournament->name => route('admin.turnamen.edit', $tournament),
                      'Verifikasi' => null,
                  ]">
-    <div class="space-y-6">
-        @if ($errors->any())
-            <x-ui.alert variant="danger" title="Pendaftaran tidak bisa diproses">
-                {{ $errors->first() }}
-            </x-ui.alert>
-        @endif
-
+    <div class="space-y-4">
         <x-ui.alert variant="info" title="Dua syarat harus terpenuhi bersamaan">
             Berkas persyaratan peserta lengkap, dan tagihan kontingennya lunas. Keduanya ditegakkan
             saat tombol ditekan — bukan hanya ditampilkan sebagai peringatan.
         </x-ui.alert>
 
-        <div class="flex flex-wrap items-center gap-2">
-            <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => StatusPendaftaran::Diajukan->value])"
-                         :variant="$status === StatusPendaftaran::Diajukan->value ? 'primary' : 'secondary'" size="sm">
-                Menunggu ({{ $jumlahMenunggu }})
-            </x-ui.button>
-
-            @foreach ($statuses as $nilai => $label)
-                @continue($nilai === StatusPendaftaran::Diajukan->value)
-
-                <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => $nilai])"
-                             :variant="$status === $nilai ? 'primary' : 'secondary'" size="sm">
-                    {{ $label }}
+        {{-- Penyaring tinggal di kepala kartu yang disaringnya. --}}
+        <x-ui.card title="Pendaftaran">
+            <x-slot:actions>
+                <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => StatusPendaftaran::Diajukan->value])"
+                             :variant="$status === StatusPendaftaran::Diajukan->value ? 'primary' : 'secondary'" size="sm">
+                    Menunggu ({{ $jumlahMenunggu }})
                 </x-ui.button>
-            @endforeach
 
-            <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => 'semua'])"
-                         :variant="$status === 'semua' ? 'primary' : 'secondary'" size="sm">
-                Semua
-            </x-ui.button>
-        </div>
+                @foreach ($statuses as $nilai => $label)
+                    @continue($nilai === StatusPendaftaran::Diajukan->value)
 
-        <x-ui.card>
+                    <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => $nilai])"
+                                 :variant="$status === $nilai ? 'primary' : 'secondary'" size="sm">
+                        {{ $label }}
+                    </x-ui.button>
+                @endforeach
+
+                <x-ui.button :href="route('admin.turnamen.verifikasi.index', [$tournament, 'status' => 'semua'])"
+                             :variant="$status === 'semua' ? 'primary' : 'secondary'" size="sm">
+                    Semua
+                </x-ui.button>
+            </x-slot:actions>
+
             @forelse ($registrations as $registration)
                 @php
                     $invoice = $registration->contingent->invoice;
@@ -60,7 +55,7 @@
                     $siap = $lunas && $kurang === [];
                 @endphp
 
-                <div class="border-b border-line py-4 last:border-0">
+                <div class="border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="flex flex-wrap items-start gap-4">
                         <div class="min-w-[260px] flex-1">
                             <p class="font-medium text-ink">{{ $registration->namaNomor() }}</p>

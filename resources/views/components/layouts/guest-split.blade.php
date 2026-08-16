@@ -5,10 +5,14 @@
 ])
 
 {{--
-    Layar autentikasi utama (Masuk/Daftar): form solid di kiri, panel kaca di
-    kanan — mengikuti seksi 05 "Auth" pada `document/design-system/RizzxxUI
-    Screens.dc.html`. Panel kanan hilang di bawah `lg`, form tetap penuh
-    lebar supaya alur masuk tidak pernah terhalang oleh dekorasi.
+    Layar autentikasi utama (Masuk/Daftar): form solid di kiri, panel
+    kepercayaan di kanan — mengikuti seksi 05 "Auth" pada
+    `document/design-system/RizzxxUI Screens.dc.html`. Panel kanan hilang di
+    bawah `lg`, form tetap penuh lebar supaya alur masuk tidak pernah
+    terhalang oleh dekorasi.
+
+    Panelnya permukaan solid, bukan kaca: kaca dipakai hanya sidebar dan
+    topbar aplikasi.
 
     Flow yang lebih pendek dan sensitif (2FA, reset kata sandi, konfirmasi)
     sengaja tetap memakai `x-layouts.guest` — kartu tunggal tanpa panel

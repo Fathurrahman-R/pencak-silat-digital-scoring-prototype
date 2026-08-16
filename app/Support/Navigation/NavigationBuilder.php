@@ -2,6 +2,7 @@
 
 namespace App\Support\Navigation;
 
+use App\Enums\StatusTurnamen;
 use App\Http\Middleware\IngatTurnamenAktif;
 use App\Models\Tournament;
 use App\Support\Resources\ResourceGate;
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\Route;
  */
 class NavigationBuilder
 {
+    private bool $turnamenDicari = false;
+
+    private ?Tournament $turnamen = null;
+
     public function __construct(private readonly ResourceGate $gate) {}
 
     /** @return array<int, array<string, mixed>> */
@@ -26,17 +31,49 @@ class NavigationBuilder
     }
 
     /**
-     * Kejuaraan yang sedang dibuka, kalau ada.
+     * Kejuaraan yang sedang dibuka.
      *
-     * Diambil ulang dari basis data tiap kali, bukan disalin ke sesi, supaya
-     * nama yang berubah atau kejuaraan yang dihapus tidak meninggalkan sisa di
-     * menu.
+     * Diambil ulang dari basis data, bukan disalin ke sesi, supaya nama yang
+     * berubah atau kejuaraan yang dihapus tidak meninggalkan sisa di menu.
+     *
+     * Sesi hanya menyimpan kejuaraan yang terakhir dibuka. Selama belum ada,
+     * menunya tidak boleh menunggu — pengguna yang baru masuk akan melihat
+     * sidebar yang isinya cuma tiga menu, dan tidak ada petunjuk bahwa
+     * sisanya baru muncul setelah sebuah kejuaraan dibuka. Karena itu
+     * kejuaraan termuda dipakai sebagai bawaan.
+     *
+     * Hasilnya ditahan satu request: satu halaman memanggil ini sekali per
+     * item menu.
      */
     public function turnamenAktif(): ?Tournament
     {
+        if ($this->turnamenDicari) {
+            return $this->turnamen;
+        }
+
+        $this->turnamenDicari = true;
+
         $id = session(IngatTurnamenAktif::KUNCI);
 
-        return $id ? Tournament::find($id) : null;
+        $this->turnamen = ($id ? Tournament::find($id) : null) ?? $this->turnamenBawaan();
+
+        return $this->turnamen;
+    }
+
+    /**
+     * Kejuaraan yang paling masuk akal dibuka lebih dulu: yang sedang
+     * berjalan, lalu draf, baru yang sudah selesai.
+     */
+    private function turnamenBawaan(): ?Tournament
+    {
+        return Tournament::query()
+            ->orderByRaw("CASE status WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END", [
+                StatusTurnamen::Berjalan->value,
+                StatusTurnamen::Draf->value,
+            ])
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->first();
     }
 
     /**
@@ -69,6 +106,7 @@ class NavigationBuilder
 
             $result[] = [
                 'label' => $this->label($item),
+                'caption' => $item['caption'] ?? null,
                 'icon' => $item['icon'] ?? null,
                 'url' => $this->url($item),
                 'active' => $this->isActive($item, $children),

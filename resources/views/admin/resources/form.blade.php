@@ -9,7 +9,7 @@
 @endphp
 
 <div class="grid gap-6 lg:grid-cols-3" x-data="{ key: @js(old('key', $resource?->key ?? '')) }">
-    <div class="lg:col-span-2 space-y-6">
+    <div class="lg:col-span-2 space-y-4">
         <x-ui.card title="Identitas resource">
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">

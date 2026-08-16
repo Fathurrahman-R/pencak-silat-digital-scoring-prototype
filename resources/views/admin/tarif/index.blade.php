@@ -9,7 +9,7 @@
                      $tournament->name => route('admin.turnamen.edit', $tournament),
                      'Tarif' => null,
                  ]">
-    <div class="space-y-6">
+    <div class="space-y-4">
         @if ($terkunci)
             <x-ui.alert variant="warning" title="Tarif terkunci">
                 Kejuaraan sudah {{ strtolower($tournament->status->label()) }}. Mengubah tarif sekarang

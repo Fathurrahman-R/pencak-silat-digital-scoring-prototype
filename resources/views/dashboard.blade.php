@@ -9,8 +9,8 @@
         </x-ui.alert>
     @endif
 
-    {{-- Baris metrik memakai kartu kaca: ini satu-satunya lapisan yang boleh
-         mengambang di atas latar bertekstur. Sisanya turun ke permukaan solid. --}}
+    {{-- Baris metrik duduk di permukaan solid seperti sisi halaman lainnya —
+         kaca dipakai hanya sidebar dan topbar. --}}
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($stats as $stat)
             <x-ui.stat :label="$stat['label']"
@@ -21,7 +21,7 @@
 
     {{-- Dua kolom: grafik yang lebih lebar di kiri, aktivitas ringkas di
          kanan. Rasio 1.6fr/1fr yang sama dipakai di seluruh pola dashboard. --}}
-    <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <x-ui.card title="Pengguna baru" subtitle="6 bulan terakhir">
             <x-ui.bar-chart :series="$signups" :tones="['chart-1']" :height="184" />
         </x-ui.card>

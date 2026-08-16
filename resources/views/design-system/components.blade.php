@@ -140,7 +140,7 @@
 
     $code['stat'] = <<<'BLADE'
     <x-ui.stat label="MRR" value="Rp 412jt" delta="+12,4%" trend="up" />
-    <x-ui.stat label="Churn" value="1,8%" delta="+0,3%" trend="down" :glass="false" />
+    <x-ui.stat label="Churn" value="1,8%" delta="+0,3%" trend="down" />
     BLADE;
 
     $code['misc'] = <<<'BLADE'
@@ -437,11 +437,11 @@
         <h4 class="eyebrow mt-6 mb-3">Bisa dipilih, aksi per baris</h4>
         <p class="mb-3 max-w-[64ch] text-[13.5px] text-ink-secondary">
             Kolom centang muncul lewat prop <code class="font-mono text-[12.5px]">selectable</code> di
-            <code class="font-mono text-[12.5px]">x-ui.table</code> (daftar id yang boleh dipilih). Baris yang
-            terkunci tetap memberi <code class="font-mono text-[12.5px]">selectable</code> ke
-            <code class="font-mono text-[12.5px]">x-ui.table.row</code> meski <code class="font-mono text-[12.5px]">id</code>-nya
-            <code class="font-mono text-[12.5px]">null</code> — sel kosong tetap digambar supaya jumlah kolom sama
-            dengan baris lain. Aksi per baris memakai <code class="font-mono text-[12.5px]">variant="secondary" size="xs"</code>,
+            <code class="font-mono text-[12.5px]">x-ui.table</code> (daftar id yang boleh dipilih) — hanya di sana.
+            Baris membacanya sendiri lewat <code class="font-mono text-[12.5px]">@@aware</code>, jadi header dan baris
+            tidak mungkin punya jumlah kolom yang berbeda. Baris yang terkunci memberi
+            <code class="font-mono text-[12.5px]">id</code> <code class="font-mono text-[12.5px]">null</code>: selnya
+            tetap digambar, tapi kosong. Aksi per baris memakai <code class="font-mono text-[12.5px]">variant="secondary" size="xs"</code>,
             bukan <code class="font-mono text-[12.5px]">ghost</code>: tombol raised sesuai spesifikasi material, ghost hanya untuk aksi di dalam permukaan yang sudah punya kedalaman sendiri (toolbar, dropdown).
         </p>
 
@@ -460,7 +460,7 @@
                     </div>
                 </x-ui.table.cell>
             </x-ui.table.row>
-            <x-ui.table.row :id="null" selectable>
+            <x-ui.table.row :id="null">
                 <x-ui.table.cell class="num text-[12.5px]">INV-2047</x-ui.table.cell>
                 <x-ui.table.cell>
                     Sinar Abadi
@@ -619,8 +619,8 @@
         <x-docs.example title="Kartu metrik" class="mt-4" sunken :code="$code['stat']">
             <div class="grid w-full gap-4 sm:grid-cols-3">
                 <x-ui.stat label="MRR" value="Rp 412jt" delta="+12,4%" trend="up" icon="trending-up" />
-                <x-ui.stat label="Faktur terbit" value="1.284" delta="Stabil" trend="flat" :glass="false" />
-                <x-ui.stat label="Churn" value="1,8%" delta="+0,3%" trend="down" :glass="false" />
+                <x-ui.stat label="Faktur terbit" value="1.284" delta="Stabil" trend="flat" />
+                <x-ui.stat label="Churn" value="1,8%" delta="+0,3%" trend="down" />
             </div>
         </x-docs.example>
 

@@ -23,19 +23,24 @@
 
     @include('admin.kontingen.tabs')
 
-    <div class="space-y-6">
-        <form method="GET" class="max-w-sm">
-            <x-ui.input name="q" label="" :value="request('q')" placeholder="Cari nama atlet…" />
-        </form>
+    <div class="space-y-4">
+        {{-- Kolom cari punya kedalaman (shadow-well), jadi ia harus duduk di
+             permukaan — kepala kartu daftarnya — bukan mengambang di atas
+             latar. --}}
+        <x-ui.card title="Daftar atlet" :subtitle="$athletes->total().' atlet terdaftar'">
+            <x-slot:actions>
+                <form method="GET" class="w-[230px] max-w-full">
+                    <x-ui.input name="q" :value="request('q')" placeholder="Cari nama atlet…" />
+                </form>
+            </x-slot:actions>
 
-        <x-ui.card>
             @forelse ($athletes as $athlete)
                 @php
                     $golongan = $athlete->golonganUsia($tournament);
                     $kurang = $athlete->berkasKurang($tournament);
                 @endphp
 
-                <div class="flex flex-wrap items-start gap-4 border-b border-line py-4 last:border-0">
+                <div class="flex flex-wrap items-center gap-3 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[220px] flex-1">
                         <p class="font-medium text-ink">{{ $athlete->name }}</p>
                         <p class="text-xs text-ink-muted">
@@ -74,6 +79,15 @@
                     </div>
 
                     <div class="flex gap-1">
+                        @resource(rk('pendaftaran', ResourceAction::Create))
+                            {{-- Membuka formulir pendaftaran nomor dengan atlet ini
+                                 sudah terpilih, bukan menyuruh mencarinya lagi. --}}
+                            <x-ui.button :href="route('admin.turnamen.kontingen.pendaftaran.index', [$tournament, $contingent, 'atlet' => $athlete->id])"
+                                         variant="secondary" size="xs" title="Daftarkan nomor">
+                                <x-ui.icon name="clipboard-list" class="h-4 w-4" />
+                            </x-ui.button>
+                        @endresource
+
                         @resource(rk('atlet', ResourceAction::Update))
                             <x-ui.button type="button" variant="secondary" size="xs" title="Berkas"
                                          x-on:click="$dispatch('modal-open', 'berkas-{{ $athlete->id }}')">
@@ -96,12 +110,18 @@
                 </div>
 
                 @resource(rk('atlet', ResourceAction::Update))
-                    <x-ui.modal :id="'atlet-ubah-'.$athlete->id" title="Ubah atlet" size="md">
+                    <x-ui.modal :id="'atlet-ubah-'.$athlete->id" title="Ubah atlet" size="md"
+                                :open="$errors->any() && old('_form') === 'atlet-ubah-'.$athlete->id">
                         <form method="POST" id="ubah-atlet-{{ $athlete->id }}"
                               action="{{ route('admin.turnamen.kontingen.atlet.update', [$tournament, $contingent, $athlete]) }}"
                               class="space-y-4">
                             @csrf
                             @method('PUT')
+
+                            {{-- Penanda formulir mana yang barusan dikirim, supaya
+                                 modal yang gagal validasi — dan hanya modal itu —
+                                 terbuka kembali dengan isian terakhirnya. --}}
+                            <input type="hidden" name="_form" value="atlet-ubah-{{ $athlete->id }}">
 
                             @include('admin.atlet.form', ['athlete' => $athlete, 'suffix' => $athlete->id])
                         </form>
@@ -195,19 +215,47 @@
                 <x-ui.empty-state title="Belum ada atlet"
                                   description="Golongan usia dihitung sendiri dari tanggal lahir terhadap tanggal kejuaraan dimulai." />
             @endforelse
-        </x-ui.card>
 
-        {{ $athletes->links() }}
+            <x-slot:footer>{{ $athletes->links() }}</x-slot:footer>
+        </x-ui.card>
     </div>
 
     @resource(rk('atlet', ResourceAction::Create))
-        <x-ui.modal id="atlet-baru" title="Tambah atlet" size="md">
+        {{--
+            Menambahkan atlet dan mendaftarkan nomornya adalah satu pekerjaan,
+            jadi satu formulir. Kelas tandingnya tidak perlu dipilih — jenis
+            kelamin, tanggal lahir, dan berat badan di atasnya sudah menentukan
+            satu kelas; yang tidak bisa ditentukan sendiri dilaporkan sebagai
+            catatan setelah tersimpan.
+        --}}
+        <x-ui.modal id="atlet-baru" title="Tambah atlet" size="md"
+                    :open="$errors->any() && old('_form') === 'atlet-baru'">
             <form method="POST" id="atlet-baru-form"
                   action="{{ route('admin.turnamen.kontingen.atlet.store', [$tournament, $contingent]) }}"
                   class="space-y-4">
                 @csrf
+                <input type="hidden" name="_form" value="atlet-baru">
 
                 @include('admin.atlet.form', ['athlete' => null, 'suffix' => 'baru'])
+
+                @resource(rk('pendaftaran', ResourceAction::Create))
+                    <div class="space-y-3 border-t border-line pt-4">
+                        <p class="text-[13px] font-semibold text-ink">Sekalian daftarkan nomor</p>
+
+                        <x-ui.toggle name="daftar_tanding" id="daftar-tanding-baru"
+                                     label="Daftarkan ke kelas tandingnya"
+                                     :checked="filter_var(old('daftar_tanding', '1'), FILTER_VALIDATE_BOOL)"
+                                     hint="Kelas dipilih otomatis dari jenis kelamin, golongan usia, dan berat badan di atas." />
+
+                        @if ($nomorJurusPerorangan->isNotEmpty())
+                            <x-ui.select name="jurus_event_id" id="jurus-baru" label="Nomor jurus perorangan"
+                                         placeholder="Tidak mendaftar nomor jurus"
+                                         :selected="old('jurus_event_id')"
+                                         :options="$nomorJurusPerorangan->mapWithKeys(fn ($n) => [$n->id => $n->nama()])->all()"
+                                         hint="Nomor Ganda dan Regu didaftarkan di halaman Pendaftaran nomor, karena butuh dua sampai tiga pesilat." />
+                        @endif
+                    </div>
+                @endresource
             </form>
 
             <x-slot:footer>

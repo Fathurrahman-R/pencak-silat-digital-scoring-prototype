@@ -4,7 +4,7 @@
     $selected = array_map('strval', $selected);
 @endphp
 
-<div class="space-y-6">
+<div class="space-y-4">
     <x-ui.card title="Identitas role">
         <div class="grid gap-4 sm:grid-cols-2">
             <x-ui.input name="name" label="Nama sistem" :value="$role?->name" required
@@ -21,7 +21,7 @@
 
     <x-ui.card title="Permission"
                subtitle="Baris adalah resource, kolom adalah aksi. Centang berarti role ini boleh melakukannya.">
-        <div class="space-y-6">
+        <div class="space-y-4">
             @forelse ($resources as $resource)
                 <div>
                     <div class="mb-2 flex flex-wrap items-center gap-2">

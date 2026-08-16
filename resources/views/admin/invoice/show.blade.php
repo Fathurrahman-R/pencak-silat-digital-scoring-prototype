@@ -14,26 +14,25 @@
                  ]">
     @include('admin.kontingen.tabs')
 
-    <div class="space-y-6">
-        @if ($errors->any())
-            <x-ui.alert variant="danger" title="Tagihan tidak bisa diproses">
-                {{ $errors->first() }}
-            </x-ui.alert>
-        @endif
+    <div class="space-y-4">
+        {{-- Kepala tagihan duduk di kartu: nomor dan nominal adalah isi
+             halaman, bukan judulnya, jadi ia butuh permukaan seperti isi yang
+             lain. --}}
+        <x-ui.card>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+                <div>
+                    <p class="eyebrow">Nomor tagihan</p>
+                    <p class="font-mono text-base2 text-ink">{{ $invoice->number }}</p>
+                </div>
 
-        <div class="flex flex-wrap items-center gap-4">
-            <div>
-                <p class="text-xs tracking-wide text-ink-muted">NOMOR TAGIHAN</p>
-                <p class="font-mono text-base2 text-ink">{{ $invoice->number }}</p>
+                <x-ui.badge :variant="$invoice->status->variant()">{{ $invoice->status->label() }}</x-ui.badge>
+
+                <div class="ms-auto text-right">
+                    <p class="eyebrow">Total</p>
+                    <p class="silat-angka font-mono text-[22px] font-semibold text-ink">{{ $invoice->rupiah() }}</p>
+                </div>
             </div>
-
-            <x-ui.badge :variant="$invoice->status->variant()">{{ $invoice->status->label() }}</x-ui.badge>
-
-            <div class="ms-auto text-right">
-                <p class="text-xs tracking-wide text-ink-muted">TOTAL</p>
-                <p class="silat-angka font-mono text-[22px] font-semibold text-ink">{{ $invoice->rupiah() }}</p>
-            </div>
-        </div>
+        </x-ui.card>
 
         @if ($invoice->status === StatusInvoice::Draf)
             <x-ui.alert variant="info" title="Tagihan masih mengikuti pendaftaran">
@@ -64,22 +63,26 @@
                 <x-ui.empty-state title="Belum ada yang ditagih"
                                   description="Tagihan terisi begitu kontingen mendaftarkan peserta dan panitia menetapkan tarifnya." />
             @endforelse
-        </x-ui.card>
 
-        @resource(rk('invoice', ResourceAction::Update))
-            <div class="flex flex-wrap gap-2">
+            {{-- Tombolnya bagian dari tagihan, jadi ia tinggal di kaki kartu
+                 yang sama — bukan mengambang sendiri di bawah halaman. --}}
+            @resource(rk('invoice', ResourceAction::Update))
                 @if ($invoice->status === StatusInvoice::Draf)
-                    <form method="POST" action="{{ route('admin.turnamen.kontingen.tagihan.kunci', [$tournament, $contingent]) }}">
-                        @csrf
-                        <x-ui.button type="submit">Kunci tagihan dan lanjut bayar</x-ui.button>
-                    </form>
+                    <x-slot:footer>
+                        <form method="POST" action="{{ route('admin.turnamen.kontingen.tagihan.kunci', [$tournament, $contingent]) }}">
+                            @csrf
+                            <x-ui.button type="submit">Kunci tagihan dan lanjut bayar</x-ui.button>
+                        </form>
+                    </x-slot:footer>
                 @elseif ($invoice->status === StatusInvoice::MenungguPembayaran)
-                    <form method="POST" action="{{ route('admin.turnamen.kontingen.tagihan.batal', [$tournament, $contingent]) }}">
-                        @csrf
-                        <x-ui.button type="submit" variant="secondary">Batalkan sesi pembayaran</x-ui.button>
-                    </form>
+                    <x-slot:footer>
+                        <form method="POST" action="{{ route('admin.turnamen.kontingen.tagihan.batal', [$tournament, $contingent]) }}">
+                            @csrf
+                            <x-ui.button type="submit" variant="secondary">Batalkan sesi pembayaran</x-ui.button>
+                        </form>
+                    </x-slot:footer>
                 @endif
-            </div>
-        @endresource
+            @endresource
+        </x-ui.card>
     </div>
 </x-layouts.admin>

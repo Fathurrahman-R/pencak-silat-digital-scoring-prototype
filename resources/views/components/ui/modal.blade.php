@@ -2,6 +2,12 @@
     'id',
     'title' => null,
     'size' => 'md',
+    // Terbuka sejak halaman digambar. Untuk alur yang datang dari halaman lain
+    // (mis. ?atlet=12 yang langsung membuka formulir pendaftarannya).
+    'open' => false,
+    // Nama field yang dikandung modal ini. Kalau salah satunya ditolak
+    // validasi, modalnya terbuka sendiri saat halaman dimuat ulang.
+    'errorsFor' => [],
 ])
 
 {{--
@@ -14,6 +20,10 @@
 
     Esc menutup, fokus kembali ke elemen pemicunya, dan halaman di belakang
     tidak ikut bergulir selama modal terbuka.
+
+    Formulir yang gagal validasi mengembalikan halaman utuh — modalnya ikut
+    tertutup, dan pesan galat di dalamnya tidak pernah terbaca. `errors-for`
+    membuka kembali modal yang memuat field bersangkutan.
 --}}
 
 @php
@@ -23,6 +33,8 @@
         'lg' => 'max-w-2xl',
         'xl' => 'max-w-4xl',
     ];
+
+    $bukaSendiri = $open || ($errorsFor !== [] && $errors->hasAny((array) $errorsFor));
 @endphp
 
 <div x-data="{
@@ -40,6 +52,7 @@
             this.trigger?.focus();
         },
      }"
+     @if ($bukaSendiri) x-init="show()" @endif
      x-on:modal-open.window="$event.detail === '{{ $id }}' && show()"
      x-on:modal-close.window="$event.detail === '{{ $id }}' && hide()"
      x-on:keydown.escape.window="open && hide()">

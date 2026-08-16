@@ -7,18 +7,22 @@
                      $tournament->name => route('admin.turnamen.edit', $tournament),
                      'Timbang badan' => null,
                  ]">
-    <div class="space-y-6">
+    <div class="space-y-4">
         <x-ui.alert variant="info" title="Hasil ditetapkan saat penimbangan">
             Lolos atau tidaknya ditetapkan terhadap kelas yang berlaku saat ditimbang, lalu tidak
             dihitung ulang lagi. Penimbangan ulang dicatat sebagai baris baru — yang sebelumnya
             tetap tersimpan.
         </x-ui.alert>
 
-        <form method="GET" class="max-w-sm">
-            <x-ui.input name="q" label="" :value="$cari" placeholder="Cari nama atlet…" />
-        </form>
+        {{-- Kolom cari punya kedalaman (shadow-well), jadi ia duduk di kepala
+             kartu daftarnya, bukan mengambang di atas latar. --}}
+        <x-ui.card title="Peserta yang ditimbang">
+            <x-slot:actions>
+                <form method="GET" class="w-[230px] max-w-full">
+                    <x-ui.input name="q" :value="$cari" placeholder="Cari nama atlet…" />
+                </form>
+            </x-slot:actions>
 
-        <x-ui.card>
             @forelse ($registrations as $registration)
                 @php
                     $athlete = $registration->athletes->first();
@@ -26,7 +30,7 @@
                     $terakhir = $registration->weightIns->first();
                 @endphp
 
-                <div class="flex flex-wrap items-start gap-4 border-b border-line py-4 last:border-0">
+                <div class="flex flex-wrap items-center gap-3 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[220px] flex-1">
                         <p class="font-medium text-ink">{{ $athlete?->name ?? '—' }}</p>
                         <p class="text-xs text-ink-muted">
