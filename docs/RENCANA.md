@@ -12,7 +12,7 @@
 | Fase 2 — Pendaftaran & Timbang Badan | ✅ Selesai |
 | Fase 2b — Biaya, Invoice & Pembayaran | 🟡 Selesai kecuali integrasi Midtrans (menunggu kredensial sandbox) |
 | Fase 3 — Bagan & Jadwal | ✅ Selesai |
-| Fase 4 — Mesin Scoring Tanding | 🟡 Engine + broadcasting + HTTP + panel operator/wasit/dewan-juri selesai; PWA juri belum |
+| Fase 4 — Mesin Scoring Tanding | ✅ Selesai penuh |
 | Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
 | Fase 6 — Overlay Siaran vMix | ⬜ Belum dimulai |
@@ -562,7 +562,7 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T3.5 | Penjadwalan partai ke gelanggang + urutan tayang | ✅ `JadwalController` + `PenjadwalPartai`, deteksi bentrok antar-gelanggang |
 | T3.6 | Penugasan juri/wasit/dewan juri per partai | ✅ `AparatController`, jumlah juri mengikuti setelan peraturan |
 
-## EPIC 4 — Mesin Scoring Tanding (inti, paling berisiko) 🟡
+## EPIC 4 — Mesin Scoring Tanding (inti, paling berisiko) ✅
 
 | ID | Task | Status |
 |---|---|---|
@@ -570,7 +570,7 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T4.2 | `MatchTimer` — state babak server-authoritative + broadcast tick | 🟡 Timer selesai; broadcast per state-change (bukan tiap 250ms) — lihat catatan di Bagian 5 |
 | T4.3 | `ConsensusEvaluator` — window, ambang, juri distinct, dedup, penguncian transaksi | ✅ TDD, 8 test, menemukan bug presisi milidetik Eloquent |
 | T4.4 | Event & channel broadcast (private per gelanggang, public untuk live) | ✅ 5 event `ShouldBroadcastNow`, `ArenaChannelAuthorizer` |
-| T4.5 | PWA juri: papan tombol, manifest, service worker, wake lock, indikator koneksi | ⬜ |
+| T4.5 | PWA juri: papan tombol, manifest, service worker, wake lock, indikator koneksi | ✅ `silat.juri`, manifest per partai, `public/sw.js`, wake lock — dicoba nyata dengan `reverb:start` sungguhan |
 | T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ✅ `silat.operator`, verifikasi browser nyata |
 | T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ✅ `silat.wasit` — "hentikan" berarti jeda timer (partai.update); mengakhiri partai tetap wewenang operator/ketua (partai.manage) |
 | T4.8 | `TandingScoreCalculator` — skor per babak, hukuman, penentuan pemenang | ✅ |
@@ -782,11 +782,11 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [ ] ~~Broadcast tick ~250 ms~~ — **diganti sengaja**: broadcast per perubahan state timer (mulai/jeda/lanjut/selesai), klien hitung mundur sendiri dari `started_at`/`accumulated_ms`. Tick 250ms terus-menerus butuh proses latar yang hidup abadi, di luar cakupan siklus request/response. Didiskusikan dan disetujui user sebelum dikerjakan.
 - [x] Event broadcast: `JudgeInputReceived` (privat saja — identitas juri), `ScoreAwarded`, `PenaltyIssued`, `TimerTicked`, `MatchStateChanged` (privat + publik)
 - [x] Channel `arena.{id}` (private, klien minta `presence-arena.{id}`) dan `public-live.{arena}` (public, tanpa entri di channels.php — otomatis publik karena tidak berawalan private-/presence-)
-- [ ] PWA juri: manifest, service worker, ikon, fullscreen
-- [ ] Papan tombol juri: target sentuh nyaman satu tangan
-- [ ] Umpan balik instan saat tombol ditekan
-- [ ] Wake lock
-- [x] Indikator koneksi; putus → tombol nonaktif + indikator merah *(store Alpine `koneksi` + badge "Tersambung"/"Terputus" di ketiga panel; tombol juri sendiri menyusul PWA)*
+- [x] PWA juri: manifest per partai (`start_url` menunjuk balik ke partai itu), `public/sw.js` (cache-first hanya untuk `/build/` dan `/icons/`, tidak pernah menyentuh POST nilai), ikon SVG (tanpa alat rasterisasi PNG di lingkungan ini — target Android Chrome), fullscreen
+- [x] Papan tombol juri: `x-silat.tombol-nilai` (sudah ada sejak Fase 0b), grid 2×3 penuh layar
+- [x] Umpan balik instan saat tombol ditekan (`active:` CSS, tanpa menunggu balasan server)
+- [x] Wake lock — hidup di factory `partaiPanel` sendiri (`_kunciLayar()`), otomatis untuk keempat panel gelanggang
+- [x] Indikator koneksi; putus → tombol nonaktif + indikator merah — store Alpine `koneksi` + badge "Tersambung"/"Terputus" di keempat panel, dicoba nyata dengan `reverb:start` sungguhan
 - [x] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk — `silat.operator`, verifikasi klik nyata di browser (mulai/jeda/reset/selesaikan babak/akhiri)
 - [x] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan — `silat.wasit`, verifikasi klik nyata (hukuman ringan/sedang/berat, hitungan)
 - [x] Sanksi menyimpan sebab: tingkat pelanggaran + keterangan wasit (`violation_level`, `note`)
@@ -950,13 +950,13 @@ Dikerjakan atas permintaan langsung ("fase 4 dulu, mesin scoring Tanding"), dipe
   1. `ShouldBroadcastNow` bikin aksi GAGAL TOTAL begitu Reverb tidak terjangkau, padahal perubahan sudah tersimpan ke database duluan. Diperbaiki dengan `siarkan()`: tiap dispatch event dibungkus try/catch, dilaporkan lewat `report()` tapi tidak pernah menggagalkan respons. Ditutup test regresi yang memaksa driver ke `reverb` dengan host tak terjangkau.
   2. Tombol "mulai babak" salah menghitung target setelah direset — selalu `current_round+1` padahal seharusnya mengulang babak yang sama kalau statusnya `belum_mulai`.
   3. `x-ref` di elemen yang sama dengan `x-data`-nya sendiri ternyata TIDAK tercatat di `$refs` milik komponen induk (asumsi awal dari kebiasaan Alpine keliru) — timer macet di 00:00 selamanya. Diperbaiki dengan memindahkan interpolasi rAF langsung ke komponen induk, tanpa `x-data` bersarang.
+- **`fa068e0`** — PWA panel juri (Task #36), penutup Fase 4. Enam tombol besar (`x-silat.tombol-nilai`, sudah ada sejak Fase 0b), manifest per partai lewat controller (bukan berkas statis — `start_url` menunjuk balik ke partai yang dibuka), `public/sw.js` cache-first khusus berkas statis, wake lock. Verifikasi kali ini benar-benar menyalakan `reverb:start` di background supaya WebSocket nyata bisa dicoba (bukan cuma baca kode), dan menemukan bug lagi: halaman juri awalnya menyusun `x-data` lewat `{...partaiPanel(cfg), wakeLock: null, ...}` untuk menambahkan wake lock -- penyebaran objek mengevaluasi getter (`babakAktif`, `sudahSelesai`) SEKALI saat itu dan membekukannya jadi nilai statis, bukan menyalin definisi getter-nya. Label babak macet permanen di "menunggu wasit" walau pengiriman nilai sendiri tetap berhasil (bergantung properti biasa, bukan getter). Diperbaiki dengan memindahkan wake lock ke dalam factory `partaiPanel` sendiri dan menghapus pola spread sepenuhnya. Dicoba nyata: dua tab (operator + juri) tersambung bersamaan ke Reverb, keduanya "Tersambung", nilai terkirim dan diterima server.
 
-PWA juri (Task #36) belum dikerjakan — user memilih "Endpoint HTTP dulu saja" saat Fase 4 dimulai, lalu "lanjut panel operator, wasit, dewan-juri dulu" setelah HTTP selesai. PWA menyusul.
+Fase 4 (mesin scoring Tanding) **selesai penuh**: engine, broadcasting, HTTP, tiga panel gelanggang, PWA juri. Empat bug ditemukan lewat verifikasi manual sungguhan di browser (tiga di antaranya baru muncul setelah Reverb benar-benar dinyalakan) — tak satu pun akan tertangkap test HTTP murni.
 
 ---
 
 ## Yang Perlu Diputuskan / Menunggu User
 
 1. **Kredensial Midtrans sandbox** (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`) — untuk lanjut Fase 2b bagian pembayaran. Ini satu-satunya penghalang murni Fase 2b.
-2. **PWA juri** (Task #36) — satu-satunya bagian Fase 4 yang tersisa: papan tombol juri (manifest, service worker, wake lock, indikator koneksi). Endpoint HTTP (`nilai`) sudah ada dan teruji.
-3. **Arah setelah Fase 4 selesai total**: Fase 2b (Midtrans, menunggu kredensial), Fase 4b (VAR), Fase 5 (live score publik), Fase 7 (Jurus) — semuanya masih ⬜, belum ada urutan yang diputuskan user.
+2. **Arah lanjutan**: Fase 4 tuntas total. Sisa yang belum dimulai sama sekali: Fase 2b (Midtrans, menunggu kredensial), Fase 4b (VAR & keberatan), Fase 5 (live score publik & tunneling), Fase 6 (overlay vMix — butuh Fase 5 & mesin scoring, keduanya sudah siap), Fase 7 (kategori Jurus), Fase 8 (rekap & dokumen). Belum ada urutan yang diputuskan user.
