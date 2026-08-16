@@ -58,6 +58,11 @@ class Tournament extends Model
         return $this->hasMany(JurusEvent::class)->orderBy('sort_order');
     }
 
+    public function contingents(): HasMany
+    {
+        return $this->hasMany(Contingent::class);
+    }
+
     /**
      * Setelan peraturan yang berlaku, dijamin ada.
      *
