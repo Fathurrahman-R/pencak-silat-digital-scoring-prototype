@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\ResourceAction;
+use App\Http\Controllers\Admin\AparatController;
 use App\Http\Controllers\Admin\ArenaController;
 use App\Http\Controllers\Admin\AthleteController;
+use App\Http\Controllers\Admin\BracketController;
 use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -266,6 +269,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('gelanggang', ResourceAction::Create));
                     Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
+                });
+
+            /*
+             * Bagan dikunci secara sengaja tegas: menyusun dan menukar tempat
+             * hanya bisa selagi belum dikunci, dan membukanya kembali
+             * dianggap seberat menghapus — makanya dijaga aksi Delete, bukan
+             * Update seperti aksi biasa.
+             */
+            Route::controller(BracketController::class)
+                ->prefix('{tournament}/bagan')
+                ->name('bagan.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('bagan', ResourceAction::View));
+                    Route::post('/{weightClass}/susun', 'susun')->name('susun')->middleware('resource:'.rk('bagan', ResourceAction::Create));
+                    Route::get('/{weightClass}', 'show')->name('show')->middleware('resource:'.rk('bagan', ResourceAction::View));
+                    Route::post('/{weightClass}/tukar', 'tukar')->name('tukar')->middleware('resource:'.rk('bagan', ResourceAction::Update));
+                    Route::post('/{weightClass}/kunci', 'kunci')->name('kunci')->middleware('resource:'.rk('bagan', ResourceAction::Update));
+                    Route::post('/{weightClass}/buka-kunci', 'bukaKunci')->name('buka-kunci')->middleware('resource:'.rk('bagan', ResourceAction::Delete));
+                });
+
+            Route::controller(JadwalController::class)
+                ->prefix('{tournament}/jadwal')
+                ->name('jadwal.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('jadwal', ResourceAction::View));
+                    Route::post('/{match}/tetapkan', 'tetapkan')->name('tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                    Route::post('/{match}/lepas', 'lepas')->name('lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                    Route::post('/{match}/urutkan', 'urutkan')->name('urutkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                });
+
+            Route::controller(AparatController::class)
+                ->prefix('{tournament}/partai/{match}/aparat')
+                ->name('partai.aparat.')
+                ->group(function () {
+                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::View));
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
                 });
         });
 

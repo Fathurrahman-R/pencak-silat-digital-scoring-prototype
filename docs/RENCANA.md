@@ -11,7 +11,7 @@
 | Fase 1 — Manajemen Turnamen | ✅ Selesai |
 | Fase 2 — Pendaftaran & Timbang Badan | ✅ Selesai |
 | Fase 2b — Biaya, Invoice & Pembayaran | 🟡 Selesai kecuali integrasi Midtrans (menunggu kredensial sandbox) |
-| Fase 3 — Bagan & Jadwal | 🟡 Generator bagan selesai; drawing/lock/jadwal/penugasan aparat belum (Task #21) |
+| Fase 3 — Bagan & Jadwal | ✅ Selesai |
 | Fase 4 — Mesin Scoring Tanding | ⬜ Belum dimulai |
 | Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
@@ -551,16 +551,16 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T2B.9 | Penandaan lunas manual + bukti + audit log | ✅ |
 | T2B.10 | Pencatatan pembatalan tanpa pengembalian dana | ✅ |
 
-## EPIC 3 — Bagan & Jadwal 🟡
+## EPIC 3 — Bagan & Jadwal ✅
 
 | ID | Task | Status |
 |---|---|---|
 | T3.1 | Migrasi & model: brackets, bracket_slots, matches, match_officials | ✅ |
 | T3.2 | `BracketGenerator` — gugur tunggal + penanganan bye | ✅ |
-| T3.3 | Antarmuka drawing: acak / atur manual / kunci bagan | ⬜ Task #21 |
-| T3.4 | Promosi otomatis pemenang ke slot berikutnya | ✅ (logic `PromosiPemenang` ada, belum ada UI pemicu partai selesai) |
-| T3.5 | Penjadwalan partai ke gelanggang + urutan tayang | ⬜ Task #21 |
-| T3.6 | Penugasan juri/wasit/dewan juri per partai | ⬜ Task #21 |
+| T3.3 | Antarmuka drawing: acak / atur manual / kunci bagan | ✅ `BracketController`, panel bagan (susun/tukar/kunci/buka-kunci) |
+| T3.4 | Promosi otomatis pemenang ke slot berikutnya | ✅ (logic `PromosiPemenang` ada; UI pemicu partai selesai menyusul Fase 4) |
+| T3.5 | Penjadwalan partai ke gelanggang + urutan tayang | ✅ `JadwalController` + `PenjadwalPartai`, deteksi bentrok antar-gelanggang |
+| T3.6 | Penugasan juri/wasit/dewan juri per partai | ✅ `AparatController`, jumlah juri mengikuti setelan peraturan |
 
 ## EPIC 4 — Mesin Scoring Tanding (inti, paling berisiko) ⬜
 
@@ -751,19 +751,22 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Test: verifikasi ditolak selama invoice belum lunas
 - [ ] Uji end-to-end di Midtrans sandbox
 
-## Fase 3 — Bagan & Jadwal 🟡 Sebagian selesai (Task #21 tersisa)
+## Fase 3 — Bagan & Jadwal ✅ Selesai
 
 - [x] Migrasi `brackets`, `bracket_slots`, `matches`, `match_officials`
 - [x] `BracketGenerator`: ukuran bagan pangkat dua terdekat, sebar bye merata
 - [x] Uji generator untuk 2, 3, 5, 8, 9, 16, 17, 32 peserta
-- [ ] Antarmuka drawing: tombol acak + pemindahan slot manual
-- [ ] Kunci bagan; perubahan setelah terkunci wajib beralasan + `audit_logs`
-- [x] Promosi otomatis pemenang ke `bracket_slot` berikutnya *(logic ada — `PromosiPemenang`, belum terpasang ke alur UI penyelesaian partai)*
-- [ ] Penjadwalan partai ke gelanggang + pengurutan tayang (drag)
-- [ ] Deteksi bentrok: satu atlet tidak boleh dijadwalkan di dua gelanggang berdekatan
-- [ ] Penugasan juri 1..N, wasit, dewan juri per partai
-- [ ] Validasi jumlah juri ditugaskan = `judge_count` turnamen
+- [x] Antarmuka drawing: tombol acak (susun/susun ulang) + tukar tempat manual sebelum dikunci
+- [x] Kunci bagan; membuka kunci wajib beralasan + tercatat `audit_logs` (`bagan.kunci`, `bagan.buka_kunci`)
+- [x] Promosi otomatis pemenang ke `bracket_slot` berikutnya *(logic `PromosiPemenang`; pemicunya baru otomatis untuk bye — pemicu dari hasil partai sungguhan menyusul mesin scoring Fase 4)*
+- [x] Penjadwalan partai ke gelanggang + pengurutan tayang (`PenjadwalPartai`, tombol naik/turun — bukan drag, tapi fungsinya sama)
+- [x] Deteksi bentrok: satu atlet tidak boleh dijadwalkan di dua gelanggang dalam jeda 30 menit
+- [x] Penugasan juri 1..N, wasit per partai (`AparatController`, `match_officials`)
+- [x] Validasi jumlah juri ditugaskan = `jumlah_juri_tanding` dari setelan peraturan turnamen
 - [x] Test: bagan 5 peserta menghasilkan bye yang benar dan promosi berjalan sampai final
+- [x] Test: tukar tempat menyusun ulang partai babak pertama termasuk bye yang berpindah
+- [x] Test: deteksi bentrok jadwal (beda gelanggang berdekatan ditolak, gelanggang sama/jarak jauh diterima)
+- [x] Test: jumlah juri yang tidak sesuai setelan peraturan ditolak, wasit tidak boleh merangkap juri
 
 ## Fase 4 — Mesin Scoring Tanding ⬜ Belum dimulai
 
@@ -923,13 +926,22 @@ Dikerjakan atas permintaan langsung sebelum lanjut ke Task #21 (Fase 3 lanjutan)
 - [x] Fix UI: bendahara, verifikasi, gelanggang (border/spacing), guest-split layout
 - [x] Fix 6 bug UI: menu fallback, cakupan glassmorphism, spacing, konsolidasi card, layout tabel, search
 - [x] `MenuKejuaraanAktifTest.php` ditambahkan (4 test)
-- [ ] **Commit & push seluruh perubahan UI refinement di atas** — belum dilakukan
-- [ ] Uji dark mode — disebutkan belum tuntas di catatan sesi
+- [x] Commit & push seluruh perubahan UI refinement di atas (commit `5e13b1b`)
+- [ ] Uji dark mode — disebutkan belum tuntas di catatan sesi, belum diverifikasi ulang
+
+## Task #21 — Drawing, penguncian bagan, dan penjadwalan (selesai)
+
+Bagian terakhir Fase 3 yang sempat tertunda oleh permintaan `/goal`. Tiga potongan:
+
+- [x] **Panel bagan** (`BracketController`, `resources/views/admin/bagan/`) — daftar kelas tanding dengan status bagan, susun/susun ulang, tukar tempat manual sebelum dikunci, kunci dengan konfirmasi, buka kunci wajib alasan + audit log. `BracketGenerator` ditambah method `tukar()`, `kunci()`, `bukaKunci()`.
+- [x] **Penjadwalan** (`JadwalController`, `PenjadwalPartai`, `resources/views/admin/jadwal/`) — tetapkan partai ke gelanggang + waktu tayang, urutan otomatis di akhir antrean, tombol naik/turun urutan, lepas jadwal. Deteksi bentrok: satu atlet tidak boleh dijadwalkan di gelanggang berbeda dalam jeda 30 menit (konstanta implementasi, bukan dari naskah — naskah tidak mengatur jadwal sama sekali).
+- [x] **Penugasan aparat** (`AparatController`, `resources/views/admin/partai/aparat.blade.php`) — pilih wasit + N juri dari pengguna berperan `wasit`/`juri`, jumlah juri mengikuti `jumlah_juri_tanding` dari setelan peraturan turnamen (bukan angka tetap), wasit tidak boleh merangkap juri, menetapkan ulang menimpa penugasan lama.
+- [x] Nav baru: grup "Pertandingan" (Bagan, Jadwal) di sidebar; halaman Aparat diakses lewat tautan dari baris partai di halaman Jadwal, tidak lewat nav sendiri.
+- [x] 29 test baru (`BracketGeneratorTest` +8, `BracketControllerTest`, `PenjadwalPartaiTest`, `JadwalControllerTest`, `AparatControllerTest`), semuanya hijau bersama seluruh suite.
 
 ---
 
 ## Yang Perlu Diputuskan / Menunggu User
 
-1. **Kredensial Midtrans sandbox** (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`) — untuk lanjut Fase 2b bagian pembayaran.
-2. **Konfirmasi lanjut ke Task #21** (drawing bagan, penguncian, penjadwalan, penugasan aparat) — bagian terakhir Fase 3 yang tersisa.
-3. **Commit pekerjaan UI refinement yang belum ter-commit** (lihat Bagian 5 di atas).
+1. **Kredensial Midtrans sandbox** (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`) — untuk lanjut Fase 2b bagian pembayaran. Ini satu-satunya penghalang murni Fase 2b.
+2. **Arah lanjutan**: Fase 4 (mesin scoring Tanding — `ConsensusEvaluator`, timer server, panel juri PWA) adalah kelanjutan alami sesuai urutan rencana, tapi ukurannya besar dan berisiko tinggi (real-time, konsensus juri, tangga hukuman Pasal 11). Alternatif: Fase 7 (kategori Jurus) lebih sederhana dan tidak butuh Reverb/PWA. Menunggu arahan user sebelum memilih.

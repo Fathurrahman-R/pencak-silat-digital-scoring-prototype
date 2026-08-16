@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Arena extends Model
 {
@@ -29,6 +30,11 @@ class Arena extends Model
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(SilatMatch::class);
     }
 
     public function scopeAktif(Builder $query): Builder

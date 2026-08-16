@@ -6,6 +6,7 @@ use App\Enums\StatusPendaftaran;
 use App\Models\Bracket;
 use App\Models\Registration;
 use App\Models\SilatMatch;
+use App\Models\User;
 use App\Models\WeightClass;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,72 @@ class BracketGenerator
 
             return $bracket->refresh();
         });
+    }
+
+    /**
+     * Menukar isi dua tempat pada babak pertama.
+     *
+     * Dipakai antarmuka undian untuk koreksi manual sebelum bagan dikunci.
+     * Menukar isi tempat saja tidak cukup — babak pertama dan bye yang sudah
+     * terlanjur diluluskan ikut disusun ulang dari susunan tempat yang baru,
+     * supaya keduanya tidak pernah berbeda dari yang ditampilkan panitia.
+     */
+    public function tukar(Bracket $bracket, int $posisiA, int $posisiB): Bracket
+    {
+        if ($bracket->terkunci()) {
+            throw new RuntimeException(
+                "Bagan {$bracket->weightClass->name} sudah dikunci dan tidak bisa diubah.",
+            );
+        }
+
+        if ($posisiA === $posisiB) {
+            throw new RuntimeException('Pilih dua tempat yang berbeda untuk ditukar.');
+        }
+
+        return DB::transaction(function () use ($bracket, $posisiA, $posisiB) {
+            $slotA = $bracket->slots()->where('position', $posisiA)->firstOrFail();
+            $slotB = $bracket->slots()->where('position', $posisiB)->firstOrFail();
+
+            [$isiA, $isiB] = [$slotA->registration_id, $slotB->registration_id];
+
+            // Dilepas dulu supaya tidak sempat bentrok dengan batasan unik
+            // (bracket_id, registration_id) saat kedua tempat ditukar.
+            $slotA->update(['registration_id' => null]);
+            $slotB->update(['registration_id' => null]);
+            $slotA->update(['registration_id' => $isiB]);
+            $slotB->update(['registration_id' => $isiA]);
+
+            $bracket->matches()->delete();
+            $this->susunPartai($bracket);
+
+            return $bracket->refresh();
+        });
+    }
+
+    /** Mengunci bagan. Susunannya tidak bisa disusun ulang maupun ditukar lagi setelah ini. */
+    public function kunci(Bracket $bracket, User $user): Bracket
+    {
+        if ($bracket->terkunci()) {
+            throw new RuntimeException("Bagan {$bracket->weightClass->name} sudah dikunci.");
+        }
+
+        $bracket->update(['locked_at' => now(), 'locked_by' => $user->id]);
+
+        return $bracket->refresh();
+    }
+
+    /**
+     * Membuka kunci bagan.
+     *
+     * Bukan operasi rutin — pemanggilnya (panel bagan) mewajibkan alasan dan
+     * mencatatnya ke jejak audit, karena bagan yang bergeser setelah diumumkan
+     * berarti kontingen sempat menyiapkan lawan yang keliru.
+     */
+    public function bukaKunci(Bracket $bracket): Bracket
+    {
+        $bracket->update(['locked_at' => null, 'locked_by' => null]);
+
+        return $bracket->refresh();
     }
 
     /**

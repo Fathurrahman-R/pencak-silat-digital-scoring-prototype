@@ -10,6 +10,7 @@ use App\Models\Contingent;
 use App\Models\Registration;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Models\User;
 use App\Support\Bagan\BracketGenerator;
 use App\Support\Bagan\PromosiPemenang;
 
@@ -214,4 +215,98 @@ it('menempatkan tiap peserta tepat sekali di bagan', function () {
 
     expect($terpakai)->toHaveCount(7)
         ->and($terpakai->unique())->toHaveCount(7);
+});
+
+it('menukar isi dua tempat dan menyusun ulang partai babak pertama', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas, acak: false);
+    $slot1 = $bracket->slots()->where('position', 1)->firstOrFail()->registration_id;
+    $slot2 = $bracket->slots()->where('position', 2)->firstOrFail()->registration_id;
+
+    $ditukar = $this->generator->tukar($bracket, 1, 2);
+
+    expect($ditukar->slots()->where('position', 1)->firstOrFail()->registration_id)->toBe($slot2)
+        ->and($ditukar->slots()->where('position', 2)->firstOrFail()->registration_id)->toBe($slot1);
+
+    $partaiSatu = $ditukar->matches()->where('round', 1)->where('position', 1)->firstOrFail();
+
+    expect($partaiSatu->red_registration_id)->toBe($slot2)
+        ->and($partaiSatu->blue_registration_id)->toBe($slot1);
+});
+
+/*
+ * Menukar tempat bisa mengubah siapa yang bye. Partai babak pertama harus
+ * ikut disusun ulang, bukan sekadar bertukar isi sudut merah/birunya —
+ * kalau tidak, peserta yang lawannya sekarang bye akan tetap menunggu
+ * partai yang tidak akan pernah dipertandingkan.
+ */
+it('meluluskan bye yang baru muncul setelah tempatnya ditukar', function () {
+    pesertaSah($this->kontingen, $this->kelas, 3);
+
+    $bracket = $this->generator->untukKelas($this->kelas, acak: false);
+
+    // Tempat 2 selalu kosong (bye) pada bagan 3 peserta ukuran 4 — pasangannya
+    // adalah tempat 1. Tukar tempat 1 dengan tempat 4 supaya yang sekarang
+    // bye adalah peserta yang tadinya di tempat 4, bukan yang di tempat 1.
+    $isiTempat4 = $bracket->slots()->where('position', 4)->firstOrFail()->registration_id;
+
+    $ditukar = $this->generator->tukar($bracket, 1, 4);
+
+    $partaiSatu = $ditukar->matches()->where('round', 1)->where('position', 1)->firstOrFail();
+
+    expect($partaiSatu->bye())->toBeTrue()
+        ->and($partaiSatu->status)->toBe(SilatMatch::STATUS_SELESAI)
+        ->and($partaiSatu->winner_registration_id)->toBe($isiTempat4);
+});
+
+it('menolak menukar tempat pada bagan yang sudah dikunci', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas);
+    $bracket->update(['locked_at' => now()]);
+
+    $this->generator->tukar($bracket, 1, 2);
+})->throws(RuntimeException::class, 'sudah dikunci');
+
+it('menolak menukar tempat yang sama', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas);
+
+    $this->generator->tukar($bracket, 1, 1);
+})->throws(RuntimeException::class, 'berbeda');
+
+it('mengunci bagan beserta penguncinya', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas);
+    $user = User::factory()->create();
+
+    $dikunci = $this->generator->kunci($bracket, $user);
+
+    expect($dikunci->terkunci())->toBeTrue()
+        ->and($dikunci->locked_by)->toBe($user->id);
+});
+
+it('menolak mengunci bagan yang sudah terkunci', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas);
+    $user = User::factory()->create();
+
+    $this->generator->kunci($bracket, $user);
+    $this->generator->kunci($bracket, $user);
+})->throws(RuntimeException::class, 'sudah dikunci');
+
+it('membuka kunci bagan yang sudah terkunci', function () {
+    pesertaSah($this->kontingen, $this->kelas, 4);
+
+    $bracket = $this->generator->untukKelas($this->kelas);
+    $this->generator->kunci($bracket, User::factory()->create());
+
+    $dibuka = $this->generator->bukaKunci($bracket);
+
+    expect($dibuka->terkunci())->toBeFalse()
+        ->and($dibuka->locked_by)->toBeNull();
 });

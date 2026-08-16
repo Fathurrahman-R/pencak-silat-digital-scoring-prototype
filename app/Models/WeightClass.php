@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WeightClass extends Model
 {
@@ -43,6 +44,11 @@ class WeightClass extends Model
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
+    }
+
+    public function bracket(): HasOne
+    {
+        return $this->hasOne(Bracket::class);
     }
 
     /**

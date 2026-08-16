@@ -111,6 +111,28 @@ return [
     ],
 
     [
+        'label' => 'Pertandingan',
+        'icon' => 'network',
+        'butuh_turnamen' => true,
+        'children' => [
+            [
+                'label' => 'Bagan',
+                'route' => 'admin.turnamen.bagan.index',
+                'butuh_turnamen' => true,
+                'resource' => rk('bagan', ResourceAction::View),
+                'active' => 'admin/turnamen/*/bagan*',
+            ],
+            [
+                'label' => 'Jadwal',
+                'route' => 'admin.turnamen.jadwal.index',
+                'butuh_turnamen' => true,
+                'resource' => rk('jadwal', ResourceAction::View),
+                'active' => 'admin/turnamen/*/jadwal*',
+            ],
+        ],
+    ],
+
+    [
         'label' => 'Keuangan',
         'icon' => 'wallet',
         'butuh_turnamen' => true,
