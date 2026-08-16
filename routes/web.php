@@ -321,6 +321,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('partai.')
                 ->group(function () {
                     Route::get('/', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::View));
+                    Route::get('/operator', 'operator')->name('operator')->middleware('resource:'.rk('partai', ResourceAction::View));
+                    Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
+                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
 
                     Route::post('/timer/mulai', 'mulaiBabak')->name('timer.mulai')->middleware('resource:'.rk('partai', ResourceAction::Update));
                     Route::post('/timer/jeda', 'jeda')->name('timer.jeda')->middleware('resource:'.rk('partai', ResourceAction::Update));

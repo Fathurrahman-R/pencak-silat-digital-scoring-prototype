@@ -46,6 +46,27 @@
                             </x-ui.button>
                         @endresource
 
+                        @resource(rk('partai', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.partai.operator', [$tournament, $partai])"
+                                         variant="secondary" size="xs">
+                                Operator
+                            </x-ui.button>
+                        @endresource
+
+                        @resource(rk('hukuman', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.partai.wasit', [$tournament, $partai])"
+                                         variant="secondary" size="xs">
+                                Wasit
+                            </x-ui.button>
+                        @endresource
+
+                        @resource(rk('hasil-partai', ResourceAction::View))
+                            <x-ui.button :href="route('admin.turnamen.partai.dewan-juri', [$tournament, $partai])"
+                                         variant="secondary" size="xs">
+                                Dewan juri
+                            </x-ui.button>
+                        @endresource
+
                         @resource(rk('jadwal', ResourceAction::Assign))
                             <div class="flex gap-1">
                                 <form method="POST" action="{{ route('admin.turnamen.jadwal.urutkan', [$tournament, $partai]) }}">

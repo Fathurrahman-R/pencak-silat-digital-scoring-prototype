@@ -226,6 +226,64 @@ it('wasit tidak boleh membatalkan nilai -- itu wewenang dewan juri', function ()
         ->assertForbidden();
 });
 
+it('menyertakan hitungan teguran dan setelan peraturan di state', function () {
+    $this->actingAs($this->operator)
+        ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertJsonPath('hukuman.merah.teguran', 0)
+        ->assertJsonPath('peraturan.jumlah_juri', 3)
+        ->assertJsonPath('peraturan.ambang_sepakat', 2);
+});
+
+it('membalas JSON tipis alih-alih redirect saat panel meminta JSON', function () {
+    $this->actingAs($this->operator)
+        ->postJson(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
+        ->assertOk()
+        ->assertJson(['tipe' => 'success']);
+});
+
+it('membalas galat validasi sebagai JSON saat panel meminta JSON', function () {
+    $this->actingAs($this->operator)
+        ->postJson(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('babak');
+});
+
+it('menyertakan riwayat nilai dan hukuman untuk panel dewan juri', function () {
+    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->wasit)->post(route('admin.turnamen.partai.hukuman', [$this->tournament, $this->match]), [
+        'babak' => 1, 'corner' => 'blue', 'tingkat' => 'berat',
+    ]);
+
+    $response = $this->actingAs($this->operator)
+        ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk();
+
+    $riwayat = $response->json('riwayat');
+    expect($riwayat)->toHaveCount(1)
+        ->and($riwayat[0]['tipe'])->toBe('hukuman')
+        ->and($riwayat[0]['corner'])->toBe('blue');
+});
+
+it('tetap menyimpan aksi ke database walau server Reverb tidak terjangkau', function () {
+    // Ditemukan lewat verifikasi manual di browser: sebelum diperbaiki, aksi
+    // yang berhasil di database ikut gagal total begitu ShouldBroadcastNow
+    // tidak bisa menjangkau Reverb -- gelanggang berhenti bekerja hanya
+    // karena siaran realtimenya putus, padahal skor semestinya tetap sah
+    // dicatat lokal. config() dipaksa ke 'reverb' dengan kredensial asli dari
+    // .env supaya tanda tangan permintaannya valid, tapi host-nya tidak ada
+    // server yang menyala di sana sehingga panggilannya betul-betul gagal.
+    config(['broadcasting.default' => 'reverb']);
+
+    $this->actingAs($this->operator)
+        ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($this->match->fresh()->current_round)->toBe(1)
+        ->and($this->match->fresh()->status)->toBe(SilatMatch::STATUS_BERLANGSUNG);
+});
+
 it('menolak state partai yang bukan milik kejuaraan di alamat', function () {
     $turnamenLain = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($turnamenLain);
