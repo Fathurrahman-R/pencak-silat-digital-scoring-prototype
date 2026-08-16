@@ -12,7 +12,7 @@
 | Fase 2 — Pendaftaran & Timbang Badan | ✅ Selesai |
 | Fase 2b — Biaya, Invoice & Pembayaran | 🟡 Selesai kecuali integrasi Midtrans (menunggu kredensial sandbox) |
 | Fase 3 — Bagan & Jadwal | ✅ Selesai |
-| Fase 4 — Mesin Scoring Tanding | 🟡 Engine + broadcasting + HTTP selesai; panel operator/wasit/dewan-juri dan PWA juri belum |
+| Fase 4 — Mesin Scoring Tanding | 🟡 Engine + broadcasting + HTTP + panel operator/wasit/dewan-juri selesai; PWA juri belum |
 | Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
 | Fase 6 — Overlay Siaran vMix | ⬜ Belum dimulai |
@@ -571,10 +571,10 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T4.3 | `ConsensusEvaluator` — window, ambang, juri distinct, dedup, penguncian transaksi | ✅ TDD, 8 test, menemukan bug presisi milidetik Eloquent |
 | T4.4 | Event & channel broadcast (private per gelanggang, public untuk live) | ✅ 5 event `ShouldBroadcastNow`, `ArenaChannelAuthorizer` |
 | T4.5 | PWA juri: papan tombol, manifest, service worker, wake lock, indikator koneksi | ⬜ |
-| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ⬜ Endpoint HTTP-nya sudah ada, halaman Blade-nya belum |
-| T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ⬜ Endpoint HTTP-nya sudah ada, halaman Blade-nya belum |
+| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ✅ `silat.operator`, verifikasi browser nyata |
+| T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ✅ `silat.wasit` — "hentikan" berarti jeda timer (partai.update); mengakhiri partai tetap wewenang operator/ketua (partai.manage) |
 | T4.8 | `TandingScoreCalculator` — skor per babak, hukuman, penentuan pemenang | ✅ |
-| T4.9 | Panel dewan juri: verifikasi, koreksi bernotulen, pengesahan hasil | ⬜ Endpoint HTTP-nya sudah ada (sahkan, batal nilai/hukuman), halaman Blade-nya belum |
+| T4.9 | Panel dewan juri: verifikasi, koreksi bernotulen, pengesahan hasil | ✅ `silat.dewan-juri` — riwayat nilai/hukuman + pembatalan beralasan + sahkan |
 | T4.10 | Resync state penuh saat reconnect untuk semua panel | ✅ `GET .../partai/{match}` |
 | T4.11 | Tangga hukuman Pasal 11 | ✅ |
 | T4.12 | Hitungan teknik | ✅ |
@@ -786,9 +786,9 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [ ] Papan tombol juri: target sentuh nyaman satu tangan
 - [ ] Umpan balik instan saat tombol ditekan
 - [ ] Wake lock
-- [ ] Indikator koneksi; putus → tombol nonaktif + indikator merah
-- [ ] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk *(endpoint HTTP sudah ada — `timer.mulai/jeda/lanjut/reset/selesai-babak`, `akhiri`)*
-- [ ] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan *(endpoint HTTP sudah ada — `hukuman`, `hitungan`)*
+- [x] Indikator koneksi; putus → tombol nonaktif + indikator merah *(store Alpine `koneksi` + badge "Tersambung"/"Terputus" di ketiga panel; tombol juri sendiri menyusul PWA)*
+- [x] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk — `silat.operator`, verifikasi klik nyata di browser (mulai/jeda/reset/selesaikan babak/akhiri)
+- [x] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan — `silat.wasit`, verifikasi klik nyata (hukuman ringan/sedang/berat, hitungan)
 - [x] Sanksi menyimpan sebab: tingkat pelanggaran + keterangan wasit (`violation_level`, `note`)
 - [x] Peringatan (`penalties.tier=peringatan`) berlaku sepanjang partai, tidak pernah reset antar babak
 - [x] Pembinaan akumulatif tanpa bedakan jenis pelanggaran (reset hanya saat memicu eskalasi ke Teguran)
@@ -806,10 +806,10 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Test: Peringatan III → diskualifikasi & akhiri partai
 - [x] Penyelesaian partai dengan sebab khusus lewat endpoint `akhiri` (angka/teknik/mutlak/wmp/undur_diri/cedera/wo); diskualifikasi otomatis lewat tangga hukuman/hitungan teknik
 - [x] `TandingScoreCalculator`
-- [ ] Panel dewan juri: tinjau, koreksi via baris pembatal + alasan, sahkan hasil *(endpoint HTTP sudah ada — `sahkan`, `nilai.batal`, `hukuman.batal`; halaman Blade belum)*
+- [x] Panel dewan juri: tinjau, koreksi via baris pembatal + alasan, sahkan hasil — `silat.dewan-juri`, riwayat gabungan nilai+hukuman, verifikasi klik nyata (batalkan sanksi, dot padam)
 - [x] Endpoint `GET .../partai/{match}` untuk resync (bukan `/api/match/{id}/state` — mengikuti pola route admin yang sudah ada, bukan API terpisah)
-- [ ] Semua panel resync tiap Echo tersambung kembali *(menunggu panel dibangun)*
-- [x] Test: partai penuh 1 babak dari mulai sampai diakhiri dan disahkan → status dan skor benar (lewat `PartaiScoringControllerTest`, 16 test end-to-end HTTP)
+- [x] Semua panel resync penuh tiap aksi sukses (bukan menunggu Echo) dan tiap event Reverb diterima — lihat catatan bug #1 dan #3 di ringkasan Fase 4 di bawah
+- [x] Test: partai penuh 1 babak dari mulai sampai diakhiri dan disahkan → status dan skor benar (lewat `PartaiScoringControllerTest`, 21 test end-to-end HTTP + 6 test halaman panel)
 
 ## Fase 4b — VAR & Pengajuan Keberatan ⬜ Belum dimulai
 
@@ -946,12 +946,17 @@ Dikerjakan atas permintaan langsung ("fase 4 dulu, mesin scoring Tanding"), dipe
 
 - **`ee0a37c`** — Engine murni: 6 kelas domain di `App\Support\Scoring` (ConsensusEvaluator, MatchTimer, TanggaHukuman, HitunganTeknik, TandingScoreCalculator, plus CatatInputJuri di commit berikutnya), 6 enum, 4 model baru, 5 migrasi. TDD penuh — test ditulis sebelum implementasi untuk ConsensusEvaluator, menemukan bug nyata (presisi milidetik Eloquent, lihat di atas).
 - **`d01710f`** — Lapisan pengiriman: 5 event broadcast, `ArenaChannelAuthorizer`, `PartaiScoringController` dengan 11 endpoint (resync + timer + nilai + hukuman + hitungan + akhiri + sahkan + 2 pembatalan). Sempat berhenti sebentar untuk konfirmasi user soal keputusan TimerTicked (lihat catatan di atas) sebelum lanjut.
+- **`d5e894e`** — Panel operator, wasit, dewan juri (Task #35). Satu factory Alpine (`partaiPanel`) dipakai ketiganya, tombol beda per panel diatur `@resource` di Bladenya, bukan tiga factory terpisah. Verifikasi lewat klik nyata di browser (bukan cuma baca kode) menemukan dan memperbaiki tiga bug yang test HTTP murni tidak akan pernah menangkap:
+  1. `ShouldBroadcastNow` bikin aksi GAGAL TOTAL begitu Reverb tidak terjangkau, padahal perubahan sudah tersimpan ke database duluan. Diperbaiki dengan `siarkan()`: tiap dispatch event dibungkus try/catch, dilaporkan lewat `report()` tapi tidak pernah menggagalkan respons. Ditutup test regresi yang memaksa driver ke `reverb` dengan host tak terjangkau.
+  2. Tombol "mulai babak" salah menghitung target setelah direset — selalu `current_round+1` padahal seharusnya mengulang babak yang sama kalau statusnya `belum_mulai`.
+  3. `x-ref` di elemen yang sama dengan `x-data`-nya sendiri ternyata TIDAK tercatat di `$refs` milik komponen induk (asumsi awal dari kebiasaan Alpine keliru) — timer macet di 00:00 selamanya. Diperbaiki dengan memindahkan interpolasi rAF langsung ke komponen induk, tanpa `x-data` bersarang.
 
-User diberi pilihan lanjut sekaligus / HTTP dulu / berhenti setelah engine selesai — memilih **"Endpoint HTTP dulu saja"**, jadi panel Blade (operator/wasit/dewan juri) dan PWA juri (Task #35, #36) sengaja belum dikerjakan.
+PWA juri (Task #36) belum dikerjakan — user memilih "Endpoint HTTP dulu saja" saat Fase 4 dimulai, lalu "lanjut panel operator, wasit, dewan-juri dulu" setelah HTTP selesai. PWA menyusul.
 
 ---
 
 ## Yang Perlu Diputuskan / Menunggu User
 
 1. **Kredensial Midtrans sandbox** (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`) — untuk lanjut Fase 2b bagian pembayaran. Ini satu-satunya penghalang murni Fase 2b.
-2. **Lanjut ke panel operator/wasit/dewan-juri dan PWA juri** (Task #35, #36) — endpoint HTTP-nya sudah lengkap dan teruji, tinggal antarmukanya. Ini pekerjaan besar lagi (real-time Echo, desain gelanggang, PWA), menunggu konfirmasi user untuk mulai.
+2. **PWA juri** (Task #36) — satu-satunya bagian Fase 4 yang tersisa: papan tombol juri (manifest, service worker, wake lock, indikator koneksi). Endpoint HTTP (`nilai`) sudah ada dan teruji.
+3. **Arah setelah Fase 4 selesai total**: Fase 2b (Midtrans, menunggu kredensial), Fase 4b (VAR), Fase 5 (live score publik), Fase 7 (Jurus) — semuanya masih ⬜, belum ada urutan yang diputuskan user.
