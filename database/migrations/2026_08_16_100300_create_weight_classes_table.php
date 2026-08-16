@@ -35,12 +35,30 @@ return new class extends Migration
              * Batas berat dalam kilogram, satu angka di belakang koma
              * mengikuti ketelitian timbangan yang dipakai.
              *
-             * Batas bawah kelas terendah dan batas atas kelas tertinggi boleh
-             * kosong, karena naskah menuliskannya sebagai "sampai dengan" dan
-             * "di atas" tanpa ujung.
+             * Kosong berarti tanpa ujung: kelas terendah tidak punya batas
+             * bawah, kelas tertinggi tidak punya batas atas.
              */
             $table->decimal('weight_min', 5, 1)->nullable();
             $table->decimal('weight_max', 5, 1)->nullable();
+
+            /*
+             * Naskah memakai tiga rumusan yang inklusivitasnya berbeda-beda,
+             * dan perbedaan itu menentukan kelas mana yang menerima atlet yang
+             * beratnya jatuh persis di angka batas:
+             *
+             *   "Diatas 43 kg sampai 47 kg"  batas bawah eksklusif, atas inklusif
+             *   "39 kg sampai 43 kg"         kedua batas inklusif
+             *   "Dibawah 39 kg"              batas atas eksklusif
+             *
+             * Tanpa kedua penanda ini, kelas Remaja "Dibawah 39 kg" dan kelas A
+             * "39 kg sampai 43 kg" akan sama-sama mengaku memuat atlet 39,0 kg,
+             * sementara kelas terendah Usia Dini 2 "26 kg sampai 28 kg" justru
+             * menolak atlet 26,0 kg yang seharusnya diterimanya.
+             *
+             * Bawaannya mengikuti rumusan yang paling sering dipakai naskah.
+             */
+            $table->boolean('weight_min_exclusive')->default(true);
+            $table->boolean('weight_max_inclusive')->default(true);
 
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
