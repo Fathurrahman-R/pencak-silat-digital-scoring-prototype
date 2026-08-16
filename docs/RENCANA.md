@@ -15,7 +15,7 @@
 | Fase 4 — Mesin Scoring Tanding | ✅ Selesai penuh |
 | Fase 4b — VAR & Keberatan | ⬜ Belum dimulai |
 | Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
-| Fase 6 — Overlay Siaran vMix | ⬜ Belum dimulai |
+| Fase 6 — Overlay Siaran vMix | 🟡 Selesai kecuali uji nyata vMix Pro (T6.8, butuh perangkat lunak vMix sungguhan) |
 | Fase 7 — Kategori Jurus | ⬜ Belum dimulai |
 | Fase 8 — Rekap, Laporan, Dokumen | ⬜ Belum dimulai |
 
@@ -602,18 +602,18 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T5.5 | Konfigurasi reverse proxy + tunnel, allowlist path | ⬜ |
 | T5.6 | Uji penetrasi ringan dari jaringan luar | ⬜ |
 
-## EPIC 6 — Overlay Siaran vMix ⬜
+## EPIC 6 — Overlay Siaran vMix 🟡
 
 | ID | Task | Status |
 |---|---|---|
-| T6.1 | Route group `/overlay/*` + middleware `AllowLocalNetworkOnly` | ⬜ |
-| T6.2 | `overlay/connection.js` — Echo, reconnect backoff, resync | ⬜ |
-| T6.3 | Halaman scorebug (Overlay 1) | ⬜ |
-| T6.4 | Halaman lower third profil atlet (Overlay 2) | ⬜ |
-| T6.5 | Halaman rincian nilai & hukuman + kilatan (Overlay 3) | ⬜ |
-| T6.6 | Halaman papan hasil (Overlay 4) | ⬜ |
-| T6.7 | Halaman bagan & rekap medali antar partai | ⬜ |
-| T6.8 | Uji nyata di vMix Pro | ⬜ |
+| T6.1 | Route group `/overlay/*` + middleware `AllowLocalNetworkOnly` | ✅ CIDR via `config/overlay.php` + `OVERLAY_ALLOWED_CIDRS`, terdaftar lewat `then:` closure di `bootstrap/app.php` (bukan `routes/web.php`, supaya tidak pernah lewat middleware `auth`) |
+| T6.2 | `overlay/connection.js` — Echo, reconnect backoff, resync | ✅ Alpine factory `overlayLive`, channel publik `public-live.{arena}` (bukan presence — Browser Input vMix tidak bisa login), resync penuh tiap event & tiap `pusher.connection` `connected` |
+| T6.3 | Halaman scorebug (Overlay 1) | ✅ |
+| T6.4 | Halaman lower third profil atlet (Overlay 2) | ✅ per sudut lewat `/overlay/athlete/{arena}/{corner}` |
+| T6.5 | Halaman rincian nilai & hukuman + kilatan (Overlay 3) | ✅ kilat 500ms lewat `_kilatkan()` saat event `skor.terbit` |
+| T6.6 | Halaman papan hasil (Overlay 4) | ✅ |
+| T6.7 | Halaman bagan & rekap medali antar partai | 🟡 bagan statis via `?kelas=ID` selesai; rekap medali penuh menyusul Fase 8 (belum ada mesin hitungnya) |
+| T6.8 | Uji nyata di vMix Pro | ⬜ **tidak bisa dikerjakan di sandbox ini** — butuh vMix Pro sungguhan di mesin Windows user, lihat catatan Fase 6 |
 
 ## EPIC 7 — Kategori Jurus ⬜
 
@@ -836,19 +836,23 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [ ] Uji dari jaringan seluler luar
 - [ ] Uji: matikan tunnel di tengah pertandingan
 
-## Fase 6 — Overlay Siaran vMix ⬜ Belum dimulai
+## Fase 6 — Overlay Siaran vMix 🟡 Selesai kecuali uji nyata vMix Pro
 
-- [ ] `AllowLocalNetworkOnly` middleware
-- [ ] `routes/overlay.php` prefix `/overlay`
-- [ ] `resources/js/overlay/connection.js`
-- [ ] Layout overlay dasar 1920×1080 transparan
-- [ ] Bundle font & ikon lokal
-- [ ] Halaman scorebug
-- [ ] Halaman lower third atlet
-- [ ] Halaman rincian nilai & hukuman + kilat
-- [ ] Halaman papan hasil
-- [ ] Halaman bagan & rekap medali
-- [ ] Uji nyata di vMix Pro (transparansi, latensi, 3 jam stabil, FPS)
+> Route/controller/JS/5 halaman selesai dan terverifikasi lewat browser (data live dari `/overlay/state/{arena}` benar, kilat hukuman jalan, papan hasil muncul saat partai selesai, bagan render dari data bracket sungguhan). 14 test Pest (`AllowLocalNetworkOnlyTest`, `OverlayControllerTest`) hijau.
+
+- [x] `AllowLocalNetworkOnly` middleware — 403 (bukan 404) karena tugasnya cuma membantu IT gelanggang debug setup vMix; menyembunyikan rute dari publik itu tugas reverse proxy/tunnel di Fase 5
+- [x] `routes/overlay.php` prefix `/overlay`, didaftarkan lewat `then:` closure di `bootstrap/app.php`, bukan `routes/web.php` — supaya rute ini tidak pernah lewat middleware `auth` sama sekali
+- [x] `resources/js/overlay/connection.js` — diimpor ke `silat.js` (entri Vite bersama, bukan entri terpisah, sesuai konvensi berkas)
+- [x] Layout overlay dasar 1920×1080 transparan (`layouts/overlay.blade.php`, sudah ada sejak Fase 0b)
+- [x] Bundle font & ikon lokal — IBM Plex Mono/Space Grotesk & sprite SVG sudah lokal sejak Fase 0b, tidak ada permintaan CDN baru
+- [x] Halaman scorebug — diverifikasi visual di viewport 1920×1080 (bar posisi `bottom-64px` sempat tampak kosong di viewport kecil default browser pane, ternyata cuma soal viewport, bukan bug)
+- [x] Halaman lower third atlet per sudut (`/overlay/athlete/{arena}/{corner}`, 404 untuk sudut tidak dikenal)
+- [x] Halaman rincian nilai & hukuman + kilat — diverifikasi lewat inspeksi state Alpine langsung, animasi `silat-kilat` 500ms
+- [x] Halaman papan hasil — diverifikasi visual dengan mengubah status partai ke `selesai` sementara lewat tinker, tampil "Menang Teknik" dsb dengan benar, lalu dikembalikan
+- [x] Halaman bagan & rekap medali — versi statis (tanpa Alpine/Echo, karena susunan bagan tidak berubah selama satu partai) selesai; rekap medali penuh sengaja ditunda ke Fase 8 karena belum ada mesin hitungnya
+- [ ] Uji nyata di vMix Pro (transparansi, latensi, 3 jam stabil, FPS) — **tidak bisa dilakukan di lingkungan sandbox ini, butuh vMix Pro sungguhan**. Item follow-up nyata untuk user: pasang kelima halaman sebagai Web Browser Input di vMix, petakan ke Overlay Channel 1–4, dan jalankan checklist T6.8 di atas kanvas siaran sesungguhnya.
+
+**Bug yang dihindari (bukan ditemukan) di fase ini** — pola object-spread `{...overlayLive(cfg), extra: val}` di `x-data` yang membekukan getter reaktif jadi nilai statis (ditemukan sebagai bug nyata di Fase 4, commit `fa068e0`) sengaja dihindari dari awal di `overlay/result.blade.php` dengan menaruh `sebabLabel` di `x-data` anak yang terpisah, bukan disebar ke induk.
 
 ## Fase 7 — Kategori Jurus ⬜ Belum dimulai
 

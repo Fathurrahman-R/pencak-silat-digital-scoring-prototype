@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 
 import './echo';
+import './overlay/connection';
 
 /**
  * Bundel gelanggang: panel juri, panel wasit, panel operator, live score
