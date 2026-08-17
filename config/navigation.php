@@ -136,6 +136,13 @@ return [
                 'resource' => rk('penampilan-jurus', ResourceAction::View),
                 'active' => 'admin/turnamen/*/jurus*',
             ],
+            [
+                'label' => 'Rekap & Laporan',
+                'route' => 'admin.turnamen.rekap.index',
+                'butuh_turnamen' => true,
+                'resource' => rk('rekap', ResourceAction::View),
+                'active' => 'admin/turnamen/*/rekap*',
+            ],
         ],
     ],
 

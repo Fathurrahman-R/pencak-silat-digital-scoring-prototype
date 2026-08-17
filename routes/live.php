@@ -14,5 +14,6 @@ Route::controller(LiveScoreController::class)->group(function () {
     Route::get('/gelanggang/{arena}/state', 'state')->name('gelanggang.state');
 
     Route::get('/turnamen/{tournament}', 'turnamen')->name('turnamen');
+    Route::get('/turnamen/{tournament}/medali', 'medali')->name('turnamen.medali');
     Route::get('/turnamen/{tournament}/bagan/{weightClass}', 'bagan')->name('turnamen.bagan');
 });

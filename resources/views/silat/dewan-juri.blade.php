@@ -12,11 +12,20 @@
                 </h1>
             </div>
 
-            <span
-                class="rounded-full px-3 py-1 text-[11px] tracking-wide"
-                x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
-                x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
-            ></span>
+            <div class="flex items-center gap-2">
+                @resource(rk('hasil-partai', ResourceAction::Print))
+                    <a href="{{ route('admin.turnamen.partai.berita-acara', [$tournament, $match]) }}" target="_blank"
+                       class="rounded-full bg-white/5 px-3 py-1 text-[11px] tracking-wide text-silat-teks hover:bg-white/10">
+                        Berita acara (PDF)
+                    </a>
+                @endresource
+
+                <span
+                    class="rounded-full px-3 py-1 text-[11px] tracking-wide"
+                    x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
+                    x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
+                ></span>
+            </div>
         </header>
 
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>

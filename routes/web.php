@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
@@ -329,6 +330,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/juri/manifest.webmanifest', 'manifest')->name('juri.manifest')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+                    Route::get('/berita-acara', 'beritaAcara')->name('berita-acara')->middleware('resource:'.rk('hasil-partai', ResourceAction::Print));
 
                     Route::post('/timer/mulai', 'mulaiBabak')->name('timer.mulai')->middleware('resource:'.rk('partai', ResourceAction::Update));
                     Route::post('/timer/jeda', 'jeda')->name('timer.jeda')->middleware('resource:'.rk('partai', ResourceAction::Update));
@@ -395,6 +397,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         Route::post('/diskualifikasi', 'diskualifikasi')->name('diskualifikasi')->middleware('resource:'.rk('pengurangan-jurus', ResourceAction::Create));
                         Route::post('/sahkan', 'sahkan')->name('sahkan')->middleware('resource:'.rk('hasil-jurus', ResourceAction::Approve));
                     });
+                });
+
+            Route::controller(RekapController::class)
+                ->prefix('{tournament}/rekap')
+                ->name('rekap.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('rekap', ResourceAction::View));
+                    Route::get('/ekspor/medali', 'exportMedali')->name('ekspor.medali')->middleware('resource:'.rk('rekap', ResourceAction::Export));
+                    Route::get('/ekspor/peserta', 'exportPeserta')->name('ekspor.peserta')->middleware('resource:'.rk('rekap', ResourceAction::Export));
+                    Route::get('/ekspor/jadwal', 'exportJadwal')->name('ekspor.jadwal')->middleware('resource:'.rk('rekap', ResourceAction::Export));
                 });
         });
 

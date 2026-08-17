@@ -17,7 +17,7 @@
 | Fase 5 — Live Score Publik & Tunneling | 🟡 Selesai kecuali rekap medali (Fase 8) dan uji penetrasi jaringan luar sungguhan |
 | Fase 6 — Overlay Siaran vMix | 🟡 Selesai kecuali uji nyata vMix Pro (T6.8, butuh perangkat lunak vMix sungguhan) |
 | Fase 7 — Kategori Jurus | ✅ Selesai |
-| Fase 8 — Rekap, Laporan, Dokumen | ⬜ Belum dimulai |
+| Fase 8 — Rekap, Laporan, Dokumen | ✅ Selesai (ekspor CSV, bukan .xlsx — lihat catatan T8.4) |
 
 Selain itu, ada pekerjaan **di luar urutan fase asli** yang sudah dikerjakan atas permintaan langsung: refactor navigasi ke sidebar, perbaikan komponen UI (design system compliance), dan pembersihan modul contoh boilerplate (`Post`).
 
@@ -627,18 +627,18 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T7.6 | Pemecah seri: hukuman, waktu terdekat, standar deviasi, undian | ✅ `peringkat()`, berhenti di kriteria pertama yang memisahkan; 'undian' tidak dihitung otomatis |
 | T7.7 | Validasi jumlah juri Jurus minimal 4 dan wajib genap | ✅ ditegakkan saat pengesahan (`sahkan()`), bukan saat submit nilai -- juri boleh mengirim nilai kapan saja, tapi skor tidak bisa disahkan sampai jumlahnya memenuhi `jumlah_juri_jurus` dan genap. Diskualifikasi dikecualikan. |
 
-## EPIC 8 — Rekap, Laporan, Dokumen ⬜
+## EPIC 8 — Rekap, Laporan, Dokumen ✅
 
 | ID | Task | Status |
 |---|---|---|
-| T8.1 | Rekap medali per kontingen + peringkat umum | ⬜ |
-| T8.2 | Daftar juara per kelas dan nomor seni | ⬜ |
-| T8.3 | Berita acara partai (PDF) | ⬜ |
-| T8.4 | Ekspor Excel: peserta, jadwal, rekap medali | ⬜ |
-| T8.5 | README + panduan instalasi LAN (Windows) | ⬜ |
-| T8.6 | ERD + diagram arsitektur | ⬜ |
-| T8.7 | Panduan operasional panitia | ⬜ |
-| T8.8 | Daftar parameter peraturan wajib diverifikasi ke naskah resmi | ⬜ |
+| T8.1 | Rekap medali per kontingen + peringkat umum | ✅ `RekapMedali`, TDD 4 test — emas/perak dari final, perunggu dari KEDUA semifinal (tidak ada playoff juara tiga) |
+| T8.2 | Daftar juara per kelas dan nomor seni | ✅ digabung di `admin.rekap.index` + halaman publik `live.turnamen.medali` |
+| T8.3 | Berita acara partai (PDF) | ✅ `barryvdh/laravel-dompdf`, tombol di Panel Dewan Juri, gated resource `hasil-partai` Print (sudah ada sejak Fase 0) |
+| T8.4 | Ekspor Excel: peserta, jadwal, rekap medali | 🟡 CSV (bukan `.xlsx`) — mengikuti pola `TreasuryController::export()` yang sudah ada sejak Fase 2b (`response()->streamDownload()` manual), bukan menambah dependensi `maatwebsite/excel` baru untuk hal yang CSV sudah cukup (dibuka Excel dengan baik) |
+| T8.5 | README + panduan instalasi LAN (Windows) | ✅ README ditulis ulang fokus ke produk (README lama boilerplate dipindah ke `docs/BOILERPLATE-RESOURCE-KEYS.md`), `docs/INSTALASI-LAN.md` |
+| T8.6 | ERD + diagram arsitektur | ✅ `docs/ERD.md`, `docs/ARSITEKTUR.md` (mermaid) |
+| T8.7 | Panduan operasional panitia | ✅ `docs/PANDUAN-OPERASIONAL.md` |
+| T8.8 | Daftar parameter peraturan wajib diverifikasi ke naskah resmi | ✅ `docs/PARAMETER-PERATURAN.md` — hanya 2 parameter benar-benar tanpa rujukan pasal (`ambang_sepakat`, `window_ms`), sudah ditandai sejak Fase 0 |
 
 ---
 ---
@@ -885,18 +885,22 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Test: 26 test (`tests/Feature/Jurus/`) -- kalkulator, timer, lapisan HTTP termasuk validasi jumlah juri saat pengesahan
 - [x] Diverifikasi end-to-end lewat browser sungguhan: buat penampilan → mulai/hentikan timer (duration_ms server benar) → juri kirim nilai → operator lihat median/skor akhir → sahkan → tampil di peringkat dan halaman publik
 
-## Fase 8 — Rekap, Laporan, Dokumen ⬜ Belum dimulai
+## Fase 8 — Rekap, Laporan, Dokumen ✅ Selesai
 
-- [ ] Pasang pustaka ekspor PDF dan Excel
-- [ ] Rekap medali per kontingen + peringkat umum
-- [ ] Daftar juara per kelas tanding dan per nomor seni
-- [ ] Berita acara partai (PDF)
-- [ ] Ekspor Excel: peserta, jadwal, rekap medali
-- [ ] README
-- [ ] Panduan instalasi LAN Windows
-- [ ] ERD dan diagram arsitektur
-- [ ] Panduan operasional panitia
-- [ ] `docs/PARAMETER-PERATURAN.md`
+> Rekap medali dan berita acara adalah pekerjaan pelaporan/agregasi di atas mesin scoring yang sudah ada, bukan mesin scoring baru -- risikonya jauh lebih rendah dari Fase 4/7, jadi TDD tetap dipakai untuk `RekapMedali` (logikanya nyata: emas/perak/perunggu, peringkat umum) tapi tidak untuk lapisan tampilan/ekspor.
+
+- [x] Pasang pustaka ekspor PDF (`barryvdh/laravel-dompdf`). Excel **tidak** dipasang -- lihat catatan T8.4 di atas: CSV manual mengikuti pola yang sudah ada sejak `TreasuryController::export()` di Fase 2b, dibuka Excel dengan baik tanpa dependensi baru
+- [x] Rekap medali per kontingen + peringkat umum (`App\Support\Rekap\RekapMedali::peringkatUmum()`)
+- [x] Daftar juara per kelas tanding dan per nomor seni (`admin.rekap.index`, `live.turnamen.medali`)
+- [x] Berita acara partai (PDF) -- skor per babak, daftar nilai, daftar hukuman, kolom tanda tangan Wasit/Ketua Pertandingan/Dewan Wasit Juri
+- [x] Ekspor CSV: peserta, jadwal, rekap medali (`RekapController::export{Medali,Peserta,Jadwal}`)
+- [x] README ditulis ulang fokus produk; README boilerplate asli dipindah ke `docs/BOILERPLATE-RESOURCE-KEYS.md` supaya tidak hilang tapi juga tidak menutupi identitas aplikasi ini
+- [x] Panduan instalasi LAN Windows (`docs/INSTALASI-LAN.md`) -- termasuk kenapa `REVERB_HOST` tidak boleh `localhost` untuk HP juri
+- [x] ERD (`docs/ERD.md`, 6 diagram mermaid per domain) dan diagram arsitektur (`docs/ARSITEKTUR.md`, topologi jaringan + sequence diagram alur satu nilai Tanding)
+- [x] Panduan operasional panitia (`docs/PANDUAN-OPERASIONAL.md`) -- alur H-1 sampai selesai, siapa mengerjakan apa, setup vMix per Overlay Channel
+- [x] `docs/PARAMETER-PERATURAN.md` -- hanya 2 parameter (`ambang_sepakat`, `window_ms`) yang benar-benar tanpa rujukan pasal
+- [x] Test: 10 test baru (`tests/Feature/Rekap/`) -- kalkulator medali (final+semifinal, DQ, belum disahkan), lapisan HTTP rekap, berita acara PDF (Content-Type `application/pdf`)
+- [x] Diverifikasi lewat browser sungguhan: halaman rekap admin, unduhan PDF berita acara (berhasil, ditandai dialog simpan browser), halaman medali publik
 
 ---
 ---

@@ -66,6 +66,12 @@ it('menyajikan bagan kelas untuk publik', function () {
         ->assertSee('Andi');
 });
 
+it('menyajikan halaman rekap medali publik', function () {
+    $this->get(route('live.turnamen.medali', $this->tournament))
+        ->assertOk()
+        ->assertSee('Peringkat Umum');
+});
+
 it('menolak bagan kelas yang bukan milik turnamen', function () {
     $turnamenLain = Tournament::factory()->create(['starts_on' => '2026-10-01']);
 

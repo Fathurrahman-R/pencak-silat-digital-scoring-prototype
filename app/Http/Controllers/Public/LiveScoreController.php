@@ -10,6 +10,7 @@ use App\Models\Tournament;
 use App\Models\WeightClass;
 use App\Support\Jurus\JurusScoreCalculator;
 use App\Support\Live\StatePartaiPublik;
+use App\Support\Rekap\RekapMedali;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -30,6 +31,7 @@ class LiveScoreController extends Controller
     public function __construct(
         private readonly StatePartaiPublik $state,
         private readonly JurusScoreCalculator $jurusKalkulator,
+        private readonly RekapMedali $rekap,
     ) {}
 
     public function gelanggang(Arena $arena): View
@@ -83,10 +85,16 @@ class LiveScoreController extends Controller
         ]);
     }
 
-    /**
-     * Bagan satu kelas untuk dilihat publik. Rekap medali gabungan seluruh
-     * kelas menyusul Fase 8 -- belum ada mesin hitungnya di codebase ini.
-     */
+    public function medali(Tournament $tournament): View
+    {
+        return view('public.live.medali', [
+            'tournament' => $tournament,
+            'peringkatUmum' => $this->rekap->peringkatUmum($tournament),
+            'tanding' => $this->rekap->tanding($tournament),
+            'jurus' => $this->rekap->jurus($tournament),
+        ]);
+    }
+
     public function bagan(Tournament $tournament, WeightClass $weightClass): View
     {
         abort_unless($weightClass->tournament_id === $tournament->id, 404);

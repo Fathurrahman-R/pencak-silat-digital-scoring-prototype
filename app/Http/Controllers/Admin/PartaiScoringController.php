@@ -18,6 +18,7 @@ use App\Support\Scoring\HitunganTeknik;
 use App\Support\Scoring\MatchTimer;
 use App\Support\Scoring\TandingScoreCalculator;
 use App\Support\Scoring\TanggaHukuman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 /**
@@ -114,6 +116,38 @@ class PartaiScoringController extends Controller
             'config' => $this->konfigPanel($tournament, $match),
             'manifestUrl' => route('admin.turnamen.partai.juri.manifest', [$tournament, $match]),
         ]);
+    }
+
+    /** Berita acara partai -- FR-J-03: skor per babak, daftar nilai, daftar hukuman, kolom tanda tangan. */
+    public function beritaAcara(Tournament $tournament, SilatMatch $match): HttpResponse
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        $match->load([
+            'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
+            'bracket.weightClass.tournament', 'rounds', 'officials.user',
+        ]);
+
+        $babakSekarang = $match->current_round ?? $match->rounds->max('round') ?? 1;
+
+        $rounds = $match->rounds->sortBy('round')->values()->map(fn ($r) => [
+            'round' => $r->round,
+            'skor_merah' => $this->kalkulator->skorBabak($match, Sudut::Merah, $r->round),
+            'skor_biru' => $this->kalkulator->skorBabak($match, Sudut::Biru, $r->round),
+        ]);
+
+        $pdf = Pdf::loadView('admin.rekap.berita-acara', [
+            'match' => $match,
+            'rounds' => $rounds,
+            'skorTotal' => ['merah' => $this->kalkulator->skor($match, Sudut::Merah), 'biru' => $this->kalkulator->skor($match, Sudut::Biru)],
+            'nilai' => $match->scoreEvents()->berlaku()->orderBy('server_ts')->get(),
+            'hukuman' => $match->penalties()->berlaku()->orderBy('created_at')->get(),
+            'peraturan' => $babakSekarang,
+        ])->setPaper('a4');
+
+        $namaBerkas = 'berita-acara-'.$match->id.'.pdf';
+
+        return $pdf->stream($namaBerkas);
     }
 
     /**
