@@ -9,6 +9,9 @@
         <x-ui.button :href="route('admin.turnamen.rekap.ekspor.medali', $tournament)" variant="secondary" size="sm">
             Ekspor medali (CSV)
         </x-ui.button>
+        <x-ui.button :href="route('admin.turnamen.rekap.ekspor.medali-pdf', $tournament)" variant="secondary" size="sm">
+            Cetak medali (PDF)
+        </x-ui.button>
         <x-ui.button :href="route('admin.turnamen.rekap.ekspor.peserta', $tournament)" variant="secondary" size="sm">
             Ekspor peserta (CSV)
         </x-ui.button>

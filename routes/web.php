@@ -405,6 +405,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('rekap', ResourceAction::View));
                     Route::get('/ekspor/medali', 'exportMedali')->name('ekspor.medali')->middleware('resource:'.rk('rekap', ResourceAction::Export));
+                    Route::get('/ekspor/medali.pdf', 'exportMedaliPdf')->name('ekspor.medali-pdf')->middleware('resource:'.rk('rekap', ResourceAction::Print));
                     Route::get('/ekspor/peserta', 'exportPeserta')->name('ekspor.peserta')->middleware('resource:'.rk('rekap', ResourceAction::Export));
                     Route::get('/ekspor/jadwal', 'exportJadwal')->name('ekspor.jadwal')->middleware('resource:'.rk('rekap', ResourceAction::Export));
                 });

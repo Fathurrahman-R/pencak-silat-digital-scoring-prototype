@@ -25,6 +25,13 @@ it('menampilkan halaman rekap', function () {
         ->assertSee('Peringkat Umum Kontingen');
 });
 
+it('mengekspor rekap medali sebagai PDF', function () {
+    $this->actingAs($this->sekretaris)
+        ->get(route('admin.turnamen.rekap.ekspor.medali-pdf', $this->tournament))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
+});
+
 it('mengekspor rekap medali sebagai CSV', function () {
     $this->actingAs($this->sekretaris)
         ->get(route('admin.turnamen.rekap.ekspor.medali', $this->tournament))

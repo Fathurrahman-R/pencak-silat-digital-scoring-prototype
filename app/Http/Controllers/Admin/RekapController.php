@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tournament;
 use App\Support\Rekap\RekapMedali;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Rekap medali dan ekspor -- FR-J. */
@@ -22,6 +24,18 @@ class RekapController extends Controller
             'tanding' => $this->rekap->tanding($tournament),
             'jurus' => $this->rekap->jurus($tournament),
         ]);
+    }
+
+    public function exportMedaliPdf(Tournament $tournament): HttpResponse
+    {
+        $pdf = Pdf::loadView('admin.rekap.medali-pdf', [
+            'tournament' => $tournament,
+            'peringkatUmum' => $this->rekap->peringkatUmum($tournament),
+            'tanding' => $this->rekap->tanding($tournament),
+            'jurus' => $this->rekap->jurus($tournament),
+        ])->setPaper('a4');
+
+        return $pdf->stream('rekap-medali-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function exportMedali(Tournament $tournament): StreamedResponse
