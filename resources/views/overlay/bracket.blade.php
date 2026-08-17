@@ -22,34 +22,7 @@
                 </h1>
             </div>
 
-            <div class="flex gap-6 overflow-x-auto">
-                @foreach ($babak as $round => $partaiSatuBabak)
-                    <div class="w-[300px] shrink-0">
-                        <p class="mb-2 text-[14px] tracking-wide text-silat-teks-redup">{{ $bracket->namaBabak($round) }}</p>
-
-                        <div class="flex flex-col gap-3">
-                            @foreach ($partaiSatuBabak->sortBy('position') as $partai)
-                                <div class="rounded-silat bg-silat-panel p-3">
-                                    @foreach (['red' => $partai->red, 'blue' => $partai->blue] as $sudut => $peserta)
-                                        <div @class([
-                                            'rounded-[3px] px-2 py-1.5 text-[15px]',
-                                            'bg-white/10 text-silat-teks' => $partai->winner_registration_id && $partai->winner_registration_id === $peserta?->id,
-                                            'text-silat-teks-redup' => ! ($partai->winner_registration_id && $partai->winner_registration_id === $peserta?->id),
-                                        ])>
-                                            @if ($peserta)
-                                                {{ $peserta->athletes->pluck('name')->implode(', ') }}
-                                                <span class="text-[12px]">· {{ $peserta->contingent->name }}</span>
-                                            @else
-                                                <span class="text-[12px]">{{ $partai->bye() ? 'Bye' : '—' }}</span>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+            <x-silat.bagan-pohon :bracket="$bracket" :babak="$babak" />
         @endif
     </div>
 </x-layouts.overlay>

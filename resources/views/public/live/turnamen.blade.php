@@ -46,5 +46,38 @@
                 @endforelse
             </div>
         </section>
+
+        @if ($jurusEvents->isNotEmpty())
+            <section>
+                <p class="mb-2 text-[13px] font-medium text-silat-teks">Nomor Jurus</p>
+
+                <div class="flex flex-col gap-3">
+                    @foreach ($jurusEvents as $baris)
+                        <div class="rounded-silat bg-silat-panel p-4">
+                            <p class="mb-2 text-[14px] text-silat-teks">{{ $baris['nomor']->nama() }}</p>
+
+                            <div class="divide-y divide-silat-garis">
+                                @foreach ($baris['peringkat'] as $i => $penampilan)
+                                    <div class="flex items-center gap-3 py-2">
+                                        <span class="w-5 shrink-0 text-center font-mono text-[12px] text-silat-teks-redup">{{ $i + 1 }}</span>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-[13px] text-silat-teks">
+                                                {{ $penampilan->registration->athletes->pluck('name')->implode(', ') }}
+                                            </p>
+                                            <p class="truncate text-[11px] text-silat-teks-redup">
+                                                {{ $penampilan->registration->contingent->name }}
+                                            </p>
+                                        </div>
+                                        <span class="silat-angka shrink-0 text-[15px] text-silat-teks">
+                                            {{ $penampilan->didiskualifikasi ? 'DQ' : number_format(app(\App\Support\Jurus\JurusScoreCalculator::class)->skorAkhir($penampilan), 2) }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 </x-layouts.silat>

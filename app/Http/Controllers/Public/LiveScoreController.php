@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Arena;
 use App\Models\Bracket;
+use App\Models\JurusEvent;
 use App\Models\Tournament;
 use App\Models\WeightClass;
+use App\Support\Jurus\JurusScoreCalculator;
 use App\Support\Live\StatePartaiPublik;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +27,10 @@ use Illuminate\Support\Facades\Cache;
  */
 class LiveScoreController extends Controller
 {
-    public function __construct(private readonly StatePartaiPublik $state) {}
+    public function __construct(
+        private readonly StatePartaiPublik $state,
+        private readonly JurusScoreCalculator $jurusKalkulator,
+    ) {}
 
     public function gelanggang(Arena $arena): View
     {
@@ -60,10 +65,21 @@ class LiveScoreController extends Controller
                 return ['kelas' => $wc, 'punya_bagan' => $wc->bracket !== null, 'juara' => $juara];
             });
 
+        $jurusEvents = $tournament->jurusEvents()->aktif()
+            ->with(['performances' => fn ($q) => $q->whereNotNull('ratified_at')->with('registration.athletes', 'registration.contingent', 'scores')])
+            ->orderBy('golongan_usia')->orderBy('sort_order')
+            ->get()
+            ->filter(fn (JurusEvent $e) => $e->performances->isNotEmpty())
+            ->map(fn (JurusEvent $e) => [
+                'nomor' => $e,
+                'peringkat' => $this->jurusKalkulator->peringkat($e->performances)->values(),
+            ]);
+
         return view('public.live.turnamen', [
             'tournament' => $tournament,
             'arenas' => $arenas,
             'kelas' => $kelas,
+            'jurusEvents' => $jurusEvents,
         ]);
     }
 

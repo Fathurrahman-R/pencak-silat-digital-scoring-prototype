@@ -194,6 +194,32 @@ class SilatResourceSeeder extends Seeder
                 'locked' => true,
             ],
 
+            // ── Kategori Jurus ───────────────────────────────────────────────
+            [
+                'key' => 'penampilan-jurus',
+                'label' => 'Kendali Penampilan Jurus',
+                'group' => 'Pertandingan',
+                'description' => 'Membuat penampilan dari pendaftaran terverifikasi, mengendalikan timer.',
+                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
+                'locked' => true,
+            ],
+            [
+                'key' => 'pengurangan-jurus',
+                'label' => 'Pengurangan Nilai Jurus',
+                'group' => 'Pertandingan',
+                'description' => 'Pengurangan 0.50 oleh Pengawas/Dewan Wasit Juri dan penetapan diskualifikasi.',
+                'actions' => [ResourceAction::View, ResourceAction::Create],
+                'locked' => true,
+            ],
+            [
+                'key' => 'hasil-jurus',
+                'label' => 'Hasil Jurus',
+                'group' => 'Pertandingan',
+                'description' => 'Koreksi bernotulen dan pengesahan skor akhir penampilan Jurus.',
+                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
+                'locked' => true,
+            ],
+
             // ── Keberatan ────────────────────────────────────────────────────
             [
                 'key' => 'var',

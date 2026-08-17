@@ -489,6 +489,172 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 }));
 
+/**
+ * Panel Jurus: operator/pengawas dan juri berbagi factory ini, sama seperti
+ * `partaiPanel` dipakai bersama operator/wasit/dewan juri Tanding.
+ *
+ * Jauh lebih sederhana dari partaiPanel -- satu penampilan berjalan sekali
+ * dari awal sampai selesai tanpa babak maupun jeda, jadi ini stopwatch
+ * (hitung naik dari `started_at`), bukan hitung mundur server-authoritative
+ * seperti timer partai.
+ */
+Alpine.data('jurusPanel', (cfg) => ({
+    cfg,
+    memuat: true,
+    performance: { id: cfg.performanceId, status: 'terjadwal', started_at: null, duration_ms: null, didiskualifikasi: false, ratified: false },
+    peserta: { nama: '', kontingen: '' },
+    skor: { median: 0, total_pengurangan: 0, akhir: 0 },
+    nilaiJuri: [],
+    pengurangan: [],
+    berjalanMs: 0,
+    pesan: null,
+    galat: null,
+    _rafId: null,
+
+    // Khusus panel juri (silat.jurus-juri) -- kosong dan tidak dipakai di
+    // panel operator, tapi hidup di sini (bukan disebar dari luar) supaya
+    // getter reaktifnya (nilaiSaya) tidak ikut bergantung pada pola object
+    // spread yang membekukan getter (lihat commit fa068e0).
+    nilaiInput: '',
+
+    async init() {
+        await this.muatUlang();
+    },
+
+    destroy() {
+        this._hentikanStopwatch();
+    },
+
+    /** Nilai yang sudah dikirim juri yang sedang login, atau null bila belum. */
+    get nilaiSaya() {
+        return this.nilaiJuri.find((n) => n.judge_user_id === this.cfg.judgeUserId)?.value ?? null;
+    },
+
+    get tampilWaktu() {
+        const totalDetik = Math.floor(this.berjalanMs / 1000);
+        const menit = Math.floor(totalDetik / 60);
+        const detik = totalDetik % 60;
+
+        return `${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
+    },
+
+    async muatUlang() {
+        const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+
+        if (!res.ok) {
+            this.galat = 'Gagal memuat state penampilan.';
+
+            return;
+        }
+
+        const data = await res.json();
+        this.performance = data.performance;
+        this.peserta = data.peserta;
+        this.skor = data.skor;
+        this.nilaiJuri = data.nilai_juri;
+        this.pengurangan = data.pengurangan;
+        this.memuat = false;
+
+        if (this.nilaiSaya !== null) {
+            this.nilaiInput = this.nilaiSaya.toFixed(2);
+        }
+
+        if (this.performance.status === 'berlangsung' && this.performance.started_at) {
+            this._mulaiStopwatch(new Date(this.performance.started_at).getTime());
+        } else {
+            this._hentikanStopwatch();
+            this.berjalanMs = this.performance.duration_ms ?? 0;
+        }
+    },
+
+    async kirim(url, data = {}) {
+        this.galat = null;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify(data),
+            });
+
+            const body = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                this.galat = body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+
+                return false;
+            }
+
+            this.pesan = body.pesan ?? null;
+            await this.muatUlang();
+
+            return true;
+        } catch (e) {
+            this.galat = 'Tidak bisa menghubungi server.';
+
+            return false;
+        }
+    },
+
+    mulai() {
+        return this.kirim(this.cfg.mulai);
+    },
+
+    berhenti() {
+        return this.kirim(this.cfg.berhenti);
+    },
+
+    kirimNilai(value) {
+        return this.kirim(this.cfg.nilai, { value });
+    },
+
+    kirimNilaiInput() {
+        return this.kirimNilai(parseFloat(this.nilaiInput));
+    },
+
+    penguranganJuri(alasan) {
+        return this.kirim(this.cfg.penguranganJuri, { alasan });
+    },
+
+    penguranganPengawas(alasan) {
+        return this.kirim(this.cfg.penguranganPengawas, { alasan });
+    },
+
+    batalkanPengurangan(id, alasan) {
+        return this.kirim(this.cfg.penguranganBatal.replace('__ID__', id), { alasan });
+    },
+
+    diskualifikasi() {
+        return this.kirim(this.cfg.diskualifikasi);
+    },
+
+    sahkan() {
+        return this.kirim(this.cfg.sahkan);
+    },
+
+    _mulaiStopwatch(mulaiEpochMs) {
+        this._hentikanStopwatch();
+
+        const langkah = () => {
+            this.berjalanMs = Date.now() - mulaiEpochMs;
+            this._rafId = requestAnimationFrame(langkah);
+        };
+
+        this._rafId = requestAnimationFrame(langkah);
+    },
+
+    _hentikanStopwatch() {
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 pantauKoneksi();

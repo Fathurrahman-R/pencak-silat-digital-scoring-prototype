@@ -16,7 +16,7 @@
 | Fase 4b — VAR & Keberatan | ✅ Selesai |
 | Fase 5 — Live Score Publik & Tunneling | 🟡 Selesai kecuali rekap medali (Fase 8) dan uji penetrasi jaringan luar sungguhan |
 | Fase 6 — Overlay Siaran vMix | 🟡 Selesai kecuali uji nyata vMix Pro (T6.8, butuh perangkat lunak vMix sungguhan) |
-| Fase 7 — Kategori Jurus | ⬜ Belum dimulai |
+| Fase 7 — Kategori Jurus | ✅ Selesai |
 | Fase 8 — Rekap, Laporan, Dokumen | ⬜ Belum dimulai |
 
 Selain itu, ada pekerjaan **di luar urutan fase asli** yang sudah dikerjakan atas permintaan langsung: refactor navigasi ke sidebar, perbaikan komponen UI (design system compliance), dan pembersihan modul contoh boilerplate (`Post`).
@@ -615,17 +615,17 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T6.7 | Halaman bagan & rekap medali antar partai | 🟡 bagan statis via `?kelas=ID` selesai; rekap medali penuh menyusul Fase 8 (belum ada mesin hitungnya) |
 | T6.8 | Uji nyata di vMix Pro | ⬜ **tidak bisa dikerjakan di sandbox ini** — butuh vMix Pro sungguhan di mesin Windows user, lihat catatan Fase 6 |
 
-## EPIC 7 — Kategori Jurus ⬜
+## EPIC 7 — Kategori Jurus ✅
 
 | ID | Task | Status |
 |---|---|---|
-| T7.1 | Migrasi & model: jurus_performances, jurus_scores, jurus_deductions | ⬜ |
-| T7.2 | Timer penampilan waktu acuan & toleransi per nomor & golongan usia | ⬜ |
-| T7.3 | Panel juri Jurus: nilai skala 9.00–10.00 + pengurangan 0.01 | ⬜ |
-| T7.4 | Panel Pengawas/Dewan Wasit Juri: pengurangan 0.50 | ⬜ |
-| T7.5 | `JurusScoreCalculator` — median seluruh juri, kurangi hukuman, DQ jadi 0,00 | ⬜ |
-| T7.6 | Pemecah seri: hukuman, waktu terdekat, standar deviasi, undian | ⬜ |
-| T7.7 | Validasi jumlah juri Jurus minimal 4 dan wajib genap | ⬜ |
+| T7.1 | Migrasi & model: jurus_performances, jurus_scores, jurus_deductions | ✅ Tabel terpisah dari `matches` -- Jurus tidak punya bagan gugur atau sudut merah/biru |
+| T7.2 | Timer penampilan waktu acuan & toleransi per nomor & golongan usia | ✅ `JurusTimer` -- stopwatch hitung naik dari `started_at` server, bukan hitung mundur seperti Tanding (satu penampilan tidak punya babak/jeda) |
+| T7.3 | Panel juri Jurus: nilai skala 9.00–10.00 + pengurangan 0.01 | ✅ `jurus.juri`, upsert per juri (bukan log immutable seperti `judge_inputs` -- lihat catatan di bawah) |
+| T7.4 | Panel Pengawas/Dewan Wasit Juri: pengurangan 0.50 | ✅ digabung ke `jurus.operator` (gated resource `pengurangan-jurus`), termasuk penetapan diskualifikasi |
+| T7.5 | `JurusScoreCalculator` — median seluruh juri, kurangi hukuman, DQ jadi 0,00 | ✅ TDD, 9 test |
+| T7.6 | Pemecah seri: hukuman, waktu terdekat, standar deviasi, undian | ✅ `peringkat()`, berhenti di kriteria pertama yang memisahkan; 'undian' tidak dihitung otomatis |
+| T7.7 | Validasi jumlah juri Jurus minimal 4 dan wajib genap | ✅ ditegakkan saat pengesahan (`sahkan()`), bukan saat submit nilai -- juri boleh mengirim nilai kapan saja, tapi skor tidak bisa disahkan sampai jumlahnya memenuhi `jumlah_juri_jurus` dan genap. Diskualifikasi dikecualikan. |
 
 ## EPIC 8 — Rekap, Laporan, Dokumen ⬜
 
@@ -862,21 +862,28 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 
 **Bug yang dihindari (bukan ditemukan) di fase ini** — pola object-spread `{...overlayLive(cfg), extra: val}` di `x-data` yang membekukan getter reaktif jadi nilai statis (ditemukan sebagai bug nyata di Fase 4, commit `fa068e0`) sengaja dihindari dari awal di `overlay/result.blade.php` dengan menaruh `sebabLabel` di `x-data` anak yang terpisah, bukan disebar ke induk.
 
-## Fase 7 — Kategori Jurus ⬜ Belum dimulai
+## Fase 7 — Kategori Jurus ✅ Selesai
 
-- [ ] Migrasi `jurus_performances`, `jurus_scores`, `jurus_deductions`
-- [ ] Nomor: Tunggal, Tunggal Bebas, Ganda, Regu A, Regu B, Solo Kreatif
-- [ ] Timer penampilan waktu acuan & toleransi
-- [ ] Panel juri Jurus: skala 9.00–10.00, langkah 0.01
-- [ ] Pengurangan 0.01 oleh juri
-- [ ] Pengurangan 0.50 oleh Pengawas/Dewan Wasit Juri
-- [ ] `JurusScoreCalculator`: median, kurangi hukuman
-- [ ] Validasi juri minimal 4 & genap; median genap = rata-rata dua nilai tengah
-- [ ] Diskualifikasi → `0,00`
-- [ ] Pemecah seri: hukuman, waktu terdekat, standar deviasi, undian
-- [ ] Test: median 6 juri, median 4 juri, kasus nilai kembar
-- [ ] Test: standar deviasi sebagai pemecah seri
-- [ ] Papan hasil Jurus di panel operator dan halaman publik
+> Nomor (jenis × golongan usia × jenis kelamin) sudah tersusun otomatis sejak Fase 0 lewat `SusunMasterDataTurnamen` -- yang dibangun di fase ini murni mesin scoring-nya: `jurus_performances`/`jurus_scores`/`jurus_deductions`, `JurusTimer`, `JurusScoreCalculator`, dan dua panel (`jurus.operator`, `jurus.juri`).
+>
+> **Penyederhanaan yang disengaja** dari `judge_inputs` Tanding: nilai juri Jurus memakai upsert (`JurusScore::updateOrCreate`), bukan log immutable. Beralasan -- juri Jurus menulis satu angka akhir setelah menonton penampilan selesai, bukan menekan tombol cepat berkali-kali dalam window 2 detik yang butuh jejak tiap perubahan untuk anti-kecurangan. Dicatat di sini secara terang-terangan karena ini beda dari prinsip "tidak pernah diubah" yang dipegang ketat di `judge_inputs`.
+
+- [x] Migrasi `jurus_performances`, `jurus_scores`, `jurus_deductions`
+- [x] Nomor: Tunggal, Tunggal Bebas, Ganda, Regu A, Regu B, Solo Kreatif -- sudah ada dari Fase 0/1 (`JurusEvent`, `JenisJurus`)
+- [x] Timer penampilan (`JurusTimer`) -- stopwatch hitung naik dari `started_at` server; toleransi/waktu acuan sudah tersedia lewat `JurusEvent::waktuAcuanMs()` sejak Fase 0, dipakai `selisihKeAcuan()` untuk pemecah seri
+- [x] Panel juri Jurus (`jurus.juri`): skala 9.00–10.00, langkah 0.01, upsert (lihat catatan di atas)
+- [x] Pengurangan 0.01 oleh juri
+- [x] Pengurangan 0.50 oleh Pengawas/Dewan Wasit Juri -- digabung ke `jurus.operator`
+- [x] `JurusScoreCalculator`: median, kurangi hukuman
+- [x] Validasi juri minimal 4 & genap -- ditegakkan saat **pengesahan**, bukan saat submit nilai (juri boleh mengirim nilai kapan saja; skor tidak bisa disahkan sampai jumlahnya memenuhi `jumlah_juri_jurus` dan genap, kecuali diskualifikasi). Median genap dihitung rata-rata dua nilai tengah.
+- [x] Diskualifikasi → `0,00`, ditetapkan eksplisit oleh Pengawas (bukan otomatis dari selisih waktu -- naskah menyebut beberapa sebab yang semuanya butuh penilaian manusia)
+- [x] Pemecah seri: hukuman, waktu terdekat, standar deviasi, undian (`peringkat()`, berhenti di kriteria pertama yang memisahkan; 'undian' sengaja tidak dihitung otomatis)
+- [x] Test: median 6 juri, median 4 juri, kasus nilai kembar
+- [x] Test: standar deviasi sebagai pemecah seri
+- [x] Papan hasil Jurus di panel operator (skor real-time) dan halaman publik (`live.turnamen`, daftar penampilan yang sudah disahkan per nomor, terurut peringkat)
+- [x] Resource key baru `penampilan-jurus`/`pengurangan-jurus`/`hasil-jurus` + grant ke `operator-it`, `pengawas-wasit-juri`, `ketua-pertandingan`, `juri`
+- [x] Test: 26 test (`tests/Feature/Jurus/`) -- kalkulator, timer, lapisan HTTP termasuk validasi jumlah juri saat pengesahan
+- [x] Diverifikasi end-to-end lewat browser sungguhan: buat penampilan → mulai/hentikan timer (duration_ms server benar) → juri kirim nilai → operator lihat median/skor akhir → sahkan → tampil di peringkat dan halaman publik
 
 ## Fase 8 — Rekap, Laporan, Dokumen ⬜ Belum dimulai
 

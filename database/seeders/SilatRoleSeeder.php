@@ -76,6 +76,8 @@ class SilatRoleSeeder extends Seeder
                     // memutus tingkat pertama Protes Manajer.
                     'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                     'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
+                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
                 ],
             ],
@@ -90,6 +92,9 @@ class SilatRoleSeeder extends Seeder
                     'hukuman' => [ResourceAction::View, ResourceAction::Create],
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Update],
                     'var' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
+                    'penampilan-jurus' => $lihat,
+                    'pengurangan-jurus' => [ResourceAction::View, ResourceAction::Create],
+                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Update],
                 ],
             ],
             [
@@ -120,6 +125,9 @@ class SilatRoleSeeder extends Seeder
                 'grants' => [
                     'partai' => $lihat,
                     'penilaian' => [ResourceAction::View, ResourceAction::Create],
+                    // Sama seperti Tanding: juri Jurus hanya melihat penampilan
+                    // dan mengirim nilai, tidak pernah mengendalikan timer.
+                    'penampilan-jurus' => $lihat,
                 ],
             ],
             [
@@ -135,6 +143,8 @@ class SilatRoleSeeder extends Seeder
                     // Operator paling dekat dengan meja pelatih -- bisa
                     // memasukkan protes VAR ke sistem, tapi tidak memutusnya.
                     'var' => [ResourceAction::View, ResourceAction::Create],
+                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
+                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Print],
                 ],
             ],
             [

@@ -129,6 +129,13 @@ return [
                 'resource' => rk('jadwal', ResourceAction::View),
                 'active' => 'admin/turnamen/*/jadwal*',
             ],
+            [
+                'label' => 'Kategori Jurus',
+                'route' => 'admin.turnamen.jurus.nomor',
+                'butuh_turnamen' => true,
+                'resource' => rk('penampilan-jurus', ResourceAction::View),
+                'active' => 'admin/turnamen/*/jurus*',
+            ],
         ],
     ],
 

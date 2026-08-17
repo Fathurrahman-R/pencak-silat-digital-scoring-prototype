@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\PermissionController;
@@ -363,6 +364,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/protes-manajer', 'ajukanManajer')->name('protes-manajer.ajukan')->middleware('resource:'.rk('protes-manajer', ResourceAction::Create));
                     Route::post('/protes-manajer/{managerProtest}/banding', 'banding')->name('protes-manajer.banding')->middleware('resource:'.rk('protes-manajer', ResourceAction::Create));
                     Route::post('/protes-manajer/{managerProtest}/putuskan', 'putuskanManajer')->name('protes-manajer.putuskan')->middleware('resource:'.rk('protes-manajer', ResourceAction::Approve));
+                });
+
+            /*
+             * Mesin scoring Jurus. Jauh lebih ramping dari Tanding: satu
+             * penampilan berjalan sekali dari awal sampai selesai, jadi tidak
+             * ada kendali babak/jeda seperti timer partai.
+             */
+            Route::controller(JurusScoringController::class)
+                ->prefix('{tournament}/jurus')
+                ->name('jurus.')
+                ->group(function () {
+                    Route::get('/', 'daftarNomor')->name('nomor')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::get('/{jurusEvent}', 'index')->name('index')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::post('/{jurusEvent}/buat-penampilan', 'generate')->name('generate')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Create));
+
+                    Route::prefix('penampilan/{performance}')->name('penampilan.')->group(function () {
+                        Route::get('/', 'state')->name('state')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                        Route::get('/operator', 'operator')->name('operator')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                        Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+
+                        Route::post('/timer/mulai', 'mulaiTimer')->name('timer.mulai')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Update));
+                        Route::post('/timer/berhenti', 'berhentiTimer')->name('timer.berhenti')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Update));
+
+                        Route::post('/nilai', 'nilai')->name('nilai')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+                        Route::post('/pengurangan-juri', 'penguranganJuri')->name('pengurangan-juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+                        Route::post('/pengurangan-pengawas', 'penguranganPengawas')->name('pengurangan-pengawas')->middleware('resource:'.rk('pengurangan-jurus', ResourceAction::Create));
+                        Route::post('/pengurangan/{deduction}/batal', 'batalkanPengurangan')->name('pengurangan.batal')->middleware('resource:'.rk('hasil-jurus', ResourceAction::Update));
+
+                        Route::post('/diskualifikasi', 'diskualifikasi')->name('diskualifikasi')->middleware('resource:'.rk('pengurangan-jurus', ResourceAction::Create));
+                        Route::post('/sahkan', 'sahkan')->name('sahkan')->middleware('resource:'.rk('hasil-jurus', ResourceAction::Approve));
+                    });
                 });
         });
 

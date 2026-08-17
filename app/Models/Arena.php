@@ -37,6 +37,11 @@ class Arena extends Model
         return $this->hasMany(SilatMatch::class);
     }
 
+    public function jurusPerformances(): HasMany
+    {
+        return $this->hasMany(JurusPerformance::class);
+    }
+
     public function scopeAktif(Builder $query): Builder
     {
         return $query->where('is_active', true);

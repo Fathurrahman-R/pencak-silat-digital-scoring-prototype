@@ -66,6 +66,11 @@ class Registration extends Model
         return $this->hasMany(WeightIn::class)->latest('weighed_at');
     }
 
+    public function jurusPerformances(): HasMany
+    {
+        return $this->hasMany(JurusPerformance::class);
+    }
+
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
