@@ -28,6 +28,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('overlay')
                 ->name('overlay.')
                 ->group(base_path('routes/overlay.php'));
+
+            /*
+             * Live score publik: satu-satunya kelompok rute yang memang
+             * dirancang untuk diteruskan tunnel ke internet (lihat Fase 5 di
+             * docs/RENCANA.md untuk konfigurasi reverse proxy-nya). Dibatasi
+             * `throttle:live`, BUKAN AllowLocalNetworkOnly -- justru
+             * kebalikan dari overlay, rute ini harus bisa dijangkau dari
+             * luar jaringan gelanggang.
+             */
+            Route::middleware(['web', 'throttle:live'])
+                ->prefix('live')
+                ->name('live.')
+                ->group(base_path('routes/live.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

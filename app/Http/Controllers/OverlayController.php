@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Sudut;
 use App\Models\Arena;
 use App\Models\Bracket;
-use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\WeightClass;
-use App\Support\Scoring\TanggaHukuman;
-use App\Support\Scoring\TandingScoreCalculator;
+use App\Support\Live\StatePartaiPublik;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,70 +22,11 @@ use Illuminate\Http\Request;
  */
 class OverlayController extends Controller
 {
-    public function __construct(
-        private readonly TandingScoreCalculator $kalkulator,
-        private readonly TanggaHukuman $tangga,
-    ) {}
+    public function __construct(private readonly StatePartaiPublik $state) {}
 
     public function state(Arena $arena): JsonResponse
     {
-        $match = $this->partaiRelevan($arena);
-
-        if ($match === null) {
-            return response()->json(['ada_partai' => false]);
-        }
-
-        $babakSekarang = $match->current_round ?? $match->rounds->max('round') ?? 1;
-
-        $penalti = fn (Sudut $sudut) => [
-            'pembinaan' => $this->tangga->jumlahPembinaan($match, $sudut),
-            'teguran' => $this->tangga->jumlahTeguran($match, $sudut, $babakSekarang),
-            'peringatan' => $this->tangga->jumlahPeringatan($match, $sudut),
-        ];
-
-        $round = $match->rounds->firstWhere('round', $babakSekarang);
-
-        return response()->json([
-            'ada_partai' => true,
-            'match' => [
-                'id' => $match->id,
-                'status' => $match->status,
-                'current_round' => $match->current_round,
-                'win_reason' => $match->win_reason,
-                'winner_corner' => $match->winner_registration_id === null ? null
-                    : ($match->winner_registration_id === $match->red_registration_id ? 'red' : 'blue'),
-                'ratified' => $match->disahkan(),
-            ],
-            'kelas' => [
-                'nama' => $match->bracket->weightClass->name,
-                'golongan' => $match->bracket->weightClass->golongan_usia->label(),
-                'jenis_kelamin' => $match->bracket->weightClass->jenis_kelamin->label(),
-            ],
-            'babak_label' => $match->bracket->namaBabak($match->round),
-            'red' => $match->red ? [
-                'nama' => $match->red->athletes->pluck('name')->implode(', '),
-                'kontingen' => $match->red->contingent->name,
-            ] : null,
-            'blue' => $match->blue ? [
-                'nama' => $match->blue->athletes->pluck('name')->implode(', '),
-                'kontingen' => $match->blue->contingent->name,
-            ] : null,
-            'timer' => $round ? [
-                'round' => $round->round,
-                'status' => $round->status->value,
-                'duration_ms' => $round->duration_ms,
-                'accumulated_ms' => $round->accumulated_ms,
-                'started_at' => optional($round->started_at)->toIso8601String(),
-            ] : null,
-            'skor_total' => [
-                'merah' => $this->kalkulator->skor($match, Sudut::Merah),
-                'biru' => $this->kalkulator->skor($match, Sudut::Biru),
-            ],
-            'hukuman' => [
-                'merah' => $penalti(Sudut::Merah),
-                'biru' => $penalti(Sudut::Biru),
-            ],
-        ]);
+        return response()->json(($this->state)($arena));
     }
 
     public function scorebug(Arena $arena): View
@@ -156,24 +94,5 @@ class OverlayController extends Controller
             'arenaId' => $arena->id,
             'state' => route('overlay.state', $arena),
         ];
-    }
-
-    /** Partai yang sedang berlangsung di gelanggang ini, atau partai terakhir yang selesai kalau belum ada yang berlangsung. */
-    private function partaiRelevan(Arena $arena): ?SilatMatch
-    {
-        $muatan = [
-            'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
-            'bracket.weightClass', 'rounds',
-        ];
-
-        return SilatMatch::where('arena_id', $arena->id)
-                ->where('status', SilatMatch::STATUS_BERLANGSUNG)
-                ->with($muatan)
-                ->first()
-            ?? SilatMatch::where('arena_id', $arena->id)
-                ->where('status', SilatMatch::STATUS_SELESAI)
-                ->with($muatan)
-                ->latest('updated_at')
-                ->first();
     }
 }

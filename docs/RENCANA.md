@@ -14,7 +14,7 @@
 | Fase 3 — Bagan & Jadwal | ✅ Selesai |
 | Fase 4 — Mesin Scoring Tanding | ✅ Selesai penuh |
 | Fase 4b — VAR & Keberatan | ✅ Selesai |
-| Fase 5 — Live Score Publik & Tunneling | ⬜ Belum dimulai |
+| Fase 5 — Live Score Publik & Tunneling | 🟡 Selesai kecuali rekap medali (Fase 8) dan uji penetrasi jaringan luar sungguhan |
 | Fase 6 — Overlay Siaran vMix | 🟡 Selesai kecuali uji nyata vMix Pro (T6.8, butuh perangkat lunak vMix sungguhan) |
 | Fase 7 — Kategori Jurus | ⬜ Belum dimulai |
 | Fase 8 — Rekap, Laporan, Dokumen | ⬜ Belum dimulai |
@@ -591,16 +591,16 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T4B.5 | Dampak hasil VAR ke skor lewat baris pembatal | ✅ `KeputusanVar` memakai pola `voided_at`/`voided_by`/`void_reason` yang sama dengan koreksi dewan juri |
 | T4B.6 | Protes Manajer berjenjang beserta tenggatnya sampai banding final | ✅ `PengajuanProtesManajer`/`KeputusanProtesManajer`, banding hanya bisa diajukan setelah tingkat pertama diputuskan, `ManagerProtest::final()` |
 
-## EPIC 5 — Live Score Publik & Tunneling ⬜
+## EPIC 5 — Live Score Publik & Tunneling 🟡
 
 | ID | Task | Status |
 |---|---|---|
-| T5.1 | Route group `/live/*` read-only + rate limit + cache | ⬜ |
-| T5.2 | Halaman live per gelanggang | ⬜ |
-| T5.3 | Halaman jadwal, bagan, hasil, rekap medali publik | ⬜ |
-| T5.4 | Channel publik terpisah | ⬜ |
-| T5.5 | Konfigurasi reverse proxy + tunnel, allowlist path | ⬜ |
-| T5.6 | Uji penetrasi ringan dari jaringan luar | ⬜ |
+| T5.1 | Route group `/live/*` read-only + rate limit + cache | ✅ Didaftarkan lewat `then:` closure di `bootstrap/app.php` (pola sama `/overlay/*`), rate limiter `throttle:live` (120/menit per IP), endpoint state dicache 1 detik |
+| T5.2 | Halaman live per gelanggang | ✅ `live.gelanggang`, memakai ulang Alpine factory `overlayLive` dari Fase 6 lewat template berbeda |
+| T5.3 | Halaman jadwal, bagan, hasil, rekap medali publik | 🟡 Bagan & daftar kelas (dengan juara bila sudah disahkan) selesai; rekap medali gabungan menyusul Fase 8 |
+| T5.4 | Channel publik terpisah | ✅ Reuse `public-live.{arena}` yang sudah ada sejak Fase 6 -- tidak ada channel baru, payloadnya sudah sama-sama bersih dari identitas juri |
+| T5.5 | Konfigurasi reverse proxy + tunnel, allowlist path | ✅ `docs/TUNNELING.md`: contoh Caddyfile yang hanya meneruskan `/live/*`, `/build/*`, dan `/app/*` (WebSocket Reverb) |
+| T5.6 | Uji penetrasi ringan dari jaringan luar | ⬜ **tidak bisa dikerjakan di lingkungan ini** -- butuh perangkat di luar LAN venue dan domain sungguhan untuk TLS Caddy, dicatat sebagai langkah hari-H di `docs/TUNNELING.md` |
 
 ## EPIC 6 — Overlay Siaran vMix 🟡
 
@@ -826,18 +826,23 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Test: hasil VAR "Tidak Sah" membatalkan nilai dan hukuman tanpa hapus `judge_inputs`
 - [x] Resource key `var`/`protes-manajer` sudah ada sejak Fase 0 (`SilatResourceSeeder`); grant `Create` ditambahkan ke `ketua-pertandingan`, `wasit-komisi-protes`, dan `operator-it` di `SilatRoleSeeder` karena sebelumnya tidak ada peran yang bisa mengajukan protes sama sekali (hanya bisa `Approve`/`Reject`)
 
-## Fase 5 — Live Score Publik & Tunneling ⬜ Belum dimulai
+## Fase 5 — Live Score Publik & Tunneling 🟡 Selesai kecuali rekap medali dan uji jaringan luar sungguhan
 
-- [ ] `routes/public.php` prefix `/live`, tanpa auth, read-only
-- [ ] Rate limit + cache respons pendek
-- [ ] Halaman `/live/{arena}`
-- [ ] Halaman `/live/tournament/{id}`
-- [ ] Payload channel publik dibersihkan
-- [ ] Pemulihan otomatis saat koneksi terputus
-- [ ] Konfigurasi Caddy/Nginx: teruskan hanya `/live/*`, aset, WebSocket publik
-- [ ] Sambungkan cloudflared/ngrok ke reverse proxy
-- [ ] Uji dari jaringan seluler luar
-- [ ] Uji: matikan tunnel di tengah pertandingan
+> `App\Support\Live\StatePartaiPublik` diekstrak dari `OverlayController::state()` supaya overlay (Fase 6, dikunci LAN) dan live score publik (Fase 5, dibuka lewat tunnel) memakai bentuk payload yang PERSIS sama alih-alih dua salinan yang bisa diam-diam bergeser satu sama lain. `resources/views/public/live/gelanggang.blade.php` memakai ulang Alpine factory `overlayLive` dari `resources/js/overlay/connection.js` -- logikanya (resync, interpolasi timer, kilat nilai baru) identik, cuma rangka visualnya beda karena halaman ini ditonton langsung, bukan dikomposit vMix.
+
+- [x] `routes/live.php`, prefix `/live`, tanpa auth, read-only -- didaftarkan lewat `then:` closure di `bootstrap/app.php` (pola sama `/overlay/*`), memakai prefiks `gelanggang`/`turnamen` di dalamnya supaya rute tidak bisa saling tertukar router (`/live/turnamen/9` tidak pernah dicoba dulu sebagai binding Arena)
+- [x] Rate limit (`throttle:live`, 120/menit per IP, `AppServiceProvider::boot()`) + cache respons endpoint state (1 detik, `Cache::remember`)
+- [x] Halaman `/live/gelanggang/{arena}`
+- [x] Halaman `/live/turnamen/{tournament}` -- daftar gelanggang + daftar kelas dengan tautan bagan dan juara (bila sudah disahkan)
+- [x] Halaman `/live/turnamen/{tournament}/bagan/{weightClass}`
+- [ ] Rekap medali gabungan -- menyusul Fase 8, belum ada mesin hitungnya
+- [x] Payload channel publik dibersihkan -- reuse `public-live.{arena}`, sudah tanpa identitas juri sejak Fase 6
+- [x] Pemulihan otomatis saat koneksi terputus -- reuse `overlayLive`, resync penuh tiap tersambung ulang
+- [x] Konfigurasi Caddy/Nginx: teruskan hanya `/live/*`, `/build/*` (aset Vite), `/app/*` (WebSocket Reverb) -- `docs/TUNNELING.md`
+- [ ] Sambungkan cloudflared/ngrok ke reverse proxy -- **butuh domain sungguhan untuk TLS Caddy, langkah hari-H**
+- [ ] Uji dari jaringan seluler luar -- **tidak bisa dikerjakan di lingkungan ini**, checklist lengkap ada di `docs/TUNNELING.md`
+- [ ] Uji: matikan tunnel di tengah pertandingan -- idem, langkah hari-H
+- [x] Test: halaman live gelanggang tampil tanpa login, payload state tanpa `officials`/`riwayat`, halaman turnamen dan bagan tampil, bagan kelas milik turnamen lain ditolak 404 (5 test, `tests/Feature/Live/LiveScoreControllerTest.php`)
 
 ## Fase 6 — Overlay Siaran vMix 🟡 Selesai kecuali uji nyata vMix Pro
 
