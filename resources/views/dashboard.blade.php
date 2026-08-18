@@ -1,4 +1,46 @@
 <x-layouts.admin heading="Dashboard" description="Ringkasan singkat isi aplikasi.">
+    {{-- Paling atas, sebelum apa pun: wasit dan juri membuka halaman ini di HP
+         di pinggir gelanggang, dan satu-satunya hal yang mereka butuhkan
+         adalah pintu masuk ke partainya. --}}
+    @if ($penugasan !== [])
+        <x-ui.card title="Partai saya" subtitle="Partai tempat Anda ditugaskan" class="mb-4">
+            <div class="divide-y divide-line">
+                @foreach ($penugasan as $tugas)
+                    <a href="{{ $tugas['url'] }}"
+                       class="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-surface-inset">
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm text-ink">
+                                {{ $tugas['merah'] ?: 'Sudut merah' }}
+                                <span class="text-ink-muted">vs</span>
+                                {{ $tugas['biru'] ?: 'Sudut biru' }}
+                            </p>
+                            <p class="truncate text-xs text-ink-muted">
+                                {{ $tugas['sebutan'] }} · {{ $tugas['kelas'] }}
+                                @if ($tugas['gelanggang']) · {{ $tugas['gelanggang'] }} @endif
+                                @if ($tugas['waktu']) · {{ $tugas['waktu'] }} @endif
+                            </p>
+                        </div>
+
+                        @if ($tugas['berlangsung'])
+                            <x-ui.badge variant="success" dot>Berlangsung</x-ui.badge>
+                        @endif
+
+                        <x-ui.icon name="chevron-right" class="size-4 shrink-0 text-ink-muted" />
+                    </a>
+                @endforeach
+            </div>
+        </x-ui.card>
+    @endif
+
+    @if (! $tampilkanRingkasan && $penugasan === [])
+        <x-ui.card class="mb-4">
+            <x-ui.empty-state icon="calendar-off"
+                              title="Belum ada partai untuk Anda"
+                              description="Kartu partai muncul di sini setelah panitia menugaskan Anda sebagai wasit atau juri. Untuk kategori Jurus, buka menu Pertandingan → Kategori Jurus." />
+        </x-ui.card>
+    @endif
+
+    @if ($tampilkanRingkasan)
     @if ($unmappedCount > 0)
         <x-ui.alert variant="warning" title="Ada resource key yang belum dipetakan" class="mb-6">
             {{ $unmappedCount }} key belum menunjuk permission mana pun, jadi aksesnya tertutup untuk semua orang
@@ -62,4 +104,5 @@
             </li>
         </ol>
     </x-ui.card>
+    @endif
 </x-layouts.admin>
