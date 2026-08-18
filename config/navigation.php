@@ -137,6 +137,13 @@ return [
                 'active' => 'admin/turnamen/*/jurus*',
             ],
             [
+                'label' => 'Overlay Siaran',
+                'route' => 'admin.turnamen.siaran.index',
+                'butuh_turnamen' => true,
+                'resource' => rk('overlay', ResourceAction::View),
+                'active' => 'admin/turnamen/*/siaran*',
+            ],
+            [
                 'label' => 'Rekap & Laporan',
                 'route' => 'admin.turnamen.rekap.index',
                 'butuh_turnamen' => true,

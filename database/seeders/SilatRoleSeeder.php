@@ -78,6 +78,7 @@ class SilatRoleSeeder extends Seeder
                     'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                     'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
                     'hasil-jurus' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
+                    'overlay' => $lihat,
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
                 ],
             ],
@@ -145,6 +146,10 @@ class SilatRoleSeeder extends Seeder
                     'var' => [ResourceAction::View, ResourceAction::Create],
                     'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
                     'hasil-jurus' => [ResourceAction::View, ResourceAction::Print],
+
+                    // Operator IT yang memasang Web Browser Input di vMix,
+                    // jadi dialah yang paling butuh daftar alamat overlay.
+                    'overlay' => $lihat,
                 ],
             ],
             [

@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RekapController;
-use App\Http\Controllers\Admin\PostController;
+use App\Http\Controllers\Admin\SiaranController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RegistrationController;
@@ -398,6 +398,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         Route::post('/sahkan', 'sahkan')->name('sahkan')->middleware('resource:'.rk('hasil-jurus', ResourceAction::Approve));
                     });
                 });
+
+            /*
+             * Daftar alamat overlay, bukan overlaynya sendiri. Halaman
+             * overlay hidup di routes/overlay.php tanpa auth sama sekali --
+             * yang dijaga di sini hanya daftar alamatnya.
+             */
+            Route::get('{tournament}/siaran', [SiaranController::class, 'index'])
+                ->name('siaran.index')
+                ->middleware('resource:'.rk('overlay', ResourceAction::View));
 
             Route::controller(RekapController::class)
                 ->prefix('{tournament}/rekap')

@@ -220,6 +220,15 @@ class SilatResourceSeeder extends Seeder
                 'locked' => true,
             ],
 
+            // ── Siaran ───────────────────────────────────────────────────────
+            [
+                'key' => 'overlay',
+                'label' => 'Alamat Overlay Siaran',
+                'group' => 'Pertandingan',
+                'description' => 'Daftar alamat halaman overlay vMix per gelanggang. Halaman overlaynya sendiri tidak berautentikasi -- yang dijaga key ini hanya daftar alamatnya.',
+                'actions' => [ResourceAction::View],
+            ],
+
             // ── Keberatan ────────────────────────────────────────────────────
             [
                 'key' => 'var',

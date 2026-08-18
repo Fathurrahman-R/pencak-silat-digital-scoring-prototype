@@ -53,7 +53,7 @@ Menu di sidebar muncul-hilang mengikuti peran akun yang sedang login. Kalau satu
 | Official Kontingen | Kontingen (miliknya sendiri), atlet, pendaftaran, tagihan |
 | Petugas Timbang Badan | Timbang badan |
 | Ketua Pertandingan | Jadwal, penugasan aparat, panel partai, keberatan, Kategori Jurus, pengesahan hasil |
-| Operator IT | Jadwal, panel Operator partai, panel Operator Jurus, pengajuan VAR |
+| Operator IT | Jadwal, panel Operator partai, panel Operator Jurus, pengajuan VAR, Overlay Siaran |
 | Wasit | Panel Wasit (hukuman, hitungan teknik) |
 | Juri | PWA Juri, panel Juri Jurus |
 | Pengawas / Dewan Wasit Juri | Penugasan aparat, panel Dewan Juri, pengurangan 0.50 Jurus, keputusan VAR |
@@ -300,7 +300,8 @@ Terakhir, cetak berita acara tiap partai yang belum sempat dicetak, dari panel D
 | Nilai juri tidak terbit | Jumlah juri yang menekan belum mencapai ambang, atau jaraknya melewati window. Naikkan window di Setelan peraturan bila jaringan venue memang lambat |
 | Tombol juri mati semua | Timer sedang tidak berjalan, atau koneksi WebSocket putus (indikator merah) |
 | Pengesahan Jurus ditolak | Juri yang menilai kurang dari setelan, atau jumlahnya ganjil |
-| Overlay vMix kosong | `arena_id` di URL salah, atau gelanggang itu belum punya partai aktif |
+| Overlay vMix kosong | Gelanggang itu belum punya partai aktif. Pastikan alamatnya diambil dari menu Pertandingan → Overlay Siaran, bukan diketik manual |
+| Menu Overlay Siaran tidak ada | Peran akun tidak punya `overlay.view` — tersedia untuk Operator IT dan Ketua Pertandingan |
 
 ---
 

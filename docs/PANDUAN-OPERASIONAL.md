@@ -54,6 +54,8 @@ Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari s
 
 ## Setup vMix Pro
 
+> Alamat lengkapnya tidak perlu diketik manual. Buka menu **Pertandingan → Overlay Siaran**: seluruh alamat per gelanggang tercetak di sana lengkap dengan tombol salin dan pratinjau. Tabel di bawah hanya menjelaskan isi tiap halaman dan ke Overlay Channel mana ia dipasang.
+
 Lima halaman overlay dipasang sebagai **Web Browser Input** terpisah (bukan satu input untuk semuanya), supaya bisa ditoggle sendiri-sendiri dari vMix:
 
 | Overlay Channel | URL | Isi |
@@ -66,7 +68,7 @@ Lima halaman overlay dipasang sebagai **Web Browser Input** terpisah (bukan satu
 
 Langkah di vMix: **Add Input → Web Browser → masukkan URL di atas → centang "Transparent Background"**. Resolusi Browser Input diset 1920×1080 mengikuti kanvas overlay.
 
-`{arena_id}` dilihat dari URL panel operator gelanggang bersangkutan (`/admin/turnamen/{tournament}/gelanggang`). Overlay otomatis mengikuti partai aktif gelanggang itu -- tidak perlu dipilih manual ulang tiap partai.
+`{arena_id}` tidak perlu dicari sendiri — menu **Pertandingan → Overlay Siaran** sudah menyusunkan alamatnya per gelanggang. Overlay otomatis mengikuti partai aktif gelanggang itu, jadi tidak perlu dipilih ulang tiap partai.
 
 **Sebelum siaran dimulai**, uji checklist T6.8 di `docs/RENCANA.md` (transparansi latar, latensi dengan panel operator, kestabilan 3 jam, FPS output vMix) -- ini butuh vMix Pro sungguhan dan tidak bisa diuji dari lingkungan pengembangan.
 
