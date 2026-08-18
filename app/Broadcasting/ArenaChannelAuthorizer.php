@@ -10,10 +10,14 @@ use App\Support\Resources\ResourceGate;
  * Otorisasi channel privat satu gelanggang.
  *
  * Ditulis sebagai kelas, bukan closure langsung di routes/channels.php,
- * supaya bisa diuji langsung tanpa harus menembus lapisan broadcaster HTTP
- * -- broadcaster default di lingkungan testing ('null') meregistrasi channel
- * saat boot dan tidak bisa ditukar belakangan lewat config(), jadi jalur
- * /broadcasting/auth tidak bisa dipakai menguji otorisasi ini secara andal.
+ * supaya logikanya bisa diuji tanpa merangkai permintaan HTTP penuh.
+ *
+ * Methodnya WAJIB bernama `join`. Itu kontrak Laravel untuk channel berbasis
+ * kelas, dan bukan sekadar selera penamaan: `__invoke` membuat setiap
+ * langganan presence gagal dengan 500 sementara seluruh unit test yang
+ * memanggil kelas ini sebagai fungsi tetap hijau. Lihat
+ * tests/Feature/Scoring/ChannelAuthEndpointTest.php, yang sengaja menembus
+ * broadcaster sungguhan supaya kontrak itu ikut teruji.
  *
  * Operator, wasit, juri, dan dewan juri masing-masing menyandang resource
  * key yang berbeda, jadi izinnya dicek dengan ATAU, bukan satu key tunggal.
@@ -23,7 +27,7 @@ class ArenaChannelAuthorizer
     public function __construct(private readonly ResourceGate $gate) {}
 
     /** @return array{id: int, name: string}|false */
-    public function __invoke(User $user, int $arenaId): array|false
+    public function join(User $user, int $arenaId): array|false
     {
         $boleh = $this->gate->any([
             rk('partai', ResourceAction::View),
