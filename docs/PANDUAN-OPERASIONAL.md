@@ -16,7 +16,7 @@
 
 1. Nyalakan empat proses server (lihat `docs/INSTALASI-LAN.md` §6): `serve`, `reverb:start`, `queue:listen`, dan proxy tunnel kalau live score publik dipakai.
 2. **Operator IT** tiap gelanggang membuka panel Operator di laptop gelanggangnya masing-masing (`/admin/turnamen/{id}/partai/{match}/operator` untuk partai pertama).
-3. Juri membuka panel juri di HP masing-masing lewat URL yang dibagikan, login, dan menambahkan ke layar utama (PWA) supaya tidak perlu buka browser lagi tiap partai.
+3. Juri dan wasit login di HP masing-masing. Partai yang ditugaskan kepada mereka muncul sebagai kartu **"Partai saya"** di dashboard — tekan satu partai untuk membuka panelnya, tidak perlu URL yang dikirim manual. Tambahkan panel juri ke layar utama (PWA) supaya tidak perlu buka browser lagi tiap partai.
 4. Uji satu nilai percobaan sebelum partai pertama sungguhan dimulai -- indikator koneksi harus hijau di seluruh perangkat.
 
 ## Alur satu partai Tanding

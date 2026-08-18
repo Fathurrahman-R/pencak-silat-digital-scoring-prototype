@@ -214,6 +214,8 @@ Empat panel berjalan bersamaan untuk satu partai yang sama:
 | Juri (PWA) | `/admin/turnamen/{id}/partai/{match}/juri` | Juri 1–3, HP masing-masing |
 | Dewan Juri | `/admin/turnamen/{id}/partai/{match}/dewan-juri` | Dewan Juri |
 
+Wasit dan juri tidak perlu mengetik alamat itu: partai yang ditugaskan kepada mereka muncul sebagai kartu **"Partai saya"** di dashboard begitu login, dan tiap barisnya menuju panel yang sesuai perannya. Panel-panel ini memang tidak ada di sidebar — satu alamat panel hanya berarti untuk satu partai, sedangkan menu sidebar hanya bisa menunjuk kejuaraan.
+
 **Urutan jalannya:**
 
 1. **Operator** menekan Mulai babak. Timer berjalan di server — jam perangkat siapa pun tidak dipakai.
@@ -289,6 +291,8 @@ Terakhir, cetak berita acara tiap partai yang belum sempat dicetak, dari panel D
 | Gejala | Penyebab paling sering |
 |---|---|
 | Menu tidak ada di sidebar | Peran akun tidak punya izinnya — cek Manajemen Akses → Pengguna |
+| Juri hanya melihat menu "Kategori Jurus" | Benar. Peran Juri hanya berhak atas penilaian dan penampilan Jurus; bagan, jadwal, dan rekap memang tertutup. Panel juri Tanding dibuka dari kartu "Partai saya" di dashboard, bukan dari sidebar |
+| Kartu "Partai saya" kosong | Akun itu belum ditugaskan sebagai wasit atau juri di partai mana pun — tetapkan lewat Jadwal → Aparat |
 | Menu kejuaraan kosong semua | Belum ada kejuaraan aktif; buka satu kejuaraan dulu dari menu Kejuaraan |
 | Tombol Setujui verifikasi ditolak | Tagihan kontingen belum lunas, atau ada berkas atlet yang belum diunggah |
 | Bagan tidak bisa disusun | Kurang dari 2 pendaftaran berstatus Terverifikasi di kelas itu |
