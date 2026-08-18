@@ -8,6 +8,8 @@
 > - [`TUNNELING.md`](TUNNELING.md) — konfigurasi live score publik
 > - [`PARAMETER-PERATURAN.md`](PARAMETER-PERATURAN.md) — asal-usul tiap angka peraturan di Setelan Peraturan
 
+> **Mau langsung ke bagian hari-H?** `php artisan silat:simulasi` menyusun satu kejuaraan yang seluruh Tahap 1–10 di bawah sudah selesai — akun tiap peran, tarif, peserta, tagihan lunas, bagan terkunci, jadwal, aparat. Rinciannya di [Lampiran: kejuaraan siap-uji](#lampiran--kejuaraan-siap-uji).
+
 ---
 
 ## Peta alur
@@ -295,3 +297,41 @@ Terakhir, cetak berita acara tiap partai yang belum sempat dicetak, dari panel D
 | Tombol juri mati semua | Timer sedang tidak berjalan, atau koneksi WebSocket putus (indikator merah) |
 | Pengesahan Jurus ditolak | Juri yang menilai kurang dari setelan, atau jumlahnya ganjil |
 | Overlay vMix kosong | `arena_id` di URL salah, atau gelanggang itu belum punya partai aktif |
+
+---
+
+## Lampiran — kejuaraan siap-uji
+
+Untuk mencoba aplikasi tanpa mengetik data pra-acara satu per satu:
+
+```bash
+php artisan silat:simulasi
+```
+
+Menyusun kejuaraan **Kejuaraan Simulasi Digital Scoring** yang seluruh Tahap 1–10 sudah selesai:
+
+| Sudah disiapkan | Isinya |
+|---|---|
+| Akun | 21 pengguna, satu per peran, kata sandi `password` |
+| Gelanggang | Gelanggang A dan B |
+| Tarif | Tanding Rp150.000, Jurus Rp125.000, biaya tetap kontingen Rp250.000 |
+| Peserta | 4 kontingen, 16 atlet, 14 pendaftaran, berkas wajib lengkap |
+| Kelas | Tanding putra 4 peserta (bagan penuh), tanding putri 5 peserta (bagan dengan bye), Jurus Tunggal 3 peserta, Jurus Ganda 2 tim |
+| Keuangan | Empat tagihan terkunci dan **lunas** lewat pembayaran manual berikut buktinya |
+| Pertandingan | Pendaftaran terverifikasi, timbang badan lolos, bagan terkunci, 4 partai terjadwal, aparat ditugaskan |
+
+Akun yang paling sering dipakai: `operator@silat.test` (panel gelanggang), `wasit1@silat.test`, `juri1@silat.test`–`juri6@silat.test`, `ketua@silat.test` (pengesahan hasil dan VAR). Daftar lengkapnya tercetak di akhir keluaran perintah.
+
+Juri 1–3 ditugaskan ke Gelanggang A dan juri 4–6 ke Gelanggang B, jadi dua gelanggang bisa dijalankan bersamaan tanpa satu orang pun merangkap. Keenamnya dipakai bersama untuk kategori Jurus.
+
+**Window konsensus dinaikkan ke 5 detik** (bawaan 2 detik). Uji manual dijalankan satu orang yang berpindah antar tab, dan tiga tekanan tombol tidak mungkin masuk dalam dua detik seperti tiga juri sungguhan yang duduk bersamaan. Kembalikan ke 2000 ms lewat Setelan peraturan bila ingin menguji ketatnya window yang sebenarnya.
+
+Yang **tidak** dikerjakan seeder — dan memang inilah yang diuji: menjalankan partai, nilai juri, hukuman wasit, penampilan Jurus, protes VAR, pengesahan hasil, rekap medali. Lanjutkan dari [Bagian B](#bagian-b--hari-h).
+
+Ulangi dari bersih:
+
+```bash
+php artisan silat:simulasi --reset
+```
+
+Perintah ini **menghapus permanen** kejuaraan simulasi beserta seluruh peserta, tagihan, bagan, dan hasilnya, lalu menyusun ulang. Kejuaraan lain tidak tersentuh — yang dihapus hanya kejuaraan ber-slug `simulasi-manual`.

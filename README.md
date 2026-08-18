@@ -43,6 +43,30 @@ Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`
 
 Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat.
 
+### Kejuaraan siap-uji untuk simulasi manual
+
+```bash
+php artisan silat:simulasi
+```
+
+Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, empat kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Operator IT dan menekan Mulai babak.
+
+Yang sengaja **tidak** dikerjakan: menjalankan partai, memasukkan nilai juri, membuat penampilan Jurus, dan mengesahkan hasil — justru itu yang mau diuji manual.
+
+| Akun | Peran |
+|---|---|
+| `operator@silat.test` | Operator IT (panel gelanggang, timer) |
+| `wasit1@silat.test`, `wasit2@silat.test` | Wasit |
+| `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B; keenamnya untuk Jurus) |
+| `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR) |
+| `pengawas@silat.test`, `komisi@silat.test`, `delegasi@silat.test` | Pengawas, Wasit Komisi Protes, Delegasi Teknik |
+| `sekretaris@silat.test`, `bendahara@silat.test`, `timbang@silat.test` | Petugas pra-acara |
+| `official1@silat.test` … `official4@silat.test` | Official kontingen |
+
+Kata sandi seluruhnya `password`. Ulangi dari bersih dengan `php artisan silat:simulasi --reset`.
+
+Langkah ujinya per tahap ada di [`docs/PANDUAN-WORKFLOW.md`](docs/PANDUAN-WORKFLOW.md).
+
 **Database.** MySQL 8. Buat dua database sebelum migrasi — satu aplikasi, satu test:
 
 ```sql
