@@ -1,6 +1,8 @@
 # Panduan Operasional — Hari-H
 
 > Untuk panitia. Langkah teknis instalasi ada di `docs/INSTALASI-LAN.md`; konfigurasi tunnel ada di `docs/TUNNELING.md`. Dokumen ini adalah urutan langkah dan siapa mengerjakan apa.
+>
+> Seluruh tahap pra-acara — membuat kejuaraan, tarif, pendaftaran, tagihan, verifikasi, timbang badan, bagan, jadwal — ada di [`PANDUAN-WORKFLOW.md`](PANDUAN-WORKFLOW.md), lengkap dengan syarat tiap tahap dan apa yang memblokir kalau tombolnya tidak jalan.
 
 ## H-1: Persiapan
 
