@@ -31,8 +31,11 @@
         </template>
 
         <template x-if="! memuat && ! adaPartai">
-            <div class="bg-silat-panel p-6 text-center">
-                <p class="text-[14px] text-silat-teks-redup">Belum ada partai berjalan di gelanggang ini.</p>
+            <div class="border border-dashed border-silat-tepi-kendali px-5 py-8 text-center">
+                <p class="text-[16px] font-medium text-silat-teks">Belum ada partai berjalan</p>
+                <p class="mt-1 text-[14px] leading-relaxed text-silat-teks-redup">
+                    Skor muncul di sini begitu operator memulai partai berikutnya di gelanggang ini.
+                </p>
             </div>
         </template>
 
@@ -139,7 +142,7 @@
                 ditonton orang luar.
             --}}
             <template x-if="match?.status === 'selesai'">
-                <div class="bg-silat-panel p-4 text-center"
+                <div class="border-t-2 border-silat-teks pt-4 text-center"
                      x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">
                     <p class="text-[13px] text-silat-teks-redup">Hasil</p>
                     <p class="text-[16px] font-medium text-silat-teks">

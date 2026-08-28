@@ -5,7 +5,6 @@
     OverlayController::bracket), karena satu turnamen bisa punya ratusan
     kelas dan overlay tidak bisa menebak mana yang mau ditayangkan.
 
-    Rekap medali penuh menyusul Fase 8; belum ada mesin hitungnya.
 --}}
 
 <x-layouts.overlay title="Bagan">
