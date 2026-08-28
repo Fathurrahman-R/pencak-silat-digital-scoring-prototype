@@ -7,6 +7,10 @@
     'teguran' => 0,
     'peringatan' => 0,
     'ukuran' => 'papan',
+
+    // Sisi petak hukuman. 32px cukup terbaca dari tepi matras tanpa membuat
+    // tujuh petak memakan lebar blok sudut.
+    'ukuranPetak' => 32,
 ])
 
 @php
@@ -51,9 +55,19 @@
 
     <x-silat.angka-skor :nilai="$nilai" :ukuran="$ukuran" class="mt-1 block text-silat-teks" />
 
-    <div class="mt-3 flex flex-col gap-1.5 {{ $kanan ? 'items-end' : 'items-start' }}">
-        <x-silat.baris-hukuman jenis="pembinaan" :terisi="$pembinaan" :rata="$kanan ? 'kanan' : 'kiri'" pada="sudut" />
-        <x-silat.baris-hukuman jenis="teguran" :terisi="$teguran" :rata="$kanan ? 'kanan' : 'kiri'" pada="sudut" />
-        <x-silat.baris-hukuman jenis="peringatan" :terisi="$peringatan" :rata="$kanan ? 'kanan' : 'kiri'" pada="sudut" />
+    {{--
+        Tiga kelompok berdampingan, bukan bertumpuk: posisinya jadi tetap, dan
+        dari tepi matras mata cukup menghafal tempat alih-alih membaca. Urutan
+        Pembinaan-Teguran-Peringatan SAMA di kedua sudut walau bloknya
+        bercermin -- kalau urutannya ikut dibalik, mata harus membaca dua arah
+        berbeda untuk membandingkan kedua pesilat.
+    --}}
+    <div class="mt-3 flex gap-4 {{ $kanan ? 'justify-end' : 'justify-start' }}">
+        <x-silat.baris-hukuman jenis="pembinaan" :terisi="$pembinaan" pada="sudut"
+                               :rata="$kanan ? 'kanan' : 'kiri'" :ukuran="$ukuranPetak" />
+        <x-silat.baris-hukuman jenis="teguran" :terisi="$teguran" pada="sudut"
+                               :rata="$kanan ? 'kanan' : 'kiri'" :ukuran="$ukuranPetak" />
+        <x-silat.baris-hukuman jenis="peringatan" :terisi="$peringatan" pada="sudut"
+                               :rata="$kanan ? 'kanan' : 'kiri'" :ukuran="$ukuranPetak" />
     </div>
 </div>

@@ -17,10 +17,12 @@
                 aturan yang sudah dipakai blok sudut.
             --}}
             @php
+                // Jumlah petak dibaca dari config supaya tangga hukuman di layar
+                // penonton tidak pernah berbeda dari yang dihitung mesin scoring.
                 $kolomHukuman = [
-                    'pembinaan' => ['jumlah' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2), 'nyala' => 'bg-white/45'],
-                    'teguran' => ['jumlah' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2), 'nyala' => 'bg-white/75'],
-                    'peringatan' => ['jumlah' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3), 'nyala' => 'bg-white'],
+                    'pembinaan' => ['jumlah' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2)],
+                    'teguran' => ['jumlah' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2)],
+                    'peringatan' => ['jumlah' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3)],
                 ];
             @endphp
 

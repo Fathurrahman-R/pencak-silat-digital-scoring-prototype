@@ -3,72 +3,92 @@
     'terisi' => 0,
     'rata' => 'kiri',
     'pada' => 'panel',
+    'ukuran' => 44,
 ])
 
 @php
     /*
-     * Deret kolom hukuman: kolom menyala sebanyak sanksi yang sudah dijatuhkan.
+     * Petak hukuman: satu petak per sanksi yang mungkin dijatuhkan, menyala
+     * sebanyak yang sudah jatuh.
      *
-     * Jumlah kolomnya dibaca dari config/scoring.php, bukan ditulis di sini,
+     * Jumlah petaknya dibaca dari config/scoring.php, bukan ditulis di sini,
      * supaya angkanya tetap satu sumber dengan mesin scoring dan tidak pernah
      * berbeda antara yang dihitung server dan yang dilihat penonton.
      *
      * Pasal 11.6.d.4:
-     *   pembinaan  2 kolom — tidak mengurangi nilai, tapi dua pembinaan adalah
+     *   pembinaan  2 petak — tidak mengurangi nilai, tapi dua pembinaan adalah
      *              ambang yang menentukan: pelanggaran ringan berikutnya naik
      *              menjadi teguran
-     *   teguran    2 kolom — teguran ketiga tidak pernah muncul di sini, ia
+     *   teguran    2 petak — teguran ketiga tidak pernah muncul di sini, ia
      *              langsung menjadi Peringatan I
-     *   peringatan 3 kolom — kolom ketiga menyala berarti diskualifikasi
+     *   peringatan 3 petak — petak ketiga bergaris putus karena ia bukan
+     *              pengurangan nilai: mengisinya berarti diskualifikasi
      *
-     * Pembinaan sengaja dibuat paling redup. Ia tidak mengurangi nilai, dan
-     * kalau tampil sekuat teguran, penonton akan membacanya sebagai sanksi
-     * padahal dampaknya nol.
+     * Jumlah dibaca dari BERAPA PETAK YANG MENYALA, tidak pernah dari angka.
+     * Dari tepi matras, menghitung dua kotak lebih cepat daripada membaca "×2",
+     * dan petak yang masih kosong sekaligus memberi tahu berapa langkah lagi
+     * sebelum naik tingkat.
      */
-    $jumlahKolom = config("scoring.tanding.hukuman.{$jenis}.jumlah_kolom", 0);
+    $jumlahPetak = config("scoring.tanding.hukuman.{$jenis}.jumlah_kolom", 0);
 
     /*
-     * Dua konteks, dua skala warna.
+     * Tiap petak memuat ikon jenisnya, terisi maupun belum -- supaya petaknya
+     * terbaca untuk apa bahkan sebelum ada hukuman. Yang membedakan terisi dari
+     * kosong adalah bidang warnanya, bukan ada-tidaknya ikon.
      *
-     * Di panel netral, tingkat keparahan diberi warna semantik: abu, oranye,
-     * merah.
-     *
-     * Di atas blok sudut, warna itu justru runtuh — oranye di atas merah jadi
-     * lumpur, dan merah di atas merah hilang sama sekali. Jadi di sana
-     * keparahan dibawa oleh terang-gelap: makin berat makin putih. Bentuk
-     * ikonnya tetap membedakan ketiganya, sehingga tidak ada informasi yang
-     * hanya bergantung pada warna.
+     * Petak kosong TIDAK PERNAH berupa bidang abu. Bidang gelap yang dipakai
+     * sebelumnya (`bg-black/25`) berkontras 1.27 di atas blok sudut: petak yang
+     * belum terisi praktis tidak terlihat. Sekarang ia berupa tepi yang terukur
+     * 3.15 di bidang merah dan 4.01 di bidang biru.
      */
-    $gaya = $pada === 'sudut'
-        ? [
-            'pembinaan' => ['nyala' => 'bg-white/45', 'mati' => 'bg-black/25', 'teks' => 'text-white/60'],
-            'teguran' => ['nyala' => 'bg-white/75', 'mati' => 'bg-black/25', 'teks' => 'text-white/75'],
-            'peringatan' => ['nyala' => 'bg-white', 'mati' => 'bg-black/25', 'teks' => 'text-white/90'],
-        ][$jenis] ?? ['nyala' => 'bg-white', 'mati' => 'bg-black/25', 'teks' => 'text-white/75']
-        : [
-            'pembinaan' => ['nyala' => 'bg-silat-pembinaan', 'mati' => 'bg-silat-mati', 'teks' => 'text-silat-teks-samar'],
-            'teguran' => ['nyala' => 'bg-silat-teguran', 'mati' => 'bg-silat-mati', 'teks' => 'text-silat-teks-redup'],
-            'peringatan' => ['nyala' => 'bg-silat-peringatan', 'mati' => 'bg-silat-mati', 'teks' => 'text-silat-teks-redup'],
-        ][$jenis] ?? ['nyala' => 'bg-silat-teks-redup', 'mati' => 'bg-silat-mati', 'teks' => 'text-silat-teks-redup'];
+    $bidang = [
+        'pembinaan' => 'bg-silat-pembinaan',
+        'teguran' => 'bg-silat-teguran',
+        'peringatan' => 'bg-silat-peringatan',
+    ][$jenis] ?? 'bg-silat-teks-redup';
+
+    $tintaIkon = [
+        'pembinaan' => 'text-silat-teks',
+        'teguran' => 'text-[color:var(--teguran-teks)]',
+        'peringatan' => 'text-silat-teks',
+    ][$jenis] ?? 'text-silat-teks';
+
+    // Label mengikuti latar tempat petaknya duduk: di atas blok sudut ia harus
+    // memakai nuansa sudut, bukan abu yang tenggelam.
+    $tintaLabel = $pada === 'sudut'
+        ? ($rata === 'kanan' ? 'text-silat-teks-biru-samar' : 'text-silat-teks-merah-samar')
+        : 'text-silat-teks-redup';
 
     $label = ['pembinaan' => 'Pembinaan', 'teguran' => 'Teguran', 'peringatan' => 'Peringatan'][$jenis] ?? $jenis;
 
-    $terisi = max(0, min((int) $terisi, $jumlahKolom));
-    $kananDulu = $rata === 'kanan';
+    $terisi = max(0, min((int) $terisi, $jumlahPetak));
+    $ikonPx = (int) round($ukuran * 0.55);
 @endphp
 
 <div
-    {{ $attributes->merge(['class' => 'flex items-center gap-2 '.($kananDulu ? 'flex-row-reverse' : '')]) }}
+    {{ $attributes->merge(['class' => 'flex flex-col gap-1.5 '.($rata === 'kanan' ? 'items-end' : 'items-start')]) }}
     role="group"
-    aria-label="{{ $label }}: {{ $terisi }} dari {{ $jumlahKolom }}"
+    aria-label="{{ $label }}: {{ $terisi }} dari {{ $jumlahPetak }}"
 >
-    <x-silat.ikon :nama="$jenis" :ukuran="14" :label="null" class="{{ $gaya['teks'] }}" />
-
-    <span class="text-[11px] tracking-wide {{ $gaya['teks'] }}">{{ $label }}</span>
-
-    <div class="flex gap-1 {{ $kananDulu ? 'flex-row-reverse' : '' }}" aria-hidden="true">
-        @for ($i = 1; $i <= $jumlahKolom; $i++)
-            <span class="h-2.5 w-5 rounded-[2px] {{ $i <= $terisi ? $gaya['nyala'] : $gaya['mati'] }}"></span>
+    <div class="flex gap-1.5" aria-hidden="true">
+        @for ($i = 1; $i <= $jumlahPetak; $i++)
+            @php
+                $nyala = $i <= $terisi;
+                // Petak terakhir peringatan berarti diskualifikasi, bukan
+                // pengurangan nilai -- dibedakan garis putus.
+                $diskualifikasi = $jenis === 'peringatan' && $i === $jumlahPetak;
+            @endphp
+            <span @class([
+                'flex shrink-0 items-center justify-center rounded-silat',
+                $bidang => $nyala,
+                'border border-silat-tepi-petak' => ! $nyala && ! $diskualifikasi,
+                'border border-dashed border-silat-tepi-petak' => ! $nyala && $diskualifikasi,
+            ]) style="width: {{ $ukuran }}px; height: {{ $ukuran }}px;">
+                <x-silat.ikon :nama="$jenis" :ukuran="$ikonPx" :label="null"
+                              class="{{ $nyala ? $tintaIkon : 'text-silat-tepi-petak' }}" />
+            </span>
         @endfor
     </div>
+
+    <span class="text-[11px] tracking-[.06em] uppercase {{ $tintaLabel }}">{{ $label }}</span>
 </div>
