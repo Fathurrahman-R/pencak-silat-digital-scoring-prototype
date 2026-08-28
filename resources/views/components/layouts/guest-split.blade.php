@@ -46,10 +46,18 @@
                 </div>
             </div>
 
-            <div class="relative hidden flex-col justify-end overflow-hidden p-9 lg:flex"
-                 style="background-image: radial-gradient(90% 90% at 70% 10%, var(--accent-soft) 0%, transparent 55%), var(--mat-base)">
-                <div class="bg-grid pointer-events-none absolute inset-0" aria-hidden="true"></div>
+            {{--
+                Panel kanan gelap, apa pun tema yang dipilih. Ia bukan bagian
+                dari antarmuka yang dipakai orang: ia menyatakan kejuaraan apa
+                yang sedang berjalan dan siapa yang masuk lewat sini, dan bidang
+                gelap memisahkannya tegas dari formulir di kiri.
 
+                Gradien aksen dan lapisan grid dibuang bersama efek material
+                RizzxxUI di Tahap 0 -- keduanya sudah berhenti menggambar apa pun
+                sejak saat itu, dan menyisakan elemennya hanya membingungkan
+                orang berikutnya.
+            --}}
+            <div class="relative hidden flex-col justify-between gap-10 overflow-hidden bg-[#0b0b0c] p-10 text-white lg:flex">
                 {{ $aside ?? '' }}
             </div>
         </div>

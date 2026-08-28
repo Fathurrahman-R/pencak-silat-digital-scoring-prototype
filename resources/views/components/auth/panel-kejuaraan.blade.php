@@ -7,35 +7,74 @@
     Selain tidak ada hubungannya dengan pencak silat, testimoni dan metrik yang
     dikarang tidak boleh ikut terbit di halaman yang dibuka orang luar.
 
-    Isi panel ini hanya menyatakan apa yang benar-benar dilakukan aplikasi dan
-    siapa yang masuk lewat halaman ini -- tidak ada klaim, tidak ada angka.
-    Komponennya masih tersedia di design system untuk yang membutuhkannya.
+    Yang menggantikannya bukan klaim lain, melainkan ANGKA YANG BENAR-BENAR ADA
+    di basis data: kejuaraan mana yang sedang berjalan, berapa kontingen yang
+    terdaftar, berapa kelas yang dipertandingkan. Kalau tidak ada kejuaraan
+    berjalan, bagian itu tidak muncul sama sekali -- bukan diganti angka contoh.
+
+    Query-nya dijalankan di sini, bukan dititipkan ke controller auth. Halaman
+    masuk punya empat controller berbeda (login, register, forgot, reset) dan
+    ketiganya tidak punya urusan dengan data kejuaraan; menaruhnya di komponen
+    membuat panel ini berdiri sendiri.
 --}}
 
-<div class="relative max-w-[420px]">
-    <p class="eyebrow">Digital Scoring Pencak Silat</p>
+@php
+    $kejuaraan = App\Models\Tournament::query()
+        ->where('status', App\Enums\StatusTurnamen::Berjalan)
+        ->withCount(['contingents', 'weightClasses', 'arenas'])
+        ->orderBy('starts_on')
+        ->first();
+@endphp
 
-    <p class="mt-3 font-display text-[26px] leading-snug font-semibold tracking-tight text-ink">
-        Satu sistem dari pendaftaran kontingen sampai rekap medali.
-    </p>
+<div class="flex h-full flex-col justify-between gap-10">
+    <div>
+        <div class="text-[11px] tracking-[.28em] text-[#8a8a90] uppercase">Digital Scoring Pencak Silat</div>
 
-    <p class="mt-3 text-sm text-ink-secondary">
-        Penilaian Tanding dan Jurus mengikuti Peraturan Pertandingan Pencak Silat
-        Nasional 2025. Seluruh jalur pertandingan berjalan di jaringan lokal
-        gelanggang, tanpa bergantung internet.
-    </p>
+        @if ($kejuaraan)
+            <div class="mt-6 text-[11px] tracking-[.28em] text-[#8a8a90] uppercase">Sedang berlangsung</div>
+            <div class="mt-2 text-[28px] leading-tight font-bold">{{ $kejuaraan->name }}</div>
+            <div class="mt-2 font-mono text-[13px] text-[#8a8a90]">
+                {{ $kejuaraan->venue ? strtoupper($kejuaraan->venue).' · ' : '' }}{{ $kejuaraan->starts_on?->translatedFormat('d M Y') }}
+            </div>
 
-    <dl class="mt-7 space-y-3.5">
+            <div class="mt-8">
+                @foreach ([
+                    [$kejuaraan->contingents_count, 'kontingen'],
+                    [$kejuaraan->weight_classes_count, 'kelas dipertandingkan'],
+                    [$kejuaraan->arenas_count, 'gelanggang'],
+                ] as [$angka, $label])
+                    <div class="flex items-baseline gap-6 border-b border-[#2a2a2c] py-3">
+                        <span class="w-[84px] font-mono text-[30px] leading-none font-semibold tabular-nums">{{ $angka }}</span>
+                        <span class="text-[15px] text-[#8a8a90]">{{ $label }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="mt-6 text-[24px] leading-snug font-semibold">
+                Satu sistem dari pendaftaran kontingen sampai rekap medali.
+            </div>
+            <p class="mt-3 max-w-[46ch] text-[15px] leading-relaxed text-[#8a8a90]">
+                Penilaian Tanding dan Jurus mengikuti Peraturan Pertandingan Pencak Silat 2025.
+                Seluruh jalur pertandingan berjalan di jaringan lokal gelanggang, tanpa bergantung internet.
+            </p>
+        @endif
+    </div>
+
+    <div>
+        <div class="border-b-2 border-white pb-3 text-[11px] tracking-[.28em] text-[#8a8a90] uppercase">
+            Yang masuk lewat sini
+        </div>
+
         @foreach ([
-            ['Wasit dan Juri', 'Masuk dari HP; partai yang ditugaskan langsung muncul di halaman depan.'],
-            ['Operator IT', 'Menjalankan timer dan papan skor gelanggang.'],
-            ['Dewan Wasit Juri', 'Meninjau riwayat nilai dan mengesahkan hasil partai.'],
-            ['Official kontingen', 'Mendaftarkan pesilat, mengunggah berkas, dan melihat tagihan.'],
+            ['Wasit dan juri', 'Panel gelanggang untuk partai yang ditugaskan hari itu'],
+            ['Operator', 'Timer dan papan skor gelanggang'],
+            ['Dewan Wasit Juri', 'Meninjau riwayat nilai dan mengesahkan hasil'],
+            ['Panitia dan official', 'Jadwal, bagan, verifikasi, timbang badan, tagihan'],
         ] as [$peran, $tugas])
-            <div class="flex gap-3">
-                <dt class="w-[132px] shrink-0 text-sm font-semibold text-ink">{{ $peran }}</dt>
-                <dd class="text-[12.5px] leading-relaxed text-ink-muted">{{ $tugas }}</dd>
+            <div class="flex items-baseline gap-6 border-b border-[#2a2a2c] py-3">
+                <span class="w-[150px] shrink-0 text-[15px] font-semibold">{{ $peran }}</span>
+                <span class="text-[14px] leading-relaxed text-[#8a8a90]">{{ $tugas }}</span>
             </div>
         @endforeach
-    </dl>
+    </div>
 </div>
