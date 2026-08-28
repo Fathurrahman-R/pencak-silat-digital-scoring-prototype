@@ -3,6 +3,14 @@
     'kunciSkor' => 'merah',
     'rata' => 'kiri',
     'indikator' => false,
+
+    /*
+     * Ukuran angka skor mengikuti jarak baca, bukan selera. Di panel operator
+     * papan skor mengisi setengah layar dan dibaca dari jarak meja gelanggang,
+     * jadi angkanya jauh lebih besar daripada di panel yang hanya menampilkan
+     * skor sebagai konteks pendukung.
+     */
+    'ukuranAngka' => 'panel',
 ])
 
 @php
@@ -11,8 +19,17 @@
     // Lihat catatan di <x-silat.blok-sudut>: nuansa merah muda lama hanya 2.89:1
     // di atas #d42027 sementara padanan birunya 4.63:1, jadi identitas pesilat
     // merah selalu lebih sulit dibaca. Angka di bawah sudah dihitung >= 4.5:1.
-    $redup = $sudut === 'blue' ? 'text-[#9ebbea]' : 'text-[#fff0f0]';
-    $samar = $sudut === 'blue' ? 'text-[#cbdbf7]' : 'text-[#fff5f5]';
+    // Nuansa teks di dalam bidang sudut. Nilainya token, bukan hex mentah --
+    // dulu #9ebbea dan #cbdbf7 yang sebenarnya lolos kontras (7.04 dan 9.83)
+    // tapi berdiri sendiri di luar sistem.
+    $redup = $sudut === 'blue' ? 'text-silat-teks-biru-samar' : 'text-silat-teks-merah';
+    $samar = $sudut === 'blue' ? 'text-silat-teks-biru' : 'text-silat-teks-merah-redup';
+
+    $angkaKelas = [
+        'papan' => 'text-[104px] leading-[.86]',
+        'operator' => 'text-[136px] leading-[.86]',
+        'panel' => 'text-[56px] leading-none',
+    ][$ukuranAngka] ?? 'text-[56px] leading-none';
     $namaSudut = $sudut === 'blue' ? 'Sudut biru' : 'Sudut merah';
     $kanan = $rata === 'kanan';
 @endphp
@@ -24,7 +41,7 @@
         <p class="text-[13px] {{ $redup }}" x-text="match.{{ $sudut }}?.contingent ?? '—'"></p>
     </div>
 
-    <p class="silat-angka mt-1 text-[56px] leading-none font-medium text-silat-teks" x-text="skorTotal.{{ $kunciSkor }}"></p>
+    <p class="silat-angka mt-1 font-medium text-silat-teks {{ $angkaKelas }}" x-text="skorTotal.{{ $kunciSkor }}"></p>
 
     <div class="mt-3 flex flex-col gap-1.5 {{ $kanan ? 'items-end' : 'items-start' }}">
         @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)

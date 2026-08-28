@@ -5,7 +5,17 @@
          laptop gelanggang dan tidak pernah digulir. Sebelumnya papan skor
          berhenti di sekitar 60% tinggi layar dan sisanya kosong, padahal
          angkanya justru yang dibaca dari jarak meja. --}}
-    <div x-data="partaiPanel(@js($config))" class="mx-auto flex h-dvh max-w-4xl flex-col gap-4 overflow-y-auto p-4">
+    {{--
+        Panel operator memakai seluruh lebar layar, bukan kolom terpusat
+        selebar 896px. Angka skor di sini dibaca dari jarak meja gelanggang,
+        dan `max-w-4xl` memaksa kedua papan skor menyusut ke 266px sementara
+        sisa layar dibiarkan kosong.
+
+        `overflow-hidden` menggantikan `overflow-y-auto`: layar ini tidak boleh
+        digulir sama sekali. Kalau isinya tidak muat, itu cacat tata letak yang
+        harus ketahuan, bukan disembunyikan di balik gulir.
+    --}}
+    <div x-data="partaiPanel(@js($config))" class="flex h-dvh flex-col gap-4 overflow-hidden p-4">
         <header class="flex items-center justify-between gap-4">
             <div>
                 <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">OPERATOR GELANGGANG</p>
@@ -35,53 +45,72 @@
             <span x-show="! match.ratified" class="text-silat-teks-redup">Menunggu pengesahan Dewan Wasit Juri.</span>
         </div>
 
-        {{-- Timer --}}
-        <div class="rounded-silat bg-silat-panel p-6 text-center">
-            <p class="silat-angka text-[12px] tracking-[.1em] text-silat-teks-redup">
-                Babak <span x-text="match.current_round ?? '–'"></span><span class="text-silat-teks-samar">/<span x-text="peraturan.jumlah_babak"></span></span>
-            </p>
-            <div
-                class="silat-angka text-[52px] leading-none font-medium text-silat-teks"
-                x-text="tampilWaktu"
-                role="timer"
-                aria-live="off"
-            >00:00</div>
+        {{--
+            Tiga kolom: sudut merah, kendali, sudut biru.
 
-            @resource(rk('partai', ResourceAction::Update))
-                {{--
-                    Tidak ada tombol kendali yang boleh berwarna merah atau biru.
-                    Di layar ini kedua warna itu sudah punya arti tetap — identitas
-                    sudut pesilat — dan tombol "Mulai babak" berwarna merah sudut
-                    membuat operator sepersekian detik mengira aksinya berhubungan
-                    dengan pesilat merah. Aksi memakai --silat-aksi; abu-abu tetap
-                    untuk aksi sekunder.
+            Kendali dan timer duduk di KOLOM TENGAH, bukan di baris tersendiri
+            di atas papan skor. Dua alasannya:
 
-                    Labelnya juga menyebut nomor babaknya. Sebelumnya berbunyi
-                    "Mulai babak berikutnya" bahkan pada partai yang belum pernah
-                    dimulai sama sekali — tidak ada babak sebelumnya untuk
-                    dilanjutkan, dan papan di atasnya masih menulis "Babak –/3".
-                --}}
-                <div class="mt-4 flex flex-wrap justify-center gap-2">
-                    <button type="button" x-show="babakUntukDimulai !== null" x-on:click="mulaiBabak()"
-                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">
-                        <span x-text="(babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak ' : 'Mulai babak ') + babakUntukDimulai"></span>
-                    </button>
-                    <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
-                            class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks">Jeda</button>
-                    <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
-                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">Lanjutkan</button>
-                    <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="resetBabak()"
-                            class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks-redup">Reset</button>
-                    <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="selesaikanBabak()"
-                            class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks">Selesaikan babak</button>
+            Pertama, papan skor jadi mengisi tinggi layar. Angka skor adalah
+            yang dibaca dari jarak jauh, dan sebelumnya sepertiga tinggi layar
+            habis untuk baris timer.
+
+            Kedua, tidak satu pun kendali boleh terbaca sebagai milik salah satu
+            sudut. Tombol yang duduk di dalam atau tepat di bawah blok berwarna
+            akan terbaca begitu, sama seperti tombol berwarna merah terbaca
+            berhubungan dengan pesilat merah.
+        --}}
+        <div class="grid min-h-0 flex-1 grid-cols-[1fr_300px_1fr] gap-4">
+            <x-silat.papan-skor sudut="red" kunci-skor="merah" rata="kiri" :indikator="true" ukuran-angka="operator" />
+
+            <div class="flex min-h-0 flex-col gap-4">
+                @resource(rk('partai', ResourceAction::Update))
+                    {{--
+                        Tidak ada tombol kendali yang boleh berwarna merah atau
+                        biru. Di layar ini kedua warna itu sudah punya arti tetap
+                        -- identitas sudut pesilat -- dan tombol "Mulai babak"
+                        berwarna merah sudut membuat operator sepersekian detik
+                        mengira aksinya berhubungan dengan pesilat merah.
+
+                        Labelnya menyebut nomor babaknya. Sebelumnya berbunyi
+                        "Mulai babak berikutnya" bahkan pada partai yang belum
+                        pernah dimulai sama sekali -- tidak ada babak sebelumnya
+                        untuk dilanjutkan, dan papan masih menulis "Babak -/3".
+
+                        Tinggi 64px mengikuti batas sentuh gelanggang: operator
+                        menekannya sambil mengawasi matras, bukan layar.
+                    --}}
+                    <div class="flex shrink-0 flex-col gap-2">
+                        <button type="button" x-show="babakUntukDimulai !== null" x-on:click="mulaiBabak()"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat bg-silat-aksi px-4 text-[15px] font-medium text-silat-aksi-teks">
+                            <span x-text="(babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak ' : 'Mulai babak ') + babakUntukDimulai"></span>
+                        </button>
+                        <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat bg-silat-aksi px-4 text-[15px] font-medium text-silat-aksi-teks">Lanjutkan</button>
+                        <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-4 text-[15px] text-silat-teks">Jeda</button>
+                        <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="selesaikanBabak()"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-4 text-[15px] text-silat-teks">Selesaikan babak</button>
+                        <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="resetBabak()"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-4 text-[15px] text-silat-teks-redup">Reset</button>
+                    </div>
+                @endresource
+
+                {{-- Timer mengisi sisa tinggi kolom, jadi ia duduk di tengah optik. --}}
+                <div class="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
+                    <p class="silat-angka text-[12px] tracking-[.1em] text-silat-teks-redup">
+                        Babak <span x-text="match.current_round ?? '–'"></span>/<span x-text="peraturan.jumlah_babak"></span>
+                    </p>
+                    <div
+                        class="silat-angka text-[52px] leading-none font-medium text-silat-teks"
+                        x-text="tampilWaktu"
+                        role="timer"
+                        aria-live="off"
+                    >00:00</div>
                 </div>
-            @endresource
-        </div>
+            </div>
 
-        {{-- Papan skor --}}
-        <div class="grid min-h-0 flex-1 gap-3 sm:grid-cols-2">
-            <x-silat.papan-skor sudut="red" kunci-skor="merah" rata="kiri" :indikator="true" />
-            <x-silat.papan-skor sudut="blue" kunci-skor="biru" rata="kanan" :indikator="true" />
+            <x-silat.papan-skor sudut="blue" kunci-skor="biru" rata="kanan" :indikator="true" ukuran-angka="operator" />
         </div>
 
         {{-- Akhiri partai --}}
