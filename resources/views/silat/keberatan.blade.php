@@ -34,13 +34,27 @@
         <div class="rounded-silat bg-silat-panel p-4">
             <p class="mb-3 text-[13px] font-medium text-silat-teks">Protes VAR</p>
 
+            {{--
+                Sisa kartu protes digambar sebagai kartu, bukan disebut sebagai
+                angka di dalam kalimat. Pelatih memegang kartu fisik di
+                gelanggang (Pasal 15.2.a: dua kartu untuk tiga babak), dan yang
+                ditanyakan saat protes diajukan selalu "masih ada berapa" --
+                pertanyaan yang dijawab bentuk lebih cepat daripada angka.
+            --}}
             <div class="mb-4 grid grid-cols-2 gap-3">
-                <p class="rounded-silat bg-silat-latar px-3 py-2 text-[13px] text-silat-teks">
-                    Sudut Merah — sisa kartu <span class="silat-angka font-medium" x-text="keberatan.kartu.merah"></span>
-                </p>
-                <p class="rounded-silat bg-silat-latar px-3 py-2 text-[13px] text-silat-teks">
-                    Sudut Biru — sisa kartu <span class="silat-angka font-medium" x-text="keberatan.kartu.biru"></span>
-                </p>
+                @foreach (['merah' => 'silat-merah', 'biru' => 'silat-biru'] as $sisi => $warna)
+                    <div class="flex items-center justify-between gap-3 rounded-silat border-l-[3px] border-{{ $warna }} bg-silat-latar px-3 py-2">
+                        <span class="text-[13px] text-silat-teks">Sisa kartu sudut {{ $sisi }}</span>
+                        <span class="flex gap-1.5" x-bind:aria-label="'Sisa ' + keberatan.kartu.{{ $sisi }} + ' kartu'">
+                            <template x-for="n in {{ config('scoring.var.kartu_protes.tanding', 2) }}" :key="n">
+                                <span class="h-7 w-5 rounded-[3px]"
+                                      x-bind:class="n <= keberatan.kartu.{{ $sisi }}
+                                          ? 'bg-silat-aksi'
+                                          : 'border border-silat-tepi-petak'"></span>
+                            </template>
+                        </span>
+                    </div>
+                @endforeach
             </div>
 
             @resource(rk('var', ResourceAction::Create))
@@ -80,15 +94,53 @@
                         </template>
 
                         @resource(rk('var', ResourceAction::Approve))
-                            <div x-show="! review.keputusan" class="mt-2 flex flex-wrap items-center gap-2">
-                                <span class="text-[12px]" x-bind:class="review.lewat_tenggat ? 'text-red-300' : 'text-silat-teks-redup'"
-                                      x-text="review.lewat_tenggat ? 'Tenggat 5 menit lewat -- lanjutkan lewat verifikasi juri.' : ('Sisa ' + review.sisa_detik + ' detik')"></span>
+                            {{--
+                                Tenggat adalah hal paling menekan di layar ini,
+                                jadi ia digambar paling besar. Sebelumnya ia teks
+                                12px sebaris dengan isian catatan -- seukuran
+                                keterangan, padahal lewat lima menit keputusannya
+                                berpindah tangan ke verifikasi juri yang dipimpin
+                                Ketua Pertandingan (Pasal 15).
+
+                                Tombolnya juga naik ke 64px. Pemutus protes
+                                menekannya sambil dilihat pelatih dan penonton;
+                                sasaran 30px bukan ukuran untuk keputusan yang
+                                tidak bisa ditarik kembali.
+                            --}}
+                            <div x-show="! review.keputusan" class="mt-3 flex flex-col gap-3 rounded-silat border p-3"
+                                 x-bind:class="review.lewat_tenggat ? 'border-silat-peringatan' : 'border-silat-teguran'">
+
+                                <div class="flex items-baseline justify-between gap-4">
+                                    <span class="text-[12px] tracking-[.08em] text-silat-teks-redup uppercase">
+                                        <span x-show="! review.lewat_tenggat">Sisa waktu memutus</span>
+                                        <span x-show="review.lewat_tenggat" x-cloak>Tenggat lewat</span>
+                                    </span>
+                                    <span class="silat-angka text-[36px] leading-none font-medium"
+                                          x-bind:class="review.lewat_tenggat ? 'text-silat-peringatan' : 'text-silat-teguran'"
+                                          x-text="review.lewat_tenggat
+                                              ? '00:00'
+                                              : String(Math.floor(review.sisa_detik / 60)).padStart(2, '0') + ':' + String(review.sisa_detik % 60).padStart(2, '0')"
+                                          aria-live="off"></span>
+                                </div>
+
+                                <p x-show="review.lewat_tenggat" x-cloak class="text-[13px] leading-relaxed text-silat-teks">
+                                    Lewat lima menit, keputusannya berpindah ke verifikasi juri yang dipimpin Ketua Pertandingan.
+                                </p>
+
                                 <input type="text" x-model="catatan" placeholder="Catatan keputusan"
-                                       class="w-40 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[12px] text-silat-teks placeholder:text-silat-teks-samar">
-                                <button type="button" x-on:click="putuskanVar(review.id, 'sah', catatan)"
-                                        class="rounded-silat bg-emerald-500/20 px-3 py-1.5 text-[12px] text-emerald-300">Sah</button>
-                                <button type="button" x-on:click="putuskanVar(review.id, 'tidak_sah', catatan)"
-                                        class="rounded-silat bg-red-500/20 px-3 py-1.5 text-[12px] text-red-300">Tidak Sah</button>
+                                       class="min-h-[var(--silat-sentuh-min)] w-full rounded-silat border border-silat-tepi-kendali bg-silat-latar px-3 text-[14px] text-silat-teks placeholder:text-silat-teks-redup">
+
+                                <div class="flex gap-2">
+                                    <button type="button" x-on:click="putuskanVar(review.id, 'sah', catatan)"
+                                            class="min-h-[var(--silat-sentuh-min)] flex-1 rounded-silat bg-silat-aksi text-[16px] font-medium text-silat-aksi-teks">Sah</button>
+                                    <button type="button" x-on:click="putuskanVar(review.id, 'tidak_sah', catatan)"
+                                            class="min-h-[var(--silat-sentuh-min)] flex-1 rounded-silat border border-silat-tepi-kendali text-[16px] font-medium text-silat-teks">Tidak sah</button>
+                                </div>
+
+                                <p class="text-[12px] leading-relaxed text-silat-teks-redup">
+                                    <strong class="font-medium text-silat-teks">Sah</strong> berarti nilai tetap berdiri.
+                                    <strong class="font-medium text-silat-teks">Tidak sah</strong> membatalkan nilai itu, dan skor berubah di semua layar.
+                                </p>
                             </div>
                         @endresource
                     </div>
