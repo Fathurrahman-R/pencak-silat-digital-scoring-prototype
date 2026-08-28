@@ -31,7 +31,7 @@
         </template>
 
         <template x-if="! memuat && ! adaPartai">
-            <div class="rounded-silat bg-silat-panel p-6 text-center">
+            <div class="bg-silat-panel p-6 text-center">
                 <p class="text-[14px] text-silat-teks-redup">Belum ada partai berjalan di gelanggang ini.</p>
             </div>
         </template>
@@ -64,7 +64,7 @@
                     petakHukuman: @js($petakHukuman),
                     warnaHukuman: { pembinaan: 'bg-silat-pembinaan', teguran: 'bg-silat-teguran', peringatan: 'bg-silat-peringatan' },
                  }">
-                <div class="rounded-silat bg-silat-merah-dalam p-4" x-bind:class="kilat === 'red' ? 'silat-kilat' : ''">
+                <div class="bg-silat-merah-dalam p-4" x-bind:class="kilat === 'red' ? 'silat-kilat' : ''">
                     <div class="flex items-center justify-between gap-4">
                         <div class="min-w-0">
                             <p class="text-[11px] tracking-[.12em] text-silat-teks-merah-redup uppercase">Sudut merah</p>
@@ -83,7 +83,7 @@
                             <div class="flex flex-col items-start gap-1.5">
                                 <div class="flex gap-1">
                                     <template x-for="i in petakHukuman[jenis]" :key="'m-'+jenis+'-'+i">
-                                        <span class="size-6 rounded-[4px] border"
+                                        <span class="size-6 border"
                                               x-bind:class="[
                                                   (hukuman.merah[jenis] ?? 0) >= i ? warnaHukuman[jenis] + ' border-transparent' : 'border-silat-tepi-petak',
                                                   (jenis === 'peringatan' && i === petakHukuman[jenis]) ? 'border-dashed' : '',
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-silat bg-silat-biru-dalam p-4" x-bind:class="kilat === 'blue' ? 'silat-kilat' : ''">
+                <div class="bg-silat-biru-dalam p-4" x-bind:class="kilat === 'blue' ? 'silat-kilat' : ''">
                     <div class="flex items-center justify-between gap-4">
                         <div class="min-w-0">
                             <p class="text-[11px] tracking-[.12em] text-silat-teks-biru-samar uppercase">Sudut biru</p>
@@ -111,7 +111,7 @@
                             <div class="flex flex-col items-start gap-1.5">
                                 <div class="flex gap-1">
                                     <template x-for="i in petakHukuman[jenis]" :key="'b-'+jenis+'-'+i">
-                                        <span class="size-6 rounded-[4px] border"
+                                        <span class="size-6 border"
                                               x-bind:class="[
                                                   (hukuman.biru[jenis] ?? 0) >= i ? warnaHukuman[jenis] + ' border-transparent' : 'border-silat-tepi-petak',
                                                   (jenis === 'peringatan' && i === petakHukuman[jenis]) ? 'border-dashed' : '',
@@ -139,7 +139,7 @@
                 ditonton orang luar.
             --}}
             <template x-if="match?.status === 'selesai'">
-                <div class="rounded-silat bg-silat-panel p-4 text-center"
+                <div class="bg-silat-panel p-4 text-center"
                      x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">
                     <p class="text-[13px] text-silat-teks-redup">Hasil</p>
                     <p class="text-[16px] font-medium text-silat-teks">

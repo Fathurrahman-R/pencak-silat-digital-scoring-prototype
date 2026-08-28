@@ -10,7 +10,7 @@
         <section>
             <p class="mb-2 text-[13px] font-medium text-silat-teks">Peringkat Umum</p>
 
-            <div class="divide-y divide-silat-garis rounded-silat bg-silat-panel">
+            <div class="divide-y divide-silat-garis bg-silat-panel">
                 @forelse ($peringkatUmum as $i => $baris)
                     <div class="flex items-center gap-3 px-4 py-2.5">
                         <span class="silat-angka w-6 text-center text-[13px] text-silat-teks-redup">{{ $i + 1 }}</span>
@@ -28,7 +28,7 @@
         @if ($tanding->isNotEmpty())
             <section>
                 <p class="mb-2 text-[13px] font-medium text-silat-teks">Juara Kelas Tanding</p>
-                <div class="divide-y divide-silat-garis rounded-silat bg-silat-panel">
+                <div class="divide-y divide-silat-garis bg-silat-panel">
                     @foreach ($tanding as $baris)
                         <div class="px-4 py-2.5">
                             <p class="text-[13px] text-silat-teks">
@@ -47,7 +47,7 @@
         @if ($jurus->isNotEmpty())
             <section>
                 <p class="mb-2 text-[13px] font-medium text-silat-teks">Juara Nomor Jurus</p>
-                <div class="divide-y divide-silat-garis rounded-silat bg-silat-panel">
+                <div class="divide-y divide-silat-garis bg-silat-panel">
                     @foreach ($jurus as $baris)
                         <div class="px-4 py-2.5">
                             <p class="text-[13px] text-silat-teks">{{ $baris['nomor']->nama() }}</p>
