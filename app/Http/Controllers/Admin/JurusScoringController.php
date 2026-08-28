@@ -36,7 +36,7 @@ class JurusScoringController extends Controller
     {
         $jurusEvents = $tournament->jurusEvents()->aktif()
             ->withCount(['performances', 'registrations as registrations_sah_count' => fn ($q) => $q->sah()])
-            ->orderBy('golongan_usia')->orderBy('sort_order')
+            ->urutGolonganUsia()->orderBy('sort_order')
             ->get();
 
         return view('admin.jurus.daftar', ['tournament' => $tournament, 'jurusEvents' => $jurusEvents]);

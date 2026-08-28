@@ -35,7 +35,7 @@ class SiaranController extends Controller
             ]),
             'kelas' => $tournament->weightClasses()
                 ->whereHas('bracket')
-                ->orderBy('golongan_usia')
+                ->urutGolonganUsia()
                 ->orderBy('jenis_kelamin')
                 ->orderBy('sort_order')
                 ->get(),

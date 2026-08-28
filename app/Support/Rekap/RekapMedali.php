@@ -34,7 +34,7 @@ class RekapMedali
     {
         return $tournament->weightClasses()
             ->with(['bracket.matches.red.athletes', 'bracket.matches.red.contingent', 'bracket.matches.blue.athletes', 'bracket.matches.blue.contingent'])
-            ->orderBy('golongan_usia')->orderBy('jenis_kelamin')->orderBy('code')
+            ->urutGolonganUsia()->orderBy('jenis_kelamin')->orderBy('code')
             ->get()
             ->map(fn (WeightClass $kelas) => $this->tandingSatuKelas($kelas))
             ->filter()
@@ -79,7 +79,7 @@ class RekapMedali
     {
         return $tournament->jurusEvents()->aktif()
             ->with(['performances' => fn ($q) => $q->whereNotNull('ratified_at')->with('registration.athletes', 'registration.contingent', 'scores', 'deductions')])
-            ->orderBy('golongan_usia')->orderBy('sort_order')
+            ->urutGolonganUsia()->orderBy('sort_order')
             ->get()
             ->map(fn (JurusEvent $nomor) => $this->jurusSatuNomor($nomor))
             ->filter()
