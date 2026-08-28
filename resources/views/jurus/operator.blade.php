@@ -1,7 +1,25 @@
 @php use App\Enums\ResourceAction; @endphp
 
 <x-layouts.silat :title="'Operator Jurus — '.$performance->registration->athletes->pluck('name')->implode(', ')">
-    <div x-data="jurusPanel(@js($config))" class="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 p-4">
+    @php
+        /*
+         * Waktu acuan, toleransi, dan ambang diskualifikasi dibaca dari
+         * config/scoring.php lewat JurusEvent -- bukan ditulis di layar sebagai
+         * angka tetap. Ketiganya berbeda per nomor DAN per golongan usia:
+         * Usia Dini boleh melenceng 10 detik, Dewasa hanya 5.
+         *
+         * Nilainya tetap selama halaman hidup, jadi ia dihitung di sini alih-alih
+         * ikut muatan JSON yang disegarkan tiap perubahan skor.
+         */
+        $acuanMs = $performance->jurusEvent->waktuAcuanMs($performance->tahap);
+        $golongan = $performance->jurusEvent->golongan_usia->value;
+        $toleransi = config("scoring.jurus.toleransi_detik.{$golongan}", config('scoring.jurus.toleransi_detik.bawaan'));
+        $ambangDq = config("scoring.jurus.diskualifikasi_lewat_detik.{$golongan}", config('scoring.jurus.diskualifikasi_lewat_detik.bawaan'));
+        $acuanDetik = $acuanMs ? (int) round($acuanMs / 1000) : null;
+        $jam = fn (int $d) => sprintf('%02d:%02d', intdiv($d, 60), $d % 60);
+    @endphp
+
+    <div x-data="jurusPanel(@js($config))" class="flex min-h-screen flex-col gap-4 p-4">
         <header>
             <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">OPERATOR JURUS</p>
             <h1 class="text-[18px] font-medium text-silat-teks" x-text="peserta.nama"></h1>
@@ -12,11 +30,62 @@
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
         <p x-show="pesan" x-text="pesan" class="rounded-silat bg-silat-panel px-4 py-2 text-[13px] text-silat-teks-redup"></p>
 
-        <div class="rounded-silat bg-silat-panel p-6 text-center">
-            <p class="silat-angka text-[48px] font-medium text-silat-teks" x-text="tampilWaktu"></p>
-            <p class="mt-1 text-[12px] text-silat-teks-redup" x-text="{
-                terjadwal: 'Belum dimulai', berlangsung: 'Sedang tampil', selesai: 'Selesai',
-            }[performance.status]"></p>
+        <div class="rounded-silat bg-silat-panel p-6">
+            <div class="flex items-end justify-between gap-6">
+                <div>
+                    <p class="silat-angka text-[64px] leading-none font-medium text-silat-teks" x-text="tampilWaktu"></p>
+                    <p class="mt-1 text-[12px] text-silat-teks-redup" x-text="{
+                        terjadwal: 'Belum dimulai', berlangsung: 'Sedang tampil', selesai: 'Selesai',
+                    }[performance.status]"></p>
+                </div>
+
+                @if ($acuanDetik)
+                    <div class="text-right">
+                        <p class="silat-angka text-[22px] font-medium text-silat-teks">{{ $jam($acuanDetik) }}</p>
+                        <p class="text-[12px] text-silat-teks-redup">waktu acuan · {{ ucfirst($performance->tahap) }}</p>
+                    </div>
+                @endif
+            </div>
+
+            @if ($acuanDetik)
+                {{--
+                    Pita zona waktu. Angka telanjang memaksa operator menghitung
+                    selisihnya sendiri sambil penampilan berjalan -- padahal yang
+                    perlu diketahuinya cuma "masih aman, sudah kena pengurangan,
+                    atau sudah lewat batas diskualifikasi".
+
+                    Pasal 12.1.e.1.a: melenceng lebih dari toleransi berarti
+                    pengurangan; jauh melewatinya berarti diskualifikasi yang
+                    ditetapkan Pengawas -- bukan otomatis dari selisih waktu.
+                --}}
+                <div class="mt-5 flex flex-col gap-2">
+                    {{-- Lebar tiap zona ditulis sebagai style, bukan kelas
+                         `flex-[...]`: nilainya dihitung saat render dari config,
+                         dan Tailwind hanya membangkitkan kelas yang terbaca
+                         statis di berkas. --}}
+                    <div class="flex h-2.5 overflow-hidden rounded-[3px]">
+                        <div class="bg-silat-tepi-kendali" style="flex: {{ max(1, $acuanDetik - $toleransi) }}"></div>
+                        <div class="bg-silat-hidup" style="flex: {{ $toleransi * 2 }}"></div>
+                        <div class="bg-silat-teguran" style="flex: {{ max(1, $ambangDq - $toleransi) }}"></div>
+                        <div class="bg-silat-peringatan" style="flex: {{ $toleransi * 2 }}"></div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-silat-teks">
+                        <span class="flex items-center gap-2">
+                            <span class="size-3 rounded-[2px] bg-silat-hidup"></span>
+                            Aman {{ $jam($acuanDetik - $toleransi) }}–{{ $jam($acuanDetik + $toleransi) }}
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="size-3 rounded-[2px] bg-silat-teguran"></span>
+                            Lewat toleransi — pengurangan {{ number_format(config('scoring.jurus.pengurangan.pengawas', 0.5), 2) }}
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="size-3 rounded-[2px] bg-silat-peringatan"></span>
+                            Lewat {{ $jam($acuanDetik + $ambangDq) }} — diskualifikasi
+                        </span>
+                    </div>
+                </div>
+            @endif
 
             @resource(rk('penampilan-jurus', ResourceAction::Update))
                 <div class="mt-4 flex justify-center gap-2">
@@ -52,28 +121,90 @@
             <template x-if="nilaiJuri.length === 0">
                 <p class="text-[13px] text-silat-teks-redup">Belum ada juri yang mengirim nilai.</p>
             </template>
-            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <template x-for="n in nilaiJuri" :key="n.judge_user_id">
-                    <div class="rounded-[4px] bg-silat-latar px-3 py-2 text-center">
+            {{--
+                Dua nilai tengah ditandai tepi terang: dari keduanyalah median
+                lahir. Tanpa penanda, operator melihat deret angka yang tampak
+                setara dan tidak punya cara menjelaskan ke pelatih dari mana
+                skor akhirnya datang.
+
+                Pasal 12.1.f: nilai akhir adalah MEDIAN, bukan penjumlahan
+                setelah membuang nilai tertinggi dan terendah. Cara itu berasal
+                dari edisi peraturan lama dan tidak berlaku di naskah 2025 --
+                perbedaan yang paling sering ditanyakan pelatih.
+            --}}
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3"
+                 x-data="{
+                    get indeksTengah() {
+                        const n = this.nilaiJuri.length;
+                        if (n < 2) return [];
+                        const urut = [...this.nilaiJuri]
+                            .map((x, i) => ({ i, v: x.value }))
+                            .sort((a, b) => a.v - b.v);
+                        return n % 2 === 0
+                            ? [urut[n / 2 - 1].i, urut[n / 2].i]
+                            : [urut[(n - 1) / 2].i];
+                    },
+                 }">
+                <template x-for="(n, i) in nilaiJuri" :key="n.judge_user_id">
+                    <div class="rounded-[4px] px-3 py-2 text-center"
+                         x-bind:class="indeksTengah.includes(i)
+                             ? 'bg-silat-latar border border-silat-tepi-petak'
+                             : 'bg-silat-latar border border-transparent'">
                         <p class="truncate text-[11px] text-silat-teks-redup" x-text="n.nama"></p>
                         <p class="silat-angka text-[16px] text-silat-teks" x-text="n.value.toFixed(2)"></p>
+                        <p x-show="indeksTengah.includes(i)" x-cloak
+                           class="text-[10px] tracking-[.06em] text-silat-teks-redup uppercase">nilai tengah</p>
                     </div>
                 </template>
             </div>
+
+            <p x-show="nilaiJuri.length >= 2" x-cloak class="mt-2 text-[12px] leading-relaxed text-silat-teks-redup">
+                Skor akhir memakai <strong class="font-medium text-silat-teks">median</strong> dari nilai juri — bukan penjumlahan setelah membuang nilai tertinggi dan terendah.
+            </p>
         </div>
 
         <div class="rounded-silat bg-silat-panel p-4">
             <p class="mb-2 text-[13px] font-medium text-silat-teks">Pengurangan</p>
 
             @resource(rk('pengurangan-jurus', ResourceAction::Create))
-                <form x-data="{ alasan: '' }" x-on:submit.prevent="penguranganPengawas(alasan).then((ok) => { if (ok) alasan = '' })"
-                      class="mb-3 flex flex-wrap items-center gap-2">
-                    <input type="text" x-model="alasan" placeholder="Alasan pengurangan 0.50" required
-                           class="min-w-[220px] flex-1 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[12px] text-silat-teks placeholder:text-silat-teks-samar">
-                    <button type="submit" class="rounded-silat bg-silat-mati px-3 py-1.5 text-[12px] text-silat-teks">Catat −0.50</button>
-                    <button type="button" x-show="! performance.didiskualifikasi" x-on:click="diskualifikasi()"
-                            class="rounded-silat bg-red-500/20 px-3 py-1.5 text-[12px] text-red-300">Diskualifikasi</button>
-                </form>
+                {{--
+                    Alasannya dipilih, bukan diketik. Kelimanya sudah disebut
+                    Pasal 12.1.e sebagai sebab pengurangan Pengawas, jadi
+                    mengetiknya hanya memperlambat orang yang sedang mengawasi
+                    penampilan -- dan menghasilkan tulisan yang tidak seragam di
+                    berita acara, padahal alasan itu ikut tercetak di sana.
+                --}}
+                <div class="mb-3 flex flex-wrap gap-2">
+                    @foreach ([
+                        'Pelanggaran waktu',
+                        'Keluar gelanggang',
+                        'Senjata menyentuh lantai',
+                        'Pakaian tidak sesuai',
+                        'Menahan gerakan lebih dari 5 detik',
+                    ] as $alasan)
+                        <button type="button" x-on:click="penguranganPengawas(@js($alasan))"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-4 text-[14px] text-silat-teks">
+                            {{ $alasan }}
+                        </button>
+                    @endforeach
+                </div>
+
+                {{--
+                    Diskualifikasi berdiri terpisah dari daftar pengurangan.
+                    Pasal 12.1.e.4.h menyebutnya sebagai skor 0.00 yang
+                    DITETAPKAN Pengawas, bukan akibat otomatis dari selisih
+                    waktu -- dan ia tidak bisa ditarik kembali, jadi ia tidak
+                    boleh duduk sebaris dengan tombol yang ditekan berkali-kali.
+                --}}
+                <div x-show="! performance.didiskualifikasi" x-cloak class="mb-3 flex items-center gap-3">
+                    <button type="button" x-on:click="diskualifikasi()"
+                            class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-peringatan px-5 text-[14px] font-medium text-silat-peringatan">
+                        Diskualifikasi
+                    </button>
+                    <span class="text-[12px] leading-relaxed text-silat-teks-redup">
+                        Skor menjadi {{ number_format(config('scoring.jurus.skor_diskualifikasi', 0), 2) }} dan penampilan tidak bisa dinilai lagi.
+                    </span>
+                </div>
             @endresource
 
             <template x-if="pengurangan.length === 0">
