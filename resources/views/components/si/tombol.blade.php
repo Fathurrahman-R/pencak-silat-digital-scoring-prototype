@@ -69,7 +69,7 @@
 @if ($tautan && ! $nonaktif)
     <a href="{{ $tautan }}" {{ $attributes->merge(['class' => $kelas]) }}>
         @if ($ikon)
-            <x-ui.icon :name="$ikon" class="size-[18px] shrink-0" />
+            <x-si.ikon :nama="$ikon" class="size-[18px] shrink-0" />
         @endif
         {{ $slot }}
     </a>
@@ -78,7 +78,7 @@
             @disabled($nonaktif)
             {{ $attributes->merge(['class' => $kelas]) }}>
         @if ($ikon)
-            <x-ui.icon :name="$ikon" class="size-[18px] shrink-0" />
+            <x-si.ikon :nama="$ikon" class="size-[18px] shrink-0" />
         @endif
         {{ $slot }}
     </button>

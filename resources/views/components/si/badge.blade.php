@@ -30,7 +30,7 @@
         .($varianKelas[$varian] ?? $varianKelas['netral']),
 ]) }}>
     @if ($ikonDipakai)
-        <x-ui.icon :name="$ikonDipakai" class="size-3.5 shrink-0" />
+        <x-si.ikon :nama="$ikonDipakai" class="size-3.5 shrink-0" />
     @endif
     {{ $slot }}
 </span>
