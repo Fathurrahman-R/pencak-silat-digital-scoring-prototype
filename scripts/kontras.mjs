@@ -145,6 +145,10 @@ const PASANGAN = [
     ['TERANG · tombol utama: teks di bidang aksi', T.kAksiTeks, T.kAksi],
     ['TERANG · tombol kedua: teks di bidang lembut', T.kTinta, T.kAksiLembut],
     ['TERANG · sukses di lembutnya', T.kSukses, T.kSuksesLembut],
+    // si/callout varian "berhasil" menaruh tinta biasa di atas bidang lembut,
+    // bukan warna suksesnya -- kalimatnya panjang dan harus terbaca sebagai
+    // teks biasa, bukan sebagai peringatan berwarna.
+    ['TERANG · tinta di sukses lembut', T.kTinta, T.kSuksesLembut],
     ['TERANG · sukses di kertas', T.kSukses, T.kKertas],
     ['TERANG · perhatian di lembutnya', T.kPerhatian, T.kPerhatianLembut],
     ['TERANG · perhatian di kertas', T.kPerhatian, T.kKertas],
@@ -160,6 +164,7 @@ const PASANGAN = [
     ['GELAP-ADMIN · tepi kendali di kertas (non-teks)', T.kdTepiKendali, T.kdKertas],
     ['GELAP-ADMIN · tombol kedua: teks di bidang lembut', T.kdTinta, T.kdAksiLembut],
     ['GELAP-ADMIN · sukses di lembutnya', T.kdSukses, T.kdSuksesLembut],
+    ['GELAP-ADMIN · tinta di sukses lembut', T.kdTinta, T.kdSuksesLembut],
     ['GELAP-ADMIN · sukses di kertas', T.kdSukses, T.kdKertas],
     ['GELAP-ADMIN · perhatian di lembutnya', T.kdPerhatian, T.kdPerhatianLembut],
     ['GELAP-ADMIN · perhatian di kertas', T.kdPerhatian, T.kdKertas],
