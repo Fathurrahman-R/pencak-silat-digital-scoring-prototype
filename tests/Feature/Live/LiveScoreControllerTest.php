@@ -69,7 +69,25 @@ it('menyajikan bagan kelas untuk publik', function () {
 it('menyajikan halaman rekap medali publik', function () {
     $this->get(route('live.turnamen.medali', $this->tournament))
         ->assertOk()
-        ->assertSee('Peringkat Umum');
+        ->assertSee('Peringkat umum')
+        ->assertSee('Emas')
+        ->assertSee('Perak')
+        ->assertSee('Perunggu')
+        ->assertSee('Jumlah');
+});
+
+/*
+ * Emoji medali dulu dipakai sebagai satu-satunya penanda emas, perak, dan
+ * perunggu. Ia dirender berbeda di tiap sistem dan bisa jadi kotak kosong,
+ * sehingga peringkatnya tidak terbaca sama sekali di sebagian perangkat.
+ * Penggantinya kolom berjudul, dan uji ini menjaga agar emoji tidak kembali.
+ */
+it('tidak memakai emoji sebagai penanda medali', function () {
+    $this->get(route('live.turnamen.medali', $this->tournament))
+        ->assertOk()
+        ->assertDontSee('🥇')
+        ->assertDontSee('🥈')
+        ->assertDontSee('🥉');
 });
 
 it('menolak bagan kelas yang bukan milik turnamen', function () {
