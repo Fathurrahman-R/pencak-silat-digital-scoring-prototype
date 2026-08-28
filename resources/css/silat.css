@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './dasar.css';
 
 /* ---------------------------------------------------------------------------
    Design system gelanggang
@@ -37,54 +38,68 @@
 --------------------------------------------------------------------------- */
 
 :root {
-    /* Sudut. Merah dan biru bukan pilihan gaya — keduanya ditetapkan peraturan
-       sebagai identitas sudut pesilat, jadi tidak boleh ditukar atau diganti
-       nuansanya sampai sulit dibedakan dari jauh. */
-    --silat-merah: #d42027;
-    --silat-merah-dalam: #7a1418;
-    --silat-biru: #12439e;
-    --silat-biru-dalam: #0c2a63;
+    /* -----------------------------------------------------------------------
+       Lapisan pemetaan. Nilai sesungguhnya ada di dasar.css, yang juga dipakai
+       bundel admin -- itulah yang membuat kedua permukaan mustahil menyimpang
+       diam-diam. Nama `--silat-*` dipertahankan supaya seluruh komponen dan
+       panel yang memakainya tidak perlu disentuh.
+    ----------------------------------------------------------------------- */
+    --silat-merah: var(--sudut-merah);
+    --silat-merah-dalam: var(--sudut-merah-dalam);
+    --silat-biru: var(--sudut-biru);
+    --silat-biru-dalam: var(--sudut-biru-dalam);
 
-    /* Kroma papan. Gelap netral, bukan hitam pekat, supaya blok merah dan biru
-       tidak terlihat "mengambang" di atasnya. */
-    --silat-latar: #0b0b0c;
-    --silat-panel: #131316;
-    --silat-garis: #2a2a2c;
-    --silat-mati: #2e2e33;
+    --silat-latar: var(--g-latar);
+    --silat-panel: var(--g-panel);
+    --silat-garis: var(--g-garis);
 
-    --silat-teks: #ffffff;
-    --silat-teks-redup: #8a8a90;
-    --silat-teks-samar: #6e6e76;
+    /* Bidang "mati" dulu #2e2e33 dan berkontras 1.46 terhadap latar: pip babak
+       dan titik juri yang belum menyala praktis tidak terlihat. Sekarang
+       menunjuk tepi kendali yang terukur 3.66. */
+    --silat-mati: var(--g-tepi-kendali);
 
-    /* Emas hanya untuk pemenang dan medali. Sengaja satu-satunya warna di luar
-       merah, biru, dan abu — begitu dipakai untuk hal lain, ia berhenti berarti
-       "juara". */
-    --silat-emas: #c9a227;
+    --silat-teks: var(--g-teks);
+    --silat-teks-redup: var(--g-teks-redup);
 
-    /* Hukuman. Pembinaan sengaja dibuat paling redup: ia tidak mengurangi
-       nilai, dan kalau tampil sekuat teguran, penonton akan salah membacanya
-       sebagai sanksi. */
-    --silat-pembinaan: #6b6b73;
-    --silat-teguran: #d98324;
-    --silat-peringatan: #d42027;
+    /* `--silat-teks-samar` dulu #6e6e76 -- inilah penyebab temuan K3, saat
+       istilah resmi hukuman ditulis berkontras 1.03-1.74 dan wasit praktis
+       tidak bisa membacanya. Namanya dipertahankan karena masih dipakai 13
+       berkas; nilainya kini sama dengan teks redup yang terukur 5.73/5.40,
+       jadi ketiga belas berkas itu ikut membaik tanpa disentuh.
 
-    /* Kendali operator. Tombol aksi TIDAK boleh memakai merah atau biru: di
-       layar yang sama kedua warna itu adalah identitas sudut pesilat, dan
-       tombol "Akhiri partai" berwarna merah terbaca seolah-olah berhubungan
-       dengan sudut merah. Aksi utama karena itu berupa bidang terang dengan
-       teks gelap — jelas berbeda dari apa pun yang berarti sudut. */
-    --silat-aksi: #e8e8ea;
-    --silat-aksi-teks: #111114;
+       Tidak ada tingkat yang lebih redup dari ini. Kalau sebuah teks terlalu
+       tidak penting untuk `--silat-teks-redup`, teks itu tidak perlu ada. */
+    --silat-teks-samar: var(--g-teks-redup);
 
-    /* Ukuran. Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat
-       lama, jadi 64px adalah batas bawah yang tidak boleh ditawar. */
-    --silat-sentuh-min: 64px;
-    --silat-radius: 6px;
+    --silat-emas: var(--emas);
 
-    /* Kanvas overlay vMix dikunci, bukan responsif. Overlay siaran bukan
-       halaman web biasa. */
-    --silat-overlay-lebar: 1920px;
-    --silat-overlay-tinggi: 1080px;
+    --silat-pembinaan: var(--pembinaan);
+    --silat-teguran: var(--teguran);
+    --silat-peringatan: var(--peringatan);
+
+    --silat-aksi: var(--g-aksi);
+    --silat-aksi-teks: var(--g-aksi-teks);
+
+    /* Tepi petak hukuman dan bidang belum-terisi. Satu nilai yang lolos di
+       keempat latar: 5.73 di latar, 5.40 di panel, 3.15 di bidang merah,
+       4.01 di bidang biru. */
+    --silat-tepi-petak: var(--g-tepi-petak);
+    --silat-tepi-kendali: var(--g-tepi-kendali);
+    --silat-teks-mati: var(--g-teks-mati);
+    --silat-hidup: var(--g-hidup);
+
+    --silat-teks-merah: var(--teks-di-merah);
+    --silat-teks-merah-redup: var(--teks-di-merah-redup);
+    --silat-teks-merah-samar: var(--teks-di-merah-samar);
+    --silat-teks-biru: var(--teks-di-biru);
+    --silat-teks-biru-samar: var(--teks-di-biru-samar);
+
+    --silat-sentuh-min: var(--sentuh-gelanggang);
+    --silat-lorong-sudut: var(--lorong-sudut);
+    --silat-radius: var(--radius);
+
+    --silat-overlay-lebar: var(--overlay-lebar);
+    --silat-overlay-tinggi: var(--overlay-tinggi);
 }
 
 @theme inline {
@@ -103,6 +118,17 @@
     --color-silat-teks-samar: var(--silat-teks-samar);
     --color-silat-emas: var(--silat-emas);
 
+    --color-silat-tepi-petak: var(--silat-tepi-petak);
+    --color-silat-tepi-kendali: var(--silat-tepi-kendali);
+    --color-silat-teks-mati: var(--silat-teks-mati);
+    --color-silat-hidup: var(--silat-hidup);
+
+    --color-silat-teks-merah: var(--silat-teks-merah);
+    --color-silat-teks-merah-redup: var(--silat-teks-merah-redup);
+    --color-silat-teks-merah-samar: var(--silat-teks-merah-samar);
+    --color-silat-teks-biru: var(--silat-teks-biru);
+    --color-silat-teks-biru-samar: var(--silat-teks-biru-samar);
+
     --color-silat-aksi: var(--silat-aksi);
     --color-silat-aksi-teks: var(--silat-aksi-teks);
 
@@ -110,8 +136,8 @@
     --color-silat-teguran: var(--silat-teguran);
     --color-silat-peringatan: var(--silat-peringatan);
 
-    --font-silat: 'Space Grotesk Variable', system-ui, sans-serif;
-    --font-silat-angka: 'IBM Plex Mono', ui-monospace, monospace;
+    --font-silat: var(--huruf-antarmuka);
+    --font-silat-angka: var(--huruf-angka);
 
     --radius-silat: var(--silat-radius);
 }

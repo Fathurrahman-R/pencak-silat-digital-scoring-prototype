@@ -572,13 +572,19 @@ Bukan bagian menggambar, tapi menentukan apa yang bisa diwujudkan.
 
 | Bundel | Melayani | Tidak boleh memuat |
 |---|---|---|
-| `app.*` | Admin/panitia | Token gelanggang, huruf display upacara |
-| `silat.*` | Panel gelanggang, overlay | ApexCharts, komponen admin, huruf display upacara |
+| `app.*` | Admin/panitia | Token khusus gelanggang yang tidak dipakainya |
+| `silat.*` | Panel gelanggang, live publik, overlay | ApexCharts, komponen admin, token khusus admin |
 
-Bundel ketiga `upacara.*` **dibatalkan** bersama lapisan upacara (§4.4). Halaman publik memakai `silat.*` yang sama dengan panel gelanggang, jadi tidak ada huruf tambahan yang ikut terseret ke overlay vMix.
+Bundel ketiga `upacara.*` **dibatalkan** bersama lapisan upacara (§4.4). Halaman publik memakai `silat.*` yang sama dengan panel gelanggang, jadi tidak ada huruf tambahan yang terseret ke overlay vMix.
 
-Token bersama tinggal di satu berkas `dasar.css` yang diimpor ketiganya, supaya nilai warna hanya
-ditulis sekali.
+**Nilai warna ditulis sekali, di dua berkas yang dibagi menurut siapa yang memakainya:**
+
+| Berkas | Isi | Diimpor |
+|---|---|---|
+| `resources/css/dasar.css` | Token bersama (sudut, hukuman, emas, tipografi, geometri) dan inti gelap | `app.css` **dan** `silat.css` |
+| `resources/css/dasar-admin.css` | Inti terang dan mode gelap admin | `app.css` saja |
+
+Pemisahan itu bukan kerapian: memasukkan token admin ke `dasar.css` membuat bundel `silat` membengkak 2,5 kB, dan overlay siaran berbagi CPU dengan encoder streaming.
 
 ### 11.2 Panel juri adalah PWA
 

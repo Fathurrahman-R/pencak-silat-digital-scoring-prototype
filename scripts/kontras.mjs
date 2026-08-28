@@ -66,6 +66,24 @@ const T = {
     kBahaya: '#a3221c',
     kBahayaLembut: '#f8e3e1',
 
+    // Mode gelap admin (:root[data-theme='dark']) memakai palet gelanggang.
+    // Tidak ada set token tersendiri -- panitia yang berpindah antara layar
+    // admin dan panel gelanggang melihat satu keluarga warna.
+    kdKertas: '#0b0b0c',
+    kdKertasNaik: '#131316',
+    kdKertasTurun: '#17171a',
+    kdAksiLembut: '#26262b',
+    kdTinta: '#ffffff',
+    kdTintaKedua: '#b0b0b6',
+    kdTintaRedup: '#8a8a90',
+    kdTepiKendali: '#6a6a70',
+    kdSukses: '#4ade80',
+    kdSuksesLembut: '#10241a',
+    kdPerhatian: '#d98324',
+    kdPerhatianLembut: '#2a1d0c',
+    kdBahaya: '#ff7b74',
+    kdBahayaLembut: '#2c1412',
+
     // Inti gelap (--g-*): panel gelanggang, live publik, overlay
     gLatar: '#0b0b0c',
     gPanel: '#131316',
@@ -121,6 +139,20 @@ const PASANGAN = [
     ['TERANG · bahaya di lembutnya', T.kBahaya, T.kBahayaLembut],
     ['TERANG · bahaya di kertas', T.kBahaya, T.kKertas],
     ['TERANG · teks putih di bidang bahaya', '#ffffff', T.kBahaya],
+
+    ['GELAP-ADMIN · teks utama di kertas', T.kdTinta, T.kdKertas],
+    ['GELAP-ADMIN · teks utama di kartu', T.kdTinta, T.kdKertasNaik],
+    ['GELAP-ADMIN · teks utama di baris selang-seling', T.kdTinta, T.kdKertasTurun],
+    ['GELAP-ADMIN · teks kedua di kertas', T.kdTintaKedua, T.kdKertas],
+    ['GELAP-ADMIN · teks redup di kertas', T.kdTintaRedup, T.kdKertas],
+    ['GELAP-ADMIN · tepi kendali di kertas (non-teks)', T.kdTepiKendali, T.kdKertas],
+    ['GELAP-ADMIN · tombol kedua: teks di bidang lembut', T.kdTinta, T.kdAksiLembut],
+    ['GELAP-ADMIN · sukses di lembutnya', T.kdSukses, T.kdSuksesLembut],
+    ['GELAP-ADMIN · sukses di kertas', T.kdSukses, T.kdKertas],
+    ['GELAP-ADMIN · perhatian di lembutnya', T.kdPerhatian, T.kdPerhatianLembut],
+    ['GELAP-ADMIN · perhatian di kertas', T.kdPerhatian, T.kdKertas],
+    ['GELAP-ADMIN · bahaya di lembutnya', T.kdBahaya, T.kdBahayaLembut],
+    ['GELAP-ADMIN · bahaya di kertas', T.kdBahaya, T.kdKertas],
 
     ['GELAP · teks di latar', T.gTeks, T.gLatar],
     ['GELAP · teks di panel', T.gTeks, T.gPanel],

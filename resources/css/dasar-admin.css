@@ -1,0 +1,75 @@
+/* ---------------------------------------------------------------------------
+   Token admin — hanya diimpor app.css
+   ---------------------------------------------------------------------------
+   Dipisahkan dari dasar.css supaya bundel gelanggang dan overlay siaran tidak
+   ikut menanggung warna yang tidak pernah dipakainya. Overlay berbagi CPU
+   dengan encoder streaming; setiap kilobyte yang tidak perlu adalah beban.
+
+   Angka kontras tiap pasangan dihitung scripts/kontras.mjs.
+--------------------------------------------------------------------------- */
+
+:root {
+    /* -----------------------------------------------------------------------
+       Inti terang — admin, panitia, dan dokumen cetak.
+       Putih tulang hangat, bukan abu biru: ini kertas kerja, bukan dasbor.
+    ----------------------------------------------------------------------- */
+    --k-kertas: #f4f2ee;
+    --k-kertas-naik: #ffffff;
+    --k-kertas-turun: #e9e6e0;
+    --k-kertas-dalam: #dcd8d0;
+
+    --k-garis: #d4cfc6;            /* pembatas dekoratif */
+    --k-tepi-kendali: #7d7668;     /* tepi isian dan tombol: 4.03 / 4.50 */
+
+    --k-tinta: #17161a;            /* 16.11 di kertas, 18.01 di kartu */
+    --k-tinta-kedua: #45434a;      /* 8.72 */
+    --k-tinta-redup: #5f5c66;      /* 5.85 — paling redup yang masih boleh */
+
+    /* Aksi utama tidak berwarna. Merah, biru, dan emas sudah punya arti yang
+       ditetapkan peraturan, jadi tidak ada warna aman tersisa untuk tombol.
+       Bidang tinta dengan teks putih: 18.01, tertinggi di seluruh sistem. */
+    --k-aksi: #17161a;
+    --k-aksi-teks: #ffffff;
+    --k-aksi-lembut: #e6e3dd;      /* tombol kedua, teks tinta: 14.06 */
+
+    --k-sukses: #14663f;           /* 6.26 di kertas */
+    --k-sukses-lembut: #dcefe4;    /* teks sukses: 5.83 */
+    --k-perhatian: #7a4a00;        /* 6.69 */
+    --k-perhatian-lembut: #f7ecd6; /* 6.39 */
+    --k-bahaya: #a3221c;           /* 6.70 · teks putih di atasnya: 7.49 */
+    --k-bahaya-lembut: #f8e3e1;    /* 6.09 */
+}
+
+/* ---------------------------------------------------------------------------
+   Mode gelap admin memakai palet gelanggang yang sama, bukan set token
+   tersendiri. Nilainya sudah terukur, dan panitia yang berpindah antara layar
+   admin dan panel gelanggang melihat satu keluarga warna.
+--------------------------------------------------------------------------- */
+:root[data-theme='dark'] {
+    --k-kertas: #0b0b0c;
+    --k-kertas-naik: #131316;
+    --k-kertas-turun: #17171a;
+    --k-kertas-dalam: #1c1c20;
+
+    --k-garis: #2a2a2c;
+    --k-tepi-kendali: #6a6a70;
+
+    --k-tinta: #ffffff;
+    --k-tinta-kedua: #b0b0b6;
+    --k-tinta-redup: #8a8a90;
+
+    --k-aksi: #e8e8ea;
+    --k-aksi-teks: #111114;
+    --k-aksi-lembut: #26262b;
+
+    --k-sukses: #4ade80;
+    --k-sukses-lembut: #10241a;
+    --k-perhatian: #d98324;
+    --k-perhatian-lembut: #2a1d0c;
+    --k-bahaya: #ff7b74;
+    --k-bahaya-lembut: #2c1412;
+
+    --bayang-angkat: 0 1px 2px rgb(0 0 0 / 0.5);
+    --bayang-apung: 0 8px 24px rgb(0 0 0 / 0.55);
+    --bayang-modal: 0 24px 64px rgb(0 0 0 / 0.65);
+}

@@ -1,0 +1,113 @@
+/* ---------------------------------------------------------------------------
+   Token dasar — satu-satunya tempat nilai warna ditulis
+   ---------------------------------------------------------------------------
+   Diimpor oleh app.css (admin/panitia) DAN silat.css (gelanggang, live publik,
+   overlay). Dua bundel Vite tetap terpisah; yang disatukan hanya nilainya.
+
+   Berkas ini memuat token BERSAMA dan inti gelap. Token khusus admin ada di
+   dasar-admin.css, yang hanya diimpor app.css -- bundel gelanggang tidak boleh
+   ikut menanggung warna yang tidak pernah dipakainya.
+
+   Setiap warna di berkas ini punya angka kontras yang sudah dihitung
+   `scripts/kontras.mjs` — 42 pasangan, 42 lolos. Menambah warna berarti
+   menambah pasangannya ke skrip itu lebih dulu, bukan sesudahnya.
+
+   Rujukan lengkap beserta alasan tiap keputusan: docs/BRIEF-DESAIN.md.
+--------------------------------------------------------------------------- */
+
+:root {
+    /* -----------------------------------------------------------------------
+       Sudut pesilat. Ditetapkan peraturan sebagai identitas, bukan pilihan
+       gaya — tidak pernah ditukar, tidak pernah dipakai untuk arti lain.
+       Nilainya sama di suasana terang maupun gelap.
+    ----------------------------------------------------------------------- */
+    --sudut-merah: #d42027;        /* teks putih di atasnya: 5.20 */
+    --sudut-merah-dalam: #7a1418;  /* blok informasi sisi merah */
+    --sudut-biru: #12439e;         /* teks putih di atasnya: 9.04 */
+    --sudut-biru-dalam: #0c2a63;
+
+    --teks-di-merah: #fff0f0;      /* 9.78 di merah-dalam */
+    --teks-di-merah-redup: #fff5f5;/* 10.12 */
+    --teks-di-merah-samar: #e8b4b6;/* 6.00 — tingkat ketiga */
+    --teks-di-biru: #f2f6ff;       /* 12.71 di biru-dalam */
+    --teks-di-biru-samar: #a8b8e0; /* 6.94 — tingkat ketiga */
+
+    /* Emas hanya untuk juara dan medali. Begitu dipakai untuk hal lain, ia
+       berhenti berarti "juara". */
+    --emas: #c9a227;               /* 8.13 di latar gelap, 7.67 di panel */
+
+    /* Tangga hukuman — Pasal 11.6.d.4. Pembinaan sengaja abu netral: ia tidak
+       mengurangi nilai, dan kalau tampil sekuat teguran penonton salah
+       membacanya sebagai sanksi. */
+    --pembinaan: #6b6b73;          /* teks putih: 5.28 */
+    --teguran: #d98324;            /* teks #1a1207: 6.37 */
+    --teguran-teks: #1a1207;
+    --peringatan: #d42027;         /* teks putih: 5.20 */
+
+    /* -----------------------------------------------------------------------
+       Inti gelap — panel gelanggang, live publik, overlay siaran, dan mode
+       gelap admin. Gelap netral, bukan hitam pekat, supaya blok merah dan biru
+       tidak terlihat mengambang di atasnya.
+    ----------------------------------------------------------------------- */
+    --g-latar: #0b0b0c;
+    --g-panel: #131316;
+
+    --g-garis: #2a2a2c;            /* pembatas dekoratif */
+    --g-tepi-kendali: #6a6a70;     /* tepi tombol dan isian: 3.45 di panel */
+
+    /* Tepi petak dan bidang "belum terisi". Nilainya sama dengan teks redup,
+       dan itu disengaja: satu nilai yang lolos di keempat latar — 5.73 di
+       latar, 5.40 di panel, 3.15 di bidang merah, 4.01 di bidang biru. */
+    --g-tepi-petak: #8a8a90;
+
+    --g-teks: #ffffff;             /* 19.67 di latar, 18.54 di panel */
+    --g-teks-redup: #8a8a90;       /* 5.73 / 5.40 */
+    --g-teks-mati: #b0b0b6;        /* teks kontrol nonaktif: 13.24 */
+
+    /* Bidang terang dengan teks gelap — jelas berbeda dari apa pun yang
+       berarti sudut. 15.40. */
+    --g-aksi: #e8e8ea;
+    --g-aksi-teks: #111114;
+
+    --g-hidup: #4ade80;            /* sistem tersambung: 11.29 / 10.64 */
+
+    /* -----------------------------------------------------------------------
+       Tipografi. Dua huruf saja di seluruh aplikasi; tidak ada huruf display.
+       Keduanya di-bundle lewat npm — gelanggang sering tanpa internet, dan
+       overlay vMix tidak boleh menunggu permintaan jaringan apa pun.
+    ----------------------------------------------------------------------- */
+    --huruf-antarmuka: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
+    --huruf-angka: 'IBM Plex Mono', ui-monospace, monospace;
+
+    /* -----------------------------------------------------------------------
+       Geometri. Dua dialek: panel dan admin memakai radius 6px; permukaan
+       publik memakai radius nol. Lihat docs/BRIEF-DESAIN.md §3.
+    ----------------------------------------------------------------------- */
+    --radius-kecil: 4px;
+    --radius: 6px;
+    --radius-besar: 12px;
+
+    /* Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat lama.
+       64px adalah batas bawah yang tidak bisa ditawar di gelanggang. */
+    --sentuh-gelanggang: 64px;
+    --sentuh-admin: 44px;
+
+    /* Lorong antara kolom merah dan biru di panel juri. Selip vertikal
+       menggeser nilai pada pesilat yang benar; selip horizontal memberikan
+       nilai kepada lawan. Biayanya tidak sama, jadi jaraknya tidak sama. */
+    --lorong-sudut: 24px;
+
+    /* -----------------------------------------------------------------------
+       Elevasi. Tidak ada kaca, noise, grid latar, maupun bevel — semuanya
+       warisan RizzxxUI. Kedalaman dinyatakan lewat warna permukaan dan satu
+       garis; bayangan hanya untuk lapisan yang benar-benar mengambang.
+    ----------------------------------------------------------------------- */
+    --bayang-angkat: 0 1px 2px rgb(20 18 14 / 0.08);
+    --bayang-apung: 0 8px 24px rgb(20 18 14 / 0.14);
+    --bayang-modal: 0 24px 64px rgb(20 18 14 / 0.28);
+
+    /* Kanvas overlay vMix dikunci, bukan responsif. Overlay siaran bukan
+       halaman web biasa: ia dikomposit sebagai lapisan berukuran tetap. */
+    --overlay-lebar: 1920px;
+    --overlay-tinggi: 1080px;
+}

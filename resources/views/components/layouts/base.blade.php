@@ -1,10 +1,15 @@
 @props([
     'title' => null,
+
+    /*
+     * `texture` dan `backdrop` dipertahankan sebagai prop supaya 20+ pemanggil
+     * tidak putus, tapi keduanya tidak lagi menggambar apa pun. Grid dan
+     * butiran noise adalah warisan RizzxxUI: keduanya ada untuk membuat panel
+     * kaca terbaca sebagai kaca, dan kacanya sendiri sudah dibuang.
+     *
+     * Prop-nya ikut hilang di Tahap 4, saat tidak ada lagi yang memanggilnya.
+     */
     'texture' => true,
-    // 'page' — halaman publik: permukaan rata + grid + butiran noise.
-    // 'shell' — di dalam aplikasi: semburat aksen + grid saja. Noise sengaja
-    //           tidak ikut; di balik panel kaca butirannya hanya menambah
-    //           dengung tanpa menolong keterbacaan.
     'backdrop' => 'page',
 ])
 
@@ -30,19 +35,6 @@
     'bg-shell' => $shell,
     'bg-surface' => ! $shell,
 ])>
-    {{--
-        Grid dan noise bukan hiasan: kaca hanya terbaca sebagai kaca kalau ada
-        sesuatu di belakangnya untuk dibiaskan. Di atas warna rata, panel kaca
-        cuma jadi kotak abu-abu.
-    --}}
-    @if ($texture)
-        <div class="bg-grid pointer-events-none fixed inset-0 z-0" aria-hidden="true"></div>
-
-        @unless ($shell)
-            <div class="bg-noise pointer-events-none fixed inset-0 z-0" aria-hidden="true"></div>
-        @endunless
-    @endif
-
     {{--
         x-data kosong di pembungkus ini bukan formalitas: Alpine hanya
         memproses elemen yang punya leluhur ber-x-data. Tanpanya, setiap

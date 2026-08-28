@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import './dasar.css';
+@import './dasar-admin.css';
 
 /* Font di-bundle Vite, bukan diambil dari CDN, supaya aplikasi tetap tampil
    benar di jaringan tertutup — kasus yang lumrah untuk internal tools.
@@ -7,10 +9,8 @@
    font terlihat berkedip/telat tiap ganti halaman karena request-nya
    baru jalan setelah script dieksekusi.
 
-   Sora  : heading dan angka besar
    Space Grotesk : seluruh antarmuka
    IBM Plex Mono : nilai teknis, kode, dan angka di tabel */
-@import '@fontsource-variable/sora';
 @import '@fontsource-variable/space-grotesk';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
@@ -34,159 +34,117 @@
 --------------------------------------------------------------------------- */
 
 :root {
-    --surface: #f1f1f4;
-    --surface-raised: #ffffff;
-    --surface-sunken: #e7e7ec;
-    --surface-inset: #dedee4;
+    /* -----------------------------------------------------------------------
+       Lapisan pemetaan. Nilai sesungguhnya ada di dasar.css; di sini ia hanya
+       diberi nama yang sudah dikenal RizzxxUI, supaya alias Tailwind di bawah
+       dan seluruh view yang memakainya tidak perlu diubah.
+    ----------------------------------------------------------------------- */
+    --surface: var(--k-kertas);
+    --surface-raised: var(--k-kertas-naik);
+    --surface-sunken: var(--k-kertas-turun);
+    --surface-inset: var(--k-kertas-dalam);
 
-    --border-subtle: #dddde3;
-    --border-strong: #c2c2cc;
+    --border-subtle: var(--k-garis);
+    --border-strong: var(--k-tepi-kendali);
 
-    --text-primary: #15171c;
-    --text-secondary: #494e58;
-    --text-muted: #6c717c;
-    --text-inverse: #ffffff;
+    --text-primary: var(--k-tinta);
+    --text-secondary: var(--k-tinta-kedua);
+    --text-muted: var(--k-tinta-redup);
+    --text-inverse: var(--k-aksi-teks);
 
-    --accent: #3d5fe0;
-    --accent-hover: #3450c4;
-    --accent-soft: #e5eafc;
-    --accent-on: #ffffff;
-    --accent-lit: #5b79ea;
+    /* Aksi utama tidak berwarna -- lihat dasar.css. Nama `accent` dipertahankan
+       karena dipakai 200+ kali di view; yang berubah nilainya. */
+    --accent: var(--k-aksi);
+    --accent-hover: var(--k-tinta-kedua);
+    --accent-soft: var(--k-aksi-lembut);
+    --accent-on: var(--k-aksi-teks);
+    --accent-lit: var(--k-tinta-kedua);
 
-    --link: #2f4dc7;
-    --link-hover: #1f3aa8;
+    /* Tautan bertinta penuh dan bergaris bawah, bukan berwarna: merah, biru,
+       dan emas semuanya sudah punya arti yang ditetapkan peraturan. */
+    --link: var(--k-tinta);
+    --link-hover: var(--k-tinta-kedua);
 
-    --success: #0e7a55;
-    --success-soft: #dff4ec;
-    --warning: #8f5300;
-    --warning-soft: #fbeeda;
-    --danger: #c0342e;
-    --danger-soft: #fbe6e5;
-    --info: #3d5fe0;
-    --info-soft: #e8edfd;
+    --success: var(--k-sukses);
+    --success-soft: var(--k-sukses-lembut);
+    --warning: var(--k-perhatian);
+    --warning-soft: var(--k-perhatian-lembut);
+    --danger: var(--k-bahaya);
+    --danger-soft: var(--k-bahaya-lembut);
+    --info: var(--k-tinta-kedua);
+    --info-soft: var(--k-kertas-turun);
 
-    --glass-bg: rgb(255 255 255 / 0.62);
-    --glass-border: rgb(255 255 255 / 0.9);
-    --glass-shadow: 0 10px 34px rgb(20 24 40 / 0.12);
+    /* Kaca dinetralkan: permukaan rata dengan satu garis. */
+    --glass-bg: var(--k-kertas-naik);
+    --glass-border: var(--k-garis);
+    --glass-shadow: var(--bayang-angkat);
 
-    --elev-sm: 0 1px 2px rgb(16 20 30 / 0.07);
-    --elev-md: 0 4px 14px rgb(16 20 30 / 0.08);
-    --elev-lg: 0 18px 44px rgb(16 20 30 / 0.14);
+    --elev-sm: var(--bayang-angkat);
+    --elev-md: var(--bayang-apung);
+    --elev-lg: var(--bayang-modal);
 
-    --grid-line: rgb(21 23 28 / 0.045);
-    --noise-opacity: 0.035;
+    /* Grid dan noise tidak lagi menggambar apa pun. */
+    --grid-line: transparent;
+    --noise-opacity: 0;
 
-    --code-bg: #efeff3;
-    --code-text: #2a2e37;
+    --code-bg: var(--k-kertas-turun);
+    --code-text: var(--k-tinta-kedua);
 
-    /* Palet chart kategorikal. */
-    --c1: #4f7cff;
-    --c2: #00a98f;
-    --c3: #e0761f;
-    --c4: #8b5cf6;
-    --c5: #d4a017;
-    --c6: #e0526b;
+    /* Palet grafik. Merah dan biru sengaja TIDAK ikut: keduanya berarti sudut
+       pesilat, dan sebuah batang grafik berwarna sudut akan terbaca sebagai
+       identitas. */
+    --c1: #45434a;
+    --c2: #14663f;
+    --c3: #7a4a00;
+    --c4: #6b6b73;
+    --c5: #a3221c;
+    --c6: #c9a227;
 
-    /* Material: permukaan dengan cahaya tetap dari atas. */
-    --mat-raised: linear-gradient(180deg, #ffffff 0%, #efeff3 100%);
-    --mat-base: linear-gradient(180deg, #f4f4f7 0%, #e9e9ee 100%);
-    --mat-accent: linear-gradient(180deg, var(--accent-lit) 0%, var(--accent) 100%);
+    /* Material: bidang rata, bukan gradien. */
+    --mat-raised: none;
+    --mat-base: none;
+    --mat-accent: none;
+    --mat-danger: none;
+    --mat-success: none;
+    --mat-warning: none;
 
-    /* Tombol status ikut aturan material yang sama dengan tombol utama. Ujung
-       atas gradiennya sengaja tidak seterang contoh di berkas Tactile: teks
-       putih di atas #E4655F hanya mencapai 3,4:1, sedangkan warna ini menahan
-       kontras di atas 4,5:1 di seluruh tinggi tombol. */
-    --mat-danger: linear-gradient(180deg, #d14a43 0%, var(--danger) 100%);
-    --mat-success: linear-gradient(180deg, #189068 0%, var(--success) 100%);
-    --mat-warning: linear-gradient(180deg, #a4650f 0%, var(--warning) 100%);
+    /* Bevel dan press dinetralkan; kedalaman kini dari warna permukaan. */
+    --bevel: none;
+    --lift: var(--bayang-angkat);
+    --lift-lg: var(--bayang-apung);
+    --press: none;
+    --well: none;
 
-    --bevel: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(15 18 28 / 0.07);
-    --lift: 0 1px 1px rgb(15 18 28 / 0.05), 0 3px 7px rgb(15 18 28 / 0.08);
-    --lift-lg: 0 2px 3px rgb(15 18 28 / 0.06), 0 10px 22px rgb(15 18 28 / 0.1);
-    --press: inset 0 2px 5px rgb(15 18 28 / 0.16), inset 0 -1px 0 rgb(255 255 255 / 0.55);
-    --well: inset 0 2px 5px rgb(15 18 28 / 0.13), inset 0 -1px 0 rgb(255 255 255 / 0.7);
-
-    --control-h: 38px;
+    --control-h: var(--sentuh-admin);
     --rail-w: 72px;
-    --glass-blur: 16px;
+    --glass-blur: 0px;
     --grid-size: 26px;
 
-    /* Shell aplikasi: panel kaca mengambang dengan jarak yang sama di semua
-       sisi — sidebar dan topbar tidak pernah menempel ke tepi viewport. */
     --shell-pad: 16px;
     --shell-gap: 16px;
 
-    --r-sm: 6px;
-    --r-md: 8px;
-    --r-lg: 10px;
-    --r-xl: 14px;
+    --r-sm: var(--radius-kecil);
+    --r-md: var(--radius);
+    --r-lg: var(--radius);
+    --r-xl: var(--radius-besar);
 }
 
+/* Mode gelap: dasar.css sudah menukar nilai --k-* ke palet gelanggang, jadi
+   seluruh pemetaan di atas ikut berganti tanpa satu pun baris tambahan.
+   Yang tersisa di sini hanya yang tidak diturunkan dari --k-*. */
 :root[data-theme='dark'] {
-    --surface: #0c1117;
-    --surface-raised: #141a24;
-    --surface-sunken: #090d13;
-    --surface-inset: #1b222d;
+    --grid-line: transparent;
+    --noise-opacity: 0;
 
-    --border-subtle: #212936;
-    --border-strong: #36404f;
+    --code-bg: var(--k-kertas-naik);
+    --code-text: var(--k-tinta-kedua);
 
-    --text-primary: #e9ecf2;
-    --text-secondary: #a8b0be;
-    --text-muted: #7d8797;
-    --text-inverse: #0b0f14;
-
-    --accent: #4f7cff;
-    --accent-hover: #6b90ff;
-    --accent-soft: rgb(79 124 255 / 0.16);
-    --accent-on: #07101f;
-    --accent-lit: #7396ff;
-
-    --link: #8faaff;
-    --link-hover: #b4c6ff;
-
-    --success: #3dd69c;
-    --success-soft: rgb(61 214 156 / 0.15);
-    --warning: #f0b23c;
-    --warning-soft: rgb(240 178 60 / 0.15);
-    --danger: #ff6b63;
-    --danger-soft: rgb(255 107 99 / 0.15);
-    --info: #7a9bff;
-    --info-soft: rgb(122 155 255 / 0.15);
-
-    --glass-bg: rgb(20 26 36 / 0.56);
-    --glass-border: rgb(255 255 255 / 0.1);
-    --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.55);
-
-    --elev-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-    --elev-md: 0 4px 14px rgb(0 0 0 / 0.45);
-    --elev-lg: 0 18px 44px rgb(0 0 0 / 0.6);
-
-    --grid-line: rgb(255 255 255 / 0.04);
-    --noise-opacity: 0.055;
-
-    --code-bg: #0e141c;
-    --code-text: #c3cad6;
-
-    --c1: #6b90ff;
-    --c2: #2fd1b4;
-    --c3: #f0913c;
-    --c4: #a78bfa;
-    --c5: #efc64a;
-    --c6: #ff7a90;
-
-    --mat-raised: linear-gradient(180deg, #1c2431 0%, #121822 100%);
-    --mat-base: linear-gradient(180deg, #111823 0%, #0a0f16 100%);
-    --mat-accent: linear-gradient(180deg, var(--accent-lit) 0%, var(--accent) 100%);
-    --mat-danger: linear-gradient(180deg, #ff8b84 0%, var(--danger) 100%);
-    --mat-success: linear-gradient(180deg, #62e4b4 0%, var(--success) 100%);
-    --mat-warning: linear-gradient(180deg, #f7c766 0%, var(--warning) 100%);
-
-    --bevel: inset 0 1px 0 rgb(255 255 255 / 0.09), inset 0 -1px 0 rgb(0 0 0 / 0.55);
-    --lift: 0 1px 1px rgb(0 0 0 / 0.5), 0 4px 10px rgb(0 0 0 / 0.5);
-    --lift-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 12px 26px rgb(0 0 0 / 0.55);
-    --press: inset 0 2px 6px rgb(0 0 0 / 0.65), inset 0 -1px 0 rgb(255 255 255 / 0.06);
-    --well: inset 0 2px 6px rgb(0 0 0 / 0.6), inset 0 -1px 0 rgb(255 255 255 / 0.05);
+    --c1: #b0b0b6;
+    --c2: #4ade80;
+    --c3: #d98324;
+    --c4: #8a8a90;
+    --c5: #ff7b74;
+    --c6: #c9a227;
 }
 
 /* ---------------------------------------------------------------------------
@@ -238,9 +196,12 @@
     --color-chart-5: var(--c5);
     --color-chart-6: var(--c6);
 
-    --font-display: 'Sora Variable', 'Sora', system-ui, sans-serif;
-    --font-sans: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    /* Dua huruf saja. `font-display` dipertahankan namanya karena dipakai di
+       banyak view, tapi menunjuk ke huruf antarmuka yang sama -- tidak ada
+       huruf display di sistem ini. */
+    --font-display: var(--huruf-antarmuka);
+    --font-sans: var(--huruf-antarmuka);
+    --font-mono: var(--huruf-angka);
 
     --radius-sm: var(--r-sm);
     --radius-md: var(--r-md);
