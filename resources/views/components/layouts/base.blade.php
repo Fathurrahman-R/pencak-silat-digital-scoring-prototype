@@ -45,7 +45,7 @@
         {{ $slot }}
     </div>
 
-    <x-ui.toast />
+    <x-si.pesan-kilat />
 
     @stack('scripts')
 </body>

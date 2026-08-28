@@ -30,7 +30,7 @@
         <button type="button" data-theme-toggle
                 class="relative mt-6 inline-flex size-9 items-center justify-center rounded-md border border-line-strong bg-[image:var(--mat-raised)] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none">
             <span class="sr-only">Ganti tema</span>
-            <x-ui.icon name="sun-moon" class="size-4" />
+            <x-si.ikon nama="sun-moon" class="size-4" />
         </button>
     </div>
 </x-layouts.base>

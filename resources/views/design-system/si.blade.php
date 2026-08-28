@@ -98,6 +98,25 @@
             </div>
         </x-si.kartu>
 
+        {{-- PESAN KILAT --}}
+        <x-si.kartu judul="Pesan hasil tindakan"
+                    keterangan="Tidak hilang sendiri. Pendahulunya menutup diri setelah 6 detik — cukup buat orang yang sudah tahu pesan apa yang ditunggunya, tidak cukup buat orang yang baru pertama memakai aplikasi.">
+            {{-- session()->now() menaruh flash untuk permintaan ini saja, jadi
+                 yang tampil di bawah adalah komponen sungguhan membaca session
+                 sungguhan -- bukan tiruan markup yang bisa melenceng dari
+                 aslinya begitu komponennya berubah. --}}
+            @php
+                session()->now('success', 'Hasil partai 35 disahkan. Bagan lanjut ke semifinal.');
+            @endphp
+
+            <p class="text-[14px] leading-relaxed text-ink-secondary">
+                Pesannya muncul melayang di pojok kanan bawah halaman ini. Tutup lewat tombol silangnya;
+                ia tidak akan pergi sendiri.
+            </p>
+
+            <x-si.pesan-kilat />
+        </x-si.kartu>
+
         {{-- KEADAAN KOSONG --}}
         <x-si.kartu judul="Keadaan kosong" keterangan="Wajib menyebutkan apa yang membuka isinya, bukan sekadar “tidak ada data”.">
             <x-si.kosong judul="Belum ada medali"
