@@ -54,10 +54,19 @@ it('menampilkan panel operator dan menyisipkan konfigurasi alamat aksi', functio
 it('menampilkan panel wasit', function () {
     $wasit = ($this->buatUser)('wasit');
 
+    /*
+     * Penandanya istilah naskah, bukan eyebrow "WASIT" yang dulu ada di kepala.
+     * Kepala panel dibuat setipis mungkin ketika layarnya dipindah ke orientasi
+     * landscape -- tinggi 390px seluruhnya dibutuhkan tombol. Istilah Pasal
+     * 11.6.d.4 justru penanda yang lebih benar: ia WAJIB ada di panel wasit dan
+     * tidak boleh hilang, sedangkan eyebrow hanya hiasan.
+     */
     $this->actingAs($wasit)
         ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
         ->assertOk()
-        ->assertSee('WASIT');
+        ->assertSee('Pembinaan')
+        ->assertSee('Teguran')
+        ->assertSee('Peringatan');
 });
 
 it('menampilkan panel dewan juri', function () {
