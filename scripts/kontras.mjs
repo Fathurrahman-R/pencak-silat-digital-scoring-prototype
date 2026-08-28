@@ -65,6 +65,7 @@ const T = {
     kPerhatianLembut: '#f7ecd6',
     kBahaya: '#a3221c',
     kBahayaLembut: '#f8e3e1',
+    kBahayaTeks: '#ffffff',
 
     // Mode gelap admin (:root[data-theme='dark']) memakai palet gelanggang.
     // Tidak ada set token tersendiri -- panitia yang berpindah antara layar
@@ -83,6 +84,7 @@ const T = {
     kdPerhatianLembut: '#2a1d0c',
     kdBahaya: '#ff7b74',
     kdBahayaLembut: '#2c1412',
+    kdBahayaTeks: '#111114',
 
     // Inti gelap (--g-*): panel gelanggang, live publik, overlay
     gLatar: '#0b0b0c',
@@ -138,7 +140,7 @@ const PASANGAN = [
     ['TERANG · perhatian di kertas', T.kPerhatian, T.kKertas],
     ['TERANG · bahaya di lembutnya', T.kBahaya, T.kBahayaLembut],
     ['TERANG · bahaya di kertas', T.kBahaya, T.kKertas],
-    ['TERANG · teks putih di bidang bahaya', '#ffffff', T.kBahaya],
+    ['TERANG · teks di bidang bahaya', T.kBahayaTeks, T.kBahaya],
 
     ['GELAP-ADMIN · teks utama di kertas', T.kdTinta, T.kdKertas],
     ['GELAP-ADMIN · teks utama di kartu', T.kdTinta, T.kdKertasNaik],
@@ -153,6 +155,7 @@ const PASANGAN = [
     ['GELAP-ADMIN · perhatian di kertas', T.kdPerhatian, T.kdKertas],
     ['GELAP-ADMIN · bahaya di lembutnya', T.kdBahaya, T.kdBahayaLembut],
     ['GELAP-ADMIN · bahaya di kertas', T.kdBahaya, T.kdKertas],
+    ['GELAP-ADMIN · teks di bidang bahaya', T.kdBahayaTeks, T.kdBahaya],
 
     ['GELAP · teks di latar', T.gTeks, T.gLatar],
     ['GELAP · teks di panel', T.gTeks, T.gPanel],

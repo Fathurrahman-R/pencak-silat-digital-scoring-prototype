@@ -83,9 +83,14 @@
        Geometri. Dua dialek: panel dan admin memakai radius 6px; permukaan
        publik memakai radius nol. Lihat docs/BRIEF-DESAIN.md §3.
     ----------------------------------------------------------------------- */
-    --radius-kecil: 4px;
-    --radius: 6px;
-    --radius-besar: 12px;
+    --radius-kecil: 4px;   /* badge dan isian kecil */
+    --radius: 6px;         /* tombol, kartu, panel */
+    --radius-besar: 12px;  /* modal dan dialog */
+
+    /* Permukaan publik memakai radius nol -- papan pengumuman tidak punya
+       sudut membulat, dan `rounded` di mana-mana adalah tanda tangan keluaran
+       yang disusun mesin. Kelasnya ditulis langsung di sana, bukan lewat token
+       ini, supaya perbedaannya terlihat di markup. */
 
     /* Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat lama.
        64px adalah batas bawah yang tidak bisa ditawar di gelanggang. */

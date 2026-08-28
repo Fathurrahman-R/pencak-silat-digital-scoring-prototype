@@ -70,6 +70,7 @@
     --warning: var(--k-perhatian);
     --warning-soft: var(--k-perhatian-lembut);
     --danger: var(--k-bahaya);
+    --danger-on: var(--k-bahaya-teks);
     --danger-soft: var(--k-bahaya-lembut);
     --info: var(--k-tinta-kedua);
     --info-soft: var(--k-kertas-turun);
@@ -182,6 +183,7 @@
     --color-warning: var(--warning);
     --color-warning-soft: var(--warning-soft);
     --color-danger: var(--danger);
+    --color-danger-on: var(--danger-on);
     --color-danger-soft: var(--danger-soft);
     --color-info: var(--info);
     --color-info-soft: var(--info-soft);

@@ -53,6 +53,13 @@ if (config('design-system.enabled')) {
             Route::get('/komponen', 'components')->name('components');
             Route::get('/pola', 'patterns')->name('patterns');
             Route::get('/layar/{screen}', 'screen')->name('screen');
+
+            /*
+             * Dokumentasi hidup lapisan komponen baru. Ia berdiri di samping
+             * peraga RizzxxUI selama masa peralihan; begitu lapisan lama
+             * dibongkar, halaman inilah yang tersisa.
+             */
+            Route::view('/si', 'design-system.si')->name('si');
         });
 
     /*

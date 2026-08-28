@@ -214,7 +214,7 @@ Konsekuensi: bundel ketiga `upacara.*` tidak jadi dibuat, dan tidak ada huruf ke
 
 **Jarak** kelipatan 4: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 
-**Radius:** `--r-kecil 4px` (badge, isian) · `--r-sedang 8px` (tombol, kartu) · `--r-besar 12px` (modal, panel besar). Tidak ada bentuk pil, tidak ada lingkaran kecuali avatar dan indikator juri.
+**Radius:** `--radius-kecil 4px` (badge, isian kecil) · `--radius 6px` (tombol, kartu, panel) · `--radius-besar 12px` (modal, dialog). **Permukaan publik memakai radius nol** — lihat §3. Tidak ada bentuk pil, tidak ada lingkaran kecuali avatar dan indikator juri.
 
 **Ukuran sentuh minimum:**
 

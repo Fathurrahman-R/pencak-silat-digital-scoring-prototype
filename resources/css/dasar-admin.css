@@ -36,7 +36,8 @@
     --k-sukses-lembut: #dcefe4;    /* teks sukses: 5.83 */
     --k-perhatian: #7a4a00;        /* 6.69 */
     --k-perhatian-lembut: #f7ecd6; /* 6.39 */
-    --k-bahaya: #a3221c;           /* 6.70 · teks putih di atasnya: 7.49 */
+    --k-bahaya: #a3221c;           /* 6.70 di kertas */
+    --k-bahaya-teks: #ffffff;      /* teks di atas bidang bahaya: 7.49 */
     --k-bahaya-lembut: #f8e3e1;    /* 6.09 */
 }
 
@@ -67,6 +68,9 @@
     --k-perhatian: #d98324;
     --k-perhatian-lembut: #2a1d0c;
     --k-bahaya: #ff7b74;
+    /* Bidang bahaya di mode gelap jauh lebih terang, jadi teksnya ikut
+       berbalik: putih di atasnya hanya 2.52 dan tidak terbaca. */
+    --k-bahaya-teks: #111114;      /* 7.48 */
     --k-bahaya-lembut: #2c1412;
 
     --bayang-angkat: 0 1px 2px rgb(0 0 0 / 0.5);
