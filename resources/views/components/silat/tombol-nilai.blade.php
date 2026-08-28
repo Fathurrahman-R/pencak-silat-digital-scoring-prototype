@@ -15,6 +15,10 @@
      *     di bawah itu jari meleset saat pemakainya tidak melihat.
      *   - Ikon dan angka nilai berdampingan, tanpa mengandalkan teks. Juri
      *     mengenali bentuk lebih cepat daripada membaca kata.
+     *   - Isinya tersusun MENDATAR saat layar landscape. Aparat memegang HP
+     *     dalam orientasi itu, dan tinggi tiap tombol tinggal sekitar 100px --
+     *     susunan tegak memaksa ikon mengecil sampai bentuknya tidak lagi
+     *     terbaca sekilas.
      *   - Umpan balik tekan terjadi seketika lewat `active:`, tidak menunggu
      *     balasan server. Menunggu jaringan membuat juri ragu apakah tekanannya
      *     masuk, lalu menekan dua kali.
@@ -41,20 +45,21 @@
     {{ $attributes->merge([
         'class' => $latar.' '.implode(' ', [
             'flex w-full select-none flex-col items-center justify-center gap-1',
+            'landscape:flex-row landscape:gap-4',
             'rounded-silat text-silat-teks',
             'min-h-[var(--silat-sentuh-min)] min-w-[var(--silat-sentuh-min)] px-4 py-3',
             'transition-none touch-manipulation',
             'active:translate-y-px',
-            'disabled:bg-silat-mati disabled:text-silat-teks-samar',
+            'disabled:bg-transparent disabled:text-silat-teks-mati disabled:ring-1 disabled:ring-silat-tepi-kendali',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
         ]),
     ]) }}
     aria-label="{{ $label }}, nilai {{ $nilai }}, sudut {{ $sudut }}"
 >
-    <x-silat.ikon :nama="$jenis" :ukuran="34" :label="null" />
+    <x-silat.ikon :nama="$jenis" :ukuran="34" :label="null" class="shrink-0" />
 
-    <span class="flex items-baseline gap-1.5">
-        <span class="text-[13px] tracking-wide">{{ $label }}</span>
-        <span class="silat-angka text-[20px] font-medium">{{ $nilai }}</span>
+    <span class="flex items-baseline gap-1.5 landscape:gap-3">
+        <span class="text-[13px] tracking-wide landscape:text-[18px]">{{ $label }}</span>
+        <span class="silat-angka text-[20px] font-medium landscape:text-[26px]">{{ $nilai }}</span>
     </span>
 </button>

@@ -29,13 +29,35 @@
         x-init="if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')"
         class="flex h-dvh flex-col overflow-hidden select-none"
     >
-        <header class="flex shrink-0 items-center justify-between gap-3 px-3 py-2">
-            <p class="silat-angka text-[11px] text-silat-teks-redup">
-                Babak <span x-text="match.current_round ?? '–'"></span>
-                <span x-show="babakAktif?.status !== 'berjalan'" class="text-silat-teks-samar">· menunggu wasit</span>
-            </p>
+        {{--
+            Kepala dibuat setipis mungkin: aparat memegang HP dalam orientasi
+            landscape, dan di sana tinggi adalah barang langka -- setiap piksel
+            yang dipakai kepala diambil dari tombol nilai.
 
-            <x-silat.indikator-koneksi />
+            Nama pesilat ikut tampil, merah kiri dan biru kanan mengikuti sisi
+            tombolnya. Tanpa itu juri harus mengingat sendiri siapa yang berdiri
+            di sudut mana, dan kolom yang ditekannya hanya berlabel warna.
+        --}}
+        <header class="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 py-1.5">
+            <div class="flex min-w-0 items-center gap-2">
+                <span class="size-2.5 shrink-0 rounded-full bg-silat-merah"></span>
+                <span class="truncate text-[14px] font-medium text-silat-teks"
+                      x-text="match.red?.athletes?.join(', ') ?? '—'"></span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <p class="silat-angka text-[11px] whitespace-nowrap text-silat-teks-redup">
+                    Babak <span x-text="match.current_round ?? '–'"></span>
+                    <span x-show="babakAktif?.status !== 'berjalan'">· menunggu wasit</span>
+                </p>
+                <x-silat.indikator-koneksi />
+            </div>
+
+            <div class="flex min-w-0 items-center justify-end gap-2">
+                <span class="truncate text-[14px] font-medium text-silat-teks"
+                      x-text="match.blue?.athletes?.join(', ') ?? '—'"></span>
+                <span class="size-2.5 shrink-0 rounded-full bg-silat-biru"></span>
+            </div>
         </header>
 
         <p x-show="galat" x-text="galat" x-cloak
