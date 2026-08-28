@@ -1,0 +1,315 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; }
+    a { color: #17161a; } a:hover { color: #45434a; }
+  </style>
+</helmet>
+
+<div style="background: #f4f2ee; color: #17161a; padding: 56px 56px 72px; display: flex; flex-direction: column; gap: 48px;">
+
+  <div style="display: flex; flex-direction: column; gap: 12px; border-bottom: 2px solid #17161a; padding-bottom: 24px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #5f5c66;">Fondasi · Sistem desain</div>
+    <h1 style="margin: 0; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Digiscoring Pencak Silat</h1>
+    <p style="margin: 0; max-width: 68ch; font-size: 16px; line-height: 1.55; color: #45434a;">Dua suasana, satu keluarga. Admin terang seperti kertas kerja panitia; gelanggang, live publik, dan overlay tetap gelap. Permukaan publik dan dokumen cetak mendapat lapisan upacara.</p>
+    <p style="margin: 4px 0 0; max-width: 68ch; font-size: 14px; line-height: 1.5; color: #5f5c66;">Setiap rasio di halaman ini dihitung <code style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; background: #e9e6e0; padding: 1px 5px; border-radius: 4px;">scripts/kontras.mjs</code> — 43 pasangan diuji, 43 lolos. Tidak ada warna masuk desain sebelum angkanya ada.</p>
+  </div>
+
+  <!-- ============ INTI TERANG ============ -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Inti terang</h2>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">--k-*</span>
+      <span style="font-size: 14px; color: #5f5c66;">Admin/panitia dan dokumen cetak</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #f4f2ee; border: 1px solid #d4cfc6;"></div>
+        <div style="font-size: 13px; font-weight: 600;">kertas</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#f4f2ee</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #ffffff; border: 1px solid #d4cfc6;"></div>
+        <div style="font-size: 13px; font-weight: 600;">kertas-naik</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#ffffff</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #e9e6e0; border: 1px solid #d4cfc6;"></div>
+        <div style="font-size: 13px; font-weight: 600;">kertas-turun</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#e9e6e0</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #dcd8d0; border: 1px solid #d4cfc6;"></div>
+        <div style="font-size: 13px; font-weight: 600;">kertas-dalam</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#dcd8d0</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #d4cfc6;"></div>
+        <div style="font-size: 13px; font-weight: 600;">garis</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#d4cfc6</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="height: 72px; border-radius: 8px; background: #7d7668;"></div>
+        <div style="font-size: 13px; font-weight: 600;">tepi-kendali</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#7d7668 · 4.03</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+      <div style="background: #f4f2ee; border: 1px solid #d4cfc6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 19px; font-weight: 600; color: #17161a;">Teks utama · tinta</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#17161a di kertas · <strong style="color: #17161a;">16.11</strong></div>
+      </div>
+      <div style="background: #f4f2ee; border: 1px solid #d4cfc6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 19px; font-weight: 500; color: #45434a;">Keterangan · tinta-kedua</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#45434a di kertas · <strong style="color: #17161a;">8.72</strong></div>
+      </div>
+      <div style="background: #f4f2ee; border: 1px solid #d4cfc6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 19px; font-weight: 500; color: #5f5c66;">Paling redup · tinta-redup</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5c66;">#5f5c66 di kertas · <strong style="color: #17161a;">5.85</strong></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
+      <div style="background: #17161a; color: #ffffff; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 16px; font-weight: 600;">Aksi utama</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; opacity: 0.8;">#17161a / putih · 18.01</div>
+      </div>
+      <div style="background: #dcefe4; color: #14663f; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 16px; font-weight: 600;">Sukses</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">#14663f / #dcefe4 · 5.83</div>
+      </div>
+      <div style="background: #f7ecd6; color: #7a4a00; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 16px; font-weight: 600;">Perhatian</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">#7a4a00 / #f7ecd6 · 6.39</div>
+      </div>
+      <div style="background: #f8e3e1; color: #a3221c; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 16px; font-weight: 600;">Bahaya</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">#a3221c / #f8e3e1 · 6.09</div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-left: 3px solid #17161a; border-radius: 0 8px 8px 0; padding: 16px 20px; display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 15px; font-weight: 600;">Tidak ada token aksen berwarna</div>
+      <div style="font-size: 14px; line-height: 1.55; color: #45434a; max-width: 78ch;">Merah, biru, dan emas sudah punya arti yang ditetapkan peraturan. Tidak ada warna aman tersisa untuk tombol utama, jadi aksi utama berupa bidang tinta. Konsekuensinya tautan juga tidak berwarna — ia bergaris bawah dan bertinta penuh.</div>
+    </div>
+  </div>
+
+  <!-- ============ INTI GELAP ============ -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Inti gelap</h2>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">--g-*</span>
+      <span style="font-size: 14px; color: #5f5c66;">Panel gelanggang, live publik, overlay</span>
+    </div>
+
+    <div style="background: #0b0b0c; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #0b0b0c; border: 1px solid #6a6a70;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">latar</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#0b0b0c</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #131316; border: 1px solid #6a6a70;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">panel</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#131316</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #d42027;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">merah · sudut</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#d42027 · 5.20</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #12439e;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">biru · sudut</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#12439e · 9.04</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #e8e8ea;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">aksi</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#e8e8ea · 15.40</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 64px; border-radius: 8px; background: #c9a227;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: #ffffff;">emas · juara</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8a8a90;">#c9a227 · 8.13</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+        <div style="background: #6b6b73; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 16px; font-weight: 600; color: #ffffff;">Pembinaan</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ffffff; opacity: 0.85;">tanpa pengurangan · 5.28</div>
+        </div>
+        <div style="background: #d98324; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 16px; font-weight: 600; color: #1a1207;">Teguran</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1a1207;">−1 / −2 · 6.37</div>
+        </div>
+        <div style="background: #d42027; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 16px; font-weight: 600; color: #ffffff;">Peringatan</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ffffff; opacity: 0.9;">−5 / −10 · 5.20</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+        <div style="background: #7a1418; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff5f5;">Sudut merah</div>
+          <div style="font-size: 19px; font-weight: 600; color: #fff0f0;">Bayu Pratama</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #fff5f5;">#fff0f0 / #7a1418 · 9.78</div>
+        </div>
+        <div style="background: #0c2a63; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #f2f6ff;">Sudut biru</div>
+          <div style="font-size: 19px; font-weight: 600; color: #f2f6ff;">Candra Setiawan</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #f2f6ff;">#f2f6ff / #0c2a63 · 12.71</div>
+        </div>
+      </div>
+
+      <div style="border-left: 3px solid #d42027; padding: 12px 16px; background: #131316; border-radius: 0 8px 8px 0;">
+        <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 4px;">Token yang dihapus tanpa pengganti</div>
+        <div style="font-size: 14px; line-height: 1.55; color: #8a8a90; max-width: 78ch;">
+          <span style="font-family: 'IBM Plex Mono', monospace;">--silat-teks-samar</span> (#8a8a90) menulis istilah resmi hukuman pada kontras 1.03–1.74 — praktis tidak terbaca wasit. Kalau sebuah teks terlalu tidak penting untuk teks-redup, teks itu tidak perlu ada.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LAPISAN UPACARA — DIBATALKAN ============ -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Lapisan upacara — dibatalkan</h2>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66; text-decoration: line-through;">--u-*</span>
+    </div>
+
+    <div style="background: #ffffff; border-left: 3px solid #a3221c; border-radius: 0 8px 8px 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="font-size: 17px; font-weight: 600;">Palet krem–kunyit–coklat dan huruf serif dibuang dari seluruh permukaan publik</div>
+      <div style="font-size: 15px; line-height: 1.6; color: #45434a; max-width: 84ch;">
+        Warna hangat tanah adalah tebakan default untuk "nuansa Nusantara" — ia tidak datang dari sumber mana pun, dan itulah yang membuat halaman publik terbaca sebagai keluaran mesin, bukan sebagai kejuaraan. Petrona ditambah garis rangkap kop memperparahnya: tiruan piagam, bukan formalitas sungguhan.
+      </div>
+      <div style="font-size: 15px; line-height: 1.6; color: #45434a; max-width: 84ch;">
+        Penggantinya datang dari sumber yang nyata: <strong style="color: #17161a;">seragam pertandingan pencak silat IPSI berwarna hitam polos.</strong> Permukaan publik memakai hitam, putih, dan merah/biru sudut — palet yang sama dengan panel gelanggang. Yang membedakan halaman publik dari panel bukan warna tempelan, melainkan <strong style="color: #17161a;">kepadatan dan skala</strong>.
+      </div>
+      <div style="font-size: 15px; line-height: 1.6; color: #45434a; max-width: 84ch;">
+        Konsekuensi: bundel ketiga <span style="font-family: 'IBM Plex Mono', monospace;">upacara.*</span> tidak jadi dibuat, dan tidak ada huruf keempat yang perlu di-bundle.
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
+      <div style="background: #0b0b0c; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 40px; font-weight: 600; color: #ffffff; line-height: 1;">14</div>
+        <div style="font-size: 13px; color: #8a8a90;">Skor 110px lawan label 11px</div>
+      </div>
+      <div style="background: #0b0b0c; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; gap: 6px; align-items: stretch; height: 40px;">
+          <div style="width: 5px; background: #d42027;"></div>
+          <div style="width: 5px; background: #12439e;"></div>
+        </div>
+        <div style="font-size: 13px; color: #8a8a90;">Sudut jadi batang tepi, bukan bidang penuh</div>
+      </div>
+      <div style="background: #0b0b0c; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="height: 40px; display: flex; align-items: center;"><div style="width: 100%; height: 2px; background: #ffffff;"></div></div>
+        <div style="font-size: 13px; color: #8a8a90;">Judul bagian: label 11px + garis, bukan serif</div>
+      </div>
+      <div style="background: #0b0b0c; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="height: 40px; display: flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #ffffff;">10:42</div>
+        <div style="font-size: 13px; color: #8a8a90;">Radius nol di seluruh permukaan publik</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TIPOGRAFI ============ -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Tipografi</h2>
+      <span style="font-size: 14px; color: #5f5c66;">Dua huruf saja: Space Grotesk antarmuka · IBM Plex Mono angka</span>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; background: #e9e6e0; padding: 10px 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #45434a;">
+        <div>Nama</div><div>Contoh</div><div>Dipakai untuk</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">angka-raksasa 96</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 96px; font-weight: 600; line-height: 1;">14</div>
+        <div style="font-size: 14px; color: #45434a;">Skor di panel operator dan papan gelanggang</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">angka-besar 56</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 56px; font-weight: 600; line-height: 1;">01:32</div>
+        <div style="font-size: 14px; color: #45434a;">Skor papan panel, timer gelanggang</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">judul-1 32</div>
+        <div style="font-size: 32px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em;">Verifikasi pendaftaran</div>
+        <div style="font-size: 14px; color: #45434a;">Judul halaman</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">judul-3 19</div>
+        <div style="font-size: 19px; font-weight: 600; line-height: 1.3;">Kontingen Padepokan Harimau</div>
+        <div style="font-size: 14px; color: #45434a;">Judul kartu</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">badan 16</div>
+        <div style="font-size: 16px; line-height: 1.55;">Bagan belum bisa disusun karena 3 pesilat belum ditimbang.</div>
+        <div style="font-size: 14px; color: #45434a;">Teks isi. Batas bawah untuk teks yang harus dibaca</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 180px 1fr 260px; gap: 0; padding: 16px 20px; align-items: center;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5f5c66;">mikro 12</div>
+        <div style="font-size: 12px; line-height: 1.4; color: #45434a;">10:49:07 · Juri 2</div>
+        <div style="font-size: 14px; color: #45434a;">Badge dan cap waktu saja. Tidak pernah untuk kalimat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ UKURAN SENTUH & FOKUS ============ -->
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Ukuran sentuh</h2>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 120px; height: 64px; background: #17161a; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;">64px</div>
+          <div style="font-size: 14px; line-height: 1.55; color: #45434a;"><strong style="color: #17161a;">Panel gelanggang.</strong> Ditekan cepat sambil berdiri, tanpa sempat melihat lama. Batas bawah yang tidak bisa ditawar.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 120px; height: 44px; background: #e6e3dd; color: #17161a; border: 1px solid #7d7668; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">44px</div>
+          <div style="font-size: 14px; line-height: 1.55; color: #45434a;"><strong style="color: #17161a;">Admin di laptop.</strong> Sasaran tetikus, sesi panjang.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 120px; display: flex; gap: 24px; align-items: stretch;">
+            <div style="flex: 1; height: 44px; background: #7a1418; border-radius: 6px;"></div>
+            <div style="flex: 1; height: 44px; background: #0c2a63; border-radius: 6px;"></div>
+          </div>
+          <div style="font-size: 14px; line-height: 1.55; color: #45434a;"><strong style="color: #17161a;">Lorong merah–biru ≥24px.</strong> Selip ke samping memberikan nilai kepada lawan. Sela antar baris boleh tetap 8px — biayanya tidak sama.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Fokus keyboard</h2>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <button style="height: 44px; padding: 0 20px; background: #17161a; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #17161a;">Simpan</button>
+          <div style="font-size: 14px; line-height: 1.5; color: #45434a;">Cincin ganda: 2px latar di dalam, 2px tinta di luar.</div>
+        </div>
+        <div style="background: #0b0b0c; border-radius: 8px; padding: 20px; display: flex; gap: 16px; align-items: center;">
+          <button style="height: 44px; padding: 0 20px; background: #e8e8ea; color: #111114; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; box-shadow: 0 0 0 2px #0b0b0c, 0 0 0 4px #ffffff;">Mulai babak 1</button>
+          <div style="font-size: 14px; line-height: 1.5; color: #8a8a90;">Di suasana gelap, cincin luar putih.</div>
+        </div>
+        <div style="font-size: 14px; line-height: 1.55; color: #45434a;">Pola ini terbaca di atas permukaan apa pun tanpa menambah warna baru. Fokus tidak pernah dihilangkan.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

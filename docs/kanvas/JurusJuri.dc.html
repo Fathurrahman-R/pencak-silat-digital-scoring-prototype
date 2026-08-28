@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#131316\]{background-color:#131316}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#e8e8ea\]{background-color:#e8e8ea}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#2a2a2c\]{border-color:#2a2a2c}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[5px\]{gap:5px}
+    .gap-\[6px\]{gap:6px}
+    .gap-\[8px\]{gap:8px}
+    .grid{display:grid}
+    .h-\[26px\]{height:26px}
+    .h-\[390px\]{height:390px}
+    .h-\[64px\]{height:64px}
+    .h-\[7px\]{height:7px}
+    .inline-flex{display:inline-flex}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}
+    .leading-none{line-height:1}
+    .min-h-0{min-height:0}
+    .min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .p-\[10px\]{padding:10px}
+    .p-\[12px\]{padding:12px}
+    .px-\[12px\]{padding-left:12px;padding-right:12px}
+    .px-\[14px\]{padding-left:14px;padding-right:14px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .py-\[8px\]{padding-top:8px;padding-bottom:8px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#111114\]{color:#111114}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#b0b0b6\]{color:#b0b0b6}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[11px\]{font-size:11px}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[18px\]{font-size:18px}
+    .text-\[20px\]{font-size:20px}
+    .text-\[22px\]{font-size:22px}
+    .text-\[52px\]{font-size:52px}
+    .text-left{text-align:left}
+    .tracking-\[-0\.02em\]{letter-spacing:-0.02em}
+    .tracking-\[0\.1em\]{letter-spacing:0.1em}
+    .truncate{text-overflow:ellipsis}
+    .uppercase{text-transform:uppercase}
+    .w-\[7px\]{width:7px}
+    .w-\[844px\]{width:844px}
+    .whitespace-nowrap{white-space:nowrap}
+  </style>
+</helmet>
+
+<div class="w-[844px] h-[390px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[10px] gap-[8px] overflow-hidden">
+
+  <div class="shrink-0 flex items-center justify-between gap-[12px] h-[26px]">
+    <div class="flex items-baseline gap-[10px] min-w-0">
+      <span class="text-[17px] font-bold whitespace-nowrap">Sari Melati</span>
+      <span class="text-[13px] text-[#8a8a90] whitespace-nowrap overflow-hidden truncate">Padepokan Harimau Putih · Tunggal Putri · Final</span>
+    </div>
+    <div class="flex items-center gap-[10px] shrink-0">
+      <span class="font-mono text-[20px] font-semibold">02:47</span>
+      <span class="inline-flex items-center gap-[5px]" style="padding: 0">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#4ade80]"></span>
+        <span class="text-[11px] font-semibold">Tersambung</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="flex-1 grid gap-[12px] min-h-0" style="grid-template-columns: 1fr 290px">
+
+    <!-- Kiri: nilai dan papan tik sendiri -->
+    <div class="grid gap-[12px] min-h-0" style="grid-template-columns: 1fr 250px">
+
+      <div class="flex flex-col gap-[8px] min-h-0">
+        <div class="flex items-baseline justify-between shrink-0">
+          <span class="text-[11px] tracking-[0.1em] uppercase text-[#8a8a90]">Nilai saya</span>
+          <span class="font-mono text-[12px] text-[#8a8a90]">9.00 – 10.00</span>
+        </div>
+
+        <div class="shrink-0 bg-[#131316] border border-[#6a6a70] rounded-[6px] p-[12px] flex items-center justify-center">
+          <span class="font-mono text-[52px] font-semibold leading-none tracking-[-0.02em]">9.4<span class="text-[#8a8a90]">_</span></span>
+        </div>
+
+        <button class="shrink-0 h-[64px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[18px] font-bold">Kirim nilai</button>
+
+        <div class="flex-1 min-h-0"></div>
+
+        <div class="shrink-0 flex items-center justify-between bg-[#131316] rounded-[6px] py-[8px] px-[12px]">
+          <span class="text-[12px] text-[#8a8a90]">Pengurangan saya: Urutan ×1</span>
+          <span class="font-mono text-[14px] font-semibold">−0.01</span>
+        </div>
+      </div>
+
+      <div class="grid gap-[6px] min-h-0" style="grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr)">
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">1</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">2</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">3</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">4</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">5</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">6</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">7</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">8</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-mono text-[22px] font-semibold">9</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#8a8a90] font-sans text-[13px] font-semibold">Ulangi</button>
+        <button class="bg-transparent border border-[#6a6a70] rounded-[6px] text-[#b0b0b6] font-mono text-[22px] font-semibold">0</button>
+        <button class="bg-[#131316] border border-[#2a2a2c] rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9L3 12z"/><path d="M12 10l4 4M16 10l-4 4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Kanan: pengurangan juri, alasannya sudah disebut peraturan -->
+    <div class="bg-[#131316] rounded-[6px] p-[12px] flex flex-col gap-[8px] min-h-0">
+      <div class="flex items-baseline justify-between shrink-0">
+        <span class="text-[13px] font-semibold">Pengurangan</span>
+        <span class="font-mono text-[12px] text-[#8a8a90]">−0.01 tiap kesalahan</span>
+      </div>
+      <button class="flex-1 bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[15px] text-left py-0 px-[14px]" style="min-height: 56px">Rincian gerak</button>
+      <button class="flex-1 bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[15px] text-left py-0 px-[14px]" style="min-height: 56px">Kesalahan urutan</button>
+      <button class="flex-1 bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[15px] text-left py-0 px-[14px]" style="min-height: 56px">Gerakan tertinggal</button>
+      <button class="flex-1 bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[15px] text-left py-0 px-[14px]" style="min-height: 56px">Senjata terlepas</button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

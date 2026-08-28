@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; }
+    a { color: #17161a; } a:hover { color: #45434a; }
+  </style>
+</helmet>
+
+<div style="background: #f4f2ee; color: #17161a; padding: 56px 56px 72px; display: flex; flex-direction: column; gap: 44px;">
+
+  <div style="display: flex; flex-direction: column; gap: 12px; border-bottom: 2px solid #17161a; padding-bottom: 24px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #5f5c66;">Komponen · Suasana terang</div>
+    <h1 style="margin: 0; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Komponen inti</h1>
+    <p style="margin: 0; max-width: 74ch; font-size: 16px; line-height: 1.55; color: #45434a;">Menggantikan 60 komponen warisan boilerplate. Empat belas dibuang tanpa pengganti — termasuk command palette, satu-satunya pencarian di halaman Bagan, tersembunyi di balik pintasan papan tik yang tidak akan ditemukan panitia.</p>
+  </div>
+
+  <!-- TOMBOL -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Tombol</h2>
+    <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 150px repeat(5, minmax(0, 1fr)); background: #e9e6e0; padding: 10px 20px; gap: 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #45434a;">
+        <div>Varian</div><div>Normal</div><div>Tertunjuk</div><div>Ditekan</div><div>Fokus</div><div>Nonaktif</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 150px repeat(5, minmax(0, 1fr)); padding: 18px 20px; gap: 12px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-size: 14px; font-weight: 600;">Utama</div>
+        <div><button style="height: 44px; padding: 0 18px; background: #17161a; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Simpan</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #2a2a2c; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Simpan</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #17161a; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; transform: translateY(1px);">Simpan</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #17161a; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #17161a;">Simpan</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #dcd8d0; color: #7d7668; border: none; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Simpan</button></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 150px repeat(5, minmax(0, 1fr)); padding: 18px 20px; gap: 12px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-size: 14px; font-weight: 600;">Kedua</div>
+        <div><button style="height: 44px; padding: 0 18px; background: #e6e3dd; color: #17161a; border: 1px solid #7d7668; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Batal</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #dcd8d0; color: #17161a; border: 1px solid #7d7668; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Batal</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #d4cfc6; color: #17161a; border: 1px solid #7d7668; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; transform: translateY(1px);">Batal</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #e6e3dd; color: #17161a; border: 1px solid #7d7668; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #17161a;">Batal</button></div>
+        <div><button style="height: 44px; padding: 0 18px; background: #e9e6e0; color: #7d7668; border: 1px solid #d4cfc6; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%;">Batal</button></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 150px repeat(5, minmax(0, 1fr)); padding: 18px 20px; gap: 12px; align-items: center;">
+        <div style="font-size: 14px; font-weight: 600;">Berbahaya</div>
+        <div><button style="height: 44px; padding: 0 14px; background: #ffffff; color: #a3221c; border: 1px solid #a3221c; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/></svg>Hapus</button></div>
+        <div><button style="height: 44px; padding: 0 14px; background: #f8e3e1; color: #a3221c; border: 1px solid #a3221c; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/></svg>Hapus</button></div>
+        <div><button style="height: 44px; padding: 0 14px; background: #a3221c; color: #ffffff; border: 1px solid #a3221c; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; transform: translateY(1px);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/></svg>Hapus</button></div>
+        <div><button style="height: 44px; padding: 0 14px; background: #ffffff; color: #a3221c; border: 1px solid #a3221c; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #17161a;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/></svg>Hapus</button></div>
+        <div><button style="height: 44px; padding: 0 14px; background: #e9e6e0; color: #7d7668; border: 1px solid #d4cfc6; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/></svg>Hapus</button></div>
+      </div>
+    </div>
+    <div style="font-size: 14px; line-height: 1.55; color: #45434a; max-width: 82ch;">Tombol berbahaya berkontur, bukan berbidang penuh, sampai ia sudah dikonfirmasi. Bidang merah penuh hanya muncul di dalam dialog konfirmasi — supaya merah tidak berteriak sepanjang hari di layar daftar.</div>
+  </div>
+
+  <!-- ISIAN -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Isian</h2>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 14px; font-weight: 600;">Berat badan</label>
+        <input value="52.4" style="height: 44px; padding: 0 12px; border: 1px solid #7d7668; border-radius: 8px; background: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #17161a; width: 100%; box-sizing: border-box;">
+        <div style="font-size: 13px; line-height: 1.45; color: #5f5c66;">Kilogram, satu angka di belakang koma.</div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 14px; font-weight: 600;">Berat badan <span style="font-weight: 400; color: #5f5c66;">· fokus</span></label>
+        <input value="52.4" style="height: 44px; padding: 0 12px; border: 1px solid #17161a; border-radius: 8px; background: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #17161a; width: 100%; box-sizing: border-box; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #17161a;">
+        <div style="font-size: 13px; line-height: 1.45; color: #5f5c66;">Kilogram, satu angka di belakang koma.</div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 14px; font-weight: 600;">Berat badan <span style="font-weight: 400; color: #a3221c;">· belum sesuai</span></label>
+        <input value="" placeholder="52.4" style="height: 44px; padding: 0 12px; border: 2px solid #a3221c; border-radius: 8px; background: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #17161a; width: 100%; box-sizing: border-box;">
+        <div style="font-size: 13px; line-height: 1.45; color: #a3221c; display: flex; gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span>Berat badan belum diisi. Isi angka dalam kilogram, misalnya 52.4.</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 14px; font-weight: 600; color: #7d7668;">Berat badan <span style="font-weight: 400;">· terkunci</span></label>
+        <input value="52.4" style="height: 44px; padding: 0 12px; border: 1px solid #d4cfc6; border-radius: 8px; background: #dcd8d0; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #7d7668; width: 100%; box-sizing: border-box;">
+        <div style="font-size: 13px; line-height: 1.45; color: #5f5c66;">Timbang badan sudah ditutup panitia.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGE, CALLOUT, CHIP -->
+  <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Badge status</h2>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #dcefe4; color: #14663f; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Terverifikasi</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #f7ecd6; color: #7a4a00; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Menunggu</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #f8e3e1; color: #a3221c; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>Ditolak</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #e9e6e0; color: #45434a; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg>Belum mulai</span>
+        </div>
+        <div style="font-size: 14px; line-height: 1.55; color: #45434a;">Selalu berikon. Warna tidak pernah jadi satu-satunya pembawa makna — panitia yang sulit membedakan warna tetap harus bisa membaca status.</div>
+      </div>
+
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Chip saring</h2>
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 20px; display: flex; flex-wrap: wrap; gap: 8px;">
+        <button style="height: 36px; padding: 0 14px; background: #17161a; color: #ffffff; border: 1px solid #17161a; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 600;">Semua <span style="opacity: 0.7; font-family: 'IBM Plex Mono', monospace;">174</span></button>
+        <button style="height: 36px; padding: 0 14px; background: #ffffff; color: #17161a; border: 1px solid #7d7668; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 500;">Ada peserta <span style="color: #5f5c66; font-family: 'IBM Plex Mono', monospace;">2</span></button>
+        <button style="height: 36px; padding: 0 14px; background: #ffffff; color: #17161a; border: 1px solid #7d7668; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 500;">Sudah dikunci <span style="color: #5f5c66; font-family: 'IBM Plex Mono', monospace;">0</span></button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Callout &amp; keadaan kosong</h2>
+      <div style="background: #f7ecd6; border-left: 3px solid #7a4a00; border-radius: 0 8px 8px 0; padding: 16px 20px; display: flex; gap: 12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7a4a00" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0; margin-top: 2px;"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16h.01"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 15px; font-weight: 600; color: #7a4a00;">Bagan belum bisa disusun</div>
+          <div style="font-size: 14px; line-height: 1.55; color: #45434a;">3 pesilat di kelas ini belum ditimbang. Selesaikan timbang badan dulu, lalu kembali ke sini. <a href="#" style="font-weight: 600;">Buka timbang badan</a></div>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7d7668" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        <div style="font-size: 19px; font-weight: 600;">Belum ada medali</div>
+        <div style="font-size: 14px; line-height: 1.55; color: #45434a; max-width: 46ch;">Medali muncul setelah hasil partai atau penampilan Jurus disahkan Dewan Wasit Juri.</div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #7d7668; flex-shrink: 0;"></div>
+        <div style="font-size: 14px; line-height: 1.55; color: #45434a;"><strong style="color: #17161a;">Nonaktif selalu berpasangan dengan alasan.</strong> Tombol nonaktif tanpa penjelasan sama membingungkannya dengan tombol yang gagal diam-diam.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABEL -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Pola daftar</h2>
+    <div style="background: #ffffff; border: 1px solid #d4cfc6; border-radius: 12px; overflow: hidden;">
+      <div style="padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #d4cfc6;">
+        <div style="position: relative; flex: 1; max-width: 340px;">
+          <input placeholder="Cari nama pesilat atau kontingen" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 12px 0 40px; border: 1px solid #7d7668; border-radius: 8px; font-family: inherit; font-size: 15px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5f5c66" stroke-width="1.8" stroke-linecap="round" style="position: absolute; left: 12px; top: 13px;"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+        </div>
+        <div style="flex: 1;"></div>
+        <div style="font-size: 14px; color: #5f5c66;">Menampilkan <strong style="color: #17161a;">2</strong> dari 174 kelas · <a href="#" style="font-weight: 600;">tampilkan semua</a></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 160px; background: #e9e6e0; padding: 10px 20px; gap: 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #45434a;">
+        <div>Kelas</div><div>Peserta sah</div><div>Status</div><div></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 160px; padding: 14px 20px; gap: 12px; align-items: center; border-bottom: 1px solid #d4cfc6;">
+        <div style="font-size: 15px; font-weight: 600;">Putra Kelas B · 50–55 kg</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 15px;">8</div>
+        <div><span style="display: inline-flex; align-items: center; gap: 6px; background: #dcefe4; color: #14663f; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Siap disusun</span></div>
+        <div><button style="height: 40px; padding: 0 16px; background: #17161a; color: #ffffff; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600; width: 100%;">Susun bagan</button></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 160px; padding: 14px 20px; gap: 12px; align-items: center; background: #f4f2ee;">
+        <div style="font-size: 15px; font-weight: 600;">Putri Kelas A · 45–50 kg</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 15px;">6</div>
+        <div><span style="display: inline-flex; align-items: center; gap: 6px; background: #f7ecd6; color: #7a4a00; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>3 belum ditimbang</span></div>
+        <div><button style="height: 40px; padding: 0 16px; background: #dcd8d0; color: #7d7668; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600; width: 100%;">Susun bagan</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

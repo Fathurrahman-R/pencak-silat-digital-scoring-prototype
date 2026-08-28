@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .absolute{position:absolute}
+    .bg-\[\#00b140\]{background-color:#00b140}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#0c2a63\]{background-color:#0c2a63}
+    .bg-\[\#12439e\]{background-color:#12439e}
+    .bg-\[\#6b6b73\]{background-color:#6b6b73}
+    .bg-\[\#7a1418\]{background-color:#7a1418}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-\[\#d98324\]{background-color:#d98324}
+    .bg-\[\#ffffff\]{background-color:#ffffff}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-\[\#8a8a90\]{border-color:#8a8a90}
+    .border-\[\#d42027\]{border-color:#d42027}
+    .border-dashed{border-style:dashed}
+    .border-l-\[4px\]{border-left-width:4px}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[20px\]{gap:20px}
+    .gap-\[4px\]{gap:4px}
+    .gap-\[6px\]{gap:6px}
+    .gap-\[9px\]{gap:9px}
+    .h-\[1080px\]{height:1080px}
+    .h-\[14px\]{height:14px}
+    .h-\[24px\]{height:24px}
+    .items-center{align-items:center}
+    .items-end{align-items:flex-end}
+    .items-stretch{align-items:stretch}
+    .justify-center{justify-content:center}
+    .justify-end{justify-content:flex-end}
+    .leading-\[1\.15\]{line-height:1.15}
+    .leading-\[1\.5\]{line-height:1.5}
+    .leading-\[1\.6\]{line-height:1.6}
+    .leading-none{line-height:1}
+    .max-w-\[360px\]{max-width:360px}
+    .max-w-\[420px\]{max-width:420px}
+    .mb-\[6px\]{margin-bottom:6px}
+    .min-w-\[460px\]{min-width:460px}
+    .mt-\[7px\]{margin-top:7px}
+    .overflow-hidden{overflow:hidden}
+    .px-0{padding-left:0;padding-right:0}
+    .px-\[16px\]{padding-left:16px;padding-right:16px}
+    .px-\[18px\]{padding-left:18px;padding-right:18px}
+    .px-\[20px\]{padding-left:20px;padding-right:20px}
+    .px-\[28px\]{padding-left:28px;padding-right:28px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .py-\[10px\]{padding-top:10px;padding-bottom:10px}
+    .py-\[12px\]{padding-top:12px;padding-bottom:12px}
+    .py-\[14px\]{padding-top:14px;padding-bottom:14px}
+    .py-\[16px\]{padding-top:16px;padding-bottom:16px}
+    .py-\[7px\]{padding-top:7px;padding-bottom:7px}
+    .relative{position:relative}
+    .rounded-\[4px\]{border-radius:4px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-\[8px\]{border-radius:8px}
+    .rounded-full{border-radius:9999px}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#d98324\]{color:#d98324}
+    .text-\[\#f2f6ff\]{color:#f2f6ff}
+    .text-\[\#fff0f0\]{color:#fff0f0}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[20px\]{font-size:20px}
+    .text-\[22px\]{font-size:22px}
+    .text-\[30px\]{font-size:30px}
+    .text-\[44px\]{font-size:44px}
+    .tracking-\[0\.04em\]{letter-spacing:0.04em}
+    .tracking-\[0\.14em\]{letter-spacing:0.14em}
+    .uppercase{text-transform:uppercase}
+    .w-\[120px\]{width:120px}
+    .w-\[14px\]{width:14px}
+    .w-\[1920px\]{width:1920px}
+    .w-\[200px\]{width:200px}
+    .w-\[24px\]{width:24px}
+  </style>
+</helmet>
+
+<!-- Latar hijau HANYA alat bantu menggambar. Di produksi body-nya transparan. -->
+<div class="w-[1920px] h-[1080px] box-border bg-[#00b140] relative overflow-hidden">
+
+  <div class="absolute text-[#ffffff] rounded-[6px] py-[12px] px-[16px] text-[15px] leading-[1.5] max-w-[420px]" style="top: 28px; left: 28px; background: rgba(0,0,0,0.72)">
+    <strong>Latar hijau ini bukan bagian desain.</strong> Ia ada supaya jelas mana yang transparan. Di vMix, <span class="font-mono">body</span> berlatar <span class="font-mono">rgba(0,0,0,0)</span> dan hanya bar di bawah yang tergambar.
+  </div>
+
+  <!-- Bar bawah-tengah -->
+  <div class="absolute flex flex-col items-center gap-[10px]" style="left: 50%; transform: translateX(-50%); bottom: 64px">
+
+
+    <!-- Kilasan konsensus juri: muncul hanya selama jendela 2 detik, lalu hilang -->
+    <div class="flex items-center gap-[16px] border-l-[4px] border-[#d42027] rounded-[6px] py-[10px] px-[20px]" style="background: rgba(11,11,12,0.92)">
+      <span class="text-[13px] tracking-[0.14em] uppercase text-[#ffffff]">Sudut merah</span>
+      <span class="flex items-center gap-[9px]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v7l5 3 3-2 5 4"/><circle cx="6" cy="4" r="1.6"/><path d="M11 14l-1 6"/></svg>
+        <span class="text-[17px] font-bold text-[#ffffff]">Tendangan</span>
+      </span>
+      <span class="flex gap-[6px]">
+        <span class="w-[14px] h-[14px] rounded-full bg-[#ffffff]"></span>
+        <span class="w-[14px] h-[14px] rounded-full bg-[#ffffff]"></span>
+        <span class="w-[14px] h-[14px] rounded-full bg-transparent"></span>
+      </span>
+      <span class="text-[15px] text-[#ffffff]">2 dari 3 juri</span>
+      <span class="font-mono text-[20px] font-semibold text-[#ffffff]">+2</span>
+    </div>
+
+    <div class="flex items-stretch rounded-[8px] overflow-hidden" style="box-shadow: 0 8px 32px rgba(0,0,0,0.45)">
+
+      <!-- Sudut merah -->
+      <div class="bg-[#d42027] flex items-center gap-[20px] py-0 px-[28px] min-w-[460px]">
+        <div class="flex flex-col gap-[4px] py-[16px] px-0">
+          <div class="text-[22px] font-bold text-[#ffffff] leading-[1.15]">Bayu Pratama</div>
+          <div class="text-[15px] text-[#fff0f0]">Padepokan Harimau Putih</div>
+          <div class="flex gap-[10px] mt-[7px]"><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] bg-[#6b6b73] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></span></span><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] bg-[#d98324] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a1207" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span></span><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-dashed border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span></span></div>
+        </div>
+      </div>
+
+      <div class="bg-[#7a1418] flex items-center justify-center w-[120px]">
+        <span class="font-mono text-[44px] font-semibold text-[#ffffff] leading-none">14</span>
+      </div>
+
+      <!-- Tengah: timer dan babak -->
+      <div class="bg-[#0b0b0c] flex flex-col items-center justify-center gap-[4px] w-[200px]">
+        <div class="font-mono text-[30px] font-semibold text-[#ffffff] leading-none">01:32</div>
+        <div class="font-mono text-[13px] tracking-[0.14em] text-[#8a8a90]">BABAK 2/3</div>
+      </div>
+
+      <div class="bg-[#0c2a63] flex items-center justify-center w-[120px]">
+        <span class="font-mono text-[44px] font-semibold text-[#ffffff] leading-none">11</span>
+      </div>
+
+      <!-- Sudut biru -->
+      <div class="bg-[#12439e] flex items-center gap-[20px] py-0 px-[28px] min-w-[460px] justify-end">
+        <div class="flex flex-col gap-[4px] py-[16px] px-0 items-end">
+          <div class="text-[22px] font-bold text-[#ffffff] leading-[1.15]">Candra Setiawan</div>
+          <div class="text-[15px] text-[#f2f6ff]">PSHT Cabang Pontianak</div>
+          <div class="flex gap-[10px] mt-[7px]"><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></span></span><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span></span><span class="flex gap-[4px]"><span class="w-[24px] h-[24px] rounded-[4px] bg-[#d42027] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span><span class="w-[24px] h-[24px] rounded-[4px] border border-dashed border-[#8a8a90] flex items-center justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-[6px] py-[7px] px-[18px] text-[15px] text-[#ffffff] tracking-[0.04em]" style="background: rgba(11,11,12,0.9)">
+      Partai 14 · Putra Kelas B 50–55 kg · Semifinal · Gelanggang 1
+    </div>
+  </div>
+
+  <!-- Catatan ukuran, tidak ikut tergambar di produksi -->
+  <div class="absolute text-[#ffffff] rounded-[6px] py-[14px] px-[18px] text-[14px] leading-[1.6] max-w-[360px]" style="right: 28px; bottom: 28px; background: rgba(0,0,0,0.72)">
+    <div class="font-bold mb-[6px]">Ukuran terkunci</div>
+    Skor 44px · nama pesilat 22px · timer 30px · kontingen 15px · petak hukuman 24px.<br>
+    Kilasan konsensus juri hanya muncul selama jendela 2 detik dan langsung hilang — ia menjelaskan kenapa skor naik, tanpa menetap dan memakan kanvas.<br>
+    Tujuh petak berposisi tetap, dikelompokkan: <strong>2 Pembinaan · 2 Teguran · 3 Peringatan</strong> — jumlah slotnya ditetapkan tangga Pasal 11.6.d.4, bukan dipilih. Jumlah hukuman dibaca dari berapa petak yang menyala; tidak ada angka. Petak Peringatan ketiga bergaris putus: mengisinya berarti diskualifikasi.<br><br>
+    <span class="text-[#d98324]">Perlu dipastikan operator siaran:</span> rasio skor terhadap nama 2:1 — cukup atau kurang dominan di layar tribun?
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

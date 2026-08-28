@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#12439e\]{background-color:#12439e}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .border-0{border:none}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[24px\]{gap:24px}
+    .gap-\[5px\]{gap:5px}
+    .gap-\[8px\]{gap:8px}
+    .gap-x-\[24px\]{column-gap:24px}
+    .gap-y-\[8px\]{row-gap:8px}
+    .grid{display:grid}
+    .h-\[26px\]{height:26px}
+    .h-\[390px\]{height:390px}
+    .h-\[7px\]{height:7px}
+    .h-\[8px\]{height:8px}
+    .h-\[9px\]{height:9px}
+    .inline-flex{display:inline-flex}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .justify-center{justify-content:center}
+    .justify-end{justify-content:flex-end}
+    .leading-none{line-height:1}
+    .min-h-0{min-height:0}
+    .min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .p-\[10px\]{padding:10px}
+    .px-\[20px\]{padding-left:20px;padding-right:20px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[11px\]{font-size:11px}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[22px\]{font-size:22px}
+    .text-\[30px\]{font-size:30px}
+    .truncate{text-overflow:ellipsis}
+    .w-\[7px\]{width:7px}
+    .w-\[844px\]{width:844px}
+    .w-\[8px\]{width:8px}
+    .w-\[9px\]{width:9px}
+    .whitespace-nowrap{white-space:nowrap}
+  </style>
+</helmet>
+
+<div class="w-[844px] h-[390px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[10px] gap-[8px] overflow-hidden">
+
+  <!-- Kepala setipis mungkin: layar landscape pendek, tinggi adalah barang langka -->
+  <div class="shrink-0 grid gap-[24px] items-center" style="grid-template-columns: 1fr auto 1fr">
+    <div class="flex items-baseline gap-[8px] min-w-0">
+      <span class="w-[9px] h-[9px] rounded-full bg-[#d42027] shrink-0"></span>
+      <span class="text-[15px] font-bold whitespace-nowrap overflow-hidden truncate">Bayu Pratama</span>
+    </div>
+
+    <div class="flex items-center gap-[10px]">
+      <span class="font-mono text-[13px] font-semibold">Partai 14</span>
+      <span class="text-[12px] text-[#8a8a90]">Babak 2/3</span>
+      <span class="inline-flex items-center gap-[5px]" style="padding: 0">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#4ade80]"></span>
+        <span class="text-[11px] font-semibold">Tersambung</span>
+      </span>
+    </div>
+
+    <div class="flex items-baseline gap-[8px] justify-end min-w-0">
+      <span class="text-[15px] font-bold whitespace-nowrap overflow-hidden truncate">Candra Setiawan</span>
+      <span class="w-[9px] h-[9px] rounded-full bg-[#12439e] shrink-0"></span>
+    </div>
+  </div>
+
+  <!-- Dua kolom sudut, tiga teknik ke bawah. Lorong tengah 24px. -->
+  <div class="flex-1 grid gap-x-[24px] gap-y-[8px] min-h-0" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr">
+
+    <button aria-label="Pukulan, nilai 1, sudut merah" class="bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M7 13V8a2 2 0 014 0v4M11 12V7a2 2 0 014 0v5M15 12V9a2 2 0 014 0v6a5 5 0 01-5 5h-3l-4-4"/></svg>
+      <span class="text-[22px] font-semibold">Pukulan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">1</span>
+    </button>
+
+    <button aria-label="Pukulan, nilai 1, sudut biru" class="bg-[#12439e] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M7 13V8a2 2 0 014 0v4M11 12V7a2 2 0 014 0v5M15 12V9a2 2 0 014 0v6a5 5 0 01-5 5h-3l-4-4"/></svg>
+      <span class="text-[22px] font-semibold">Pukulan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">1</span>
+    </button>
+
+    <button aria-label="Tendangan, nilai 2, sudut merah" class="bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M6 4v7l5 3 3-2 5 4"/><circle cx="6" cy="4" r="1.6"/><path d="M11 14l-1 6"/></svg>
+      <span class="text-[22px] font-semibold">Tendangan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">2</span>
+    </button>
+
+    <button aria-label="Tendangan, nilai 2, sudut biru" class="bg-[#12439e] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M6 4v7l5 3 3-2 5 4"/><circle cx="6" cy="4" r="1.6"/><path d="M11 14l-1 6"/></svg>
+      <span class="text-[22px] font-semibold">Tendangan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">2</span>
+    </button>
+
+    <button aria-label="Jatuhan, nilai 3, sudut merah" class="bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="8" cy="5" r="1.8"/><path d="M4 10l5-2 4 3 3-1"/><path d="M3 18h13l4-3"/><path d="M9 11l-2 7"/></svg>
+      <span class="text-[22px] font-semibold">Jatuhan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">3</span>
+    </button>
+
+    <button aria-label="Jatuhan, nilai 3, sudut biru" class="bg-[#12439e] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-center gap-[16px] py-0 px-[20px]">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="8" cy="5" r="1.8"/><path d="M4 10l5-2 4 3 3-1"/><path d="M3 18h13l4-3"/><path d="M9 11l-2 7"/></svg>
+      <span class="text-[22px] font-semibold">Jatuhan</span>
+      <span class="font-mono text-[30px] font-semibold leading-none">3</span>
+    </button>
+
+  </div>
+
+  <!-- Umpan balik tekanan terakhir. Satu baris, tidak memakan tinggi. -->
+  <div class="shrink-0 flex items-center justify-center gap-[10px] h-[26px]">
+    <span class="text-[12px] text-[#8a8a90]">Terakhir kamu beri</span>
+    <span class="w-[8px] h-[8px] rounded-full bg-[#d42027]"></span>
+    <span class="text-[13px] font-semibold">Tendangan · 2</span>
+    <span class="font-mono text-[12px] text-[#8a8a90]">01:38</span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

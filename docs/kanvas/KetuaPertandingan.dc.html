@@ -1,0 +1,296 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#0c2a63\]{background-color:#0c2a63}
+    .bg-\[\#131316\]{background-color:#131316}
+    .bg-\[\#14663f\]{background-color:#14663f}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#7a1418\]{background-color:#7a1418}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-\[\#d98324\]{background-color:#d98324}
+    .bg-\[\#e8e8ea\]{background-color:#e8e8ea}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .border-\[\#d42027\]{border-color:#d42027}
+    .border-\[\#d98324\]{border-color:#d98324}
+    .border-\[\#ffffff\]{border-color:#ffffff}
+    .border-l-\[3px\]{border-left-width:3px}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-\[1\.3\]{flex:1.3 1 0%}
+    .flex-\[10\]{flex:10 1 0%}
+    .flex-\[175\]{flex:175 1 0%}
+    .flex-\[5\]{flex:5 1 0%}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[14px\]{gap:14px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[20px\]{gap:20px}
+    .gap-\[6px\]{gap:6px}
+    .gap-\[7px\]{gap:7px}
+    .gap-\[8px\]{gap:8px}
+    .gap-\[9px\]{gap:9px}
+    .grid{display:grid}
+    .h-\[44px\]{height:44px}
+    .h-\[48px\]{height:48px}
+    .h-\[56px\]{height:56px}
+    .h-\[7px\]{height:7px}
+    .h-\[8px\]{height:8px}
+    .h-\[900px\]{height:900px}
+    .h-\[9px\]{height:9px}
+    .inline-flex{display:inline-flex}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}
+    .leading-\[1\.45\]{line-height:1.45}
+    .leading-\[1\.5\]{line-height:1.5}
+    .leading-none{line-height:1}
+    .min-h-0{min-height:0}
+    .mt-\[3px\]{margin-top:3px}
+    .overflow-hidden{overflow:hidden}
+    .p-\[20px\]{padding:20px}
+    .px-\[14px\]{padding-left:14px;padding-right:14px}
+    .px-\[16px\]{padding-left:16px;padding-right:16px}
+    .px-\[6px\]{padding-left:6px;padding-right:6px}
+    .px-\[9px\]{padding-left:9px;padding-right:9px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .py-\[12px\]{padding-top:12px;padding-bottom:12px}
+    .py-\[14px\]{padding-top:14px;padding-bottom:14px}
+    .py-\[2px\]{padding-top:2px;padding-bottom:2px}
+    .relative{position:relative}
+    .rounded-\[3px\]{border-radius:3px}
+    .rounded-\[4px\]{border-radius:4px}
+    .rounded-\[5px\]{border-radius:5px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-\[8px\]{border-radius:8px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#111114\]{color:#111114}
+    .text-\[\#1a1207\]{color:#1a1207}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#d42027\]{color:#d42027}
+    .text-\[\#d98324\]{color:#d98324}
+    .text-\[\#f2f6ff\]{color:#f2f6ff}
+    .text-\[\#fff0f0\]{color:#fff0f0}
+    .text-\[\#fff5f5\]{color:#fff5f5}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[10px\]{font-size:10px}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[16px\]{font-size:16px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[18px\]{font-size:18px}
+    .text-\[19px\]{font-size:19px}
+    .text-\[24px\]{font-size:24px}
+    .text-\[26px\]{font-size:26px}
+    .text-\[40px\]{font-size:40px}
+    .text-\[44px\]{font-size:44px}
+    .text-center{text-align:center}
+    .text-left{text-align:left}
+    .text-right{text-align:right}
+    .tracking-\[0\.06em\]{letter-spacing:0.06em}
+    .tracking-\[0\.12em\]{letter-spacing:0.12em}
+    .tracking-\[0\.1em\]{letter-spacing:0.1em}
+    .uppercase{text-transform:uppercase}
+    .w-\[1440px\]{width:1440px}
+    .w-\[7px\]{width:7px}
+    .w-\[8px\]{width:8px}
+  </style>
+</helmet>
+
+<div class="w-[1440px] h-[900px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[20px] gap-[16px] overflow-hidden">
+
+  <div class="shrink-0 flex items-center justify-between gap-[16px]">
+    <div class="flex items-baseline gap-[14px]">
+      <span class="text-[24px] font-bold">Ketua Pertandingan</span>
+      <span class="text-[16px] text-[#8a8a90]">Kejuaraan Terbuka Kalimantan Barat 2026 · Hari 3</span>
+    </div>
+    <div class="flex items-center gap-[12px]">
+      <span class="font-mono text-[18px] font-semibold">10:48</span>
+      <div class="flex items-center gap-[7px]" style="padding: 0">
+        <span class="w-[8px] h-[8px] rounded-full bg-[#4ade80]"></span>
+        <span class="text-[14px] font-semibold">2 gelanggang tersambung</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 grid gap-[20px] min-h-0" style="grid-template-columns: 1.4fr 1fr">
+
+    <!-- Gelanggang yang sedang berjalan -->
+    <div class="flex flex-col gap-[16px] min-h-0">
+
+      <!-- Gelanggang 1 — Tanding -->
+      <div class="flex-1 bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[14px] min-h-0">
+        <div class="flex items-center justify-between gap-[12px]">
+          <div class="flex items-baseline gap-[12px]">
+            <span class="text-[19px] font-bold">Gelanggang 1</span>
+            <span class="text-[14px] text-[#8a8a90]">Tanding · Partai 14 · Putra Kelas B · Semifinal</span>
+          </div>
+          <span class="inline-flex items-center gap-[7px] text-[13px] font-semibold" style="padding: 0">
+            <span class="w-[7px] h-[7px] rounded-full bg-[#d42027]"></span>Berlangsung
+          </span>
+        </div>
+
+        <div class="grid gap-[16px] items-center" style="grid-template-columns: 1fr auto 1fr">
+          <div class="bg-[#7a1418] rounded-[6px] py-[12px] px-[16px] flex items-center justify-between">
+            <div>
+              <div class="text-[10px] tracking-[0.12em] uppercase text-[#fff5f5]">Merah</div>
+              <div class="text-[17px] font-semibold text-[#fff0f0]">Bayu Pratama</div>
+            </div>
+            <div class="font-mono text-[40px] font-semibold leading-none text-[#ffffff]">14</div>
+          </div>
+          <div class="text-center">
+            <div class="font-mono text-[26px] font-semibold leading-none">01:32</div>
+            <div class="font-mono text-[12px] tracking-[0.1em] text-[#8a8a90] mt-[3px]">BABAK 2/3</div>
+          </div>
+          <div class="bg-[#0c2a63] rounded-[6px] py-[12px] px-[16px] flex items-center justify-between">
+            <div class="font-mono text-[40px] font-semibold leading-none text-[#ffffff]">11</div>
+            <div class="text-right">
+              <div class="text-[10px] tracking-[0.12em] uppercase text-[#f2f6ff]">Biru</div>
+              <div class="text-[17px] font-semibold text-[#f2f6ff]">Candra Setiawan</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-[20px] text-[13px] text-[#8a8a90]">
+          <span>Wasit <span class="text-[#ffffff]">Ahmad Riyadi</span></span>
+          <span>Juri <span class="text-[#ffffff]">Dewi · Rangga · Yusuf</span></span>
+          <span>Dewan <span class="text-[#ffffff]">Sutrisno</span></span>
+        </div>
+
+        <div class="flex-1"></div>
+
+        <div class="flex gap-[10px]">
+          <button class="flex-[1.3] h-[56px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[16px] font-bold flex items-center justify-center gap-[9px]">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+            Minta verifikasi juri
+          </button>
+          <button class="flex-1 h-[56px] bg-transparent text-[#ffffff] border border-[#d42027] rounded-[6px] font-sans text-[16px] font-semibold">Hentikan pertandingan</button>
+        </div>
+      </div>
+
+      <!-- Gelanggang 2 — Jurus -->
+      <div class="flex-1 bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[14px] min-h-0">
+        <div class="flex items-center justify-between gap-[12px]">
+          <div class="flex items-baseline gap-[12px]">
+            <span class="text-[19px] font-bold">Gelanggang 2</span>
+            <span class="text-[14px] text-[#8a8a90]">Jurus · Sari Melati · Tunggal Putri · Final</span>
+          </div>
+          <span class="inline-flex items-center gap-[7px] text-[13px] font-semibold" style="padding: 0">
+            <span class="w-[7px] h-[7px] rounded-full bg-[#d42027]"></span>Berlangsung
+          </span>
+        </div>
+
+        <div class="flex items-end gap-[20px]">
+          <div>
+            <div class="font-mono text-[44px] font-semibold leading-none">02:47</div>
+            <div class="text-[13px] text-[#8a8a90] mt-[3px]">Waktu acuan 03:00 · toleransi ±5 detik</div>
+          </div>
+          <div class="flex-1 flex flex-col gap-[6px]">
+            <div class="flex h-[9px] rounded-[5px] overflow-hidden">
+              <div class="flex-[175] bg-transparent"></div>
+              <div class="flex-[10] bg-[#14663f]"></div>
+              <div class="flex-[5] bg-[#d98324]"></div>
+              <div class="flex-[10] bg-[#d42027]"></div>
+            </div>
+            <div class="text-[12px] text-[#8a8a90]">Waktu penampilan Jurus adalah tanggung jawab Ketua Pertandingan — Pasal 13.4.d.9</div>
+          </div>
+        </div>
+
+        <div class="flex-1"></div>
+
+        <div class="flex gap-[10px]">
+          <button class="flex-[1.3] h-[56px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[16px] font-semibold flex items-center justify-center gap-[9px] relative">
+            Isyarat keluar garis
+            <span class="text-[10px] font-bold tracking-[0.06em] bg-[#d98324] text-[#1a1207] py-[2px] px-[6px] rounded-[3px]">BELUM ADA</span>
+          </button>
+          <button class="flex-1 h-[56px] bg-transparent text-[#ffffff] border border-[#d42027] rounded-[6px] font-sans text-[16px] font-semibold">Hentikan penampilan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yang butuh keputusan -->
+    <div class="flex flex-col gap-[16px] min-h-0">
+
+      <div class="flex-1 bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[14px] min-h-0">
+        <div class="flex items-baseline justify-between shrink-0">
+          <span class="text-[18px] font-bold">Butuh keputusanmu</span>
+          <span class="font-mono text-[15px] font-semibold bg-[#d98324] text-[#1a1207] py-[2px] px-[9px] rounded-[4px]">3</span>
+        </div>
+
+        <div class="bg-[#0b0b0c] border-l-[3px] border-[#d98324] py-[14px] px-[16px] flex flex-col gap-[8px]" style="border-radius: 0 6px 6px 0">
+          <div class="flex items-baseline justify-between gap-[10px]">
+            <span class="text-[15px] font-semibold">Protes Manajer tingkat pertama</span>
+            <span class="font-mono text-[15px] font-semibold text-[#d98324]">96 mnt</span>
+          </div>
+          <div class="text-[13px] leading-[1.5] text-[#8a8a90]">Partai 12 · kontingen PSHT Pontianak. Formulir sudah dikembalikan, menunggu keputusanmu.</div>
+          <button class="h-[44px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[14px] font-bold">Buka protes</button>
+        </div>
+
+        <div class="bg-[#0b0b0c] border-l-[3px] border-[#ffffff] py-[14px] px-[16px] flex flex-col gap-[8px]" style="border-radius: 0 6px 6px 0">
+          <div class="flex items-baseline justify-between gap-[10px]">
+            <span class="text-[15px] font-semibold">Verifikasi juri berjalan</span>
+            <span class="font-mono text-[14px] text-[#8a8a90]">2 / 3</span>
+          </div>
+          <div class="text-[13px] leading-[1.5] text-[#8a8a90]">Gelanggang 1 · diminta Wasit · "Sudut mana yang menjatuhkan?"</div>
+          <button class="h-[44px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[14px] font-semibold">Lihat jawaban juri</button>
+        </div>
+
+        <div class="bg-[#0b0b0c] border-l-[3px] border-[#d42027] py-[14px] px-[16px] flex flex-col gap-[8px]" style="border-radius: 0 6px 6px 0">
+          <div class="flex items-baseline justify-between gap-[10px]">
+            <span class="text-[15px] font-semibold">Protes VAR lewat tenggat</span>
+            <span class="font-mono text-[14px] text-[#d42027]">5 mnt lewat</span>
+          </div>
+          <div class="text-[13px] leading-[1.5] text-[#8a8a90]">Partai 13 · Wasit Komisi Protes belum memutus. Pasal 15 menyerahkan kelanjutannya ke verifikasi juri yang kamu pimpin.</div>
+          <button class="h-[44px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[14px] font-bold">Ambil alih dengan verifikasi</button>
+        </div>
+
+        <div class="flex-1"></div>
+      </div>
+
+      <div class="bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[10px] shrink-0">
+        <div class="text-[13px] tracking-[0.1em] uppercase text-[#8a8a90]">Tindakan lain</div>
+        <button class="h-[48px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[15px] font-semibold text-left py-0 px-[14px]">Ganti petugas gelanggang</button>
+        <button class="h-[48px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[15px] font-semibold text-left py-0 px-[14px] flex items-center justify-between">
+          Teruskan masalah ke Delegasi Teknik
+          <span class="text-[10px] font-bold tracking-[0.06em] bg-[#d98324] text-[#1a1207] py-[2px] px-[6px] rounded-[3px]">BELUM ADA</span>
+        </button>
+        <button class="h-[48px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[15px] font-semibold text-left py-0 px-[14px] flex items-center justify-between">
+          Keluarkan pendamping pesilat
+          <span class="text-[10px] font-bold tracking-[0.06em] bg-[#d98324] text-[#1a1207] py-[2px] px-[6px] rounded-[3px]">BELUM ADA</span>
+        </button>
+        <div class="text-[12px] leading-[1.45] text-[#8a8a90]">Perintah mengeluarkan pendamping dijalankan Dewan Wasit Juri, bukan langsung dari sini — Pasal 13.4.d.5.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

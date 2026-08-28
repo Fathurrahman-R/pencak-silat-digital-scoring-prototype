@@ -1,0 +1,280 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Fondasi & komponen"
+    },
+    {
+      "id": "page-2",
+      "name": "Layar gelanggang"
+    },
+    {
+      "id": "page-3",
+      "name": "Publik & siaran"
+    },
+    {
+      "id": "page-4",
+      "name": "Verifikasi juri"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "Fondasi",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 1200,
+      "h": 3400,
+      "print": "flow"
+    },
+    {
+      "file": "PetaLayar.dc.html",
+      "title": "Peta layar — arahan kerja",
+      "page": "page-1",
+      "x": 1320,
+      "y": 0,
+      "w": 1200,
+      "h": 2800,
+      "print": "flow"
+    },
+    {
+      "file": "Komponen.dc.html",
+      "title": "Komponen inti (terang)",
+      "page": "page-1",
+      "x": 2640,
+      "y": 0,
+      "w": 1400,
+      "h": 2050,
+      "print": "flow"
+    },
+    {
+      "file": "KomponenGelanggang.dc.html",
+      "title": "Komponen gelanggang (gelap)",
+      "page": "page-1",
+      "x": 4160,
+      "y": 0,
+      "w": 1400,
+      "h": 1560,
+      "print": "flow"
+    },
+    {
+      "file": "Konfirmasi.dc.html",
+      "title": "Aman dari salah tekan",
+      "page": "page-1",
+      "x": 5680,
+      "y": 0,
+      "w": 1200,
+      "h": 1800,
+      "print": "flow"
+    },
+    {
+      "file": "Juri.dc.html",
+      "title": "Juri — HP landscape 844×390",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 844,
+      "h": 390
+    },
+    {
+      "file": "Wasit.dc.html",
+      "title": "Wasit — HP landscape 844×390",
+      "page": "page-2",
+      "x": 964,
+      "y": 0,
+      "w": 844,
+      "h": 390
+    },
+    {
+      "file": "Operator.dc.html",
+      "title": "Operator — 1440×900",
+      "page": "page-2",
+      "x": 1928,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "DewanWasitJuri.dc.html",
+      "title": "Dewan Wasit Juri — 1440×900",
+      "page": "page-2",
+      "x": 3488,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Beranda.dc.html",
+      "title": "Beranda kejuaraan — publik",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1040,
+      "print": "flow"
+    },
+    {
+      "file": "Scorebug.dc.html",
+      "title": "Scorebug siaran — 1920×1080",
+      "page": "page-3",
+      "x": 1560,
+      "y": 0,
+      "w": 1920,
+      "h": 1080
+    },
+    {
+      "file": "Keberatan.dc.html",
+      "title": "Keberatan — 1440×900",
+      "page": "page-2",
+      "x": 5048,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "JurusJuri.dc.html",
+      "title": "Jurus juri — HP landscape 844×390",
+      "page": "page-2",
+      "x": 6608,
+      "y": 0,
+      "w": 844,
+      "h": 390
+    },
+    {
+      "file": "JurusOperator.dc.html",
+      "title": "Jurus operator — 1440×900",
+      "page": "page-2",
+      "x": 7572,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "VerifikasiWasit.dc.html",
+      "title": "1 · Wasit meminta verifikasi — 844×390",
+      "page": "page-4",
+      "x": 0,
+      "y": 0,
+      "w": 844,
+      "h": 390
+    },
+    {
+      "file": "VerifikasiJuri.dc.html",
+      "title": "2 · Juri menjawab — 844×390",
+      "page": "page-4",
+      "x": 964,
+      "y": 0,
+      "w": 844,
+      "h": 390
+    },
+    {
+      "file": "VerifikasiHasil.dc.html",
+      "title": "3 · Hasil polling — 1440×900",
+      "page": "page-4",
+      "x": 1928,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "KetuaPertandingan.dc.html",
+      "title": "Panel Ketua Pertandingan — 1440×900",
+      "page": "page-4",
+      "x": 3488,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "LiveGelanggang.dc.html",
+      "title": "Live gelanggang — HP 390×844",
+      "page": "page-3",
+      "x": 3600,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "BaganPublik.dc.html",
+      "title": "Bagan publik — HP 390×844",
+      "page": "page-3",
+      "x": 4110,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Medali.dc.html",
+      "title": "Perolehan medali — 1440×900",
+      "page": "page-3",
+      "x": 4620,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Masuk.dc.html",
+      "title": "Masuk — 1440×900",
+      "page": "page-3",
+      "x": 6180,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    }
+  ],
+  "annotations": [
+    {
+      "id": "mulai-dari-sini",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1200,
+      "text": "MULAI DARI SINI.\n\nFondasi menetapkan nilai; Peta layar menetapkan urutan kerja. Keduanya dibaca sebelum satu pun layar digambar.\n\nSetiap angka rasio di papan Fondasi dihitung scripts/kontras.mjs — 43 pasangan, 43 lolos. Kalau kamu mengubah sebuah warna, tambahkan pasangannya ke skrip itu dulu, baru pakai angkanya."
+    },
+    {
+      "id": "aturan-b-plus-c",
+      "page": "page-1",
+      "x": 4160,
+      "y": -190,
+      "w": 1400,
+      "text": "BATAS ORNAMEN.\n\nPanel gelanggang dan overlay: gelap murni, nol ornamen, nol tekstur, nol gradien, nol bayangan. Tanpa pengecualian.\n\nOrnamen upacara (palet hangat, anyaman ≤6%, huruf Petrona) hanya hidup di halaman publik dan dokumen cetak — di margin, kop, pembatas, bingkai. Tidak pernah di belakang teks, angka, atau kontrol."
+    },
+    {
+      "id": "gelanggang-belum-lengkap",
+      "page": "page-2",
+      "x": 0,
+      "y": -230,
+      "w": 1200,
+      "text": "SELURUH ROMBONGAN 1 SUDAH DIGAMBAR.\n\nJuri · Wasit · Operator · Dewan Wasit Juri · Keberatan · Jurus juri · Jurus operator.\n\nAngka yang muncul di layar Jurus bukan karangan: skala 9.00–10.00, agregasi median, pengurangan juri 0.01 dan pengawas 0.50, acuan waktu 3:00 untuk Tunggal final, toleransi 5 detik dan diskualifikasi lewat 10 detik — semuanya dari config/scoring.php dan docs/PARAMETER-PERATURAN.md. Begitu pula kartu protes 2 per partai, tenggat VAR 5 menit, dan tenggat protes manajer 10/20/120 menit."
+    },
+    {
+      "id": "ukuran-tidak-bisa-ditawar",
+      "page": "page-2",
+      "x": 1928,
+      "y": -230,
+      "w": 1440,
+      "text": "UKURAN YANG TIDAK BISA DITAWAR.\n\nJuri dan wasit memegang HP dalam orientasi LANDSCAPE — 844×390. Tinggi adalah barang langka di sana: kepala layar dibuat setipis mungkin supaya tombol mendapat sisanya.\n\nKontrol panel gelanggang tetap ≥64px. Lorong antara kolom merah dan biru ≥24px, sela antar baris boleh 8px — selip vertikal menggeser nilai pada pesilat yang benar, selip horizontal memberikan nilai kepada lawan.\n\nTombol aksi tidak pernah berwarna merah atau biru, dan tidak pernah duduk di dalam atau tepat di bawah blok sudut: keduanya membuatnya terbaca sebagai milik sudut itu."
+    },
+    {
+      "id": "publik-belum-lengkap",
+      "page": "page-3",
+      "x": 0,
+      "y": -230,
+      "w": 1440,
+      "text": "PERMUKAAN PUBLIK — ARAH DIGANTI DARI AKAR.\n\nLapisan \"upacara\" dibatalkan: palet krem-kunyit-coklat, huruf serif Petrona, garis rangkap kop, dan tekstur diagonal semuanya dibuang. Warna hangat tanah adalah tebakan default \"nuansa Nusantara\" yang tidak datang dari sumber mana pun.\n\nPenggantinya dari sumber nyata: SERAGAM PERTANDINGAN IPSI BERWARNA HITAM POLOS. Halaman publik memakai palet yang sama dengan panel gelanggang. Yang membedakannya dari panel adalah KEPADATAN dan SKALA, bukan warna tempelan.\n\nAturan permukaan publik: radius nol, nol ikon, nol serif, nol kalimat penjelas. Kontras skala ekstrem — label 11px melawan skor 110px. Sudut ditandai batang tepi 5px, bukan bidang penuh yang melelahkan dibaca lama.\n\nMarkup kelima artboard ditulis dengan kelas Tailwind standar (arbitrary value untuk warna token), jadi bisa disalin ke Blade dan langsung jalan. CSS-nya ditempel inline karena CSP artifact memblokir CDN.\n\nBELUM: empat overlay siaran sisanya — Hasil, Rincian, Profil pesilat, Bagan."
+    },
+    {
+      "id": "verifikasi-belum-ada",
+      "page": "page-4",
+      "x": 0,
+      "y": -320,
+      "w": 1808,
+      "text": "FITUR BARU — BELUM ADA DI SISTEM.\n\nTiga layar ini memperluas cakupan yang disepakati di awal. Sistem hari ini tidak punya mekanisme verifikasi maupun polling juri; config/scoring.php justru menyatakan verifikasi \"di luar cakupan sistem digital ini\". Membangunnya butuh rute, controller, event realtime, dan kemungkinan tabel baru.\n\nDASAR NASKAH. Pasal 13 menugaskan Juri \"memberi jawaban tentang verifikasi dari Ketua Pertandingan maupun Wasit\", dan Pasal 15 menyebut keputusan verifikasi bisa diprotes pelatih. Naskah TIDAK mengatur bentuk jawaban juri — pilihan sudut (Merah/Biru/Tidak ada) adalah keputusan implementasi kita, sejajar dengan ambang_sepakat dan window_ms.\n\nPANEL KETUA PERTANDINGAN kini digambar di kanan. Role ketua-pertandingan sudah ada di SilatRoleSeeder dengan izin lengkap — deskripsinya bahkan sudah berbunyi \"memimpin verifikasi juri\" — tapi belum punya satu pun layar. Kontrol yang berbadge BELUM ADA di panel itu adalah tugas naskah yang belum punya padanan di sistem; jangan diperlakukan sebagai fitur yang tinggal digambar ulang."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-3"
+  }
+}

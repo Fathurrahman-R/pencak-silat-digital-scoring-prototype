@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#12439e\]{background-color:#12439e}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[5px\]{gap:5px}
+    .gap-\[8px\]{gap:8px}
+    .gap-x-\[24px\]{column-gap:24px}
+    .grid{display:grid}
+    .h-\[24px\]{height:24px}
+    .h-\[26px\]{height:26px}
+    .h-\[390px\]{height:390px}
+    .h-\[7px\]{height:7px}
+    .inline-flex{display:inline-flex}
+    .items-center{align-items:center}
+    .justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}
+    .leading-\[1\.2\]{line-height:1.2}
+    .leading-\[1\.4\]{line-height:1.4}
+    .min-h-0{min-height:0}
+    .mt-\[2px\]{margin-top:2px}
+    .opacity-\[0\.9\]{opacity:0.9}
+    .overflow-hidden{overflow:hidden}
+    .p-\[10px\]{padding:10px}
+    .p-\[12px\]{padding:12px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#d98324\]{color:#d98324}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[11px\]{font-size:11px}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[18px\]{font-size:18px}
+    .text-\[26px\]{font-size:26px}
+    .text-center{text-align:center}
+    .tracking-\[0\.14em\]{letter-spacing:0.14em}
+    .uppercase{text-transform:uppercase}
+    .w-\[7px\]{width:7px}
+    .w-\[844px\]{width:844px}
+  </style>
+</helmet>
+
+<div class="w-[844px] h-[390px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[10px] gap-[8px] overflow-hidden">
+
+  <!--
+    Layar ini MENGAMBIL ALIH panel juri sepenuhnya. Tombol nilai tidak boleh
+    tersisa di belakangnya: juri yang sedang diminta menjawab verifikasi tidak
+    boleh salah tekan dan memberi nilai.
+  -->
+  <div class="shrink-0 flex items-center justify-between gap-[12px] h-[24px]">
+    <span class="text-[11px] tracking-[0.14em] uppercase text-[#d98324]">Verifikasi — diminta Wasit</span>
+    <div class="flex items-center gap-[10px]">
+      <span class="text-[12px] text-[#8a8a90]">Juri 2</span>
+      <span class="inline-flex items-center gap-[5px]" style="padding: 0">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#4ade80]"></span>
+        <span class="text-[11px] font-semibold">Tersambung</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="shrink-0 text-center" style="padding: 2px 0 4px">
+    <div class="text-[26px] font-bold leading-[1.2]">Sudut mana yang menjatuhkan?</div>
+    <div class="font-mono text-[13px] text-[#8a8a90] mt-[2px]">Kejadian 10:47:58 · Babak 2</div>
+  </div>
+
+  <!-- Tiga pilihan, sudut tetap di tempatnya: merah kiri, biru kanan -->
+  <div class="flex-1 grid gap-x-[24px] min-h-0" style="grid-template-columns: 1fr 200px 1fr">
+
+    <button class="bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex flex-col items-center justify-center gap-[8px] p-[12px]">
+      <span class="text-[12px] tracking-[0.14em] uppercase opacity-[0.9]">Sudut merah</span>
+      <span class="text-[26px] font-bold">Bayu Pratama</span>
+      <span class="text-[14px] opacity-[0.9]">Padepokan Harimau Putih</span>
+    </button>
+
+    <button class="bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans flex flex-col items-center justify-center gap-[8px] p-[12px]">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/><circle cx="12" cy="12" r="9"/></svg>
+      <span class="text-[18px] font-bold">Tidak ada</span>
+      <span class="text-[13px] text-[#8a8a90] text-center leading-[1.4]">Tidak ada yang<br>menjatuhkan</span>
+    </button>
+
+    <button class="bg-[#12439e] border-0 rounded-[6px] text-[#ffffff] font-sans flex flex-col items-center justify-center gap-[8px] p-[12px]">
+      <span class="text-[12px] tracking-[0.14em] uppercase opacity-[0.9]">Sudut biru</span>
+      <span class="text-[26px] font-bold">Candra Setiawan</span>
+      <span class="text-[14px] opacity-[0.9]">PSHT Cabang Pontianak</span>
+    </button>
+  </div>
+
+  <div class="shrink-0 flex items-center justify-center gap-[10px] h-[26px]">
+    <span class="text-[12px] text-[#8a8a90]">Jawabanmu tidak terlihat juri lain sampai ketiganya selesai</span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#131316\]{background-color:#131316}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#6b6b73\]{background-color:#6b6b73}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-\[\#d98324\]{background-color:#d98324}
+    .bg-\[\#e8e8ea\]{background-color:#e8e8ea}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#1a1207\]{border-color:#1a1207}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .border-\[\#8a8a90\]{border-color:#8a8a90}
+    .border-dashed{border-style:dashed}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[14px\]{gap:14px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[1px\]{gap:1px}
+    .gap-\[5px\]{gap:5px}
+    .gap-\[6px\]{gap:6px}
+    .gap-\[8px\]{gap:8px}
+    .grid{display:grid}
+    .h-\[24px\]{height:24px}
+    .h-\[26px\]{height:26px}
+    .h-\[390px\]{height:390px}
+    .h-\[64px\]{height:64px}
+    .h-\[7px\]{height:7px}
+    .inline-flex{display:inline-flex}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .items-start{align-items:flex-start}
+    .items-stretch{align-items:stretch}
+    .justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}
+    .min-h-0{min-height:0}
+    .opacity-\[0\.85\]{opacity:0.85}
+    .opacity-\[0\.9\]{opacity:0.9}
+    .overflow-hidden{overflow:hidden}
+    .p-\[10px\]{padding:10px}
+    .px-\[16px\]{padding-left:16px;padding-right:16px}
+    .px-\[20px\]{padding-left:20px;padding-right:20px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .rounded-\[5px\]{border-radius:5px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#111114\]{color:#111114}
+    .text-\[\#1a1207\]{color:#1a1207}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[10px\]{font-size:10px}
+    .text-\[11px\]{font-size:11px}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[24px\]{font-size:24px}
+    .text-\[28px\]{font-size:28px}
+    .tracking-\[0\.12em\]{letter-spacing:0.12em}
+    .tracking-\[0\.1em\]{letter-spacing:0.1em}
+    .uppercase{text-transform:uppercase}
+    .w-\[26px\]{width:26px}
+    .w-\[64px\]{width:64px}
+    .w-\[7px\]{width:7px}
+    .w-\[844px\]{width:844px}
+    .w-\[84px\]{width:84px}
+  </style>
+</helmet>
+
+<div class="w-[844px] h-[390px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[10px] gap-[8px] overflow-hidden">
+
+  <div class="shrink-0 flex items-center justify-between gap-[12px] h-[24px]">
+    <div class="flex items-baseline gap-[10px]">
+      <span class="font-mono text-[14px] font-semibold">Partai 14</span>
+      <span class="text-[12px] text-[#8a8a90]">Babak 2/3 · Putra Kelas B</span>
+    </div>
+    <span class="inline-flex items-center gap-[5px]" style="padding: 0">
+      <span class="w-[7px] h-[7px] rounded-full bg-[#4ade80]"></span>
+      <span class="text-[11px] font-semibold">Tersambung</span>
+    </span>
+  </div>
+
+  <div class="flex-1 grid gap-[12px] min-h-0" style="grid-template-columns: 300px 1fr">
+
+    <!-- Langkah 1 dan hitungan jatuh -->
+    <div class="flex flex-col gap-[8px] min-h-0">
+      <div class="text-[11px] tracking-[0.1em] uppercase text-[#8a8a90] shrink-0">1 · Pesilat mana</div>
+
+      <button class="shrink-0 h-[64px] bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-between py-0 px-[16px]" style="box-shadow: 0 0 0 3px #0b0b0c, 0 0 0 6px #ffffff">
+        <span class="flex flex-col items-start gap-[1px]">
+          <span class="text-[10px] tracking-[0.12em] uppercase opacity-[0.9]">Sudut merah</span>
+          <span class="text-[17px] font-bold">Bayu Pratama</span>
+        </span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button>
+
+      <button class="shrink-0 h-[64px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans flex flex-col items-start justify-center gap-[1px] py-0 px-[16px]">
+        <span class="text-[10px] tracking-[0.12em] uppercase text-[#8a8a90]">Sudut biru</span>
+        <span class="text-[17px] font-bold">Candra Setiawan</span>
+      </button>
+
+      <div class="flex-1 bg-[#131316] rounded-[6px] p-[10px] flex flex-col gap-[8px] min-h-0">
+        <div class="flex items-center justify-between shrink-0">
+          <span class="text-[13px] font-semibold">Hitungan jatuh</span>
+          <span class="text-[11px] text-[#8a8a90]">Sudut merah</span>
+        </div>
+        <div class="flex-1 flex gap-[6px] items-stretch min-h-0">
+          <button class="w-[64px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-mono text-[24px] font-semibold">−</button>
+          <div class="flex-1 bg-[#0b0b0c] border border-[#6a6a70] rounded-[6px] flex items-center justify-center font-mono text-[28px] font-semibold">3</div>
+          <button class="w-[64px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-mono text-[24px] font-semibold">+</button>
+          <button class="w-[84px] bg-[#e8e8ea] border-0 rounded-[6px] text-[#111114] font-sans text-[15px] font-bold">Catat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Langkah 2: istilah naskah sebagai label utama -->
+    <div class="flex flex-col gap-[8px] min-h-0">
+      <div class="text-[11px] tracking-[0.1em] uppercase text-[#8a8a90] shrink-0">2 · Hukuman apa · <span class="text-[#ffffff]">Sudut merah</span></div>
+
+      <button class="flex-1 bg-[#6b6b73] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-between py-0 px-[20px]" style="min-height: 64px">
+        <span class="flex items-center gap-[16px]">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg>
+          <span class="flex flex-col items-start gap-[1px]">
+            <span class="text-[24px] font-bold">Pembinaan</span>
+            <span class="text-[13px] opacity-[0.9]">sebutan gelanggang: ringan</span>
+          </span>
+        </span>
+        <span class="flex items-center gap-[14px]">
+          <span class="flex gap-[5px]">
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#8a8a90]"></span>
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#8a8a90]"></span>
+          </span>
+          <span class="font-mono text-[17px] font-semibold">0</span>
+        </span>
+      </button>
+
+      <button class="flex-1 bg-[#d98324] border-0 rounded-[6px] text-[#1a1207] font-sans flex items-center justify-between py-0 px-[20px]" style="min-height: 64px">
+        <span class="flex items-center gap-[16px]">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
+          <span class="flex flex-col items-start gap-[1px]">
+            <span class="text-[24px] font-bold">Teguran</span>
+            <span class="text-[13px] opacity-[0.85]">sebutan gelanggang: sedang</span>
+          </span>
+        </span>
+        <span class="flex items-center gap-[14px]">
+          <span class="flex gap-[5px]">
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#1a1207]"></span>
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#1a1207]"></span>
+          </span>
+          <span class="font-mono text-[17px] font-semibold">−1 / −2</span>
+        </span>
+      </button>
+
+      <button class="flex-1 bg-[#d42027] border-0 rounded-[6px] text-[#ffffff] font-sans flex items-center justify-between py-0 px-[20px]" style="min-height: 64px">
+        <span class="flex items-center gap-[16px]">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg>
+          <span class="flex flex-col items-start gap-[1px]">
+            <span class="text-[24px] font-bold">Peringatan</span>
+            <span class="text-[13px] opacity-[0.9]">sebutan gelanggang: berat</span>
+          </span>
+        </span>
+        <span class="flex items-center gap-[14px]">
+          <span class="flex gap-[5px]">
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#8a8a90]"></span>
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-[#8a8a90]"></span>
+            <span class="w-[26px] h-[26px] rounded-[5px] border border-dashed border-[#8a8a90]"></span>
+          </span>
+          <span class="font-mono text-[17px] font-semibold">−5 / −10</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

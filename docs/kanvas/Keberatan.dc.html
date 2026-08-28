@@ -1,0 +1,306 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.grid{display:grid}.hidden{display:none}.block{display:block}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-start{align-items:flex-start}.items-center{align-items:center}.items-end{align-items:flex-end}.items-baseline{align-items:baseline}.items-stretch{align-items:stretch}
+    .justify-start{justify-content:flex-start}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
+    .flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.grow{flex-grow:1}
+    .min-w-0{min-width:0}.min-h-0{min-height:0}
+    .w-full{width:100%}.h-full{height:100%}
+    .relative{position:relative}.absolute{position:absolute}
+    .overflow-hidden{overflow:hidden}
+    .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .text-right{text-align:right}.text-center{text-align:center}
+    .uppercase{text-transform:uppercase}
+    .border{border-width:1px}.border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-t-2{border-top-width:2px}.border-l-4{border-left-width:4px}.border-b-2{border-bottom-width:2px}
+
+    .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .col-span-2{grid-column:span 2/span 2}
+
+    .gap-0{gap:0}.gap-px{gap:1px}.gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}
+    .gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.gap-10{gap:2.5rem}.gap-12{gap:3rem}
+    .gap-x-6{column-gap:1.5rem}.gap-x-10{column-gap:2.5rem}.gap-y-1{row-gap:.25rem}.gap-y-2{row-gap:.5rem}
+
+    .p-0{padding:0}.p-3{padding:.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}
+    .px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+    .px-6{padding-left:1.5rem;padding-right:1.5rem}.px-8{padding-left:2rem;padding-right:2rem}
+    .px-10{padding-left:2.5rem;padding-right:2.5rem}.px-14{padding-left:3.5rem;padding-right:3.5rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-16{padding-left:4rem;padding-right:4rem}
+    .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+    .py-3{padding-top:.75rem;padding-bottom:.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}
+    .py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}
+    .py-8{padding-top:2rem;padding-bottom:2rem}.py-10{padding-top:2.5rem;padding-bottom:2.5rem}.py-14{padding-top:3.5rem;padding-bottom:3.5rem}
+    .pt-3{padding-top:.75rem}.pt-4{padding-top:1rem}.pt-6{padding-top:1.5rem}.pt-8{padding-top:2rem}.pt-2{padding-top:.5rem}.pl-5{padding-left:1.25rem}.pt-10{padding-top:2.5rem}
+    .pb-2{padding-bottom:.5rem}.pb-3{padding-bottom:.75rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pb-10{padding-bottom:2.5rem}
+    .mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-6{margin-top:1.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}
+    .mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}
+
+    .text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}.text-\[14px\]{font-size:14px}.text-\[15px\]{font-size:15px}
+    .text-\[16px\]{font-size:16px}.text-\[18px\]{font-size:18px}.text-\[20px\]{font-size:20px}
+    .text-\[22px\]{font-size:22px}.text-\[26px\]{font-size:26px}.text-\[28px\]{font-size:28px}
+    .text-\[32px\]{font-size:32px}.text-\[38px\]{font-size:38px}.text-\[44px\]{font-size:44px}
+    .text-\[56px\]{font-size:56px}.text-\[64px\]{font-size:64px}.text-\[88px\]{font-size:88px}
+    .text-\[110px\]{font-size:110px}.text-\[19px\]{font-size:19px}.text-\[17px\]{font-size:17px}.text-\[40px\]{font-size:40px}.text-\[52px\]{font-size:52px}
+
+    .font-normal{font-weight:400}.font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+    .leading-none{line-height:1}.leading-tight{line-height:1.15}.leading-snug{line-height:1.3}.leading-relaxed{line-height:1.6}
+    .tracking-tight{letter-spacing:-.02em}.tracking-wide{letter-spacing:.06em}.tracking-\[\.18em\]{letter-spacing:.18em}.tracking-\[\.28em\]{letter-spacing:.28em}
+
+    .bg-black{background-color:#000}.bg-white{background-color:#fff}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}.bg-\[\#131316\]{background-color:#131316}
+        .bg-\[\#d42027\]{background-color:#d42027}.bg-\[\#12439e\]{background-color:#12439e}
+    .bg-\[\#7a1418\]{background-color:#7a1418}.bg-\[\#0c2a63\]{background-color:#0c2a63}
+    .bg-\[\#f4f2ee\]{background-color:#f4f2ee}.bg-\[\#e9e6e0\]{background-color:#e9e6e0}
+    .bg-\[\#17161a\]{background-color:#17161a}.bg-\[\#e6e3dd\]{background-color:#e6e3dd}
+    .bg-\[\#6b6b73\]{background-color:#6b6b73}.bg-\[\#d98324\]{background-color:#d98324}
+    .bg-\[\#c9a227\]{background-color:#c9a227}.bg-\[\#2a2a2c\]{background-color:#2a2a2c}.bg-\[\#8a8a90\]{background-color:#8a8a90}
+
+    .text-white{color:#fff}.text-black{color:#000}
+    .text-\[\#8a8a90\]{color:#8a8a90}.text-\[\#fff0f0\]{color:#fff0f0}.text-\[\#fff5f5\]{color:#fff5f5}
+    .text-\[\#f2f6ff\]{color:#f2f6ff}.text-\[\#d42027\]{color:#d42027}.text-\[\#12439e\]{color:#12439e}
+    .text-\[\#c9a227\]{color:#c9a227}.text-\[\#17161a\]{color:#17161a}.text-\[\#45434a\]{color:#45434a}
+    .text-\[\#5f5c66\]{color:#5f5c66}.text-\[\#1a1207\]{color:#1a1207}.text-\[\#4ade80\]{color:#4ade80}
+
+    .border-dashed{border-style:dashed}.border-\[\#8a8a90\]{border-color:#8a8a90}.border-\[\#2a2a2c\]{border-color:#2a2a2c}.border-\[\#8a8a90\]{border-color:#8a8a90}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}.border-white{border-color:#fff}
+    .border-\[\#d42027\]{border-color:#d42027}.border-\[\#12439e\]{border-color:#12439e}
+    .border-\[\#d4cfc6\]{border-color:#d4cfc6}.border-\[\#7d7668\]{border-color:#7d7668}
+    .border-\[\#17161a\]{border-color:#17161a}
+
+    .h-px{height:1px}.w-px{width:1px}.h-1{height:.25rem}.w-1{width:.25rem}
+    .h-2{height:.5rem}.w-2{width:.5rem}.h-3{height:.75rem}.w-3{width:.75rem}
+    .h-4{height:1rem}.w-4{width:1rem}.h-6{height:1.5rem}.w-6{width:1.5rem}
+    .h-8{height:2rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-16{height:4rem}.h-11{height:2.75rem}.h-14{height:3.5rem}
+    .w-\[3px\]{width:3px}.w-\[4px\]{width:4px}.w-\[46px\]{width:46px}.w-\[60px\]{width:60px}.w-\[84px\]{width:84px}.w-\[120px\]{width:120px}.w-\[150px\]{width:150px}.w-\[5px\]{width:5px}
+
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .border-\[\#d98324\]{border-color:#d98324}
+    .text-\[\#a8b8e0\]{color:#a8b8e0}
+    .text-\[\#e8b4b6\]{color:#e8b4b6}
+  </style>
+</helmet>
+
+<div class="bg-[#0b0b0c] text-white flex flex-col overflow-hidden" style="width:1440px;height:900px">
+
+  <div class="flex items-baseline justify-between gap-6 px-8 py-4 border-b border-[#2a2a2c] shrink-0">
+    <div class="flex items-baseline gap-6">
+      <div class="text-[11px] uppercase tracking-[.28em]">Keberatan</div>
+      <div class="font-mono text-[12px] text-[#8a8a90]">PARTAI 14 &middot; SEMIFINAL &middot; PUTRA 50&ndash;55 KG</div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="w-2 h-2 bg-[#4ade80]"></div>
+      <div class="font-mono text-[12px] text-[#8a8a90]">TERSAMBUNG</div>
+    </div>
+  </div>
+
+  <!--
+    Papan skor sebagai KONTEKS, bukan papan utama. Pemutus protes duduk dekat
+    layar; bidang merah/biru sepenuh kartu merebut perhatian dari isi protesnya.
+    Sudut ditandai batang tepi, hukuman jadi petak kecil.
+  -->
+  <div class="grid grid-cols-2 gap-px bg-[#2a2a2c] shrink-0">
+
+    <div class="bg-[#7a1418] flex items-center gap-6 px-8 py-5">
+      <div class="flex-1 min-w-0">
+        <div class="text-[10px] uppercase tracking-[.28em] text-[#e8b4b6]">Sudut merah</div>
+        <div class="text-[20px] font-bold leading-tight truncate text-[#fff0f0]">Bayu Pratama</div>
+        <div class="text-[12px] text-[#e8b4b6] truncate">Padepokan Harimau Putih</div>
+      </div>
+        <div class="flex gap-3 shrink-0 ">
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 bg-[#6b6b73] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-white">pembinaan</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 bg-[#d98324] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a1207" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-white">teguran</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div><div class="w-6 h-6 border border-dashed border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-[#8a8a90]">peringatan</div>
+          </div>
+        </div>
+      <div class="font-mono text-[52px] font-semibold leading-none tabular-nums tracking-tight shrink-0">14</div>
+    </div>
+
+    <div class="bg-[#0c2a63] flex items-center gap-6 px-8 py-5">
+      <div class="font-mono text-[52px] font-semibold leading-none tabular-nums tracking-tight shrink-0">11</div>
+        <div class="flex gap-3 shrink-0 justify-end">
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-[#8a8a90]">pembinaan</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-[#8a8a90]">teguran</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1"><div class="w-6 h-6 bg-[#d42027] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div><div class="w-6 h-6 border border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div><div class="w-6 h-6 border border-dashed border-[#8a8a90] flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/><path d="M12 8v5M12 16.5h.01"/></svg></div></div>
+            <div class="text-[10px] uppercase tracking-wide text-white">peringatan</div>
+          </div>
+        </div>
+      <div class="flex-1 min-w-0 text-right">
+        <div class="text-[10px] uppercase tracking-[.28em] text-[#a8b8e0]">Sudut biru</div>
+        <div class="text-[20px] font-bold leading-tight truncate text-[#f2f6ff]">Candra Setiawan</div>
+        <div class="text-[12px] text-[#a8b8e0] truncate">PSHT Cabang Pontianak</div>
+      </div>
+      </div>
+  </div>
+
+  <div class="flex-1 grid grid-cols-2 gap-px bg-[#2a2a2c] min-h-0">
+
+    <!-- Protes VAR -->
+    <div class="bg-[#0b0b0c] flex flex-col px-8 py-6 gap-5 min-h-0">
+
+      <div class="flex items-baseline justify-between border-b-2 border-white pb-3 shrink-0">
+        <div class="text-[11px] uppercase tracking-[.28em]">Protes VAR</div>
+        <div class="font-mono text-[11px] text-[#8a8a90]">PASAL 15 &middot; TENGGAT 5 MENIT</div>
+      </div>
+
+      <!-- Kartu protes sebagai benda yang dihitung, bukan angka -->
+      <div class="flex items-center gap-8 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-[3px] h-4 bg-[#d42027]"></div>
+          <div class="text-[13px] text-[#8a8a90]">Sisa kartu merah</div>
+          <div class="flex gap-1">
+            <div class="w-3 h-4 bg-white"></div>
+            <div class="w-3 h-4 border border-[#6a6a70]"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-[3px] h-4 bg-[#12439e]"></div>
+          <div class="text-[13px] text-[#8a8a90]">Sisa kartu biru</div>
+          <div class="flex gap-1">
+            <div class="w-3 h-4 bg-white"></div>
+            <div class="w-3 h-4 bg-white"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yang menunggu putusan: tenggat adalah unsur terbesar -->
+      <div class="border-l-4 border-[#d98324] pl-5 py-1 flex flex-col gap-4 shrink-0">
+        <div class="flex items-start justify-between gap-6">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-[#12439e]"></div>
+              <div class="font-mono text-[12px] text-[#8a8a90]">SUDUT BIRU &middot; BABAK 2 &middot; DIAJUKAN 10:48:12</div>
+            </div>
+            <div class="text-[17px] leading-snug mt-2">Jatuhan menit 10:47:58 dinilai tidak sah &mdash; pesilat dianggap keluar garis lebih dulu.</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-mono text-[44px] font-semibold leading-none tabular-nums">03:41</div>
+            <div class="font-mono text-[11px] text-[#8a8a90] mt-1 tracking-[.18em]">SISA</div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <input placeholder="Catatan keputusan" class="flex-1 h-12 px-4 bg-[#131316] border border-[#6a6a70] text-[15px] text-white">
+          <button class="h-12 px-6 bg-white text-black text-[15px] font-bold uppercase tracking-wide">Sah</button>
+          <button class="h-12 px-6 border border-[#6a6a70] text-[15px] font-semibold uppercase tracking-wide">Tidak sah</button>
+        </div>
+      </div>
+
+      <!-- Riwayat -->
+      <div class="flex-1 min-h-0">
+        <div class="text-[11px] uppercase tracking-[.28em] text-[#8a8a90] pb-2 border-b border-[#2a2a2c]">Sudah diputus</div>
+
+        <div class="flex items-center gap-4 py-3 border-b border-[#2a2a2c]">
+          <div class="w-[3px] h-8 bg-[#d42027] shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[15px] truncate">Pukulan menit 10:41:02</div>
+            <div class="text-[13px] text-[#8a8a90] truncate">Rekaman menunjukkan kontak sah pada sasaran</div>
+          </div>
+          <div class="font-mono text-[13px] font-semibold uppercase tracking-wide shrink-0">Sah</div>
+        </div>
+
+        <div class="flex items-center gap-4 py-3 border-b border-[#2a2a2c]">
+          <div class="w-[3px] h-8 bg-[#12439e] shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[15px] truncate">Tendangan menit 10:39:30</div>
+            <div class="text-[13px] text-[#8a8a90] truncate">Sasaran di luar bidang yang dinilai</div>
+          </div>
+          <div class="font-mono text-[13px] font-semibold uppercase tracking-wide text-[#8a8a90] shrink-0">Tidak sah</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protes manajer -->
+    <div class="bg-[#0b0b0c] flex flex-col px-8 py-6 gap-5 min-h-0">
+
+      <div class="flex items-baseline justify-between border-b-2 border-white pb-3 shrink-0">
+        <div class="text-[11px] uppercase tracking-[.28em]">Protes manajer</div>
+        <div class="font-mono text-[11px] text-[#8a8a90]">PASAL 15 AYAT 4</div>
+      </div>
+
+      <div class="shrink-0">
+        <div class="flex items-baseline justify-between">
+          <div class="text-[17px] font-bold">Tingkat pertama</div>
+          <div class="font-mono text-[12px] text-[#8a8a90]">KETUA PERTANDINGAN</div>
+        </div>
+
+        <!-- Tiga tenggat sebagai deret, bukan kalimat -->
+        <div class="mt-4">
+          <div class="flex items-center gap-4 py-3 border-b border-[#2a2a2c]">
+            <div class="w-2 h-2 bg-white shrink-0"></div>
+            <div class="flex-1 text-[15px] text-[#8a8a90]">Formulir diambil</div>
+            <div class="font-mono text-[13px] text-[#8a8a90] tabular-nums">10 MNT</div>
+          </div>
+          <div class="flex items-center gap-4 py-3 border-b border-[#2a2a2c]">
+            <div class="w-2 h-2 bg-white shrink-0"></div>
+            <div class="flex-1 text-[15px] text-[#8a8a90]">Formulir dikembalikan</div>
+            <div class="font-mono text-[13px] text-[#8a8a90] tabular-nums">20 MNT</div>
+          </div>
+          <div class="flex items-center gap-4 py-3 border-b border-[#2a2a2c]">
+            <div class="w-2 h-2 bg-[#d98324] shrink-0"></div>
+            <div class="flex-1 text-[15px] font-semibold">Menunggu keputusan</div>
+            <div class="font-mono text-[15px] font-semibold tabular-nums">96 MNT</div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-4">
+          <input placeholder="Catatan keputusan" class="flex-1 h-12 px-4 bg-[#131316] border border-[#6a6a70] text-[15px] text-white">
+          <button class="h-12 px-6 bg-white text-black text-[15px] font-bold uppercase tracking-wide">Terima</button>
+          <button class="h-12 px-6 border border-[#6a6a70] text-[15px] font-semibold uppercase tracking-wide">Tolak</button>
+        </div>
+      </div>
+
+      <div class="shrink-0 pt-2">
+        <div class="flex items-baseline justify-between">
+          <div class="text-[17px] font-bold text-[#8a8a90]">Banding</div>
+          <div class="font-mono text-[12px] text-[#8a8a90]">DELEGASI TEKNIK</div>
+        </div>
+        <div class="text-[14px] text-[#8a8a90] leading-relaxed mt-2">Terbuka setelah tingkat pertama diputus. Keputusan banding final.</div>
+        <button class="h-12 w-full mt-3 border border-[#2a2a2c] text-[15px] font-semibold uppercase tracking-wide text-[#8a8a90]">Ajukan banding</button>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <div class="shrink-0 border-t border-[#2a2a2c] pt-4 text-[13px] text-[#8a8a90] leading-relaxed">
+        Lewat tenggat, kelanjutannya adalah verifikasi juri yang dipimpin Ketua Pertandingan.
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

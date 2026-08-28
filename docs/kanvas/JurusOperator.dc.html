@@ -1,0 +1,284 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#131316\]{background-color:#131316}
+    .bg-\[\#14663f\]{background-color:#14663f}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-\[\#d98324\]{background-color:#d98324}
+    .bg-\[\#e8e8ea\]{background-color:#e8e8ea}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#2a2a2c\]{border-color:#2a2a2c}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .border-\[\#d42027\]{border-color:#d42027}
+    .border-l-\[1px\]{border-left-width:1px}
+    .border-t{border-top-width:1px}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-\[1\.6\]{flex:1.6 1 0%}
+    .flex-\[10\]{flex:10 1 0%}
+    .flex-\[175\]{flex:175 1 0%}
+    .flex-\[5\]{flex:5 1 0%}
+    .flex-col{flex-direction:column}
+    .flex-wrap{flex-wrap:wrap}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[14px\]{gap:14px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[20px\]{gap:20px}
+    .gap-\[6px\]{gap:6px}
+    .gap-\[7px\]{gap:7px}
+    .gap-\[8px\]{gap:8px}
+    .grid{display:grid}
+    .h-\[10px\]{height:10px}
+    .h-\[12px\]{height:12px}
+    .h-\[36px\]{height:36px}
+    .h-\[44px\]{height:44px}
+    .h-\[64px\]{height:64px}
+    .h-\[8px\]{height:8px}
+    .h-\[900px\]{height:900px}
+    .inline-flex{display:inline-flex}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .items-end{align-items:flex-end}
+    .items-stretch{align-items:stretch}
+    .justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}
+    .leading-\[1\.1\]{line-height:1.1}
+    .leading-\[1\.45\]{line-height:1.45}
+    .leading-\[1\.55\]{line-height:1.55}
+    .leading-\[1\.5\]{line-height:1.5}
+    .leading-none{line-height:1}
+    .min-h-0{min-height:0}
+    .mt-\[4px\]{margin-top:4px}
+    .overflow-hidden{overflow:hidden}
+    .p-\[20px\]{padding:20px}
+    .p-\[24px\]{padding:24px}
+    .pl-\[16px\]{padding-left:16px}
+    .px-0{padding-left:0;padding-right:0}
+    .px-\[12px\]{padding-left:12px;padding-right:12px}
+    .px-\[14px\]{padding-left:14px;padding-right:14px}
+    .px-\[8px\]{padding-left:8px;padding-right:8px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .py-\[11px\]{padding-top:11px;padding-bottom:11px}
+    .py-\[12px\]{padding-top:12px;padding-bottom:12px}
+    .py-\[7px\]{padding-top:7px;padding-bottom:7px}
+    .rounded-\[3px\]{border-radius:3px}
+    .rounded-\[5px\]{border-radius:5px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-\[8px\]{border-radius:8px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#111114\]{color:#111114}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#d98324\]{color:#d98324}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[16px\]{font-size:16px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[18px\]{font-size:18px}
+    .text-\[22px\]{font-size:22px}
+    .text-\[24px\]{font-size:24px}
+    .text-\[36px\]{font-size:36px}
+    .text-\[44px\]{font-size:44px}
+    .text-\[96px\]{font-size:96px}
+    .text-center{text-align:center}
+    .text-right{text-align:right}
+    .tracking-\[-0\.02em\]{letter-spacing:-0.02em}
+    .w-\[12px\]{width:12px}
+    .w-\[1440px\]{width:1440px}
+    .w-\[8px\]{width:8px}
+    .w-full{width:100%}
+  </style>
+</helmet>
+
+<div class="w-[1440px] h-[900px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[20px] gap-[16px] overflow-hidden">
+
+  <div class="shrink-0 flex items-center justify-between gap-[16px]">
+    <div class="flex items-baseline gap-[14px]">
+      <span class="text-[24px] font-bold">Sari Melati</span>
+      <span class="text-[16px] text-[#8a8a90]">Padepokan Harimau Putih</span>
+      <span class="text-[16px] text-[#8a8a90]">Tunggal Putri · Final · Gelanggang 1</span>
+    </div>
+    <div class="flex items-center gap-[12px]">
+      <div class="flex items-center gap-[7px]" style="padding: 0">
+        <span class="w-[8px] h-[8px] rounded-full bg-[#4ade80]"></span>
+        <span class="text-[14px] font-semibold">Tersambung</span>
+      </div>
+      <div class="flex items-center gap-[6px] bg-[#131316] rounded-[6px] py-[7px] px-[12px]">
+        <span class="text-[14px] text-[#8a8a90]">Nilai masuk</span>
+        <span class="font-mono text-[14px] font-semibold">6 / 6</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 grid gap-[20px] min-h-0" style="grid-template-columns: 1fr 1fr">
+
+    <!-- Kiri: waktu dan nilai juri -->
+    <div class="flex flex-col gap-[16px] min-h-0">
+
+      <!-- Timer dengan zona waktu, bukan angka telanjang -->
+      <div class="bg-[#131316] rounded-[8px] p-[24px] flex flex-col gap-[16px] shrink-0">
+        <div class="flex items-end justify-between">
+          <div>
+            <div class="font-mono text-[96px] font-semibold leading-none tracking-[-0.02em]">02:47</div>
+            <div class="text-[15px] text-[#8a8a90] mt-[4px]">Sedang tampil</div>
+          </div>
+          <div class="text-right">
+            <div class="font-mono text-[22px] font-semibold">03:00</div>
+            <div class="text-[14px] text-[#8a8a90]">waktu acuan · Final</div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-[8px]">
+          <div class="flex h-[10px] rounded-[5px] overflow-hidden">
+            <div class="flex-[175] bg-transparent"></div>
+            <div class="flex-[10] bg-[#14663f]"></div>
+            <div class="flex-[5] bg-[#d98324]"></div>
+            <div class="flex-[10] bg-[#d42027]"></div>
+          </div>
+          <div class="flex gap-[20px] flex-wrap">
+            <span class="inline-flex items-center gap-[7px] text-[14px] text-[#ffffff]"><span class="w-[12px] h-[12px] rounded-[3px] bg-[#14663f]"></span>Aman 2:55–3:05</span>
+            <span class="inline-flex items-center gap-[7px] text-[14px] text-[#ffffff]"><span class="w-[12px] h-[12px] rounded-[3px] bg-[#d98324]"></span>Lewat toleransi — pengurangan 0.50</span>
+            <span class="inline-flex items-center gap-[7px] text-[14px] text-[#ffffff]"><span class="w-[12px] h-[12px] rounded-[3px] bg-[#d42027]"></span>Lewat 3:10 — diskualifikasi</span>
+          </div>
+        </div>
+
+        <div class="flex gap-[12px]">
+          <button class="flex-1 h-[64px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[18px] font-semibold flex items-center justify-center gap-[10px]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="12" height="14" rx="2"/></svg>
+            Hentikan penampilan
+          </button>
+        </div>
+      </div>
+
+      <!-- Nilai juri -->
+      <div class="flex-1 bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[14px] min-h-0">
+        <div class="flex items-baseline justify-between">
+          <div class="text-[17px] font-bold">Nilai juri</div>
+          <div class="text-[13px] text-[#8a8a90]">Minimal 4 juri dan harus genap · Pasal 16.1.b</div>
+        </div>
+
+        <div class="grid gap-[10px]" style="grid-template-columns: repeat(6, 1fr)">
+          <div class="bg-[#0b0b0c] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 1</div>
+            <div class="font-mono text-[22px] font-semibold">9.42</div>
+          </div>
+          <div class="bg-[#0b0b0c] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 2</div>
+            <div class="font-mono text-[22px] font-semibold">9.45</div>
+          </div>
+          <div class="bg-[#0b0b0c] border border-[#6a6a70] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 3</div>
+            <div class="font-mono text-[22px] font-semibold">9.47</div>
+          </div>
+          <div class="bg-[#0b0b0c] border border-[#6a6a70] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 4</div>
+            <div class="font-mono text-[22px] font-semibold">9.48</div>
+          </div>
+          <div class="bg-[#0b0b0c] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 5</div>
+            <div class="font-mono text-[22px] font-semibold">9.50</div>
+          </div>
+          <div class="bg-[#0b0b0c] rounded-[6px] py-[12px] px-[8px] text-center">
+            <div class="text-[12px] text-[#8a8a90]">Juri 6</div>
+            <div class="font-mono text-[22px] font-semibold">9.55</div>
+          </div>
+        </div>
+
+        <div class="text-[14px] leading-[1.55] text-[#8a8a90]">Dua nilai bertepi terang adalah <strong class="text-[#ffffff]">nilai tengah</strong> yang menghasilkan median. Bukan buang tertinggi-terendah lalu dijumlahkan — cara itu berasal dari edisi peraturan lama dan tidak berlaku di naskah 2025.</div>
+      </div>
+    </div>
+
+    <!-- Kanan: skor, pengurangan, pengesahan -->
+    <div class="flex flex-col gap-[16px] min-h-0">
+
+      <div class="bg-[#131316] rounded-[8px] p-[20px] grid gap-[16px] shrink-0" style="grid-template-columns: 1fr 1fr 1.2fr">
+        <div>
+          <div class="text-[13px] text-[#8a8a90]">Median</div>
+          <div class="font-mono text-[36px] font-semibold leading-[1.1]">9.475</div>
+        </div>
+        <div>
+          <div class="text-[13px] text-[#8a8a90]">Pengurangan</div>
+          <div class="font-mono text-[36px] font-semibold leading-[1.1] text-[#d98324]">−0.51</div>
+        </div>
+        <div class="border-l-[1px] border-[#2a2a2c] pl-[16px]">
+          <div class="text-[13px] text-[#8a8a90]">Skor akhir</div>
+          <div class="font-mono text-[44px] font-semibold leading-[1.1]">8.965</div>
+        </div>
+      </div>
+
+      <div class="bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[14px] shrink-0">
+        <div class="flex items-baseline justify-between">
+          <div class="text-[17px] font-bold">Pengurangan pengawas</div>
+          <div class="font-mono text-[14px] text-[#8a8a90]">−0.50 tiap kejadian</div>
+        </div>
+        <div class="flex flex-wrap gap-[8px]">
+          <button class="h-[44px] py-0 px-[14px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[14px]">Pelanggaran waktu</button>
+          <button class="h-[44px] py-0 px-[14px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[14px]">Keluar gelanggang</button>
+          <button class="h-[44px] py-0 px-[14px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[14px]">Senjata menyentuh lantai</button>
+          <button class="h-[44px] py-0 px-[14px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[14px]">Pakaian tidak sesuai</button>
+          <button class="h-[44px] py-0 px-[14px] bg-transparent border border-[#6a6a70] rounded-[6px] text-[#ffffff] font-sans text-[14px]">Menahan gerak &gt;5 detik</button>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-[#131316] rounded-[8px] p-[20px] flex flex-col gap-[12px] min-h-0">
+        <div class="text-[17px] font-bold">Pengurangan tercatat</div>
+        <div class="flex flex-col">
+          <div class="grid gap-[12px] items-center py-[11px] px-0 border-t border-[#2a2a2c]" style="grid-template-columns: 90px 1fr 130px 100px">
+            <div class="font-mono text-[17px] font-semibold text-[#d98324]">−0.50</div>
+            <div class="text-[15px]">Keluar gelanggang</div>
+            <div class="text-[14px] text-[#8a8a90]">Pengawas</div>
+            <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+          </div>
+          <div class="grid gap-[12px] items-center py-[11px] px-0 border-t border-[#2a2a2c]" style="grid-template-columns: 90px 1fr 130px 100px">
+            <div class="font-mono text-[17px] font-semibold text-[#8a8a90]">−0.01</div>
+            <div class="text-[15px]">Kesalahan urutan</div>
+            <div class="text-[14px] text-[#8a8a90]">Juri 3</div>
+            <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+          </div>
+        </div>
+        <div class="text-[13px] leading-[1.5] text-[#8a8a90]">Membatalkan pengurangan meminta alasan tertulis — ia tercatat di berita acara.</div>
+      </div>
+
+      <div class="shrink-0 flex gap-[12px] items-stretch">
+        <div class="flex-[1.6] flex flex-col gap-[6px]">
+          <button class="h-[64px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[18px] font-bold">Sahkan skor</button>
+          <div class="text-[13px] leading-[1.45] text-[#8a8a90]">Setelah disahkan, nilai dan pengurangan tidak bisa diubah lagi.</div>
+        </div>
+        <div class="flex-1 flex flex-col gap-[6px]">
+          <button class="h-[64px] bg-transparent text-[#ffffff] border border-[#d42027] rounded-[6px] font-sans text-[17px] font-semibold">Diskualifikasi</button>
+          <div class="text-[13px] leading-[1.45] text-[#8a8a90]">Skor menjadi 0.00. Ditetapkan Pengawas, bukan otomatis dari waktu.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

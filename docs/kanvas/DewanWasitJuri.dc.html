@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input{font:inherit;color:inherit;background:none;border:0}
+    .bg-\[\#0b0b0c\]{background-color:#0b0b0c}
+    .bg-\[\#0c2a63\]{background-color:#0c2a63}
+    .bg-\[\#12439e\]{background-color:#12439e}
+    .bg-\[\#131316\]{background-color:#131316}
+    .bg-\[\#4ade80\]{background-color:#4ade80}
+    .bg-\[\#7a1418\]{background-color:#7a1418}
+    .bg-\[\#d42027\]{background-color:#d42027}
+    .bg-\[\#e8e8ea\]{background-color:#e8e8ea}
+    .bg-transparent{background:transparent}
+    .border{border-width:1px}
+    .border-0{border:none}
+    .border-\[\#2a2a2c\]{border-color:#2a2a2c}
+    .border-\[\#6a6a70\]{border-color:#6a6a70}
+    .border-\[\#d98324\]{border-color:#d98324}
+    .border-b{border-bottom-width:1px}
+    .border-l-\[3px\]{border-left-width:3px}
+    .box-border{box-sizing:border-box}
+    .flex{display:flex}
+    .flex-1{flex:1}
+    .flex-col{flex-direction:column}
+    .font-bold{font-weight:700}
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .font-sans{font-family:inherit}
+    .font-semibold{font-weight:600}
+    .gap-\[10px\]{gap:10px}
+    .gap-\[12px\]{gap:12px}
+    .gap-\[14px\]{gap:14px}
+    .gap-\[16px\]{gap:16px}
+    .gap-\[20px\]{gap:20px}
+    .gap-\[4px\]{gap:4px}
+    .gap-\[7px\]{gap:7px}
+    .gap-\[8px\]{gap:8px}
+    .grid{display:grid}
+    .h-\[10px\]{height:10px}
+    .h-\[36px\]{height:36px}
+    .h-\[40px\]{height:40px}
+    .h-\[44px\]{height:44px}
+    .h-\[64px\]{height:64px}
+    .h-\[8px\]{height:8px}
+    .h-\[900px\]{height:900px}
+    .items-baseline{align-items:baseline}
+    .items-center{align-items:center}
+    .justify-between{justify-content:space-between}
+    .leading-\[1\.05\]{line-height:1.05}
+    .leading-\[1\.5\]{line-height:1.5}
+    .min-h-0{min-height:0}
+    .opacity-\[0\.55\]{opacity:0.55}
+    .overflow-hidden{overflow:hidden}
+    .p-\[18px\]{padding:18px}
+    .p-\[20px\]{padding:20px}
+    .pl-\[12px\]{padding-left:12px}
+    .px-\[14px\]{padding-left:14px;padding-right:14px}
+    .px-\[16px\]{padding-left:16px;padding-right:16px}
+    .px-\[9px\]{padding-left:9px;padding-right:9px}
+    .py-0{padding-top:0;padding-bottom:0}
+    .py-\[10px\]{padding-top:10px;padding-bottom:10px}
+    .py-\[12px\]{padding-top:12px;padding-bottom:12px}
+    .py-\[4px\]{padding-top:4px;padding-bottom:4px}
+    .rounded-\[4px\]{border-radius:4px}
+    .rounded-\[6px\]{border-radius:6px}
+    .rounded-\[8px\]{border-radius:8px}
+    .rounded-full{border-radius:9999px}
+    .shrink-0{flex-shrink:0}
+    .text-\[\#111114\]{color:#111114}
+    .text-\[\#8a8a90\]{color:#8a8a90}
+    .text-\[\#f2f6ff\]{color:#f2f6ff}
+    .text-\[\#fff0f0\]{color:#fff0f0}
+    .text-\[\#fff5f5\]{color:#fff5f5}
+    .text-\[\#ffffff\]{color:#ffffff}
+    .text-\[12px\]{font-size:12px}
+    .text-\[13px\]{font-size:13px}
+    .text-\[14px\]{font-size:14px}
+    .text-\[15px\]{font-size:15px}
+    .text-\[16px\]{font-size:16px}
+    .text-\[17px\]{font-size:17px}
+    .text-\[18px\]{font-size:18px}
+    .text-\[24px\]{font-size:24px}
+    .text-\[56px\]{font-size:56px}
+    .text-center{text-align:center}
+    .text-right{text-align:right}
+    .tracking-\[0\.08em\]{letter-spacing:0.08em}
+    .tracking-\[0\.12em\]{letter-spacing:0.12em}
+    .uppercase{text-transform:uppercase}
+    .w-\[10px\]{width:10px}
+    .w-\[1440px\]{width:1440px}
+    .w-\[8px\]{width:8px}
+    .w-full{width:100%}
+  </style>
+</helmet>
+
+<div class="w-[1440px] h-[900px] box-border bg-[#0b0b0c] text-[#ffffff] flex flex-col p-[20px] gap-[16px] overflow-hidden">
+
+  <div class="shrink-0 flex items-center justify-between gap-[16px]">
+    <div class="flex items-baseline gap-[14px]">
+      <span class="text-[24px] font-bold">Dewan Wasit Juri</span>
+      <span class="font-mono text-[17px] text-[#8a8a90]">Partai 14</span>
+      <span class="text-[16px] text-[#8a8a90]">Putra Kelas B · Semifinal</span>
+    </div>
+    <div class="flex items-center gap-[7px]" style="padding: 0">
+      <span class="w-[8px] h-[8px] rounded-full bg-[#4ade80]"></span>
+      <span class="text-[14px] font-semibold">Tersambung</span>
+    </div>
+  </div>
+
+  <div class="flex-1 grid gap-[20px] min-h-0" style="grid-template-columns: 1fr 420px">
+
+    <!-- Riwayat: waktu dan identitas juri di setiap baris -->
+    <div class="flex flex-col gap-[12px] min-h-0">
+      <div class="shrink-0 flex items-center justify-between">
+        <div class="text-[17px] font-semibold">Riwayat nilai &amp; hukuman</div>
+        <div class="flex gap-[8px]">
+          <button class="h-[40px] py-0 px-[14px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[14px] font-semibold">Semua <span class="font-mono">39</span></button>
+          <button class="h-[40px] py-0 px-[14px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[14px]">Merah <span class="font-mono text-[#8a8a90]">21</span></button>
+          <button class="h-[40px] py-0 px-[14px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[14px]">Biru <span class="font-mono text-[#8a8a90]">18</span></button>
+          <button class="h-[40px] py-0 px-[14px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[14px]">Hukuman <span class="font-mono text-[#8a8a90]">3</span></button>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-[#131316] rounded-[8px] overflow-hidden flex flex-col min-h-0">
+        <div class="grid gap-[12px] py-[10px] px-[16px] bg-[#0b0b0c] text-[12px] font-semibold tracking-[0.08em] uppercase text-[#8a8a90] shrink-0" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div>Waktu</div><div>Babak</div><div>Kejadian</div><div>Ditekan oleh</div><div></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center border-b border-[#2a2a2c]" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:49:07</div>
+          <div class="text-[14px] text-[#8a8a90]">2</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#d42027]"></span><span class="text-[15px]">Tendangan</span><span class="font-mono text-[15px] font-semibold">+2</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Juri 1, Juri 2</div>
+          <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center border-b border-[#2a2a2c]" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:49:01</div>
+          <div class="text-[14px] text-[#8a8a90]">2</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#12439e]"></span><span class="text-[15px]">Pukulan</span><span class="font-mono text-[15px] font-semibold">+1</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Juri 3, Juri 4, Juri 5</div>
+          <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center border-b border-[#2a2a2c]" style="grid-template-columns: 100px 80px 1fr 180px 120px; background: rgba(212,32,39,0.10)">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:48:44</div>
+          <div class="text-[14px] text-[#8a8a90]">2</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#12439e]"></span><span class="bg-[#d42027] text-[#ffffff] text-[13px] font-semibold py-[4px] px-[9px] rounded-[4px]">Peringatan</span><span class="font-mono text-[15px] font-semibold">−5</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Wasit — Ahmad Riyadi</div>
+          <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center border-b border-[#2a2a2c]" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:48:20</div>
+          <div class="text-[14px] text-[#8a8a90]">2</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#d42027]"></span><span class="text-[15px]">Pukulan</span><span class="font-mono text-[15px] font-semibold">+1</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Juri 2, Juri 5</div>
+          <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center border-b border-[#2a2a2c]" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:47:58</div>
+          <div class="text-[14px] text-[#8a8a90]">2</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#d42027]"></span><span class="text-[15px]">Jatuhan</span><span class="font-mono text-[15px] font-semibold">+3</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Juri 1, Juri 3, Juri 4</div>
+          <div><button class="h-[36px] w-full bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[13px] font-semibold">Batalkan</button></div>
+        </div>
+
+        <div class="grid gap-[12px] py-[12px] px-[16px] items-center opacity-[0.55]" style="grid-template-columns: 100px 80px 1fr 180px 120px">
+          <div class="font-mono text-[14px] text-[#ffffff]">10:47:31</div>
+          <div class="text-[14px] text-[#8a8a90]">1</div>
+          <div class="flex items-center gap-[10px]"><span class="w-[10px] h-[10px] rounded-full bg-[#12439e]"></span><span class="text-[15px]">Pukulan</span><span class="font-mono text-[15px] font-semibold">+1</span></div>
+          <div class="text-[14px] text-[#8a8a90]">Juri 2, Juri 4</div>
+          <div class="text-[13px] text-[#8a8a90] text-center">Babak ditutup</div>
+        </div>
+      </div>
+
+      <div class="shrink-0 text-[14px] leading-[1.5] text-[#8a8a90]">Setiap baris menyebut <strong class="text-[#ffffff]">jam:menit:detik</strong> dan <strong class="text-[#ffffff]">siapa yang menekan</strong>. Tanpa keduanya, dewan tidak punya cara menunjuk nilai mana yang keliru saat protes.</div>
+    </div>
+
+    <!-- Konteks angka + tindakan -->
+    <div class="flex flex-col gap-[16px] min-h-0">
+      <div class="grid gap-[12px] shrink-0" style="grid-template-columns: 1fr 1fr">
+        <div class="bg-[#7a1418] rounded-[8px] p-[18px]">
+          <div class="text-[12px] tracking-[0.12em] uppercase text-[#fff5f5]">Merah</div>
+          <div class="font-mono text-[56px] font-semibold leading-[1.05] text-[#ffffff]">14</div>
+          <div class="text-[15px] font-semibold text-[#fff0f0]">Bayu Pratama</div>
+        </div>
+        <div class="bg-[#0c2a63] rounded-[8px] p-[18px] text-right">
+          <div class="text-[12px] tracking-[0.12em] uppercase text-[#f2f6ff]">Biru</div>
+          <div class="font-mono text-[56px] font-semibold leading-[1.05] text-[#ffffff]">11</div>
+          <div class="text-[15px] font-semibold text-[#f2f6ff]">Candra Setiawan</div>
+        </div>
+      </div>
+
+      <div class="bg-[#131316] rounded-[8px] p-[18px] flex flex-col gap-[12px] shrink-0">
+        <div class="text-[15px] font-semibold">Keberatan berjalan</div>
+        <div class="border-l-[3px] border-[#d98324] pl-[12px] flex flex-col gap-[4px]">
+          <div class="text-[15px]">Manajer sudut biru mengajukan protes</div>
+          <div class="text-[14px] text-[#8a8a90] leading-[1.5]">Jatuhan menit 10:47:58 dianggap tidak sah. Diajukan 10:48:12.</div>
+        </div>
+        <div class="flex gap-[8px]">
+          <button class="flex-1 h-[44px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[15px] font-semibold">Terima</button>
+          <button class="flex-1 h-[44px] bg-transparent text-[#ffffff] border border-[#6a6a70] rounded-[6px] font-sans text-[15px] font-semibold">Tolak</button>
+        </div>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <div class="shrink-0 flex flex-col gap-[8px]">
+        <button class="h-[64px] bg-[#e8e8ea] text-[#111114] border-0 rounded-[6px] font-sans text-[18px] font-bold">Sahkan hasil partai</button>
+        <div class="text-[13px] leading-[1.5] text-[#8a8a90]">Setelah disahkan, nilai dan hukuman tidak bisa diubah lagi dan hasilnya masuk ke bagan. Kamu akan diminta mengetik "Partai 14" untuk memastikan.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
