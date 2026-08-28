@@ -102,6 +102,16 @@ const T = {
     gTeksMerahRedup: '#fff5f5',
     gTeksBiru: '#f2f6ff',
     gTeksMerahSamar: '#e8b4b6',  // tingkat ketiga di dalam blok merah
+
+    /*
+     * Rona sudut yang dipakai langsung di Blade, bukan lewat token CSS.
+     * Sudah lama ada di blok sudut, papan skor, dan overlay, tapi tidak
+     * pernah masuk berkas ini -- artinya bidang sudutnya bisa digelapkan
+     * atau diterangkan tanpa satu pun uji gagal, dan teks di atasnya baru
+     * ketahuan hilang di gelanggang.
+     */
+    gRedupDiBiru: '#9ebbea',
+    gSamarDiBiru: '#cbdbf7',
     gTeksBiruSamar: '#a8b8e0',   // tingkat ketiga di dalam blok biru
     gAksi: '#e8e8ea',
     gAksiTeks: '#111114',
@@ -176,6 +186,19 @@ const PASANGAN = [
 
     ['GELAP · teks samar di blok merah', T.gTeksMerahSamar, T.gMerahDalam],
     ['GELAP · teks samar di blok biru', T.gTeksBiruSamar, T.gBiruDalam],
+
+    /*
+     * Rona sudut yang dipakai langsung di Blade -- lihat catatan di palet.
+     * Ketiganya hanya di sisi biru: padanan merahnya pernah #f5afb2 dan gagal
+     * 2.89 di atas merah sudut, jadi sisi merah sekarang memakai putih
+     * kemerahan yang lolos (dua baris terakhir di bawah).
+     */
+    ['GELAP · teks redup di biru sudut', T.gRedupDiBiru, T.gBiru],
+    ['GELAP · teks redup di biru dalam', T.gRedupDiBiru, T.gBiruDalam],
+    ['GELAP · teks samar di biru sudut', T.gSamarDiBiru, T.gBiru],
+    ['GELAP · teks samar di biru dalam', T.gSamarDiBiru, T.gBiruDalam],
+    ['GELAP · teks redup di merah sudut', T.gTeksMerah, T.gMerah],
+    ['GELAP · teks samar di merah sudut', T.gTeksMerahRedup, T.gMerah],
     ['GELAP · teks kontrol nonaktif di latar', T.gTeksMati, T.gLatar],
     ['GELAP · hijau hidup di latar', T.gHidup, T.gLatar],
     ['GELAP · hijau hidup di panel', T.gHidup, T.gPanel],
