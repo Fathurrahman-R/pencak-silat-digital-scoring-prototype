@@ -6,12 +6,13 @@
 
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <x-ui.input name="email" type="email" label="Email" :value="$request->email" required />
+        <x-si.isian name="email" tipe="email" label="Email" :value="$request->email" wajib />
 
-        <x-ui.input name="password" type="password" label="Kata sandi baru" placeholder="••••••••" required autocomplete="new-password" autofocus />
+        <x-si.isian name="password" tipe="password" label="Kata sandi baru" wajib autocomplete="new-password" autofocus
+                    bantuan="Minimal 8 karakter." />
 
-        <x-ui.input name="password_confirmation" type="password" label="Ulangi kata sandi baru" placeholder="••••••••" required autocomplete="new-password" />
+        <x-si.isian name="password_confirmation" tipe="password" label="Ulangi kata sandi baru" wajib autocomplete="new-password" />
 
-        <x-ui.button type="submit" block>Simpan kata sandi</x-ui.button>
+        <x-si.tombol tipe="submit" penuh>Simpan kata sandi</x-si.tombol>
     </form>
 </x-layouts.guest>

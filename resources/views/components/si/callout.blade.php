@@ -12,6 +12,7 @@
      */
     $varianKelas = [
         'keterangan' => 'border-line bg-surface-inset text-ink-secondary',
+        'berhasil' => 'border-success bg-success-soft text-ink',
         'perhatian' => 'border-warning bg-warning-soft text-warning',
         'bahaya' => 'border-danger bg-danger-soft text-danger',
     ];

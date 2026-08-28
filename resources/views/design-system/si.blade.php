@@ -63,6 +63,16 @@
             </div>
         </x-si.kartu>
 
+        {{-- CENTANG --}}
+        <x-si.kartu judul="Kotak centang" keterangan="Yang bisa ditekan adalah seluruh baris, bukan kotak 22px-nya saja — kotak sekecil itu meleset terus di layar sentuh.">
+            <div class="flex flex-col gap-1">
+                <x-si.centang name="contoh_centang" label="Kirim salinan berita acara ke email official" />
+                <x-si.centang name="contoh_centang_terisi" label="Sudah menerima jadwal" dicentang
+                              bantuan="Keterangan bantu ikut jadi bagian sasaran sentuh." />
+                <x-si.centang name="contoh_centang_mati" label="Terkunci setelah hasil disahkan" nonaktif />
+            </div>
+        </x-si.kartu>
+
         {{-- BADGE --}}
         <x-si.kartu judul="Badge status" keterangan="Selalu membawa kata dan ikon. Warna tidak pernah jadi satu-satunya pembawa makna.">
             <div class="flex flex-wrap items-center gap-3">

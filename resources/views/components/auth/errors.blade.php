@@ -6,7 +6,7 @@
 --}}
 
 @if ($errors->any())
-    <x-ui.alert variant="danger">
+    <x-si.callout varian="bahaya">
         @if ($errors->count() === 1)
             {{ $errors->first() }}
         @else
@@ -16,5 +16,5 @@
                 @endforeach
             </ul>
         @endif
-    </x-ui.alert>
+    </x-si.callout>
 @endif

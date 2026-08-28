@@ -17,14 +17,14 @@
             @csrf
 
             <div x-show="! recovery">
-                <x-ui.input name="code" label="Kode autentikasi" inputmode="numeric" autocomplete="one-time-code" autofocus />
+                <x-si.isian name="code" label="Kode autentikasi" inputmode="numeric" autocomplete="one-time-code" autofocus />
             </div>
 
             <div x-show="recovery" x-cloak>
-                <x-ui.input name="recovery_code" label="Kode pemulihan" autocomplete="one-time-code" />
+                <x-si.isian name="recovery_code" label="Kode pemulihan" autocomplete="one-time-code" />
             </div>
 
-            <x-ui.button type="submit" block>Verifikasi</x-ui.button>
+            <x-si.tombol tipe="submit" penuh>Verifikasi</x-si.tombol>
         </form>
 
         <button type="button" class="text-sm font-medium text-link hover:underline"
@@ -33,12 +33,12 @@
             <span x-show="recovery" x-cloak>Gunakan kode autentikator</span>
         </button>
 
-        <div class="flex items-start gap-3 rounded-lg border border-line bg-surface-sunken p-4">
-            <x-ui.icon name="shield-check" class="mt-0.5 size-4 shrink-0 text-ink-muted" />
-            <p class="text-[13px] text-ink-secondary">
-                Jangan bagikan kode ini ke siapa pun, termasuk yang mengaku dari tim kami. Kode kedaluwarsa
-                dalam waktu singkat dan hanya berlaku sekali pakai.
-            </p>
-        </div>
+        {{-- Ikon perisai dilepas: ia tidak membawa arti yang tidak sudah
+             dikatakan kalimatnya, dan lambang keamanan justru dipakai
+             halaman tiruan untuk terlihat resmi. --}}
+        <x-si.callout varian="perhatian">
+            Jangan bagikan kode ini ke siapa pun, termasuk yang mengaku dari panitia. Kode kedaluwarsa
+            dalam waktu singkat dan hanya berlaku sekali pakai.
+        </x-si.callout>
     </div>
 </x-layouts.guest>

@@ -9,16 +9,16 @@
     <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
-        <x-ui.input name="name" label="Nama lengkap" required autofocus autocomplete="name" />
+        <x-si.isian name="name" label="Nama lengkap" wajib autofocus autocomplete="name" />
 
-        <x-ui.input name="email" type="email" label="Email" placeholder="nama@contoh.id" required autocomplete="username" />
+        <x-si.isian name="email" tipe="email" label="Email" wajib autocomplete="username" />
 
-        <x-ui.input name="password" type="password" label="Kata sandi" placeholder="••••••••" required autocomplete="new-password"
-                    hint="Minimal 8 karakter." />
+        <x-si.isian name="password" tipe="password" label="Kata sandi" wajib autocomplete="new-password"
+                    bantuan="Minimal 8 karakter." />
 
-        <x-ui.input name="password_confirmation" type="password" label="Ulangi kata sandi" placeholder="••••••••" required autocomplete="new-password" />
+        <x-si.isian name="password_confirmation" tipe="password" label="Ulangi kata sandi" wajib autocomplete="new-password" />
 
-        <x-ui.button type="submit" block>Daftar</x-ui.button>
+        <x-si.tombol tipe="submit" penuh>Daftar</x-si.tombol>
 
         <p class="text-sm text-ink-muted">
             Sudah punya akun?

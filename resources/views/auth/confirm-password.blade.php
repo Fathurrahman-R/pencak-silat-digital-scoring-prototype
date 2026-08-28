@@ -5,8 +5,8 @@
     <form method="POST" action="{{ route('password.confirm') }}" class="space-y-4">
         @csrf
 
-        <x-ui.input name="password" type="password" label="Kata sandi" placeholder="••••••••" required autofocus autocomplete="current-password" />
+        <x-si.isian name="password" tipe="password" label="Kata sandi" wajib autofocus autocomplete="current-password" />
 
-        <x-ui.button type="submit" block>Konfirmasi</x-ui.button>
+        <x-si.tombol tipe="submit" penuh>Konfirmasi</x-si.tombol>
     </form>
 </x-layouts.guest>
