@@ -309,7 +309,19 @@ Tiap komponen digambar dalam keadaan: **normal · tertunjuk · ditekan · fokus 
 | **Kepala halaman** | Judul, satu kalimat penjelas, tombol aksi |
 | **Chip saring** | Dengan jumlah per chip dan keadaan terpilih |
 | **Langkah / stepper** | Menyatakan langkah keberapa dari berapa, dan apa yang menghambat langkah berikutnya |
-| **Toast** | Berhasil · Gagal. Hilang sendiri hanya untuk yang berhasil |
+| **Kotak centang** | Sasaran sentuh setinggi baris penuh (44px), bukan kotak 22px-nya saja. Tanda centang berupa bentuk, bukan glif huruf |
+| **Pesan hasil tindakan** | Berhasil · Gagal. **Tidak hilang sendiri** — lihat catatan di bawah |
+
+> **Revisi saat implementasi — "Toast" jadi "Pesan hasil tindakan".**
+> Brief ini semula menulis "hilang sendiri hanya untuk yang berhasil", meniru
+> perilaku komponen lama yang menutup diri setelah 6 detik. Itu bertentangan
+> dengan syarat pertama dokumen ini: aplikasi dipakai orang yang tidak terbiasa
+> dengan aplikasi web. Enam detik cukup untuk orang yang sudah tahu pesan apa
+> yang ditunggunya; orang yang baru pertama memakai aplikasi masih membaca saat
+> pesannya lenyap, dan tidak ada cara memanggilnya kembali selain mengulang
+> tindakan — yang untuk sebagian tindakan panitia justru tidak boleh diulang.
+> Sekarang pesannya menunggu ditutup, atau hilang saat halaman berganti.
+
 
 ### 6.2 Khas silat — ini jantung sistemnya
 
@@ -611,3 +623,45 @@ Sudah ada dan sudah benar — jadikan titik mulai, bukan lahan kosong:
 3. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
 4. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
    apakah saya tahu apa yang harus saya tekan berikutnya?"
+
+---
+
+## 12. Status implementasi
+
+Dicatat di sini, bukan di pesan commit, supaya orang yang membuka brief tahu
+bagian mana yang sudah punya wujud di kode dan bagian mana yang masih gambar.
+
+Cabang kerja: `rombak-ui`.
+
+### 12.1 Sudah terpasang
+
+| Bagian | Keadaan |
+|---|---|
+| **Token** | `dasar.css` (bersama + inti gelap) dan `dasar-admin.css` (inti terang). Lapisan nilai `app.css` dan `silat.css` diganti tanpa menyentuh nama variabel, jadi 1.032 pemanggilan komponen lama tetap hidup selama masa peralihan |
+| **Komponen `si/*`** | tombol, isian, centang, kartu, badge, callout, kosong, konfirmasi, ikon, pesan-kilat. Nol ketergantungan ke `ui/` |
+| **Dokumentasi hidup** | `/design-system/si` — merender komponen sungguhan, bukan tiruan markup |
+| **Rombongan 1 — gelanggang** | Juri, wasit, operator, Dewan Wasit Juri, keberatan, Jurus. Nol `x-ui.*` |
+| **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
+| **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
+| **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
+
+### 12.2 Belum
+
+| Bagian | Kenapa belum |
+|---|---|
+| **Rombongan 4 — panitia/admin** | 906 pemanggilan `x-ui.*` di 49 berkas. Menunggu layarnya digambar di kanvas lebih dulu — keputusan pemilik produk, karena rombongan ini yang paling banyak alurnya dan paling mahal kalau salah arah |
+| **Verifikasi juri** | Fitur baru (rute, controller, kejadian realtime, kemungkinan migrasi). Dikerjakan setelah rupa selesai supaya tidak menumpuk dua jenis perubahan dalam satu peninjauan |
+| **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
+
+### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
+
+Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
+
+- **Petak hukuman kosong tak terlihat.** `bg-black/25` di atas bidang merah sudut = 1.27; `bg-white/15` di atas panel overlay = 1.54. Aturan yang lahir dari sini: kosong dan mati bukan bidang abu, melainkan **tepi** `#8a8a90`
+- **Hasil yang sudah disahkan masih bisa dibatalkan.** Tidak ada penjaga di server, padahal antarmuka, berita acara, dan lanjutan bagan semuanya bergantung pada pengesahan
+- **Golongan usia terurut alfabet nilai enum**, sehingga Dewasa muncul di atas Usia Dini di enam daftar
+- **Emoji medali** sebagai satu-satunya penanda emas, perak, perunggu — jadi kotak kosong di sebagian peramban gelanggang
+- **Tangga hukuman ditulis dua kali**, di config dan di overlay rincian, dan bisa berbeda diam-diam
+- **Papan hasil siaran tanpa skor dan tanpa penanda sudut**, dan diam soal hasil yang belum disahkan
+- **Pesan hasil tindakan hilang sendiri** setelah 6 detik
+- **Tombol berbahaya tak terbaca** di suasana gelap: putih di atas `#ff7b74` = 2.52
