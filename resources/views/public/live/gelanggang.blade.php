@@ -1,5 +1,19 @@
 <x-layouts.silat :title="'Live — '.$arena->name">
-    <div x-data="overlayLive(@js($config))" class="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 p-4">
+    @php
+        /*
+         * Jumlah petak per tingkat mengikuti tangga Pasal 11.6.d.4 di
+         * config/scoring.php -- sama sumbernya dengan mesin scoring, jadi layar
+         * penonton tidak pernah menjanjikan jatah yang berbeda dari yang
+         * dihitung server.
+         */
+        $petakHukuman = [
+            'pembinaan' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2),
+            'teguran' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2),
+            'peringatan' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3),
+        ];
+    @endphp
+
+    <div x-data="overlayLive(@js($config))" class="mx-auto flex min-h-screen max-w-[720px] flex-col gap-4 p-4">
         <header class="flex items-center justify-between gap-4">
             <div>
                 {{-- Bukan emas: silat.css menetapkan emas hanya berarti juara/medali.
@@ -29,27 +43,85 @@
                 <p class="silat-angka mt-1 text-[40px] font-medium text-silat-teks" x-text="tampilWaktu"></p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-silat bg-silat-merah p-4 text-center" x-bind:class="kilat === 'red' ? 'silat-kilat' : ''">
-                    <p class="truncate text-[15px] font-medium text-silat-teks" x-text="red?.nama"></p>
-                    <p class="truncate text-[12px] text-white/70" x-text="red?.kontingen"></p>
-                    <p class="silat-angka mt-2 text-[48px] leading-none font-medium text-silat-teks" x-text="skorTotal.merah"></p>
-                    <p class="mt-2 text-[11px] text-white/70">
-                        Pembinaan <span x-text="hukuman.merah.pembinaan"></span>
-                        · Teguran <span x-text="hukuman.merah.teguran"></span>
-                        · Peringatan <span x-text="hukuman.merah.peringatan"></span>
-                    </p>
+            {{--
+                Bertumpuk di HP, berdampingan begitu ada ruang. Penonton tribun
+                membuka halaman ini dengan HP tegak; dua kolom di layar 390px
+                menyisakan 180px per sudut, dan nama pesilat langsung terpotong.
+
+                Bidangnya memakai merah-dalam dan biru-dalam, sama seperti papan
+                skor panel. Selain menyeragamkan keduanya, itu yang membuat petak
+                hukuman terbaca: tepi petak #8a8a90 hanya mencapai 1.52 di atas
+                merah cerah #d42027, tapi 3.15 di atas #7a1418.
+            --}}
+            {{--
+                Konstanta petak hidup di x-data BERSARANG. Menyebarnya ke dalam
+                `{...overlayLive(cfg), ...}` akan mengevaluasi getter milik
+                overlayLive sekali lalu membekukan hasilnya jadi nilai statis --
+                cacat yang sudah pernah ditemukan di panel juri Tanding.
+            --}}
+            <div class="grid gap-3 sm:grid-cols-2"
+                 x-data="{
+                    petakHukuman: @js($petakHukuman),
+                    warnaHukuman: { pembinaan: 'bg-silat-pembinaan', teguran: 'bg-silat-teguran', peringatan: 'bg-silat-peringatan' },
+                 }">
+                <div class="rounded-silat bg-silat-merah-dalam p-4" x-bind:class="kilat === 'red' ? 'silat-kilat' : ''">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-[11px] tracking-[.12em] text-silat-teks-merah-redup uppercase">Sudut merah</p>
+                            <p class="truncate text-[17px] font-medium text-silat-teks-merah" x-text="red?.nama"></p>
+                            <p class="truncate text-[13px] text-silat-teks-merah-samar" x-text="red?.kontingen"></p>
+                        </div>
+                        <p class="silat-angka shrink-0 text-[56px] leading-none font-medium text-silat-teks" x-text="skorTotal.merah"></p>
+                    </div>
+
+                    {{-- Hukuman sebagai petak, bukan deret angka. "Pembinaan 1 ·
+                         Teguran 0 · Peringatan 0" menuntut penonton membaca tiga
+                         kali untuk tahu satu hal: seberapa dekat pesilat ini ke
+                         sanksi berikutnya. --}}
+                    <div class="mt-3 flex gap-4">
+                        <template x-for="jenis in ['pembinaan','teguran','peringatan']" :key="'m-'+jenis">
+                            <div class="flex flex-col items-start gap-1.5">
+                                <div class="flex gap-1">
+                                    <template x-for="i in petakHukuman[jenis]" :key="'m-'+jenis+'-'+i">
+                                        <span class="size-6 rounded-[4px] border"
+                                              x-bind:class="[
+                                                  (hukuman.merah[jenis] ?? 0) >= i ? warnaHukuman[jenis] + ' border-transparent' : 'border-silat-tepi-petak',
+                                                  (jenis === 'peringatan' && i === petakHukuman[jenis]) ? 'border-dashed' : '',
+                                              ]"></span>
+                                    </template>
+                                </div>
+                                <span class="text-[10px] tracking-[.06em] text-silat-teks-merah-samar uppercase" x-text="jenis"></span>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
-                <div class="rounded-silat bg-silat-biru p-4 text-center" x-bind:class="kilat === 'blue' ? 'silat-kilat' : ''">
-                    <p class="truncate text-[15px] font-medium text-silat-teks" x-text="blue?.nama"></p>
-                    <p class="truncate text-[12px] text-white/70" x-text="blue?.kontingen"></p>
-                    <p class="silat-angka mt-2 text-[48px] leading-none font-medium text-silat-teks" x-text="skorTotal.biru"></p>
-                    <p class="mt-2 text-[11px] text-white/70">
-                        Pembinaan <span x-text="hukuman.biru.pembinaan"></span>
-                        · Teguran <span x-text="hukuman.biru.teguran"></span>
-                        · Peringatan <span x-text="hukuman.biru.peringatan"></span>
-                    </p>
+                <div class="rounded-silat bg-silat-biru-dalam p-4" x-bind:class="kilat === 'blue' ? 'silat-kilat' : ''">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-[11px] tracking-[.12em] text-silat-teks-biru-samar uppercase">Sudut biru</p>
+                            <p class="truncate text-[17px] font-medium text-silat-teks-biru" x-text="blue?.nama"></p>
+                            <p class="truncate text-[13px] text-silat-teks-biru-samar" x-text="blue?.kontingen"></p>
+                        </div>
+                        <p class="silat-angka shrink-0 text-[56px] leading-none font-medium text-silat-teks" x-text="skorTotal.biru"></p>
+                    </div>
+
+                    <div class="mt-3 flex gap-4">
+                        <template x-for="jenis in ['pembinaan','teguran','peringatan']" :key="'b-'+jenis">
+                            <div class="flex flex-col items-start gap-1.5">
+                                <div class="flex gap-1">
+                                    <template x-for="i in petakHukuman[jenis]" :key="'b-'+jenis+'-'+i">
+                                        <span class="size-6 rounded-[4px] border"
+                                              x-bind:class="[
+                                                  (hukuman.biru[jenis] ?? 0) >= i ? warnaHukuman[jenis] + ' border-transparent' : 'border-silat-tepi-petak',
+                                                  (jenis === 'peringatan' && i === petakHukuman[jenis]) ? 'border-dashed' : '',
+                                              ]"></span>
+                                    </template>
+                                </div>
+                                <span class="text-[10px] tracking-[.06em] text-silat-teks-biru-samar uppercase" x-text="jenis"></span>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
 
