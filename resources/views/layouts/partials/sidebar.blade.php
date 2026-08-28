@@ -47,7 +47,7 @@
                     {{ config('app.name') }}
                 </span>
                 <span class="block truncate text-[11px] text-ink-muted">
-                    {{ app()->isProduction() ? 'Workspace produksi' : 'Workspace '.app()->environment() }}
+                    {{ app()->isProduction() ? 'Server kejuaraan' : 'Lingkungan '.app()->environment() }}
                 </span>
             </span>
         </a>
@@ -123,7 +123,16 @@
             @endforeach
         </nav>
 
-        @if (config('design-system.enabled'))
+        {{--
+            Dokumentasi design system adalah alat pengembang. Sebelumnya ia
+            tampil untuk siapa pun yang login selama halamannya aktif, termasuk
+            juri yang membuka aplikasi dari HP di pinggir gelanggang — satu
+            tautan yang tidak berarti apa pun baginya, di menu yang seharusnya
+            hanya berisi pekerjaannya. Route-nya sendiri tetap dijaga
+            config('design-system.enabled'); ini soal siapa yang melihat
+            pintunya.
+        --}}
+        @if (config('design-system.enabled') && resource_allows(rk('resources', App\Enums\ResourceAction::View)))
             <a href="{{ route('design-system.foundation') }}"
                title="Design system"
                data-rail="center"

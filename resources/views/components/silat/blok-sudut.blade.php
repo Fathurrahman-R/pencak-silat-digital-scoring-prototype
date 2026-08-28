@@ -23,8 +23,21 @@
     $kanan = $sudut === 'biru';
 
     $latar = $sudut === 'biru' ? 'bg-silat-biru' : 'bg-silat-merah';
-    $redup = $sudut === 'biru' ? 'text-[#9ebbea]' : 'text-[#f5afb2]';
-    $samar = $sudut === 'biru' ? 'text-[#cbdbf7]' : 'text-[#fbd9da]';
+
+    /*
+     * Nuansa teks kedua sudut TIDAK simetris, dan itu terpaksa: merah (#d42027)
+     * jauh lebih terang daripada biru (#12439e), jadi headroom kontrasnya lebih
+     * sempit. Nuansa merah muda yang dulu dipakai di sisi merah hanya mencapai
+     * 2.89:1 — gagal AA — sementara padanannya di sisi biru lolos 4.63:1.
+     * Akibatnya identitas pesilat merah selalu lebih sulit dibaca daripada biru,
+     * padahal peraturan menempatkan keduanya setara.
+     *
+     * Angka di bawah dihitung terhadap latar sudutnya masing-masing, bukan
+     * dikira-kira, dan semuanya >= 4.5:1. Kalau nuansa ini diubah, hitung ulang
+     * — jangan disamakan begitu saja demi keseragaman rupa.
+     */
+    $redup = $sudut === 'biru' ? 'text-[#9ebbea]' : 'text-[#fff0f0]';   // 4.63 : 4.70
+    $samar = $sudut === 'biru' ? 'text-[#cbdbf7]' : 'text-[#fff5f5]';   // 6.47 : 4.86
 
     $namaSudut = $sudut === 'biru' ? 'Sudut biru' : 'Sudut merah';
 @endphp

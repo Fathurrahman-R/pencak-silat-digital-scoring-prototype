@@ -1,7 +1,11 @@
 @php use App\Enums\ResourceAction; @endphp
 
 <x-layouts.silat :title="'Operator — '.$match->bracket->weightClass->name">
-    <div x-data="partaiPanel(@js($config))" class="mx-auto flex min-h-screen max-w-4xl flex-col gap-4 p-4">
+    {{-- h-dvh, bukan min-h-screen: panel operator dipakai satu layar penuh di
+         laptop gelanggang dan tidak pernah digulir. Sebelumnya papan skor
+         berhenti di sekitar 60% tinggi layar dan sisanya kosong, padahal
+         angkanya justru yang dibaca dari jarak meja. --}}
+    <div x-data="partaiPanel(@js($config))" class="mx-auto flex h-dvh max-w-4xl flex-col gap-4 overflow-y-auto p-4">
         <header class="flex items-center justify-between gap-4">
             <div>
                 <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">OPERATOR GELANGGANG</p>
@@ -13,25 +17,22 @@
                 </h1>
             </div>
 
-            <span
-                class="rounded-full px-3 py-1 text-[11px] tracking-wide"
-                x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
-                x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
-            ></span>
+            <x-silat.indikator-koneksi />
         </header>
 
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
         <p x-show="pesan" x-text="pesan" class="rounded-silat bg-silat-panel px-4 py-2 text-[13px] text-silat-teks-redup"></p>
 
-        <div x-show="tawaranWmp" x-cloak class="rounded-silat border border-silat-emas/40 bg-silat-emas/10 px-4 py-3 text-[13px] text-silat-teks">
+        <div x-show="tawaranWmp" x-cloak class="rounded-silat border border-silat-teguran/50 bg-silat-teguran/10 px-4 py-3 text-[13px] text-silat-teks">
             Sudut <span x-text="tawaranWmp === 'red' ? 'merah' : 'biru'" class="font-medium"></span>
             unggul cukup jauh untuk menang WMP — pilih "Akhiri partai" bila ingin menetapkannya.
         </div>
 
-        <div x-show="sudahSelesai" x-cloak class="rounded-silat bg-silat-panel px-4 py-3 text-[13px] text-silat-teks">
-            Partai selesai — <span x-text="match.win_reason"></span>.
-            <span x-show="match.ratified" class="text-silat-teks-redup">Sudah disahkan dewan juri.</span>
-            <span x-show="! match.ratified" class="text-silat-teks-redup">Menunggu pengesahan dewan juri.</span>
+        <div x-show="sudahSelesai" x-cloak x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }"
+             class="rounded-silat bg-silat-panel px-4 py-3 text-[13px] text-silat-teks">
+            Partai selesai — <span x-text="sebabLabel[match?.win_reason] ?? match?.win_reason"></span>.
+            <span x-show="match.ratified" class="text-silat-teks-redup">Sudah disahkan Dewan Wasit Juri.</span>
+            <span x-show="! match.ratified" class="text-silat-teks-redup">Menunggu pengesahan Dewan Wasit Juri.</span>
         </div>
 
         {{-- Timer --}}
@@ -47,15 +48,28 @@
             >00:00</div>
 
             @resource(rk('partai', ResourceAction::Update))
+                {{--
+                    Tidak ada tombol kendali yang boleh berwarna merah atau biru.
+                    Di layar ini kedua warna itu sudah punya arti tetap — identitas
+                    sudut pesilat — dan tombol "Mulai babak" berwarna merah sudut
+                    membuat operator sepersekian detik mengira aksinya berhubungan
+                    dengan pesilat merah. Aksi memakai --silat-aksi; abu-abu tetap
+                    untuk aksi sekunder.
+
+                    Labelnya juga menyebut nomor babaknya. Sebelumnya berbunyi
+                    "Mulai babak berikutnya" bahkan pada partai yang belum pernah
+                    dimulai sama sekali — tidak ada babak sebelumnya untuk
+                    dilanjutkan, dan papan di atasnya masih menulis "Babak –/3".
+                --}}
                 <div class="mt-4 flex flex-wrap justify-center gap-2">
                     <button type="button" x-show="babakUntukDimulai !== null" x-on:click="mulaiBabak()"
-                            class="rounded-silat bg-silat-merah px-4 py-2 text-[13px] text-silat-teks">
-                        <span x-text="babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak' : 'Mulai babak berikutnya'"></span>
+                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">
+                        <span x-text="(babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak ' : 'Mulai babak ') + babakUntukDimulai"></span>
                     </button>
                     <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
                             class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks">Jeda</button>
                     <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
-                            class="rounded-silat bg-silat-biru px-4 py-2 text-[13px] text-silat-teks">Lanjutkan</button>
+                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">Lanjutkan</button>
                     <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="resetBabak()"
                             class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks-redup">Reset</button>
                     <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="selesaikanBabak()"
@@ -65,7 +79,7 @@
         </div>
 
         {{-- Papan skor --}}
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid min-h-0 flex-1 gap-3 sm:grid-cols-2">
             <x-silat.papan-skor sudut="red" kunci-skor="merah" rata="kiri" :indikator="true" />
             <x-silat.papan-skor sudut="blue" kunci-skor="biru" rata="kanan" :indikator="true" />
         </div>
@@ -89,7 +103,7 @@
                         <option value="wo">WO</option>
                     </select>
                     <button type="button" x-on:click="akhiri(corner, sebab)"
-                            class="rounded-silat bg-silat-merah px-4 py-2 text-[13px] text-silat-teks">Akhiri partai</button>
+                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">Akhiri partai</button>
                 </div>
             </div>
         @endresource

@@ -15,6 +15,31 @@
         </x-ui.alert>
 
         <x-ui.card title="Kelas tanding">
+            <x-slot:actions>
+                <form method="GET" class="flex flex-wrap items-center gap-2">
+                    @if ($tampil !== 'terpakai')
+                        <input type="hidden" name="tampil" value="{{ $tampil }}">
+                    @endif
+
+                    <x-ui.input name="q" :value="$cari" placeholder="Cari kelas…" class="w-[200px]" />
+                </form>
+            </x-slot:actions>
+
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <x-ui.filter-chips param="tampil" all="Semua kelas" :current="$tampil === 'semua' ? null : $tampil" :options="[
+                    'terpakai' => 'Ada peserta atau bagan',
+                    'tersusun' => 'Sudah disusun',
+                ]" />
+
+                <p class="text-xs text-ink-muted">
+                    Menampilkan {{ $kelas->count() }} dari {{ $jumlahSemua }} kelas.
+                    @if ($tampil === 'terpakai' && $jumlahSemua > $jumlahTerpakai)
+                        {{ $jumlahSemua - $jumlahTerpakai }} kelas tanpa peserta disembunyikan —
+                        pilih <span class="text-ink">Semua kelas</span> untuk melihatnya.
+                    @endif
+                </p>
+            </div>
+
             @forelse ($kelas as $k)
                 @php
                     $bracket = $k->bracket;
@@ -60,8 +85,13 @@
                     </div>
                 </div>
             @empty
-                <x-ui.empty-state title="Belum ada kelas tanding"
-                                  description="Kelas tanding diturunkan dari naskah peraturan saat kejuaraan dibuat." />
+                @if ($cari !== '' || $tampil !== 'semua')
+                    <x-ui.empty-state title="Tidak ada kelas yang cocok"
+                                      description="Belum ada kelas dengan peserta sah atau bagan. Ubah penyaring di atas untuk melihat seluruh kelas yang diturunkan dari naskah." />
+                @else
+                    <x-ui.empty-state title="Belum ada kelas tanding"
+                                      description="Kelas tanding diturunkan dari naskah peraturan saat kejuaraan dibuat." />
+                @endif
             @endforelse
         </x-ui.card>
     </div>

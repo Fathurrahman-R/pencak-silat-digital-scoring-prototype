@@ -2,7 +2,7 @@
     <div class="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 p-4">
         <header class="flex items-start justify-between gap-3">
             <div>
-                <p class="text-[13px] tracking-[.14em] text-silat-emas">LIVE SCORE</p>
+                <p class="text-[13px] tracking-[.14em] text-silat-teks-redup">LIVE SCORE</p>
                 <h1 class="text-[22px] font-medium text-silat-teks">{{ $tournament->name }}</h1>
             </div>
             <a href="{{ route('live.turnamen.medali', $tournament) }}"

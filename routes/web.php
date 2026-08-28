@@ -11,26 +11,27 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\PartaiScoringController;
-use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\RekapController;
-use App\Http\Controllers\Admin\SiaranController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
-use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SiaranController;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\BerandaController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', BerandaController::class)->name('home');
 
 /*
 |--------------------------------------------------------------------------

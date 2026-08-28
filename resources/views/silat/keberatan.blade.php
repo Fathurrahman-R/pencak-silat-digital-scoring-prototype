@@ -12,15 +12,23 @@
                 </h1>
             </div>
 
-            <span
-                class="rounded-full px-3 py-1 text-[11px] tracking-wide"
-                x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
-                x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
-            ></span>
+            <x-silat.indikator-koneksi />
         </header>
 
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
         <p x-show="pesan" x-text="pesan" class="rounded-silat bg-silat-panel px-4 py-2 text-[13px] text-silat-teks-redup"></p>
+
+        {{--
+            Papan skor ikut di sini karena protes tidak pernah soal kejadian yang
+            berdiri sendiri — ia soal kejadian pada kedudukan tertentu. Yang
+            memutus perlu melihat angka dan hukuman berjalan tanpa berpindah
+            layar; sebelumnya panel ini hanya berisi formulir, dan konteksnya
+            harus dicari di panel lain sementara tenggat VAR terus berjalan.
+        --}}
+        <div class="grid gap-3 sm:grid-cols-2">
+            <x-silat.papan-skor sudut="red" kunci-skor="merah" rata="kiri" />
+            <x-silat.papan-skor sudut="blue" kunci-skor="biru" rata="kanan" />
+        </div>
 
         {{-- VAR -- Pasal 15 --}}
         <div class="rounded-silat bg-silat-panel p-4">
@@ -45,7 +53,7 @@
                     </select>
                     <input type="text" x-model="kejadian" placeholder="Kejadian yang disengketakan" required
                            class="min-w-[220px] flex-1 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[12px] text-silat-teks placeholder:text-silat-teks-samar">
-                    <button type="submit" class="rounded-silat bg-silat-emas px-3 py-1.5 text-[12px] text-silat-latar">
+                    <button type="submit" class="rounded-silat bg-silat-aksi px-3 py-1.5 text-[12px] font-medium text-silat-aksi-teks">
                         Ajukan protes
                     </button>
                 </form>
@@ -102,7 +110,7 @@
                         <div class="py-2.5" x-data="{ catatan: '' }">
                             <p class="text-[13px] text-silat-teks">
                                 <span x-text="protes.level === 'pertama' ? 'Tingkat pertama (Ketua Pertandingan)' : 'Banding (Delegasi Teknik)'"></span>
-                                <span x-show="protes.final" class="ml-1 text-[11px] text-silat-emas">FINAL</span>
+                                <span x-show="protes.final" class="ml-1 text-[11px] text-silat-teks">FINAL</span>
                             </p>
 
                             <template x-if="protes.keputusan">
@@ -137,7 +145,7 @@
                 @resource(rk('protes-manajer', ResourceAction::Create))
                     <button type="button" x-show="sudahSelesai && keberatan.protes_manajer.length === 0"
                             x-on:click="ajukanProtesManajer('')"
-                            class="mt-3 rounded-silat bg-silat-emas px-3 py-1.5 text-[12px] text-silat-latar">
+                            class="mt-3 rounded-silat bg-silat-aksi px-3 py-1.5 text-[12px] font-medium text-silat-aksi-teks">
                         Ajukan protes manajer tingkat pertama
                     </button>
                 @endresource

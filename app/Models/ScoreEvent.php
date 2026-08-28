@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Satu nilai yang sah karena mencapai ambang konsensus juri.
@@ -54,6 +55,19 @@ class ScoreEvent extends Model
     public function voider(): BelongsTo
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Tekanan tombol juri yang menghasilkan nilai ini.
+     *
+     * Satu nilai tidak pernah milik satu juri — ia terbit karena beberapa juri
+     * menekan hal yang sama di dalam jendela konsensus. Karena itu relasinya
+     * jamak, dan panel dewan juri menampilkan seluruh penekannya, bukan
+     * memilih salah satu sebagai "pemberi nilai".
+     */
+    public function judgeInputs(): HasMany
+    {
+        return $this->hasMany(JudgeInput::class, 'score_event_id');
     }
 
     public function dibatalkan(): bool

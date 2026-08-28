@@ -1,4 +1,17 @@
-<x-layouts.admin heading="Dashboard" description="Ringkasan singkat isi aplikasi.">
+@php
+    /*
+     * Judul menyesuaikan siapa yang membuka. Seorang juri yang login dari HP di
+     * pinggir gelanggang tidak sedang mencari "ringkasan singkat isi aplikasi";
+     * ia mencari partainya. Kalimat boilerplate itu membuat halaman depannya
+     * terbaca seperti aplikasi milik orang lain.
+     */
+    $judul = $tampilkanRingkasan ? 'Dashboard' : 'Beranda';
+    $keterangan = $tampilkanRingkasan
+        ? ($turnamen?->name ?? 'Belum ada kejuaraan yang dibuka.')
+        : 'Partai tempat Anda ditugaskan hari ini.';
+@endphp
+
+<x-layouts.admin :heading="$judul" :description="$keterangan">
     {{-- Paling atas, sebelum apa pun: wasit dan juri membuka halaman ini di HP
          di pinggir gelanggang, dan satu-satunya hal yang mereka butuhkan
          adalah pintu masuk ke partainya. --}}
@@ -9,10 +22,29 @@
                     <a href="{{ $tugas['url'] }}"
                        class="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-surface-inset">
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm text-ink">
-                                {{ $tugas['merah'] ?: 'Sudut merah' }}
+                            {{--
+                                Sudut ditandai warnanya, tidak hanya diurutkan. Aparat
+                                perlu tahu siapa merah dan siapa biru SEBELUM membuka
+                                panel — begitu panel terbuka dan babak berjalan, tidak
+                                ada waktu lagi untuk mencocokkan nama.
+
+                                Titik warna didampingi teks "Merah"/"Biru" di
+                                aria-label, jadi maknanya tidak bergantung warna saja.
+                            --}}
+                            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="size-2 shrink-0 rounded-full bg-[#d42027]"
+                                          role="img" aria-label="Sudut merah"></span>
+                                    {{ $tugas['merah'] ?: 'Sudut merah' }}
+                                </span>
+
                                 <span class="text-ink-muted">vs</span>
-                                {{ $tugas['biru'] ?: 'Sudut biru' }}
+
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="size-2 shrink-0 rounded-full bg-[#12439e]"
+                                          role="img" aria-label="Sudut biru"></span>
+                                    {{ $tugas['biru'] ?: 'Sudut biru' }}
+                                </span>
                             </p>
                             <p class="truncate text-xs text-ink-muted">
                                 {{ $tugas['sebutan'] }} · {{ $tugas['kelas'] }}
@@ -21,8 +53,13 @@
                             </p>
                         </div>
 
+                        {{-- Status selalu tampil, bukan hanya saat berlangsung: tanpanya
+                             juri tidak bisa membedakan partai yang sudah dimulai dari
+                             yang masih menunggu, dan harus membuka panel untuk tahu. --}}
                         @if ($tugas['berlangsung'])
                             <x-ui.badge variant="success" dot>Berlangsung</x-ui.badge>
+                        @else
+                            <x-ui.badge variant="neutral">Menunggu</x-ui.badge>
                         @endif
 
                         <x-ui.icon name="chevron-right" class="size-4 shrink-0 text-ink-muted" />
@@ -41,68 +78,101 @@
     @endif
 
     @if ($tampilkanRingkasan)
-    @if ($unmappedCount > 0)
-        <x-ui.alert variant="warning" title="Ada resource key yang belum dipetakan" class="mb-6">
-            {{ $unmappedCount }} key belum menunjuk permission mana pun, jadi aksesnya tertutup untuk semua orang
-            kecuali super admin.
-            <a href="{{ route('admin.mappings.index', ['status' => 'unmapped']) }}" class="font-medium text-link underline-offset-2 hover:underline">
-                Lihat daftarnya
-            </a>
-        </x-ui.alert>
-    @endif
+        @if ($unmappedCount > 0)
+            <x-ui.alert variant="warning" title="Ada resource key yang belum dipetakan" class="mb-6">
+                {{ $unmappedCount }} key belum menunjuk permission mana pun, jadi aksesnya tertutup untuk semua orang
+                kecuali super admin.
+                <a href="{{ route('admin.mappings.index', ['status' => 'unmapped']) }}" class="font-medium text-link underline-offset-2 hover:underline">
+                    Lihat daftarnya
+                </a>
+            </x-ui.alert>
+        @endif
 
-    {{-- Baris metrik duduk di permukaan solid seperti sisi halaman lainnya —
-         kaca dipakai hanya sidebar dan topbar. --}}
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ($stats as $stat)
-            <x-ui.stat :label="$stat['label']"
-                       :value="number_format($stat['value'], 0, ',', '.')"
-                       :icon="$stat['icon']" />
-        @endforeach
-    </div>
+        @if ($turnamen === null)
+            <x-ui.card>
+                <x-ui.empty-state icon="trophy"
+                                  title="Belum ada kejuaraan"
+                                  description="Buat kejuaraan lebih dulu lewat menu Kejuaraan. Angka dan jadwal di halaman ini mengikuti kejuaraan yang sedang dibuka." />
+            </x-ui.card>
+        @else
+            {{-- Baris metrik duduk di permukaan solid seperti sisi halaman lainnya —
+                 kaca dipakai hanya sidebar dan topbar. --}}
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach ($stats as $stat)
+                    <x-ui.stat :label="$stat['label']"
+                               :value="number_format($stat['value'], 0, ',', '.')"
+                               :icon="$stat['icon']" />
+                @endforeach
+            </div>
 
-    {{-- Dua kolom: grafik yang lebih lebar di kiri, aktivitas ringkas di
-         kanan. Rasio 1.6fr/1fr yang sama dipakai di seluruh pola dashboard. --}}
-    <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <x-ui.card title="Pengguna baru" subtitle="6 bulan terakhir">
-            <x-ui.bar-chart :series="$signups" :tones="['chart-1']" :height="184" />
-        </x-ui.card>
+            <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+                <x-ui.card title="Partai hari ini" :subtitle="now()->translatedFormat('l, d F Y')">
+                    @forelse ($partaiHariIni as $gelanggang => $daftar)
+                        <div class="mb-4 last:mb-0">
+                            <p class="eyebrow mb-2">{{ $gelanggang }}</p>
 
-        <x-ui.card title="Aktivitas terbaru">
-            @if ($activity === [])
-                <p class="text-sm text-ink-muted">Belum ada aktivitas.</p>
-            @else
-                <x-ui.timeline :items="$activity" />
-            @endif
-        </x-ui.card>
-    </div>
+                            <div class="divide-y divide-line">
+                                @foreach ($daftar as $partai)
+                                    <div class="flex items-center gap-3 py-2">
+                                        <span class="num w-[46px] shrink-0 text-xs text-ink-muted">{{ $partai['waktu'] ?? '—' }}</span>
 
-    <x-ui.card title="Mulai dari mana" class="mt-4">
-        {{-- Bernomor karena urutannya memang berarti: resource dulu, baru
-             pemetaannya, baru pembagiannya ke role. --}}
-        <ol class="space-y-4">
-            <li class="flex items-start gap-3.5">
-                <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-muted">01</span>
-                <p class="text-sm text-ink-secondary">
-                    Buat <strong class="font-semibold text-ink">Resource</strong> baru untuk tiap modul aplikasi.
-                    Sistem otomatis membuatkan permission untuk tiap aksi yang dicentang.
-                </p>
-            </li>
-            <li class="flex items-start gap-3.5">
-                <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-muted">02</span>
-                <p class="text-sm text-ink-secondary">
-                    Ubah permission di balik sebuah key lewat <strong class="font-semibold text-ink">Pemetaan Key</strong>
-                    — tanpa menyentuh kode.
-                </p>
-            </li>
-            <li class="flex items-start gap-3.5">
-                <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-muted">03</span>
-                <p class="text-sm text-ink-secondary">
-                    Bagikan permission ke <strong class="font-semibold text-ink">Role</strong>, lalu tugaskan role itu
-                    ke pengguna.
-                </p>
-            </li>
-        </ol>
-    </x-ui.card>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-sm text-ink">
+                                                {{ $partai['merah'] ?: 'Sudut merah' }}
+                                                <span class="text-ink-muted">vs</span>
+                                                {{ $partai['biru'] ?: 'Sudut biru' }}
+                                            </p>
+                                            <p class="truncate text-xs2 text-ink-muted">{{ $partai['kelas'] }}</p>
+                                        </div>
+
+                                        @if ($partai['berlangsung'])
+                                            <x-ui.badge variant="success" dot>Berlangsung</x-ui.badge>
+                                        @elseif ($partai['selesai'])
+                                            <x-ui.badge variant="neutral">Selesai</x-ui.badge>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @empty
+                        <x-ui.empty-state icon="calendar-off"
+                                          title="Tidak ada partai terjadwal hari ini"
+                                          description="Partai muncul di sini setelah bagan dikunci dan jadwal ditetapkan lewat menu Pertandingan → Jadwal." />
+                    @endforelse
+                </x-ui.card>
+
+                <x-ui.card title="Hasil terakhir" subtitle="Sudah disahkan Dewan Wasit Juri">
+                    @if ($hasilTerakhir === [])
+                        <p class="text-sm text-ink-muted">Belum ada hasil yang disahkan.</p>
+                    @else
+                        <x-ui.timeline :items="$hasilTerakhir" />
+                    @endif
+                </x-ui.card>
+            </div>
+
+            <x-ui.card title="Urutan kerja kejuaraan" class="mt-4">
+                {{-- Bernomor karena urutannya memang mengikat: tiap tahap punya
+                     prasyarat yang membuat tombol tahap berikutnya mati kalau
+                     dilangkahi. Rinciannya ada di docs/PANDUAN-WORKFLOW.md. --}}
+                <ol class="space-y-4">
+                    @foreach ([
+                        ['Daftarkan kontingen dan pesilatnya', 'Berkas pesilat wajib lengkap sebelum pendaftaran bisa diverifikasi.'],
+                        ['Terbitkan tagihan dan tunggu pelunasan', 'Pendaftaran terkunci sampai tagihan kontingen lunas.'],
+                        ['Verifikasi pendaftaran dan timbang badan', 'Hasil timbang di venue yang menentukan kelas, bukan berat yang diakui saat mendaftar.'],
+                        ['Susun dan kunci bagan, lalu tetapkan jadwal', 'Setelah dikunci, penyusunan ulang wajib beralasan dan tercatat di jejak audit.'],
+                        ['Tugaskan aparat, lalu jalankan partai', 'Wasit dan juri menemukan partai yang ditugaskan langsung dari halaman depan mereka.'],
+                    ] as $i => [$langkah, $catatan])
+                        <li class="flex items-start gap-3.5">
+                            <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-muted">
+                                {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                            </span>
+                            <p class="text-sm text-ink-secondary">
+                                <strong class="font-semibold text-ink">{{ $langkah }}</strong> — {{ $catatan }}
+                            </p>
+                        </li>
+                    @endforeach
+                </ol>
+            </x-ui.card>
+        @endif
     @endif
 </x-layouts.admin>

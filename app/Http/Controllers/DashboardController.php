@@ -3,38 +3,128 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ResourceAction;
+use App\Enums\StatusPendaftaran;
+use App\Models\Contingent;
 use App\Models\MatchOfficial;
-use App\Models\Permission;
-use App\Models\Resource;
+use App\Models\Registration;
 use App\Models\ResourcePermission;
-use App\Models\Role;
 use App\Models\SilatMatch;
-use App\Models\User;
+use App\Models\Tournament;
+use App\Support\Navigation\NavigationBuilder;
+use App\Support\Scoring\AlasanMenang;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly NavigationBuilder $navigasi) {}
+
     public function __invoke(): View
     {
+        $turnamen = $this->navigasi->turnamenAktif();
+
         return view('dashboard', [
+            'turnamen' => $turnamen,
             'penugasan' => $this->penugasanSaya(),
-            // Ringkasan isi aplikasi hanya berarti bagi yang mengurusnya.
-            // Wasit dan juri tidak punya urusan dengan jumlah permission, dan
+            // Ringkasan kejuaraan hanya berarti bagi yang mengurusnya. Wasit dan
+            // juri tidak punya urusan dengan jumlah pendaftaran, dan
             // menampilkannya membuat halaman depan mereka terasa salah alamat.
-            'tampilkanRingkasan' => resource_allows(rk('users', ResourceAction::View)),
-            'stats' => [
-                ['label' => 'Pengguna', 'value' => User::count(), 'icon' => 'users'],
-                ['label' => 'Role', 'value' => Role::count(), 'icon' => 'shield-check'],
-                ['label' => 'Permission', 'value' => Permission::count(), 'icon' => 'key'],
-                ['label' => 'Resource', 'value' => Resource::count(), 'icon' => 'file-text'],
-            ],
+            'tampilkanRingkasan' => resource_allows(rk('turnamen', ResourceAction::View)),
+            'stats' => $turnamen ? $this->ringkasanKejuaraan($turnamen) : [],
+            'partaiHariIni' => $turnamen ? $this->partaiHariIni($turnamen) : [],
+            'hasilTerakhir' => $turnamen ? $this->hasilTerakhir($turnamen) : [],
             // Key tanpa permission berarti ada pintu yang tertutup untuk semua
             // orang tanpa penjelasan — layak muncul di halaman depan.
             'unmappedCount' => ResourcePermission::whereNull('permission_id')->count(),
-            'signups' => $this->monthlySignups(),
-            'activity' => $this->recentActivity(),
         ]);
+    }
+
+    /**
+     * Angka yang benar-benar ditanyakan panitia saat membuka aplikasi.
+     *
+     * Sebelumnya baris ini menghitung Pengguna, Role, Permission, dan Resource
+     * — warisan boilerplate. Tidak satu pun dari keempatnya menjawab pertanyaan
+     * yang dibawa panitia ke layar depan: berapa partai hari ini, siapa yang
+     * belum lunas, mana yang belum diverifikasi. Manajemen akses tetap ada di
+     * menunya sendiri untuk yang memang mengurusnya.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function ringkasanKejuaraan(Tournament $turnamen): array
+    {
+        $idKelas = $turnamen->weightClasses()->select('id');
+
+        $partaiHariIni = SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $idKelas))
+            ->whereDate('scheduled_at', today())
+            ->count();
+
+        $menungguVerifikasi = Registration::whereIn('weight_class_id', $idKelas)
+            ->where('status', StatusPendaftaran::Diajukan)
+            ->count();
+
+        return [
+            ['label' => 'Kontingen', 'value' => Contingent::where('tournament_id', $turnamen->id)->count(), 'icon' => 'users'],
+            ['label' => 'Pendaftaran terverifikasi', 'value' => Registration::whereIn('weight_class_id', $idKelas)
+                ->where('status', StatusPendaftaran::Terverifikasi)->count(), 'icon' => 'shield-check'],
+            ['label' => 'Partai hari ini', 'value' => $partaiHariIni, 'icon' => 'swords'],
+            ['label' => 'Menunggu verifikasi', 'value' => $menungguVerifikasi, 'icon' => 'file-text'],
+        ];
+    }
+
+    /**
+     * Jadwal hari ini per gelanggang.
+     *
+     * Menggantikan grafik "Pengguna baru 6 bulan terakhir" yang tidak pernah
+     * berarti apa-apa bagi panitia dan menyeret 843 kB apexcharts ke dalam
+     * bundel admin demi satu batang. Daftar ini dirender HTML biasa.
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function partaiHariIni(Tournament $turnamen): array
+    {
+        return SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $turnamen->weightClasses()->select('id')))
+            ->whereDate('scheduled_at', today())
+            ->with(['arena', 'bracket.weightClass', 'red.athletes', 'blue.athletes'])
+            ->orderBy('order_in_arena')
+            ->get()
+            ->groupBy(fn (SilatMatch $m) => $m->arena?->name ?? 'Belum ditempatkan')
+            ->map(fn ($partai) => $partai->map(fn (SilatMatch $m) => [
+                'kelas' => $m->bracket->weightClass->name,
+                'merah' => $m->red?->athletes->pluck('name')->implode(', '),
+                'biru' => $m->blue?->athletes->pluck('name')->implode(', '),
+                'waktu' => $m->scheduled_at?->format('H:i'),
+                'berlangsung' => $m->status === SilatMatch::STATUS_BERLANGSUNG,
+                'selesai' => $m->status === SilatMatch::STATUS_SELESAI,
+            ])->values()->all())
+            ->all();
+    }
+
+    /**
+     * Hasil partai terakhir yang sudah disahkan dewan juri.
+     *
+     * Yang belum disahkan sengaja tidak ikut: sebelum pengesahan, pemenangnya
+     * masih bisa berubah, dan halaman depan bukan tempat yang tepat untuk
+     * menyiarkan angka yang belum final.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function hasilTerakhir(Tournament $turnamen): array
+    {
+        return SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $turnamen->weightClasses()->select('id')))
+            ->whereNotNull('ratified_at')
+            ->with(['bracket.weightClass', 'red.athletes', 'blue.athletes'])
+            ->latest('ratified_at')
+            ->take(6)
+            ->get()
+            ->map(function (SilatMatch $m) {
+                $menang = $m->winner_registration_id === $m->red_registration_id ? $m->red : $m->blue;
+
+                return [
+                    'text' => trim(($menang?->athletes->pluck('name')->implode(', ') ?: 'Pemenang').' — '
+                        .(AlasanMenang::label($m->win_reason) ?? 'Sah').' · '.$m->bracket->weightClass->name),
+                    'time' => $m->ratified_at?->diffForHumans() ?? '',
+                ];
+            })
+            ->all();
     }
 
     /**
@@ -61,7 +151,9 @@ class DashboardController extends Controller
             ->with([
                 'match.arena',
                 'match.red.athletes',
+                'match.red.contingent',
                 'match.blue.athletes',
+                'match.blue.contingent',
                 'match.bracket.weightClass.tournament',
             ])
             ->get();
@@ -79,7 +171,9 @@ class DashboardController extends Controller
                     'gelanggang' => $match->arena?->name,
                     'waktu' => $match->scheduled_at?->translatedFormat('D, d M H:i'),
                     'merah' => $match->red?->athletes->pluck('name')->implode(', '),
+                    'merah_kontingen' => $match->red?->contingent->name,
                     'biru' => $match->blue?->athletes->pluck('name')->implode(', '),
+                    'biru_kontingen' => $match->blue?->contingent->name,
                     'berlangsung' => $match->status === SilatMatch::STATUS_BERLANGSUNG,
                     'url' => route(
                         $tugas->role === MatchOfficial::ROLE_WASIT
@@ -89,58 +183,6 @@ class DashboardController extends Controller
                     ),
                 ];
             })
-            ->values()
-            ->all();
-    }
-
-    /**
-     * Pengguna baru per bulan, 6 bulan terakhir. Dihitung per bulan lewat
-     * `whereBetween`, bukan `groupBy` tanggal mentah, supaya hasilnya sama di
-     * MySQL maupun SQLite (yang dipakai saat pengujian).
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function monthlySignups(): array
-    {
-        $months = collect(range(5, 0))->map(fn (int $ago) => now()->subMonths($ago)->startOfMonth());
-
-        return $months->map(fn (Carbon $month) => [
-            'label' => $month->translatedFormat('M'),
-            'value' => User::whereBetween('created_at', [$month, $month->copy()->endOfMonth()])->count(),
-        ])->all();
-    }
-
-    /**
-     * Catatan terbaru lintas modul, digabung dan diurutkan ulang di memori.
-     * Bukan audit log sungguhan — cukup untuk menunjukkan sesuatu sedang
-     * terjadi di aplikasi.
-     *
-     * @return array<int, array<string, string>>
-     */
-    private function recentActivity(): array
-    {
-        $entries = collect()
-            ->concat(User::latest()->take(3)->get()->map(fn (User $user) => [
-                'text' => "Pengguna {$user->name} ditambahkan",
-                'at' => $user->created_at,
-            ]))
-            ->concat(Role::latest()->take(3)->get()->map(fn (Role $role) => [
-                'text' => "Role {$role->name} dibuat",
-                'at' => $role->created_at,
-            ]))
-            ->concat(Resource::latest()->take(3)->get()->map(fn (Resource $resource) => [
-                'text' => "Resource {$resource->key} dibuat",
-                'at' => $resource->created_at,
-            ]));
-
-        return $entries
-            ->filter(fn (array $entry) => $entry['at'] !== null)
-            ->sortByDesc('at')
-            ->take(6)
-            ->map(fn (array $entry) => [
-                'text' => $entry['text'],
-                'time' => $entry['at']->diffForHumans(),
-            ])
             ->values()
             ->all();
     }

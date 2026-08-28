@@ -41,7 +41,7 @@
 
         <x-ui.card title="Juara Kelas Tanding">
             @if ($tanding->isEmpty())
-                <x-ui.empty-state title="Belum ada kelas yang selesai" description="Juara muncul setelah hasil final disahkan dewan juri." />
+                <x-ui.empty-state title="Belum ada kelas yang selesai" description="Juara muncul setelah hasil final disahkan Dewan Wasit Juri." />
             @else
                 <div class="divide-y divide-line">
                     @foreach ($tanding as $baris)

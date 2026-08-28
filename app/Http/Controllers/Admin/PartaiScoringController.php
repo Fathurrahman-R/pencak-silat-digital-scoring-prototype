@@ -9,6 +9,7 @@ use App\Events\Scoring\MatchStateChanged;
 use App\Events\Scoring\PenaltyIssued;
 use App\Events\Scoring\TimerTicked;
 use App\Http\Controllers\Controller;
+use App\Models\MatchOfficial;
 use App\Models\Penalty;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
@@ -136,12 +137,33 @@ class PartaiScoringController extends Controller
             'skor_biru' => $this->kalkulator->skorBabak($match, Sudut::Biru, $r->round),
         ]);
 
+        $nilai = $match->scoreEvents()->berlaku()->with('judgeInputs:id,score_event_id,judge_user_id')
+            ->orderBy('server_ts')->get();
+        $hukuman = $match->penalties()->berlaku()->orderBy('created_at')->get();
+
+        /*
+         * Berita acara ditandatangani dan diarsipkan. Tanpa kolom penekan, ia
+         * mencatat bahwa sebuah nilai terbit tapi tidak mencatat siapa yang
+         * menerbitkannya -- justru pertanyaan pertama yang muncul saat hasilnya
+         * dipersoalkan di kemudian hari. Datanya sudah tersimpan di
+         * `judge_inputs`; yang kurang hanya penyajiannya.
+         */
+        $sebutan = $match->officials->mapWithKeys(fn ($o) => [$o->user_id => $o->sebutan()]);
+
+        $penekan = $nilai->mapWithKeys(fn ($n) => [$n->id => $n->judgeInputs
+            ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
+            ->filter()->unique()->sort()->values()->implode(', ') ?: null]);
+
+        $pencatat = $hukuman->mapWithKeys(fn ($h) => [$h->id => $sebutan[$h->created_by] ?? null]);
+
         $pdf = Pdf::loadView('admin.rekap.berita-acara', [
             'match' => $match,
             'rounds' => $rounds,
             'skorTotal' => ['merah' => $this->kalkulator->skor($match, Sudut::Merah), 'biru' => $this->kalkulator->skor($match, Sudut::Biru)],
-            'nilai' => $match->scoreEvents()->berlaku()->orderBy('server_ts')->get(),
-            'hukuman' => $match->penalties()->berlaku()->orderBy('created_at')->get(),
+            'nilai' => $nilai,
+            'hukuman' => $hukuman,
+            'penekan' => $penekan,
+            'pencatat' => $pencatat,
             'peraturan' => $babakSekarang,
         ])->setPaper('a4');
 
@@ -170,8 +192,18 @@ class PartaiScoringController extends Controller
             'orientation' => 'portrait',
             'background_color' => '#0b0b0c',
             'theme_color' => '#0b0b0c',
+            /*
+             * PNG didaftarkan lebih dulu, vektor menyusul. Sebagian peluncur --
+             * iOS Safari yang paling menonjol -- menolak memasang ikon vektor
+             * dan akan melewati manifest ini seluruhnya kalau tidak ada raster
+             * yang bisa dipakai. Ukurannya 192 dan 512 karena itu dua ukuran
+             * yang diperiksa Chrome saat menentukan sebuah halaman layak
+             * dipasang atau tidak.
+             */
             'icons' => [
-                ['src' => '/icons/juri.svg', 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any maskable'],
+                ['src' => '/icons/juri-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any maskable'],
+                ['src' => '/icons/juri-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'],
+                ['src' => '/icons/juri.svg', 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any'],
             ],
         ])->header('Content-Type', 'application/manifest+json');
     }
@@ -530,23 +562,39 @@ class PartaiScoringController extends Controller
      */
     private function riwayat(SilatMatch $match): array
     {
-        $nilai = $match->scoreEvents()->berlaku()->latest('id')->limit(30)->get()->map(fn ($s) => [
-            'tipe' => 'nilai',
-            'id' => $s->id,
-            'round' => $s->round,
-            'corner' => $s->corner->value,
-            'label' => "{$s->point_type->label()} ({$s->value})",
-            'waktu' => $s->server_ts->toIso8601String(),
-        ]);
+        /*
+         * Sebutan aparat dipetakan sekali di sini, bukan di-query per baris.
+         * Panel dewan juri sanggup menampilkan 60 baris sekaligus; menanyakan
+         * nama tiap penekan satu per satu akan jadi puluhan query untuk satu
+         * halaman yang dibuka justru saat pertandingan sedang disengketakan.
+         */
+        $sebutan = $match->officials()->with('user:id,name')->get()
+            ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
 
-        $hukuman = $match->penalties()->berlaku()->latest('id')->limit(30)->get()->map(fn ($p) => [
-            'tipe' => 'hukuman',
-            'id' => $p->id,
-            'round' => $p->round,
-            'corner' => $p->corner->value,
-            'label' => "{$p->tier->label()} ".($p->points !== null ? $p->points : '(DQ)'),
-            'waktu' => $p->created_at->toIso8601String(),
-        ]);
+        $nilai = $match->scoreEvents()->berlaku()->with('judgeInputs:id,score_event_id,judge_user_id')
+            ->latest('id')->limit(30)->get()->map(fn ($s) => [
+                'tipe' => 'nilai',
+                'id' => $s->id,
+                'round' => $s->round,
+                'corner' => $s->corner->value,
+                'label' => "{$s->point_type->label()} ({$s->value})",
+                'waktu' => $s->server_ts->toIso8601String(),
+                // Urut supaya "Juri 1, Juri 3" tidak berganti-ganti urutan tiap resync.
+                'oleh' => $s->judgeInputs
+                    ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
+                    ->filter()->unique()->sort()->values()->implode(', ') ?: null,
+            ]);
+
+        $hukuman = $match->penalties()->berlaku()->with('pencatat:id,name')
+            ->latest('id')->limit(30)->get()->map(fn ($p) => [
+                'tipe' => 'hukuman',
+                'id' => $p->id,
+                'round' => $p->round,
+                'corner' => $p->corner->value,
+                'label' => "{$p->tier->label()} ".($p->points !== null ? $p->points : '(DQ)'),
+                'waktu' => $p->created_at->toIso8601String(),
+                'oleh' => $sebutan[$p->created_by] ?? $p->pencatat?->name,
+            ]);
 
         return $nilai->concat($hukuman)->sortByDesc('waktu')->values()->all();
     }

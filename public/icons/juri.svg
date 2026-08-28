@@ -1,12 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
     <!--
-        Ikon PWA panel juri. Vektor, satu berkas untuk semua ukuran (sizes
-        "any" di manifest) -- tidak ada alat rasterisasi PNG di lingkungan
-        ini, dan target pemakaiannya (Android Chrome, "Tambahkan ke layar
-        utama") membaca SVG dengan baik. iOS Safari kurang mulus dengan ikon
-        SVG untuk home screen; itu keterbatasan yang disadari, bukan alpa --
-        prioritasnya Android karena itu perangkat yang lazim dipegang juri di
-        gelanggang.
+        Ikon PWA panel juri. Vektor, satu berkas untuk semua ukuran
+        (sizes "any" di manifest).
+
+        JANGAN memakai tanda hubung ganda di dalam komentar ini. XML melarangnya,
+        dan satu saja membuat seluruh berkas gagal diurai: peramban menolak
+        merendernya sebagai gambar sama sekali, sehingga manifest PWA panel juri
+        ikut ditolak dengan "Download error or resource isn't a valid image".
+        Persis itu yang pernah terjadi di sini.
+
+        Pendamping PNG (juri-192.png, juri-512.png) tetap disediakan untuk
+        peluncur yang tidak mau memasang ikon vektor, terutama iOS Safari.
     -->
     <clipPath id="bulat"><rect width="512" height="512" rx="96"/></clipPath>
     <g clip-path="url(#bulat)">

@@ -99,23 +99,29 @@ it('menyembunyikan partai yang sudah selesai', function () {
         ->assertDontSee('Partai saya');
 });
 
-it('menyembunyikan ringkasan pengelolaan aplikasi dari aparat pertandingan', function () {
+/*
+ * Penanda ringkasan berubah dari 'Pengguna baru' dan 'Mulai dari mana' -- dua
+ * judul warisan boilerplate (grafik pendaftaran pengguna dan panduan membuat
+ * Resource) yang dibuang saat dashboard diarahkan ke isi kejuaraan. Penggantinya
+ * adalah judul yang benar-benar berarti bagi panitia.
+ */
+it('menyembunyikan ringkasan pengelolaan kejuaraan dari aparat pertandingan', function () {
     $juri = ($this->tugaskan)('juri', MatchOfficial::ROLE_JURI, 1);
 
     $this->actingAs($juri)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertDontSee('Pengguna baru')
-        ->assertDontSee('Mulai dari mana');
+        ->assertDontSee('Partai hari ini')
+        ->assertDontSee('Urutan kerja kejuaraan');
 });
 
-it('tetap menampilkan ringkasan untuk pengelola pengguna', function () {
+it('tetap menampilkan ringkasan untuk pengelola kejuaraan', function () {
     $admin = User::factory()->create();
     $admin->syncRoles([config('resources.super_admin_role')]);
 
     $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Pengguna baru')
+        ->assertSee('Urutan kerja kejuaraan')
         ->assertDontSee('Partai saya');
 });

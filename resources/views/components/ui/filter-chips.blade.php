@@ -5,6 +5,14 @@
     'options' => [],
     // Label untuk keadaan "tidak difilter".
     'all' => 'Semua',
+    /*
+     * Nilai yang dianggap sedang aktif. Biasanya tidak perlu diisi -- diambil
+     * dari query string. Diisi hanya kalau halaman punya penyaring BAWAAN yang
+     * berlaku meski query string kosong; tanpa ini chip "Semua" akan menyala
+     * padahal daftarnya sedang tersaring, dan pengguna menyimpulkan data yang
+     * tidak muncul itu memang tidak ada.
+     */
+    'current' => null,
 ])
 
 {{--
@@ -17,7 +25,7 @@
 --}}
 
 @php
-    $current = request()->query($param);
+    $current ??= request()->query($param);
     $base = request()->query();
     unset($base['page']);
 

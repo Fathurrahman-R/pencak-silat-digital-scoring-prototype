@@ -23,9 +23,9 @@ class BracketController extends Controller
 {
     public function __construct(private readonly BracketGenerator $generator) {}
 
-    public function index(Tournament $tournament): View
+    public function index(Request $request, Tournament $tournament): View
     {
-        $kelas = $tournament->weightClasses()->aktif()->get()
+        $semua = $tournament->weightClasses()->aktif()->get()
             ->map(function (WeightClass $k) {
                 $k->setRelation('bracket', $k->bracket()->withCount('slots')->first());
                 $k->peserta_sah = $this->generator->pesertaSah($k)->count();
@@ -35,9 +35,42 @@ class BracketController extends Controller
             ->sortBy('sort_order')
             ->values();
 
+        /*
+         * Naskah menurunkan 174 kelas tanding, dan satu kejuaraan biasa hanya
+         * memakai belasan di antaranya. Menampilkan seluruhnya berarti daftar
+         * sepanjang belasan layar yang 99% barisnya berbunyi "0 peserta sah",
+         * dengan kelas yang benar-benar dipakai terkubur di tengahnya.
+         *
+         * Karena itu bawaannya menyaring ke kelas yang sudah punya peserta atau
+         * sudah punya bagan. Kelas yang disembunyikan tetap dihitung dan
+         * jumlahnya disebut di layar, supaya penyaringan ini tidak pernah
+         * terasa seperti data yang hilang.
+         */
+        $tampil = $request->query('tampil', 'terpakai');
+        $cari = trim((string) $request->query('q', ''));
+
+        $kelas = $semua
+            ->when($tampil === 'terpakai', fn ($daftar) => $daftar->filter(
+                fn (WeightClass $k) => $k->peserta_sah > 0 || $k->bracket !== null
+            ))
+            ->when($tampil === 'tersusun', fn ($daftar) => $daftar->filter(
+                fn (WeightClass $k) => $k->bracket !== null
+            ))
+            ->when($cari !== '', fn ($daftar) => $daftar->filter(
+                fn (WeightClass $k) => str_contains(
+                    mb_strtolower($k->name.' '.$k->jenis_kelamin->label().' '.$k->golongan_usia->label()),
+                    mb_strtolower($cari)
+                )
+            ))
+            ->values();
+
         return view('admin.bagan.index', [
             'tournament' => $tournament,
             'kelas' => $kelas,
+            'jumlahSemua' => $semua->count(),
+            'jumlahTerpakai' => $semua->filter(fn (WeightClass $k) => $k->peserta_sah > 0 || $k->bracket !== null)->count(),
+            'tampil' => $tampil,
+            'cari' => $cari,
         ]);
     }
 

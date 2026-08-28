@@ -66,7 +66,9 @@ it('menampilkan panel dewan juri', function () {
     $this->actingAs($pengawas)
         ->get(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
         ->assertOk()
-        ->assertSee('DEWAN JURI');
+        // Sebutan badan ini disatukan jadi 'Dewan Wasit Juri', mengikuti label
+        // role di SilatRoleSeeder dan blok tanda tangan berita acara.
+        ->assertSee('DEWAN WASIT JURI');
 });
 
 it('mengizinkan juri melihat panel operator sebagai pemantau, meski tombolnya tersembunyi lewat @resource', function () {

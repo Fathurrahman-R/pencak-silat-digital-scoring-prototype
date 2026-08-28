@@ -62,6 +62,14 @@ class StatePartaiPublik
                 'jenis_kelamin' => $match->bracket->weightClass->jenis_kelamin->label(),
             ],
             'babak_label' => $match->bracket->namaBabak($match->round),
+            /*
+             * Jumlah babak ikut dikirim supaya overlay bisa menulis "Babak 2/3".
+             * `babak_label` di atas adalah tahap bagan ("Semifinal"), bukan babak
+             * pertandingan — dua hal berbeda yang sebelumnya membuat scorebug
+             * siaran tidak pernah menyebut babak keberapa yang sedang berjalan.
+             */
+            'jumlah_babak' => $match->bracket->weightClass->tournament->peraturan()
+                ->babakUntuk($match->bracket->weightClass->golongan_usia)['jumlah'],
             'red' => $match->red ? [
                 'nama' => $match->red->athletes->pluck('name')->implode(', '),
                 'kontingen' => $match->red->contingent->name,

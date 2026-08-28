@@ -68,6 +68,14 @@
     --silat-teguran: #d98324;
     --silat-peringatan: #d42027;
 
+    /* Kendali operator. Tombol aksi TIDAK boleh memakai merah atau biru: di
+       layar yang sama kedua warna itu adalah identitas sudut pesilat, dan
+       tombol "Akhiri partai" berwarna merah terbaca seolah-olah berhubungan
+       dengan sudut merah. Aksi utama karena itu berupa bidang terang dengan
+       teks gelap — jelas berbeda dari apa pun yang berarti sudut. */
+    --silat-aksi: #e8e8ea;
+    --silat-aksi-teks: #111114;
+
     /* Ukuran. Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat
        lama, jadi 64px adalah batas bawah yang tidak boleh ditawar. */
     --silat-sentuh-min: 64px;
@@ -94,6 +102,9 @@
     --color-silat-teks-redup: var(--silat-teks-redup);
     --color-silat-teks-samar: var(--silat-teks-samar);
     --color-silat-emas: var(--silat-emas);
+
+    --color-silat-aksi: var(--silat-aksi);
+    --color-silat-aksi-teks: var(--silat-aksi-teks);
 
     --color-silat-pembinaan: var(--silat-pembinaan);
     --color-silat-teguran: var(--silat-teguran);

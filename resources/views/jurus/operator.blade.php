@@ -21,7 +21,7 @@
             @resource(rk('penampilan-jurus', ResourceAction::Update))
                 <div class="mt-4 flex justify-center gap-2">
                     <button type="button" x-show="performance.status === 'terjadwal'" x-on:click="mulai()"
-                            class="rounded-silat bg-silat-biru px-5 py-2 text-[13px] text-silat-teks">
+                            class="rounded-silat bg-silat-aksi px-5 py-2 text-[13px] font-medium text-silat-aksi-teks">
                         Mulai
                     </button>
                     <button type="button" x-show="performance.status === 'berlangsung'" x-on:click="berhenti()"
@@ -43,7 +43,7 @@
             </div>
             <div class="rounded-silat bg-silat-panel p-3">
                 <p class="text-[11px] text-silat-teks-redup">Skor Akhir</p>
-                <p class="silat-angka text-[20px] font-medium text-silat-emas" x-text="performance.didiskualifikasi ? 'DQ' : skor.akhir.toFixed(2)"></p>
+                <p class="silat-angka text-[20px] font-medium text-silat-teks" x-text="performance.didiskualifikasi ? 'DQ' : skor.akhir.toFixed(2)"></p>
             </div>
         </div>
 
@@ -107,7 +107,7 @@
         @resource(rk('hasil-jurus', ResourceAction::Approve))
             <div class="rounded-silat bg-silat-panel p-4 text-center">
                 <template x-if="performance.status === 'selesai' && ! performance.ratified">
-                    <button type="button" x-on:click="sahkan()" class="rounded-silat bg-silat-biru px-5 py-2 text-[13px] text-silat-teks">
+                    <button type="button" x-on:click="sahkan()" class="rounded-silat bg-silat-aksi px-5 py-2 text-[13px] font-medium text-silat-aksi-teks">
                         Sahkan skor akhir
                     </button>
                 </template>

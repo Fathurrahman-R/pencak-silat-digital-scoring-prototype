@@ -14,7 +14,7 @@
         <x-ui.icon name="menu" class="size-5" />
     </button>
 
-    <x-ui.breadcrumb :items="$breadcrumb" :root="config('app.name')" class="hidden min-w-0 sm:block" />
+    <x-ui.breadcrumb :items="$breadcrumb" :root="config('app.name')" class="min-w-0" />
 
     <div class="min-w-0 flex-1"></div>
 

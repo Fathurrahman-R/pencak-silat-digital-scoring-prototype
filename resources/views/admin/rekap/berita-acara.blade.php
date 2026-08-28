@@ -28,7 +28,7 @@
     <table>
         <tr>
             <th>Sudut</th>
-            <th>Atlet</th>
+            <th>Pesilat</th>
             <th>Kontingen</th>
             <th>Skor Total</th>
         </tr>
@@ -49,7 +49,7 @@
     <p>
         <strong>Status:</strong> {{ $match->disahkan() ? 'Sah — disahkan '.$match->ratified_at->translatedFormat('d M Y, H:i') : 'Belum disahkan' }}<br>
         @if ($match->win_reason)
-            <strong>Hasil:</strong> Menang {{ $match->win_reason }}
+            <strong>Hasil:</strong> {{ App\Support\Scoring\AlasanMenang::label($match->win_reason) }}
         @endif
     </p>
 
@@ -67,7 +67,7 @@
 
     <p class="section-title">Daftar Nilai</p>
     <table>
-        <tr><th>Babak</th><th>Sudut</th><th>Jenis</th><th>Nilai</th><th>Waktu</th></tr>
+        <tr><th>Babak</th><th>Sudut</th><th>Jenis</th><th>Nilai</th><th>Waktu</th><th>Juri</th></tr>
         @forelse ($nilai as $n)
             <tr>
                 <td class="center">{{ $n->round }}</td>
@@ -75,15 +75,16 @@
                 <td>{{ $n->point_type->label() }}</td>
                 <td class="center">{{ $n->value }}</td>
                 <td>{{ $n->server_ts->format('H:i:s') }}</td>
+                <td>{{ $penekan[$n->id] ?? '—' }}</td>
             </tr>
         @empty
-            <tr><td colspan="5" class="center">Tidak ada nilai tercatat.</td></tr>
+            <tr><td colspan="6" class="center">Tidak ada nilai tercatat.</td></tr>
         @endforelse
     </table>
 
     <p class="section-title">Daftar Hukuman</p>
     <table>
-        <tr><th>Babak</th><th>Sudut</th><th>Tahap</th><th>Level</th><th>Pengurangan</th><th>Tingkat Pelanggaran</th></tr>
+        <tr><th>Babak</th><th>Sudut</th><th>Tahap</th><th>Level</th><th>Pengurangan</th><th>Tingkat Pelanggaran</th><th>Dicatat oleh</th></tr>
         @forelse ($hukuman as $h)
             <tr>
                 <td class="center">{{ $h->round }}</td>
@@ -92,9 +93,10 @@
                 <td class="center">{{ $h->level }}</td>
                 <td class="center">{{ $h->points ?? '(DQ)' }}</td>
                 <td>{{ $h->violation_level?->label() }}</td>
+                <td>{{ $pencatat[$h->id] ?? '—' }}</td>
             </tr>
         @empty
-            <tr><td colspan="6" class="center">Tidak ada hukuman tercatat.</td></tr>
+            <tr><td colspan="7" class="center">Tidak ada hukuman tercatat.</td></tr>
         @endforelse
     </table>
 

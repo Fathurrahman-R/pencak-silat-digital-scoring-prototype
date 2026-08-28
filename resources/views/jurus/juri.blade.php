@@ -20,7 +20,7 @@
         <div class="rounded-silat bg-silat-panel p-5">
             <p class="mb-3 text-center text-[13px] text-silat-teks-redup">
                 Nilai saya (9.00–10.00)
-                <span x-show="nilaiSaya !== null" class="text-silat-emas">· tersimpan</span>
+                <span x-show="nilaiSaya !== null" class="text-emerald-300">· tersimpan</span>
             </p>
 
             <form x-on:submit.prevent="kirimNilaiInput()" class="flex flex-col items-center gap-3">
@@ -29,7 +29,7 @@
                     x-model="nilaiInput"
                     class="silat-angka w-40 rounded-silat border border-silat-garis bg-silat-latar px-3 py-3 text-center text-[32px] text-silat-teks"
                 >
-                <button type="submit" class="w-full rounded-silat bg-silat-biru px-4 py-3 text-[14px] text-silat-teks">
+                <button type="submit" class="min-h-16 w-full rounded-silat bg-silat-aksi px-4 text-[14px] font-medium text-silat-aksi-teks">
                     Kirim nilai
                 </button>
             </form>

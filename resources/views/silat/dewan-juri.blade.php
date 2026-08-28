@@ -1,10 +1,10 @@
 @php use App\Enums\ResourceAction; @endphp
 
-<x-layouts.silat :title="'Dewan Juri — '.$match->bracket->weightClass->name">
+<x-layouts.silat :title="'Dewan Wasit Juri — '.$match->bracket->weightClass->name">
     <div x-data="partaiPanel(@js($config))" class="mx-auto flex min-h-screen max-w-4xl flex-col gap-4 p-4">
         <header class="flex items-center justify-between gap-4">
             <div>
-                <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">DEWAN JURI</p>
+                <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">DEWAN WASIT JURI</p>
                 <h1 class="text-[17px] font-medium text-silat-teks">
                     {{ $match->bracket->weightClass->jenis_kelamin->label() }}
                     {{ $match->bracket->weightClass->golongan_usia->label() }} —
@@ -20,11 +20,7 @@
                     </a>
                 @endresource
 
-                <span
-                    class="rounded-full px-3 py-1 text-[11px] tracking-wide"
-                    x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
-                    x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
-                ></span>
+                <x-silat.indikator-koneksi />
             </div>
         </header>
 
@@ -37,15 +33,16 @@
         </div>
 
         {{-- Pengesahan hasil --}}
-        <div x-show="sudahSelesai" x-cloak class="rounded-silat bg-silat-panel p-4">
+        <div x-show="sudahSelesai" x-cloak x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }"
+             class="rounded-silat bg-silat-panel p-4">
             <p class="text-[13px] text-silat-teks">
-                Partai selesai — <span x-text="match.win_reason"></span>,
+                Partai selesai — <span x-text="sebabLabel[match?.win_reason] ?? match?.win_reason"></span>,
                 sudut <span x-text="match.winner_registration_id === match.red?.registration_id ? 'merah' : 'biru'"></span> menang.
             </p>
 
             @resource(rk('hasil-partai', ResourceAction::Approve))
                 <button type="button" x-show="! match.ratified" x-on:click="sahkan()"
-                        class="mt-3 rounded-silat bg-silat-biru px-4 py-2 text-[13px] text-silat-teks">
+                        class="mt-3 rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">
                     Sahkan hasil
                 </button>
                 <p x-show="match.ratified" class="mt-3 text-[13px] text-emerald-300">Sudah disahkan.</p>
@@ -68,11 +65,26 @@
                 <div class="divide-y divide-silat-garis">
                     <template x-for="baris in riwayat" :key="baris.tipe + '-' + baris.id">
                         <div class="flex items-center justify-between gap-3 py-2.5" x-data="{ alasan: '' }">
+                            {{--
+                                Waktu dan penekan bukan hiasan: panel ini dibuka justru
+                                ketika satu nilai disengketakan, dan tanpa keduanya belasan
+                                baris berbunyi persis sama ("Biru · Babak 1 · Pukulan (1)").
+                                Dewan juri jadi tidak punya cara menunjuk baris mana yang
+                                keliru. Cap waktunya sudah lama ikut di muatan riwayat dan
+                                sudah dicetak di berita acara PDF — hanya belum pernah
+                                ditampilkan di layar yang paling membutuhkannya.
+                            --}}
                             <div class="min-w-0">
                                 <p class="text-[13px] text-silat-teks">
                                     <span x-text="baris.corner === 'red' ? 'Merah' : 'Biru'"></span>
                                     · Babak <span x-text="baris.round"></span>
                                     · <span x-text="baris.label"></span>
+                                </p>
+                                <p class="mt-0.5 text-[11px] text-silat-teks-redup">
+                                    <span class="silat-angka" x-text="new Date(baris.waktu).toLocaleTimeString('id-ID', { hour12: false })"></span>
+                                    <template x-if="baris.oleh">
+                                        <span>· <span x-text="baris.oleh"></span></span>
+                                    </template>
                                 </p>
                             </div>
 

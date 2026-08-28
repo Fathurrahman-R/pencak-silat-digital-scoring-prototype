@@ -7,8 +7,12 @@
 
 @php
     $latar = $sudut === 'blue' ? 'bg-silat-biru' : 'bg-silat-merah';
-    $redup = $sudut === 'blue' ? 'text-[#9ebbea]' : 'text-[#f5afb2]';
-    $samar = $sudut === 'blue' ? 'text-[#cbdbf7]' : 'text-[#fbd9da]';
+
+    // Lihat catatan di <x-silat.blok-sudut>: nuansa merah muda lama hanya 2.89:1
+    // di atas #d42027 sementara padanan birunya 4.63:1, jadi identitas pesilat
+    // merah selalu lebih sulit dibaca. Angka di bawah sudah dihitung >= 4.5:1.
+    $redup = $sudut === 'blue' ? 'text-[#9ebbea]' : 'text-[#fff0f0]';
+    $samar = $sudut === 'blue' ? 'text-[#cbdbf7]' : 'text-[#fff5f5]';
     $namaSudut = $sudut === 'blue' ? 'Sudut biru' : 'Sudut merah';
     $kanan = $rata === 'kanan';
 @endphp

@@ -12,11 +12,7 @@
                 </h1>
             </div>
 
-            <span
-                class="rounded-full px-3 py-1 text-[11px] tracking-wide"
-                x-bind:class="$store.koneksi.tersambung ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'"
-                x-text="$store.koneksi.tersambung ? 'Tersambung' : 'Terputus'"
-            ></span>
+            <x-silat.indikator-koneksi />
         </header>
 
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
@@ -38,7 +34,7 @@
                     <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
                             class="rounded-silat bg-silat-mati px-4 py-2 text-[13px] text-silat-teks">Hentikan sementara</button>
                     <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
-                            class="rounded-silat bg-silat-biru px-4 py-2 text-[13px] text-silat-teks">Lanjutkan</button>
+                            class="rounded-silat bg-silat-aksi px-4 py-2 text-[13px] font-medium text-silat-aksi-teks">Lanjutkan</button>
                 </div>
             @endresource
         </div>
@@ -54,30 +50,56 @@
                     <div class="rounded-silat bg-silat-panel p-4">
                         <p class="mb-3 text-[13px] font-medium text-silat-teks">Sudut {{ $sudutLabel }}</p>
 
+                        {{--
+                            Kata yang dibaca lebih dulu adalah istilah naskah — Pembinaan,
+                            Teguran, Peringatan (Pasal 11.6.d.4) — bukan ringan/sedang/berat.
+                            Wasit menghafal peraturan dalam istilah itu, dan tiap tingkat
+                            punya akibat angka yang berbeda; memaksanya menerjemahkan sendiri
+                            saat pertandingan berjalan adalah tempat kesalahan lahir.
+
+                            Sebutan sehari-hari tetap ditahan sebagai baris kedua, karena
+                            sebagian wasit memang memakainya di gelanggang. Yang berubah
+                            hanya mana yang jadi label utama.
+
+                            Warna teks mengikuti latar tombolnya, bukan satu aturan seragam:
+                            di atas oranye teguran (#d98324) teks putih hanya mencapai
+                            2.75:1, sedangkan teks gelap 7.63:1. Menyeragamkannya jadi putih
+                            akan mengulang persis cacat yang diperbaiki di sini.
+                        --}}
                         <div class="mb-3 grid grid-cols-3 gap-2">
-                            <button type="button" x-on:click="kirimHukuman('{{ $sudutKey }}', 'ringan', null)"
-                                    class="rounded-silat bg-silat-pembinaan px-2 py-2.5 text-[12px] text-silat-teks">
-                                Ringan<br><span class="text-silat-teks-samar">(pembinaan)</span>
-                            </button>
-                            <button type="button" x-on:click="kirimHukuman('{{ $sudutKey }}', 'sedang', null)"
-                                    class="rounded-silat bg-silat-teguran px-2 py-2.5 text-[12px] text-silat-teks">
-                                Sedang<br><span class="text-silat-teks-samar">(teguran)</span>
-                            </button>
-                            <button type="button" x-on:click="kirimHukuman('{{ $sudutKey }}', 'berat', null)"
-                                    class="rounded-silat bg-silat-peringatan px-2 py-2.5 text-[12px] text-silat-teks">
-                                Berat<br><span class="text-silat-teks-samar">(peringatan)</span>
-                            </button>
+                            @php
+                                $tingkatHukuman = [
+                                    ['kirim' => 'ringan', 'resmi' => 'Pembinaan', 'sehari' => 'ringan', 'latar' => 'bg-silat-pembinaan', 'teks' => 'text-silat-teks', 'kedua' => 'text-white'],
+                                    ['kirim' => 'sedang', 'resmi' => 'Teguran', 'sehari' => 'sedang', 'latar' => 'bg-silat-teguran', 'teks' => 'text-silat-latar', 'kedua' => 'text-silat-latar/75'],
+                                    ['kirim' => 'berat', 'resmi' => 'Peringatan', 'sehari' => 'berat', 'latar' => 'bg-silat-peringatan', 'teks' => 'text-silat-teks', 'kedua' => 'text-white'],
+                                ];
+                            @endphp
+
+                            @foreach ($tingkatHukuman as $tingkat)
+                                <button type="button"
+                                        x-on:click="kirimHukuman('{{ $sudutKey }}', '{{ $tingkat['kirim'] }}', null)"
+                                        aria-label="{{ $tingkat['resmi'] }} untuk sudut {{ $sudutLabel }}"
+                                        class="flex min-h-16 flex-col items-center justify-center rounded-silat {{ $tingkat['latar'] }} px-2 py-2 {{ $tingkat['teks'] }}">
+                                    <span class="text-[14px] leading-tight font-medium">{{ $tingkat['resmi'] }}</span>
+                                    <span class="text-[11px] leading-tight {{ $tingkat['kedua'] }}">({{ $tingkat['sehari'] }})</span>
+                                </button>
+                            @endforeach
                         </div>
 
-                        <div class="flex items-center gap-2">
+                        {{-- Hitungan teknik juga ditekan sambil berdiri, jadi tingginya
+                             mengikuti batas sentuh yang sama (--silat-sentuh-min: 64px).
+                             Sebelumnya 30px, yang tidak pernah masuk akal untuk aksi
+                             waktu-kritis di tengah hitungan wasit. --}}
+                        <div class="flex items-stretch gap-2">
                             <input
                                 type="number" min="1" max="10"
+                                aria-label="Hitungan ke berapa untuk sudut {{ $sudutLabel }}"
                                 x-model.number="{{ $sudutKey === 'red' ? 'hitunganMerah' : 'hitunganBiru' }}"
-                                class="w-16 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[13px] text-silat-teks"
+                                class="silat-angka min-h-16 w-20 rounded-silat border border-silat-garis bg-silat-latar px-2 text-center text-[18px] text-silat-teks"
                             >
                             <button type="button"
                                     x-on:click="kirimHitungan('{{ $sudutKey }}', {{ $sudutKey === 'red' ? 'hitunganMerah' : 'hitunganBiru' }})"
-                                    class="flex-1 rounded-silat bg-silat-mati px-3 py-1.5 text-[12px] text-silat-teks">
+                                    class="min-h-16 flex-1 rounded-silat bg-silat-mati px-3 text-[14px] text-silat-teks">
                                 Catat hitungan
                             </button>
                         </div>

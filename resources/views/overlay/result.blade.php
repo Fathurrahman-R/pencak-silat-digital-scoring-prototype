@@ -1,10 +1,4 @@
-@php
-    $sebabLabel = [
-        'angka' => 'Menang Angka', 'teknik' => 'Menang Teknik', 'mutlak' => 'Menang Mutlak',
-        'wmp' => 'Menang WMP', 'undur_diri' => 'Menang Undur Diri', 'cedera' => 'Menang (Cedera)',
-        'wo' => 'Menang WO', 'diskualifikasi' => 'Menang Diskualifikasi',
-    ];
-@endphp
+@php($sebabLabel = App\Support\Scoring\AlasanMenang::peta())
 
 <x-layouts.overlay title="Papan hasil">
     {{--

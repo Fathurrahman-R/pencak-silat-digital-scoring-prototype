@@ -26,6 +26,7 @@ Alpine.data('overlayLive', (cfg) => ({
     match: null,
     kelas: null,
     babakLabel: null,
+    jumlahBabak: null,
     red: null,
     blue: null,
     skorTotal: { merah: 0, biru: 0 },
@@ -84,6 +85,7 @@ Alpine.data('overlayLive', (cfg) => ({
         this.match = data.match;
         this.kelas = data.kelas;
         this.babakLabel = data.babak_label;
+        this.jumlahBabak = data.jumlah_babak ?? null;
         this.red = data.red;
         this.blue = data.blue;
         this.skorTotal = data.skor_total;

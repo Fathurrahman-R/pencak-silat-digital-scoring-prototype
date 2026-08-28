@@ -9,7 +9,7 @@
     <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
         @csrf
 
-        <x-ui.input name="email" type="email" label="Email" placeholder="nama@perusahaan.com" required autofocus />
+        <x-ui.input name="email" type="email" label="Email" placeholder="nama@contoh.id" required autofocus />
 
         <x-ui.button type="submit" block>Kirim tautan reset</x-ui.button>
 
