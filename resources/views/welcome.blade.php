@@ -115,7 +115,7 @@
             @if ($medali->isNotEmpty())
                 {{-- Emas hanya di sini dan di halaman medali: begitu dipakai untuk
                      hal lain, ia berhenti berarti "juara". --}}
-                <div>
+                <div class="min-w-0">
                     <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
                         <span class="text-[11px] tracking-[.28em] uppercase">Perolehan medali</span>
                         <a href="{{ route('live.medali', $berjalan) }}" class="text-[12px] text-silat-teks-redup">Seluruh kontingen</a>
@@ -132,7 +132,11 @@
                 </div>
             @endif
 
-            <div>
+            {{-- min-w-0 wajib: lebar minimum sebuah item grid mengikuti isinya,
+                 jadi tanpa ini `truncate` di dalam tidak pernah bekerja dan
+                 nama kejuaraan yang panjang mendorong halaman melebar --
+                 di HP 375px halaman jadi bisa digulir ke samping. --}}
+            <div class="min-w-0">
                 <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
                     <span class="text-[11px] tracking-[.28em] uppercase">Kejuaraan</span>
                     <span class="text-[12px] text-silat-teks-redup">{{ $kejuaraan->count() }} terdaftar</span>
