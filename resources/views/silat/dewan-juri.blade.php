@@ -1,7 +1,13 @@
 @php use App\Enums\ResourceAction; @endphp
 
 <x-layouts.silat :title="'Dewan Wasit Juri — '.$match->bracket->weightClass->name">
-    <div x-data="partaiPanel(@js($config))" class="mx-auto flex min-h-screen max-w-4xl flex-col gap-4 p-4">
+    {{--
+        Panel ini dibuka justru saat satu nilai disengketakan, dan yang dibaca
+        adalah daftar panjang berisi puluhan baris. `max-w-4xl` memaksa tiap
+        baris menyempit sampai waktu, penekan, dan alasan pembatalan berdesakan
+        di kolom yang sama.
+    --}}
+    <div x-data="partaiPanel(@js($config))" class="flex min-h-screen flex-col gap-4 p-4">
         <header class="flex items-center justify-between gap-4">
             <div>
                 <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">DEWAN WASIT JURI</p>
@@ -62,6 +68,18 @@
                     <p class="text-[13px] text-silat-teks-redup">Belum ada nilai atau hukuman tercatat.</p>
                 </template>
 
+                {{--
+                    Setelah hasil disahkan, seluruh baris terkunci -- dan
+                    alasannya dinyatakan, bukan sekadar tombolnya dimatikan.
+                    Tombol mati tanpa penjelasan sama membingungkannya dengan
+                    tombol yang gagal diam-diam.
+                --}}
+                <div x-show="match.ratified" x-cloak
+                     class="mb-3 rounded-silat border-l-[3px] border-silat-tepi-kendali bg-silat-latar px-3 py-2">
+                    <p class="text-[13px] text-silat-teks">Hasil sudah disahkan, jadi riwayat ini terkunci.</p>
+                    <p class="mt-0.5 text-[12px] text-silat-teks-redup">Koreksi sesudah pengesahan hanya lewat protes manajer — Pasal 15 ayat 4.</p>
+                </div>
+
                 <div class="divide-y divide-silat-garis">
                     <template x-for="baris in riwayat" :key="baris.tipe + '-' + baris.id">
                         <div class="flex items-center justify-between gap-3 py-2.5" x-data="{ alasan: '' }">
@@ -75,7 +93,15 @@
                                 ditampilkan di layar yang paling membutuhkannya.
                             --}}
                             <div class="min-w-0">
-                                <p class="text-[13px] text-silat-teks">
+                                {{--
+                                    Sudut ditandai warna DAN kata. Belasan baris
+                                    di sini berbunyi hampir sama, dan mata
+                                    memisahkan dua kolom warna jauh lebih cepat
+                                    daripada membaca kata pertama tiap baris.
+                                --}}
+                                <p class="flex items-center gap-2 text-[13px] text-silat-teks">
+                                    <span class="size-2.5 shrink-0 rounded-full"
+                                          x-bind:class="baris.corner === 'red' ? 'bg-silat-merah' : 'bg-silat-biru'"></span>
                                     <span x-text="baris.corner === 'red' ? 'Merah' : 'Biru'"></span>
                                     · Babak <span x-text="baris.round"></span>
                                     · <span x-text="baris.label"></span>
@@ -88,16 +114,25 @@
                                 </p>
                             </div>
 
+                            {{--
+                                Membatalkan nilai mengubah hasil resmi, jadi
+                                sasarannya mengikuti batas sentuh gelanggang dan
+                                alasannya wajib -- keduanya tercetak di berita
+                                acara. Setelah pengesahan, tombolnya benar-benar
+                                mati; server menolak permintaannya juga, jadi UI
+                                di sini tidak berdiri sendiri sebagai penjaga.
+                            --}}
                             <div class="flex shrink-0 items-center gap-2">
                                 <input
                                     type="text" x-model="alasan" placeholder="Alasan pembatalan"
-                                    class="w-40 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[12px] text-silat-teks placeholder:text-silat-teks-samar"
+                                    x-bind:disabled="match.ratified"
+                                    class="min-h-[var(--silat-sentuh-min)] w-56 rounded-silat border border-silat-tepi-kendali bg-silat-latar px-3 text-[13px] text-silat-teks placeholder:text-silat-teks-redup disabled:opacity-45"
                                 >
                                 <button
                                     type="button"
                                     x-on:click="baris.tipe === 'nilai' ? batalkanNilai(baris.id, alasan) : batalkanHukuman(baris.id, alasan)"
-                                    x-bind:disabled="! alasan"
-                                    class="rounded-silat bg-silat-mati px-3 py-1.5 text-[12px] text-silat-teks disabled:opacity-40"
+                                    x-bind:disabled="! alasan || match.ratified"
+                                    class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-4 text-[14px] text-silat-teks disabled:opacity-45"
                                 >
                                     Batalkan
                                 </button>

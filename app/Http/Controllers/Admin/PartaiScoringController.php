@@ -412,6 +412,22 @@ class PartaiScoringController extends Controller
         $this->pastikanMilik($tournament, $match);
         abort_unless($scoreEvent->match_id === $match->id, 404);
 
+        /*
+         * Hasil yang sudah disahkan tidak bisa diubah lagi. Janji itu ditulis
+         * di panel Dewan Wasit Juri, dicetak di berita acara, dan jadi dasar
+         * kenapa bagan boleh maju ke tahap berikutnya -- tapi sampai sekarang
+         * tidak ada yang menegakkannya di sisi server: nilai maupun hukuman
+         * masih bisa dibatalkan setelah pengesahan.
+         *
+         * Koreksi sesudah pengesahan bukan tidak mungkin, tapi jalurnya protes
+         * manajer (Pasal 15 ayat 4), bukan tombol Batalkan di panel.
+         */
+        if ($match->disahkan()) {
+            throw ValidationException::withMessages([
+                'match' => 'Hasil partai ini sudah disahkan, jadi nilai dan hukumannya tidak bisa diubah lagi. Koreksi hanya lewat protes manajer.',
+            ]);
+        }
+
         $data = $request->validate(['alasan' => ['required', 'string', 'max:255']]);
 
         $scoreEvent->update([
@@ -430,6 +446,22 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         abort_unless($penalty->match_id === $match->id, 404);
+
+        /*
+         * Hasil yang sudah disahkan tidak bisa diubah lagi. Janji itu ditulis
+         * di panel Dewan Wasit Juri, dicetak di berita acara, dan jadi dasar
+         * kenapa bagan boleh maju ke tahap berikutnya -- tapi sampai sekarang
+         * tidak ada yang menegakkannya di sisi server: nilai maupun hukuman
+         * masih bisa dibatalkan setelah pengesahan.
+         *
+         * Koreksi sesudah pengesahan bukan tidak mungkin, tapi jalurnya protes
+         * manajer (Pasal 15 ayat 4), bukan tombol Batalkan di panel.
+         */
+        if ($match->disahkan()) {
+            throw ValidationException::withMessages([
+                'match' => 'Hasil partai ini sudah disahkan, jadi nilai dan hukumannya tidak bisa diubah lagi. Koreksi hanya lewat protes manajer.',
+            ]);
+        }
 
         $data = $request->validate(['alasan' => ['required', 'string', 'max:255']]);
 

@@ -5,7 +5,9 @@ use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Bracket;
 use App\Models\Contingent;
+use App\Models\Penalty;
 use App\Models\Registration;
+use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
@@ -134,4 +136,75 @@ it('menyajikan manifest PWA per partai dengan start_url menunjuk balik ke partai
         ->assertHeader('Content-Type', 'application/manifest+json')
         ->assertJsonPath('start_url', route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
         ->assertJsonPath('display', 'fullscreen');
+});
+
+/*
+ * Hasil yang sudah disahkan tidak bisa diubah lagi. Janji itu ditulis di panel
+ * Dewan Wasit Juri, dicetak di berita acara, dan jadi dasar kenapa bagan boleh
+ * maju ke tahap berikutnya -- tapi sampai ditemukan lewat pemeriksaan manual,
+ * tidak ada satu pun yang menegakkannya: nilai dan hukuman masih bisa
+ * dibatalkan sesudah pengesahan.
+ *
+ * Koreksi sesudah pengesahan bukan tidak mungkin, tapi jalurnya protes manajer
+ * (Pasal 15 ayat 4), bukan tombol Batalkan di panel.
+ */
+it('menolak membatalkan nilai setelah hasil partai disahkan', function () {
+    $dewan = ($this->buatUser)('pengawas-wasit-juri');
+
+    $nilai = ScoreEvent::create([
+        'match_id' => $this->match->id,
+        'round' => 1,
+        'corner' => 'red',
+        'point_type' => 'pukulan',
+        'value' => 1,
+        'server_ts' => now(),
+    ]);
+
+    $this->match->update([
+        'status' => SilatMatch::STATUS_SELESAI,
+        'winner_registration_id' => $this->match->red_registration_id,
+        'win_reason' => 'angka',
+        'ratified_at' => now(),
+        'ratified_by' => $dewan->id,
+    ]);
+
+    $this->actingAs($dewan)
+        ->from(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
+        ->post(route('admin.turnamen.partai.nilai.batal', [$this->tournament, $this->match, $nilai]), [
+            'alasan' => 'koreksi dewan juri',
+        ])
+        ->assertSessionHasErrors('match');
+
+    expect($nilai->fresh()->voided_at)->toBeNull();
+});
+
+it('menolak membatalkan hukuman setelah hasil partai disahkan', function () {
+    $dewan = ($this->buatUser)('pengawas-wasit-juri');
+
+    $hukuman = Penalty::create([
+        'match_id' => $this->match->id,
+        'round' => 1,
+        'corner' => 'red',
+        'tier' => 'teguran',
+        'level' => 1,
+        'violation_level' => 'sedang',
+        'value' => -1,
+    ]);
+
+    $this->match->update([
+        'status' => SilatMatch::STATUS_SELESAI,
+        'winner_registration_id' => $this->match->red_registration_id,
+        'win_reason' => 'angka',
+        'ratified_at' => now(),
+        'ratified_by' => $dewan->id,
+    ]);
+
+    $this->actingAs($dewan)
+        ->from(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
+        ->post(route('admin.turnamen.partai.hukuman.batal', [$this->tournament, $this->match, $hukuman]), [
+            'alasan' => 'koreksi dewan juri',
+        ])
+        ->assertSessionHasErrors('match');
+
+    expect($hukuman->fresh()->voided_at)->toBeNull();
 });
