@@ -154,6 +154,7 @@ const PASANGAN = [
     ['TERANG · tepi kendali di kertas (non-teks)', T.kTepiKendali, T.kKertas],
     ['TERANG · tepi kendali di kartu putih (non-teks)', T.kTepiKendali, T.kKertasNaik],
     ['TERANG · tombol utama: teks di bidang aksi', T.kAksiTeks, T.kAksi],
+    ['TERANG · penyaring aktif: teks di bidangnya', T.kAksiTeks, T.kAksi],
     ['TERANG · tombol kedua: teks di bidang lembut', T.kTinta, T.kAksiLembut],
     ['TERANG · sukses di lembutnya', T.kSukses, T.kSuksesLembut],
     // si/callout varian "berhasil" menaruh tinta biasa di atas bidang lembut,
@@ -202,6 +203,19 @@ const PASANGAN = [
     ['GELAP · nuansa merah redup di merah-dalam', T.gTeksMerahRedup, T.gMerahDalam],
     ['GELAP · nuansa biru di biru-dalam', T.gTeksBiru, T.gBiruDalam],
     ['GELAP · tombol aksi: teks gelap di bidang terang', T.gAksiTeks, T.gAksi],
+
+    /*
+     * Penyaring chip yang sedang berlaku memakai pasangan yang sama dengan
+     * tombol aksi. Ia sempat memakai `bg-ink text-surface`, dan di suasana
+     * gelap keduanya putih: chipnya tampil sebagai kotak kosong tanpa satu
+     * pun huruf. Kontrasnya 1.0, dan tidak ada satu pun uji di sini yang
+     * gagal -- pasangan itu memang tidak pernah didaftarkan.
+     *
+     * Kedua barisnya sengaja ditulis meski nilainya sama dengan tombol aksi:
+     * kalau chip aktif suatu saat dipisahkan dari tombol, angkanya sudah
+     * dijaga di sini lebih dulu.
+     */
+    ['GELAP · penyaring aktif: teks di bidangnya', T.gAksiTeks, T.gAksi],
     ['GELAP · emas di latar', T.gEmas, T.gLatar],
     ['GELAP · emas di panel', T.gEmas, T.gPanel],
     ['GELAP · teks putih di pembinaan', T.gTeks, T.gPembinaan],
