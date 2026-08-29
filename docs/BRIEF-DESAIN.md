@@ -644,13 +644,14 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
 | **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
+| **Rombongan 4 — sebagian** | Timbang badan, verifikasi pendaftaran, bagan bergaris pohon, jadwal, penugasan aparat |
 | **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
 
 ### 12.2 Belum
 
 | Bagian | Kenapa belum |
 |---|---|
-| **Rombongan 4 — panitia/admin** | 906 pemanggilan `x-ui.*` di 49 berkas. Menunggu layarnya digambar di kanvas lebih dulu — keputusan pemilik produk, karena rombongan ini yang paling banyak alurnya dan paling mahal kalau salah arah |
+| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk); empat sudah jadi kode: timbang badan, verifikasi pendaftaran, bagan, jadwal, plus penugasan aparat. Sisanya menunggu lapisan tabel bersama — `x-ui.table` dipakai 115 kali dan belum punya padanan `si/*` |
 | ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
 | **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
 
@@ -666,3 +667,8 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Papan hasil siaran tanpa skor dan tanpa penanda sudut**, dan diam soal hasil yang belum disahkan
 - **Pesan hasil tindakan hilang sendiri** setelah 6 detik
 - **Tombol berbahaya tak terbaca** di suasana gelap: putih di atas `#ff7b74` = 2.52
+- **Aparat bisa ditugaskan di dua gelanggang sekaligus.** Tidak ada satu pun pemeriksaan yang menegakkannya; yang ketahuan bukan sistemnya melainkan kursi juri yang kosong saat partai dimulai
+- **Verifikasi pendaftaran tanpa kotak cari,** memuat seluruh pendaftaran sekaligus beserta dokumen tiap atlet
+- **Timbang badan menggugurkan pesilat seketika** lewat satu tombol "Catat", tanpa satu kalimat pun sebelum atau sesudah
+- **Urutan jadwal hanya bisa digeser satu langkah,** masing-masing memuat ulang halaman: urutan 14 ke 2 berarti dua belas klik
+- **`confirm()` bawaan peramban** untuk mengacak ulang undian — kotak abu-abu tanpa rupa, tombolnya berbahasa peramban
