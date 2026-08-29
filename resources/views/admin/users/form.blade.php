@@ -4,19 +4,19 @@
     $isEdit = $user !== null;
 @endphp
 
-<x-ui.card :padding="false">
+<x-si.kartu :padding="false">
     <div class="grid gap-5 p-[26px] [grid-template-columns:repeat(auto-fit,minmax(250px,1fr))]">
-        <x-ui.input name="name" label="Nama lengkap" :value="$user?->name" required />
+        <x-si.isian name="name" label="Nama lengkap" :value="$user?->name" wajib />
 
-        <x-ui.input name="email" type="email" label="Email" :value="$user?->email" required />
+        <x-si.isian name="email" tipe="email" label="Email" :value="$user?->email" wajib />
 
-        <x-ui.input name="password" type="password" label="Kata sandi"
-                    :required="! $isEdit"
+        <x-si.isian name="password" tipe="password" label="Kata sandi"
+                    :wajib="! $isEdit"
                     autocomplete="new-password"
-                    :hint="$isEdit ? 'Kosongkan bila tidak ingin mengubah kata sandi.' : 'Minimal 8 karakter.'" />
+                    :bantuan="$isEdit ? 'Kosongkan bila tidak ingin mengubah kata sandi.' : 'Minimal 8 karakter.'" />
 
-        <x-ui.input name="password_confirmation" type="password" label="Ulangi kata sandi"
-                    :required="! $isEdit" autocomplete="new-password" />
+        <x-si.isian name="password_confirmation" tipe="password" label="Ulangi kata sandi"
+                    :wajib="! $isEdit" autocomplete="new-password" />
     </div>
 
     <div class="px-[26px] pb-[26px]">
@@ -28,17 +28,17 @@
                 <div class="text-[14.5px] font-medium text-ink">Akun aktif</div>
                 <div class="text-sm2 text-ink-muted">Akun nonaktif tidak bisa masuk dan sesinya langsung diakhiri.</div>
             </div>
-            <x-ui.toggle name="is_active" :checked="old('is_active', $user?->is_active ?? true)" class="shrink-0" />
+            <x-si.saklar name="is_active" :dicentang="old('is_active', $user?->is_active ?? true)" class="shrink-0" />
         </div>
 
         <div class="mt-3.5 flex flex-wrap gap-x-6 gap-y-3">
             @foreach ($roles as $role)
-                <x-ui.checkbox name="roles[]"
-                               :value="$role->name"
-                               :label="$role->displayName()"
-                               :hint="$role->description"
-                               :id="'role_'.$role->id"
-                               :checked="in_array($role->name, old('roles', $user?->roles->pluck('name')->all() ?? []), true)" />
+                <x-si.centang name="roles[]"
+                              :value="$role->name"
+                              :label="$role->displayName()"
+                              :bantuan="$role->description"
+                              :id="'role_'.$role->id"
+                              :dicentang="in_array($role->name, old('roles', $user?->roles->pluck('name')->all() ?? []), true)" />
             @endforeach
         </div>
 
@@ -46,4 +46,4 @@
             <p class="mt-2 text-sm2 text-danger">{{ $message }}</p>
         @enderror
     </div>
-</x-ui.card>
+</x-si.kartu>

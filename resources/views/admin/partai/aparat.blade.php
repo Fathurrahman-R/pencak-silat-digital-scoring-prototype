@@ -15,7 +15,7 @@
                      'Aparat' => null,
                  ]">
     <div class="space-y-4">
-        <x-ui.card>
+        <x-si.kartu>
             <p class="font-medium text-ink">
                 {{ $match->red?->athletes->pluck('name')->implode(', ') ?? 'Menunggu babak sebelumnya' }}
                 <span class="text-ink-muted">vs</span>
@@ -26,12 +26,12 @@
                 {{ $match->bracket->weightClass->golongan_usia->label() }} — {{ $match->bracket->weightClass->name }}
                 · {{ $match->bracket->namaBabak($match->round) }}
             </p>
-        </x-ui.card>
+        </x-si.kartu>
 
-        <x-ui.alert variant="info" title="Jumlah juri mengikuti setelan peraturan kejuaraan">
+        <x-si.callout varian="keterangan" judul="Jumlah juri mengikuti setelan peraturan kejuaraan">
             Kejuaraan ini memakai {{ $jumlahJuri }} juri per partai kategori tanding. Wasit tidak boleh
             merangkap juri.
-        </x-ui.alert>
+        </x-si.callout>
 
         @resource(rk('penugasan-aparat', ResourceAction::Assign))
             {{--
@@ -136,12 +136,12 @@
                 </form>
             </x-si.kartu>
         @else
-            <x-ui.card title="Aparat bertugas">
+            <x-si.kartu judul="Aparat bertugas">
                 <p class="text-sm text-ink">Wasit: {{ $wasitSaatIni?->user->name ?? '—' }}</p>
                 @foreach ($juriSaatIni as $juri)
                     <p class="text-sm text-ink">{{ $juri->sebutan() }}: {{ $juri->user->name }}</p>
                 @endforeach
-            </x-ui.card>
+            </x-si.kartu>
         @endresource
     </div>
 </x-layouts.admin>

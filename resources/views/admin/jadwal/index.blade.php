@@ -8,11 +8,11 @@
                      'Jadwal' => null,
                  ]">
     <div class="space-y-4">
-        <x-ui.alert variant="info" title="Hanya partai yang kedua sudutnya sudah pasti yang muncul di sini">
+        <x-si.callout varian="keterangan" judul="Hanya partai yang kedua sudutnya sudah pasti yang muncul di sini">
             Partai yang masih menunggu pemenang babak sebelumnya belum bisa dijadwalkan. Satu atlet
             yang sudah dijadwalkan di satu gelanggang akan ditolak bila dijadwalkan ulang di gelanggang
             lain pada waktu yang berdekatan.
-        </x-ui.alert>
+        </x-si.callout>
 
         @foreach ($arenas as $arena)
             {{-- Blok php, bukan bentuk sebaris: yang sebaris hanya menerima satu
@@ -170,7 +170,7 @@
             </x-si.kartu>
         @endforeach
 
-        <x-ui.card title="Belum dijadwalkan">
+        <x-si.kartu judul="Belum dijadwalkan">
             @forelse ($belumDijadwalkan as $partai)
                 <div class="flex flex-wrap items-center gap-3 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[240px] flex-1">
@@ -187,10 +187,10 @@
                     </div>
 
                     @resource(rk('penugasan-aparat', ResourceAction::View))
-                        <x-ui.button :href="route('admin.turnamen.partai.aparat.show', [$tournament, $partai])"
-                                     variant="secondary" size="xs">
+                        <x-si.tombol :tautan="route('admin.turnamen.partai.aparat.show', [$tournament, $partai])"
+                                     varian="kedua" ukuran="kecil">
                             Aparat
-                        </x-ui.button>
+                        </x-si.tombol>
                     @endresource
 
                     @resource(rk('jadwal', ResourceAction::Assign))
@@ -199,21 +199,21 @@
                             @csrf
 
                             <div class="w-44">
-                                <x-ui.select name="arena_id" :options="$arenas->pluck('name', 'id')" placeholder="Gelanggang" />
+                                <x-si.pilihan name="arena_id" :options="$arenas->pluck('name', 'id')" placeholder="Gelanggang" />
                             </div>
 
                             <div class="w-52">
-                                <x-ui.input type="datetime-local" name="scheduled_at" />
+                                <x-si.isian tipe="datetime-local" name="scheduled_at" />
                             </div>
 
-                            <x-ui.button type="submit" variant="secondary" size="sm">Jadwalkan</x-ui.button>
+                            <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">Jadwalkan</x-si.tombol>
                         </form>
                     @endresource
                 </div>
             @empty
-                <x-ui.empty-state title="Semua partai yang siap sudah dijadwalkan"
-                                  description="Partai yang masih menunggu pemenang babak sebelumnya akan muncul di sini setelah lawannya pasti." />
+                <x-si.kosong judul="Semua partai yang siap sudah dijadwalkan"
+                             syarat="Partai yang masih menunggu pemenang babak sebelumnya akan muncul di sini setelah lawannya pasti." />
             @endforelse
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 </x-layouts.admin>

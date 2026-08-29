@@ -5,10 +5,10 @@
                      $tournament->name => route('admin.turnamen.edit', $tournament),
                      'Kategori Jurus' => null,
                  ]">
-    <x-ui.card title="Nomor Jurus">
+    <x-si.kartu judul="Nomor Jurus">
         @if ($jurusEvents->isEmpty())
-            <x-ui.empty-state title="Belum ada nomor Jurus"
-                               description="Nomor tersusun otomatis dari naskah 2025 saat turnamen dibuat." />
+            <x-si.kosong judul="Belum ada nomor Jurus"
+                         syarat="Nomor tersusun otomatis dari naskah 2025 saat turnamen dibuat." />
         @else
             <div class="divide-y divide-line">
                 @foreach ($jurusEvents as $event)
@@ -21,12 +21,12 @@
                             </p>
                         </div>
 
-                        <x-ui.button :href="route('admin.turnamen.jurus.index', [$tournament, $event])" variant="secondary" size="sm">
+                        <x-si.tombol :tautan="route('admin.turnamen.jurus.index', [$tournament, $event])" varian="kedua" ukuran="kecil">
                             Kelola penampilan
-                        </x-ui.button>
+                        </x-si.tombol>
                     </div>
                 @endforeach
             </div>
         @endif
-    </x-ui.card>
+    </x-si.kartu>
 </x-layouts.admin>

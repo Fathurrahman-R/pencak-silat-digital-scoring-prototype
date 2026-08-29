@@ -9,7 +9,7 @@
                  ]">
     <div class="space-y-4">
         @resource(rk('penampilan-jurus', ResourceAction::Create))
-            <x-ui.card title="Buat penampilan">
+            <x-si.kartu judul="Buat penampilan">
                 <p class="mb-3 text-sm text-ink-muted">
                     Membuat satu penampilan untuk tiap pendaftaran terverifikasi pada nomor ini yang belum
                     punya penampilan di tahap yang dipilih.
@@ -21,14 +21,15 @@
                         <option value="semifinal">Semifinal</option>
                         <option value="final" selected>Final</option>
                     </select>
-                    <x-ui.button type="submit" variant="primary" size="sm">Buat penampilan</x-ui.button>
+                    <x-si.tombol tipe="submit" varian="utama" ukuran="kecil">Buat penampilan</x-si.tombol>
                 </form>
-            </x-ui.card>
+            </x-si.kartu>
         @endresource
 
-        <x-ui.card title="Peringkat sementara">
+        <x-si.kartu judul="Peringkat sementara">
             @if ($peringkat->isEmpty())
-                <x-ui.empty-state title="Belum ada penampilan" description="Buat penampilan lebih dulu di atas." />
+                <x-si.kosong judul="Belum ada penampilan"
+                             syarat="Buat penampilan lebih dulu di atas." />
             @else
                 <div class="divide-y divide-line">
                     @foreach ($peringkat as $i => $p)
@@ -51,20 +52,20 @@
                             </span>
 
                             @resource(rk('penampilan-jurus', ResourceAction::View))
-                                <x-ui.button :href="route('admin.turnamen.jurus.penampilan.operator', [$tournament, $p])" variant="secondary" size="xs">
+                                <x-si.tombol :tautan="route('admin.turnamen.jurus.penampilan.operator', [$tournament, $p])" varian="kedua" ukuran="kecil">
                                     Operator
-                                </x-ui.button>
+                                </x-si.tombol>
                             @endresource
 
                             @resource(rk('penilaian', ResourceAction::Create))
-                                <x-ui.button :href="route('admin.turnamen.jurus.penampilan.juri', [$tournament, $p])" variant="secondary" size="xs">
+                                <x-si.tombol :tautan="route('admin.turnamen.jurus.penampilan.juri', [$tournament, $p])" varian="kedua" ukuran="kecil">
                                     Juri
-                                </x-ui.button>
+                                </x-si.tombol>
                             @endresource
                         </div>
                     @endforeach
                 </div>
             @endif
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 </x-layouts.admin>

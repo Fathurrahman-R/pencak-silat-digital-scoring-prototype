@@ -15,12 +15,12 @@
         @endif
 
         <div class="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <x-ui.button :href="url()->previous()" variant="secondary">Kembali</x-ui.button>
+            <x-si.tombol :tautan="url()->previous()" varian="kedua">Kembali</x-si.tombol>
 
             @auth
-                <x-ui.button :href="route('dashboard')">Ke dashboard</x-ui.button>
+                <x-si.tombol :tautan="route('dashboard')">Ke dashboard</x-si.tombol>
             @else
-                <x-ui.button :href="url('/')">Ke beranda</x-ui.button>
+                <x-si.tombol :tautan="url('/')">Ke beranda</x-si.tombol>
             @endauth
         </div>
     </div>

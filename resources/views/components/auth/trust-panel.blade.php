@@ -18,7 +18,7 @@
 
 <div class="relative">
     <div class="rounded-xl border border-line bg-surface-raised p-6 shadow-lift">
-        <x-ui.icon name="quote" class="size-5 text-accent" />
+        <x-si.ikon nama="quote" class="size-5 text-accent" />
         <p class="mt-3.5 font-display text-lg leading-snug font-medium tracking-tight text-ink">{{ $quote }}</p>
 
         <div class="mt-5 flex items-center gap-2.5">

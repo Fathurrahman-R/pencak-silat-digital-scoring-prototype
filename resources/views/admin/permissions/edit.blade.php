@@ -7,8 +7,8 @@
         @include('admin.permissions.form', ['permission' => $permission])
 
         <div class="flex items-center gap-2">
-            <x-ui.button type="submit">Simpan perubahan</x-ui.button>
-            <x-ui.button :href="route('admin.permissions.index')" variant="secondary">Batal</x-ui.button>
+            <x-si.tombol tipe="submit">Simpan perubahan</x-si.tombol>
+            <x-si.tombol :tautan="route('admin.permissions.index')" varian="kedua">Batal</x-si.tombol>
         </div>
     </form>
 </x-layouts.admin>

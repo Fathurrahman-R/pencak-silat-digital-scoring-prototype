@@ -119,9 +119,9 @@ class DashboardController extends Controller
                 $menang = $m->winner_registration_id === $m->red_registration_id ? $m->red : $m->blue;
 
                 return [
-                    'text' => trim(($menang?->athletes->pluck('name')->implode(', ') ?: 'Pemenang').' — '
+                    'teks' => trim(($menang?->athletes->pluck('name')->implode(', ') ?: 'Pemenang').' — '
                         .(AlasanMenang::label($m->win_reason) ?? 'Sah').' · '.$m->bracket->weightClass->name),
-                    'time' => $m->ratified_at?->diffForHumans() ?? '',
+                    'waktu' => $m->ratified_at?->diffForHumans() ?? '',
                 ];
             })
             ->all();

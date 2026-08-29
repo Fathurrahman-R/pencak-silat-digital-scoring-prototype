@@ -4,7 +4,10 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "kontras": "node scripts/kontras.mjs",
+        "sapu-prop": "node scripts/sapu-prop.mjs",
+        "periksa-rupa": "node scripts/kontras.mjs && node scripts/sapu-prop.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

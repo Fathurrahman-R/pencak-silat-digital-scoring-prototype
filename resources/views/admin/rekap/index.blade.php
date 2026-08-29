@@ -6,18 +6,18 @@
                      'Rekap & Laporan' => null,
                  ]">
     <x-slot:actions>
-        <x-ui.button :href="route('admin.turnamen.rekap.ekspor.medali', $tournament)" variant="secondary" size="sm">
+        <x-si.tombol :tautan="route('admin.turnamen.rekap.ekspor.medali', $tournament)" varian="kedua" ukuran="kecil">
             Ekspor medali (CSV)
-        </x-ui.button>
-        <x-ui.button :href="route('admin.turnamen.rekap.ekspor.medali-pdf', $tournament)" variant="secondary" size="sm">
+        </x-si.tombol>
+        <x-si.tombol :tautan="route('admin.turnamen.rekap.ekspor.medali-pdf', $tournament)" varian="kedua" ukuran="kecil">
             Cetak medali (PDF)
-        </x-ui.button>
-        <x-ui.button :href="route('admin.turnamen.rekap.ekspor.peserta', $tournament)" variant="secondary" size="sm">
+        </x-si.tombol>
+        <x-si.tombol :tautan="route('admin.turnamen.rekap.ekspor.peserta', $tournament)" varian="kedua" ukuran="kecil">
             Ekspor peserta (CSV)
-        </x-ui.button>
-        <x-ui.button :href="route('admin.turnamen.rekap.ekspor.jadwal', $tournament)" variant="secondary" size="sm">
+        </x-si.tombol>
+        <x-si.tombol :tautan="route('admin.turnamen.rekap.ekspor.jadwal', $tournament)" varian="kedua" ukuran="kecil">
             Ekspor jadwal (CSV)
-        </x-ui.button>
+        </x-si.tombol>
     </x-slot:actions>
 
     <div class="space-y-4">

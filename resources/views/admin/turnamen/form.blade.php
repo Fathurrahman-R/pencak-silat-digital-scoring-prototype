@@ -9,36 +9,36 @@
 {{-- items-start: kartu setinggi isinya sendiri. Tanpa itu kartu terpendek
      diregangkan mengikuti yang tertinggi dan menyisakan bidang kosong. --}}
 <div class="grid items-start gap-4 lg:grid-cols-3">
-    <x-ui.card title="Identitas kejuaraan" class="lg:col-span-2">
+    <x-si.kartu judul="Identitas kejuaraan" class="lg:col-span-2">
         <div class="space-y-3.5">
-            <x-ui.input name="name" label="Nama kejuaraan" :value="$tournament?->name" required />
+            <x-si.isian name="name" label="Nama kejuaraan" :value="$tournament?->name" wajib />
 
             <div class="grid gap-3.5 sm:grid-cols-2">
-                <x-ui.input name="organizer" label="Penyelenggara" :value="$tournament?->organizer"
-                            hint="Mis. Pengurus Cabang IPSI Semarang." />
-                <x-ui.input name="venue" label="Tempat" :value="$tournament?->venue" />
+                <x-si.isian name="organizer" label="Penyelenggara" :value="$tournament?->organizer"
+                            bantuan="Mis. Pengurus Cabang IPSI Semarang." />
+                <x-si.isian name="venue" label="Tempat" :value="$tournament?->venue" />
             </div>
 
-            <x-ui.textarea name="description" label="Keterangan" :value="$tournament?->description" rows="3" />
+            <x-si.isian-panjang name="description" label="Keterangan" :value="$tournament?->description" baris="3" />
         </div>
-    </x-ui.card>
+    </x-si.kartu>
 
-    <x-ui.card title="Jadwal dan pendaftaran">
+    <x-si.kartu judul="Jadwal dan pendaftaran">
         <div class="space-y-3.5">
             <div class="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-1">
-                <x-ui.input type="date" name="starts_on" label="Tanggal mulai"
+                <x-si.isian tipe="date" name="starts_on" label="Tanggal mulai"
                             :value="$tournament?->starts_on?->format('Y-m-d')" />
-                <x-ui.input type="date" name="ends_on" label="Tanggal selesai"
+                <x-si.isian tipe="date" name="ends_on" label="Tanggal selesai"
                             :value="$tournament?->ends_on?->format('Y-m-d')" />
             </div>
 
             <div class="grid gap-3.5 border-t border-line pt-3.5 sm:grid-cols-2 lg:grid-cols-1">
-                <x-ui.input type="datetime-local" name="registration_opens_at" label="Pendaftaran dibuka"
+                <x-si.isian tipe="datetime-local" name="registration_opens_at" label="Pendaftaran dibuka"
                             :value="$tournament?->registration_opens_at?->format('Y-m-d\TH:i')" />
-                <x-ui.input type="datetime-local" name="registration_closes_at" label="Pendaftaran ditutup"
+                <x-si.isian tipe="datetime-local" name="registration_closes_at" label="Pendaftaran ditutup"
                             :value="$tournament?->registration_closes_at?->format('Y-m-d\TH:i')"
-                            hint="Paling lambat hari pertama bertanding — bagan disusun dari peserta yang sudah terkunci." />
+                            bantuan="Paling lambat hari pertama bertanding — bagan disusun dari peserta yang sudah terkunci." />
             </div>
         </div>
-    </x-ui.card>
+    </x-si.kartu>
 </div>

@@ -9,8 +9,8 @@
     <div class="flex flex-col gap-5">
         <div class="flex items-center gap-3">
             <span class="relative inline-flex">
-                <x-ui.avatar :user="$user" size="md" />
-                <x-ui.presence-dot :status="$user->is_active ? 'online' : 'offline'" />
+                <x-si.foto :user="$user" ukuran="sedang" />
+                <x-si.titik-hadir :keadaan="$user->is_active ? 'aktif' : 'mati'" />
             </span>
 
             <div class="min-w-0 flex-1">
@@ -18,9 +18,9 @@
                 <div class="truncate text-sm2 text-ink-muted">{{ $user->email }}</div>
             </div>
 
-            <x-ui.badge :variant="$user->is_active ? 'success' : 'danger'" dot>
+            <x-si.badge :varian="$user->is_active ? 'success' : 'danger'" dot>
                 {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
-            </x-ui.badge>
+            </x-si.badge>
         </div>
 
         <dl class="flex flex-col gap-3.5 text-base2">
@@ -28,7 +28,7 @@
                 <dt class="w-[120px] shrink-0 text-ink-muted">Role</dt>
                 <dd class="flex flex-wrap gap-1">
                     @forelse ($user->roles as $role)
-                        <x-ui.badge :variant="$role->isSuperAdmin() ? 'purple' : 'primary'">{{ $role->displayName() }}</x-ui.badge>
+                        <x-si.badge :varian="$role->isSuperAdmin() ? 'purple' : 'primary'">{{ $role->displayName() }}</x-si.badge>
                     @empty
                         <span class="text-ink-muted">—</span>
                     @endforelse
@@ -53,10 +53,9 @@
 
         <div class="flex flex-wrap gap-2 border-t border-line pt-4">
             <x-can :resource="rk('users', ResourceAction::Update)">
-                <x-ui.button :href="route('admin.users.edit', $user)" size="sm">
-                    <x-ui.icon name="pencil" class="size-4" />
+                <x-si.tombol :tautan="route('admin.users.edit', $user)" ukuran="kecil" ikon="pencil">
                     Ubah pengguna
-                </x-ui.button>
+                </x-si.tombol>
             </x-can>
         </div>
     </div>

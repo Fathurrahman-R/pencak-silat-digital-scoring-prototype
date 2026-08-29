@@ -38,10 +38,9 @@
 
         <div class="flex flex-wrap gap-2 border-t border-line pt-4">
             @resource(rk('atlet', ResourceAction::View))
-                <x-ui.button :href="route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent])" size="sm">
-                    <x-ui.icon name="users" class="size-4" />
+                <x-si.tombol :tautan="route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent])" ukuran="kecil" ikon="users">
                     Kelola atlet
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
         </div>
     </div>

@@ -24,7 +24,7 @@
         <x-slot:toolbar>
             <x-si.tabel.toolbar :table="$table" placeholder="Cari nama, penyelenggara, tempat…">
                 <x-slot:chips>
-                    <x-ui.filter-chips param="status" all="Semua status" :options="$statuses" />
+                    <x-si.saring param="status" semua="Semua status" :pilihan="$statuses" />
                 </x-slot:chips>
 
                 @resource(rk('turnamen', ResourceAction::Delete))
@@ -48,7 +48,7 @@
             </x-si.tabel.toolbar>
         </x-slot:toolbar>
 
-        @forelse ($tournaments as $tournament)
+        @foreach ($tournaments as $tournament)
             <x-si.tabel.baris :id="$tournament->id" :panel="route('admin.turnamen.panel', $tournament)">
                 <x-si.tabel.sel header>
                     {{ $tournament->name }}
@@ -74,10 +74,10 @@
 
                 <x-si.tabel.sel>
                     <x-si.badge :varian="match ($tournament->status) {
-                        App\Enums\StatusTurnamen::Berjalan => 'sukses',
-                        App\Enums\StatusTurnamen::Selesai => 'netral',
-                        default => 'perhatian',
-                    }">{{ $tournament->status->label() }}</x-si.badge>
+                                App\Enums\StatusTurnamen::Berjalan => 'sukses',
+                                App\Enums\StatusTurnamen::Selesai => 'netral',
+                                default => 'perhatian',
+                                }">{{ $tournament->status->label() }}</x-si.badge>
                 </x-si.tabel.sel>
 
                 <x-si.tabel.sel align="right">
@@ -107,14 +107,14 @@
                     </div>
                 </x-si.tabel.sel>
             </x-si.tabel.baris>
-        @empty
-            <tr>
-                <td colspan="7">
-                    <x-si.kosong judul="Belum ada kejuaraan"
-                                 syarat="Kejuaraan baru langsung dibekali kelas tanding dan nomor jurus sesuai naskah 2025." />
-                </td>
-            </tr>
-        @endforelse
+        @endforeach
+
+        @if ($tournaments->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Belum ada kejuaraan"
+                             syarat="Kejuaraan baru langsung dibekali kelas tanding dan nomor jurus sesuai naskah 2025." />
+            </x-slot:kosong>
+        @endif
 
         <x-slot:footer>{{ $tournaments->links() }}</x-slot:footer>
     </x-si.tabel>

@@ -33,7 +33,7 @@
         <div class="mx-auto flex h-[62px] max-w-[1320px] items-center gap-4 px-6">
             <a href="{{ route('design-system.patterns') }}#layar"
                class="flex shrink-0 items-center gap-2 text-[13.5px] text-ink-secondary transition hover:text-ink">
-                <x-ui.icon name="chevron-left" class="size-4" />
+                <x-si.ikon nama="chevron-left" class="size-4" />
                 Layar contoh
             </a>
 
@@ -52,7 +52,7 @@
                     <a href="{{ route('design-system.screen', $prev) }}" title="{{ $screens[$prev]['title'] }}"
                        class="inline-flex size-9 items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-inset hover:text-ink">
                         <span class="sr-only">Layar sebelumnya</span>
-                        <x-ui.icon name="chevron-left" class="size-4" />
+                        <x-si.ikon nama="chevron-left" class="size-4" />
                     </a>
                 @endif
 
@@ -60,7 +60,7 @@
                     <a href="{{ route('design-system.screen', $next) }}" title="{{ $screens[$next]['title'] }}"
                        class="inline-flex size-9 items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-inset hover:text-ink">
                         <span class="sr-only">Layar berikutnya</span>
-                        <x-ui.icon name="chevron-right" class="size-4" />
+                        <x-si.ikon nama="chevron-right" class="size-4" />
                     </a>
                 @endif
             </div>
@@ -68,7 +68,7 @@
             <button type="button" data-theme-toggle
                     class="inline-flex size-9 items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-inset hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-accent-soft">
                 <span class="sr-only">Ganti tema</span>
-                <x-ui.icon name="sun-moon" class="size-5" />
+                <x-si.ikon nama="sun-moon" class="size-5" />
             </button>
         </div>
     </header>

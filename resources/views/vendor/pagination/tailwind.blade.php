@@ -28,12 +28,12 @@
             @if ($paginator->onFirstPage())
                 <span class="{{ $mati }}" aria-disabled="true">
                     <span class="sr-only">{{ __('pagination.previous') }}</span>
-                    <x-ui.icon name="chevron-left" class="size-4" />
+                    <x-si.ikon nama="chevron-left" class="size-4" />
                 </span>
             @else
                 <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="{{ $tombol }}">
                     <span class="sr-only">{{ __('pagination.previous') }}</span>
-                    <x-ui.icon name="chevron-left" class="size-4" />
+                    <x-si.ikon nama="chevron-left" class="size-4" />
                 </a>
             @endif
 
@@ -56,12 +56,12 @@
             @if ($paginator->hasMorePages())
                 <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="{{ $tombol }}">
                     <span class="sr-only">{{ __('pagination.next') }}</span>
-                    <x-ui.icon name="chevron-right" class="size-4" />
+                    <x-si.ikon nama="chevron-right" class="size-4" />
                 </a>
             @else
                 <span class="{{ $mati }}" aria-disabled="true">
                     <span class="sr-only">{{ __('pagination.next') }}</span>
-                    <x-ui.icon name="chevron-right" class="size-4" />
+                    <x-si.ikon nama="chevron-right" class="size-4" />
                 </span>
             @endif
         </div>

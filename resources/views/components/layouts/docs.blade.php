@@ -55,7 +55,7 @@
             <button type="button" data-theme-toggle
                     class="inline-flex size-9 items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-inset hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-accent-soft">
                 <span class="sr-only">Ganti tema</span>
-                <x-ui.icon name="sun-moon" class="size-5" />
+                <x-si.ikon nama="sun-moon" class="size-5" />
             </button>
         </div>
     </header>

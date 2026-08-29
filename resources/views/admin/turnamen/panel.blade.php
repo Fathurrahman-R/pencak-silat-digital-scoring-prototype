@@ -61,24 +61,21 @@
 
         <div class="flex flex-wrap gap-2 border-t border-line pt-4">
             @resource(rk('turnamen', ResourceAction::Update))
-                <x-ui.button :href="route('admin.turnamen.edit', $tournament)" size="sm">
-                    <x-ui.icon name="pencil" class="size-4" />
+                <x-si.tombol :tautan="route('admin.turnamen.edit', $tournament)" ukuran="kecil" ikon="pencil">
                     Ubah kejuaraan
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
 
             @resource(rk('gelanggang', ResourceAction::View))
-                <x-ui.button :href="route('admin.turnamen.gelanggang.index', $tournament)" variant="secondary" size="sm">
-                    <x-ui.icon name="layout-grid" class="size-4" />
+                <x-si.tombol :tautan="route('admin.turnamen.gelanggang.index', $tournament)" varian="kedua" ukuran="kecil" ikon="layout-grid">
                     Gelanggang
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
 
             @resource(rk('peraturan-turnamen', ResourceAction::View))
-                <x-ui.button :href="route('admin.turnamen.peraturan.edit', $tournament)" variant="secondary" size="sm">
-                    <x-ui.icon name="scale" class="size-4" />
+                <x-si.tombol :tautan="route('admin.turnamen.peraturan.edit', $tournament)" varian="kedua" ukuran="kecil" ikon="scale">
                     Peraturan
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
         </div>
     </div>

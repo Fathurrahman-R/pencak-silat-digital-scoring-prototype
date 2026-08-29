@@ -6,8 +6,8 @@
         @include('admin.permissions.form')
 
         <div class="flex items-center gap-2">
-            <x-ui.button type="submit">Simpan</x-ui.button>
-            <x-ui.button :href="route('admin.permissions.index')" variant="secondary">Batal</x-ui.button>
+            <x-si.tombol tipe="submit">Simpan</x-si.tombol>
+            <x-si.tombol :tautan="route('admin.permissions.index')" varian="kedua">Batal</x-si.tombol>
         </div>
     </form>
 </x-layouts.admin>

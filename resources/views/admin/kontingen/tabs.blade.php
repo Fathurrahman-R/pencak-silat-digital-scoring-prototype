@@ -36,5 +36,5 @@
 @endphp
 
 @if (count($items) > 1)
-    <x-ui.nav-tabs :items="$items" class="mb-6" />
+    <x-si.tab-halaman :daftar="$items" class="mb-6" />
 @endif

@@ -312,6 +312,32 @@ Tiap komponen digambar dalam keadaan: **normal · tertunjuk · ditekan · fokus 
 | **Kotak centang** | Sasaran sentuh setinggi baris penuh (44px), bukan kotak 22px-nya saja. Tanda centang berupa bentuk, bukan glif huruf |
 | **Pesan hasil tindakan** | Berhasil · Gagal. **Tidak hilang sendiri** — lihat catatan di bawah |
 
+Yang ditambahkan saat implementasi, karena ternyata dibutuhkan layar sungguhan:
+
+| Komponen | Kenapa ada |
+|---|---|
+| **Saklar** | Menyatakan KEADAAN yang menyala atau padam ("gelanggang aktif"), berbeda dari centang yang menyatakan pilihan yang dikirim bersama formulir |
+| **Unggah berkas** | Tombol bawaan peramban berbunyi "Choose File" — bahasa Inggris yang mengikuti bahasa peramban, bukan bahasa aplikasi, dan tidak bisa diubah |
+| **Isian panjang** | Alasan pembatalan partai dan catatan ketua pertandingan berupa kalimat, bukan kata |
+| **Angka** | Metrik bendahara. Digit tabular supaya kolom rupiah tidak bergoyang antar-baris |
+| **Panel rincian** | Satu untuk seluruh tabel, isinya diambil saat dibuka. Lima puluh baris berarti lima puluh panel tersembunyi kalau tidak begitu |
+| **Hapus satu baris** | Dialog hapus per-halaman, bukan per-baris. Angka yang berbeda tiap baris dikirim barisnya lewat `data-rincian` |
+| **Hapus borongan** | Menyebut JUMLAH yang terpilih. "Hapus terpilih" tidak memberi tahu apakah yang tercentang tiga baris atau tiga puluh |
+| **Foto & titik keadaan** | `alt` selalu terisi nama pemiliknya: di gelanggang dengan sambungan seluler gambar sering gagal dimuat |
+| **Tab antar halaman** | Berpindah halaman, bukan menyembunyikan isi — masing-masing punya alamatnya sendiri dan bisa dibagikan ke official |
+| **Menu & butir menu** | Bertingkat lebih dari satu tidak dipakai: kalau butuh submenu, yang dibutuhkan sebenarnya halaman tersendiri |
+| **Lonceng notifikasi** | Penanda berupa titik, bukan angka — angka kecil di sudut ikon tidak terbaca sambil berjalan |
+| **Cari menu (⌘K)** | Pintasan papan ketik bukan satu-satunya jalan masuk: topbar punya tombolnya, dan tombol itu menyebut pintasannya |
+| **Tuts** | Menyebut tuts papan ketik di dalam kalimat |
+| **Linimasa** | Urutan kejadian; yang terbaru ditandai titik beraksen DAN huruf tebal |
+
+Dua yang ada di daftar §6.1 tapi TIDAK dibuat: **Langkah/stepper** dan
+**Pilihan tanggal**. Yang pertama diganti kalimat prasyarat di callout — tangga
+langkah menyiratkan urutan yang kaku, padahal alur kejuaraan sering
+bercabang. Yang kedua memakai `<input type="date">` bawaan peramban: di HP ia
+membuka pemilih tanggal milik sistem, yang jauh lebih besar sasarannya
+daripada apa pun yang bisa digambar sendiri.
+
 > **Revisi saat implementasi — "Toast" jadi "Pesan hasil tindakan".**
 > Brief ini semula menulis "hilang sendiri hanya untuk yang berhasil", meniru
 > perilaku komponen lama yang menutup diri setelah 6 detik. Itu bertentangan
@@ -617,11 +643,22 @@ Sudah ada dan sudah benar — jadikan titik mulai, bukan lahan kosong:
 
 ### 11.4 Cara memeriksa desain sebelum diserahkan
 
+`npm run periksa-rupa` menjalankan dua pemeriksa sekaligus:
+
 1. `node scripts/kontras.mjs` — setiap pasangan warna baru ditambahkan ke berkas itu lebih dulu.
-   Tidak ada warna masuk desain sebelum angkanya ada.
-2. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
-3. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
-4. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
+   Tidak ada warna masuk desain sebelum angkanya ada. Pemeriksa ini hanya menguji pasangan yang
+   **didaftarkan**: chip penyaring yang tampil putih di atas putih lolos berbulan-bulan justru
+   karena pasangannya tidak pernah ditulis di sana.
+2. `node scripts/sapu-prop.mjs` — mencari nama prop berbahasa lama yang tersangkut di tag
+   `x-si.*`. Blade tidak mengeluh soal prop yang tidak dikenal komponennya: ia lolos jadi
+   atribut HTML dan komponennya diam-diam memakai nilai bawaan. Empat cacat sungguhan lahir
+   dari situ, tercatat di §12.3.
+
+Lalu dengan mata:
+
+3. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
+4. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
+5. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
    apakah saya tahu apa yang harus saya tekan berikutnya?"
 
 ---
@@ -638,23 +675,23 @@ Cabang kerja: `rombak-ui`.
 | Bagian | Keadaan |
 |---|---|
 | **Token** | `dasar.css` (bersama + inti gelap) dan `dasar-admin.css` (inti terang). Lapisan nilai `app.css` dan `silat.css` diganti tanpa menyentuh nama variabel, jadi 1.032 pemanggilan komponen lama tetap hidup selama masa peralihan |
-| **Komponen `si/*`** | tombol, isian, centang, kartu, badge, callout, kosong, konfirmasi, ikon, pesan-kilat. Nol ketergantungan ke `ui/` |
+| **Komponen `si/*`** | Tiga puluh satu berkas. Isian: tombol, isian, isian-panjang, pilihan, centang, saklar, unggah. Wadah: kartu, modal, panel-rincian, tabel (+baris, sel, toolbar). Penanda: badge, ikon, foto, titik-hadir, angka, callout, kosong, pesan-kilat, tuts, linimasa. Navigasi: menu, menu-butir, jejak, tab-halaman, saring, lonceng, cari-menu. Bahaya: konfirmasi, hapus-baris, hapus-borongan. Nol ketergantungan ke `ui/` |
 | **Dokumentasi hidup** | `/design-system/si` — merender komponen sungguhan, bukan tiruan markup |
 | **Rombongan 1 — gelanggang** | Juri, wasit, operator, Dewan Wasit Juri, keberatan, Jurus. Nol `x-ui.*` |
 | **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
 | **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
-| **Rombongan 4 — sebagian** | Timbang badan, verifikasi, bagan, jadwal, aparat, kontingen, atlet, gelanggang, tarif, bendahara, pendaftaran nomor, rekap, setelan peraturan, daftar kejuaraan |
+| **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
+| **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
-| **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
+| **Pemeriksa otomatis** | `npm run periksa-rupa`: `kontras.mjs` (72 pasangan, 72 lolos) dan `sapu-prop.mjs` (nol prop tersangkut) |
 
 ### 12.2 Belum
 
 | Bagian | Kenapa belum |
 |---|---|
-| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk). Enam belas layar sudah jadi kode; `si/tabel` dan `si/hapus-borongan` tersedia. Pemakaian `x-ui.*` di admin turun 906 → 636. Sisanya layar formulir dan boilerplate manajemen akses |
 | ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
-| **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
+| **Tahap 4 — pembersihan** | **Siap dikerjakan.** Rombongan 4 selesai, jadi `resources/views/components/ui/`, empat halaman peraga RizzxxUI lama, dan sisa CSS-nya sudah tidak dipanggil satu layar pun. Yang tersisa hanya menghapusnya, dan menurunkan `DesignSystemTest` ke halaman yang benar-benar tinggal |
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
 
@@ -678,3 +715,19 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Dialog dirender per baris** di enam layar: satu halaman berisi dua puluh lima baris berarti dua puluh lima dialog tersembunyi
 - **Hapus borongan mengirim langsung di lima layar** — kejuaraan, pengguna, role, permission, resource. Satu tekan menghapus setiap baris yang tercentang, tanpa konfirmasi dan tanpa menyebut berapa banyak yang terpilih
 - **Emoji medali di layar rekap panitia,** layar yang justru dipakai menyusun berita acara
+- **Badge status seluruhnya abu-abu.** `StatusInvoice`, `StatusPendaftaran`, dan `StatusTurnamen` mengembalikan nama varian dalam bahasa Inggris. `si/badge` tidak mengenalinya dan menjatuhkannya ke `netral` tanpa galat — di layar bendahara, lunas dan belum lunas tampil sama
+- **Penyaring yang sedang berlaku tampil sebagai kotak putih kosong.** `bg-ink` di atas `text-surface`; di suasana gelap keduanya putih. Rasio 1.0, dan pengukur kontras diam karena pasangan itu tidak pernah didaftarkan
+- **Subjudul layar siaran tidak pernah tampil.** Kedua kartunya mengoper prop `subjudul` yang tidak pernah ada di komponennya. Blade membuang prop asing tanpa peringatan
+- **Penyaring status bendahara tidak menandai dirinya,** karena `:variant` dinamisnya pun bukan prop yang dikenal — seluruh tombolnya tampil serupa, dan daftar yang tersaring terbaca sebagai daftar seluruhnya
+- **Rincian tiap baris tabel tidak terjangkau papan ketik.** Baris bisa diklik, tapi `<tr>` tidak bisa difokus dan tidak menanggapi Enter; chevron di ujungnya sengaja disembunyikan dari pembaca layar sebagai "penanda arah"
+- **Badge ungu tidak pernah ungu.** Tiga layar menandai super admin dan permission inti dengan rona yang tidak ada di palet mana pun
+- **Tombol baris tanpa nama.** Pensil, mata, dan tong sampah berjajar dengan `title` sebagai satu-satunya keterangan — dan `title` tidak pernah muncul di layar sentuh
+- **Tombol "Batal" di dialog konfirmasi sebenarnya tombol kirim.** Ditulis `type="button"` padahal propnya `tipe`; atributnya lolos jadi atribut HTML kedua, dan peramban memakai yang pertama
+
+Satu pola menyambungkan enam di antaranya: **Blade tidak mengeluh soal prop yang
+tidak dikenal komponennya.** Prop asing lolos jadi atribut HTML dan menempel
+diam-diam di elemen, dan komponennya memakai nilai bawaan. Tidak ada galat,
+tidak ada peringatan, tidak ada uji yang gagal — yang terlihat hanya badge yang
+warnanya kurang tepat, kalau ada yang memperhatikan. Karena itu pemindahan ini
+disertai penyapu yang membaca tiap tag `x-si.*` dan mencari nama prop
+berbahasa lama di dalamnya.

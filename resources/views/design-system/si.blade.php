@@ -3,8 +3,12 @@
 
     Halaman ini bukan hiasan: ia satu-satunya tempat setiap komponen tampil
     dalam SELURUH keadaannya sekaligus, jadi kalau sebuah keadaan rusak ia
-    ketahuan di sini alih-alih di gelanggang. Ia juga rujukan saat memindahkan
-    layar dari `x-ui.*` ke `x-si.*`.
+    ketahuan di sini alih-alih di gelanggang.
+
+    GaleriKomponenSiTest menjaga dua hal: halamannya merender tanpa galat, dan
+    setiap komponen di `components/si/` benar-benar dipanggil dari sini.
+    Komponen baru yang tidak dipasang di galeri memerahkan uji — kecuali kalau
+    alasannya ditulis eksplisit di daftar pengecualian uji itu.
 
     Rujukan nilai dan alasannya: docs/BRIEF-DESAIN.md.
 --}}
@@ -100,13 +104,21 @@
 
         {{-- TABEL --}}
         <x-si.kartu judul="Tabel"
-                    keterangan="Padanan x-ui.table dengan API yang sepadan — memindahkan layar admin cukup dengan mengganti nama komponennya.">
-            <x-si.tabel :headers="['Atlet', 'Kontingen', 'Kelas', 'Berat', '']">
+                    keterangan="Bisa dipilih, bisa diurutkan, dan tindakan borongannya hanya hidup saat ada yang tercentang.">
+            <x-si.tabel :headers="['Atlet', 'Kontingen', 'Kelas', 'Berat', '']"
+                        :selectable="[1, 2, 3]">
                 <x-slot:toolbar>
-                    <x-si.tabel.toolbar placeholder="Cari nama atlet…" :tampil="3" :total="312" />
+                    <x-si.tabel.toolbar placeholder="Cari nama atlet…" :tampil="3" :total="312">
+                        {{-- Tindakan borongan hanya hidup di dalam cakupan tabel
+                             yang bisa dipilih: `selected` datang dari sana. --}}
+                        <x-slot:bulk>
+                            <x-si.hapus-borongan aksi="#" benda="atlet"
+                                                 akibat="Pendaftaran, hasil timbang badan, dan berkas tiap atlet ikut terhapus. Official kontingen harus mengunggahnya ulang." />
+                        </x-slot:bulk>
+                    </x-si.tabel.toolbar>
                 </x-slot:toolbar>
 
-                <x-si.tabel.baris>
+                <x-si.tabel.baris :id="1">
                     <x-si.tabel.sel header>Bayu Pratama</x-si.tabel.sel>
                     <x-si.tabel.sel>Padepokan Harimau Putih</x-si.tabel.sel>
                     <x-si.tabel.sel>Putra Dewasa — Kelas B</x-si.tabel.sel>
@@ -116,7 +128,7 @@
                     </x-si.tabel.sel>
                 </x-si.tabel.baris>
 
-                <x-si.tabel.baris>
+                <x-si.tabel.baris :id="2">
                     <x-si.tabel.sel header>Candra Setiawan</x-si.tabel.sel>
                     <x-si.tabel.sel>PSHT Cabang Pontianak</x-si.tabel.sel>
                     <x-si.tabel.sel>Putra Dewasa — Kelas B</x-si.tabel.sel>
@@ -126,7 +138,7 @@
                     </x-si.tabel.sel>
                 </x-si.tabel.baris>
 
-                <x-si.tabel.baris>
+                <x-si.tabel.baris :id="3">
                     <x-si.tabel.sel header>Ilham Nugraha</x-si.tabel.sel>
                     <x-si.tabel.sel>Merpati Putih Singkawang</x-si.tabel.sel>
                     <x-si.tabel.sel>Putra Remaja — Kelas A</x-si.tabel.sel>
@@ -194,6 +206,165 @@
                 label="Hapus kontingen"
                 metode="DELETE"
                 aksi="#" />
+        </x-si.kartu>
+
+        {{-- PILIHAN, SAKLAR, UNGGAH, ISIAN PANJANG --}}
+        <x-si.kartu judul="Isian lain"
+                    keterangan="Select mempertahankan bentuk bawaan peramban: di HP ia membuka pemilih layar penuh milik sistem, yang sasarannya lebih besar dan sudah dikenal.">
+            <div class="flex flex-col gap-6">
+                <x-si.pilihan name="contoh-golongan" label="Golongan usia" wajib
+                              placeholder="Pilih golongan…"
+                              :options="['dewasa' => 'Dewasa', 'remaja' => 'Remaja', 'pra-remaja' => 'Pra Remaja']"
+                              bantuan="Menentukan lama babak dan tangga kelas berat." />
+
+                <x-si.pilihan name="contoh-galat" label="Kelas" wajib
+                              placeholder="Pilih kelas…"
+                              :options="['a' => 'Kelas A', 'b' => 'Kelas B']" />
+
+                <x-si.isian-panjang name="contoh-alasan" label="Alasan pembatalan" wajib baris="3"
+                                    bantuan="Dibaca delegasi teknik dan tercatat di berita acara." />
+
+                <x-si.unggah name="contoh-berkas" label="Akta kelahiran" wajib
+                             accept="application/pdf,image/*"
+                             bantuan="PDF atau foto, maksimal 4 MB." />
+
+                <div class="flex flex-col gap-3 rounded-[var(--radius)] border border-line p-4">
+                    <x-si.saklar name="contoh-aktif" label="Gelanggang aktif" dicentang
+                                 bantuan="Gelanggang yang tidak aktif tidak muncul di daftar partai." />
+                    <x-si.saklar name="contoh-mati" label="Terima pendaftaran susulan" />
+                </div>
+            </div>
+        </x-si.kartu>
+
+        {{-- ANGKA --}}
+        <x-si.kartu judul="Angka"
+                    keterangan="Digit tabular supaya sebaris kartu berjajar lurus: di font biasa angka 1 lebih sempit dari 8, dan kolom rupiah jadi bergoyang.">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <x-si.angka label="Total masuk" nilai="Rp 48.400.000" ikon="wallet" />
+                <x-si.angka label="Tunggakan" nilai="Rp 3.200.000" />
+                <x-si.angka label="Kontingen lunas" nilai="18" keterangan="dari 22 kontingen" />
+                <x-si.angka label="Belum lunas" nilai="4" />
+            </div>
+        </x-si.kartu>
+
+        {{-- PENYARING --}}
+        <x-si.kartu judul="Penyaring"
+                    keterangan="Yang sedang berlaku dibedakan warna DAN tebal huruf DAN garis tepi. Warna sendirian menghilang di proyektor gelanggang.">
+            <x-si.saring param="contoh-status" semua="Semua status"
+                         sekarang="lunas"
+                         :pilihan="['draf' => 'Draf', 'menunggu' => 'Menunggu pembayaran', 'lunas' => 'Lunas']" />
+        </x-si.kartu>
+
+        {{-- TAB HALAMAN --}}
+        <x-si.kartu judul="Tab antar halaman"
+                    keterangan="Berpindah halaman, bukan menyembunyikan isi: masing-masing punya alamatnya sendiri dan bisa dibagikan ke official.">
+            <x-si.tab-halaman :daftar="[
+                'Atlet' => request()->url(),
+                'Pendaftaran' => '#pendaftaran',
+                'Tagihan' => '#tagihan',
+            ]" />
+        </x-si.kartu>
+
+        {{-- FOTO DAN TITIK HADIR --}}
+        <x-si.kartu judul="Foto dan keadaan akun"
+                    keterangan="Titik keadaan tidak pernah jadi satu-satunya pembawa arti: katanya selalu ada untuk pembaca layar, dan di daftar keadaannya diulang sebagai badge berkata.">
+            <div class="flex flex-wrap items-center gap-6">
+                @foreach ([
+                    ['aktif', 'Sedang aktif', 'Bayu Pratama'],
+                    ['pergi', 'Sedang pergi', 'Sari Wulandari'],
+                    ['mati', 'Tidak aktif', 'Joko Prasetyo'],
+                ] as [$keadaan, $kata, $nama])
+                    @php($contoh = new App\Models\User(['name' => $nama]))
+
+                    <div class="flex items-center gap-3">
+                        <span class="relative inline-flex">
+                            <x-si.foto :user="$contoh" ukuran="sedang" />
+                            <x-si.titik-hadir :keadaan="$keadaan" />
+                        </span>
+
+                        <div class="flex flex-col">
+                            <span class="text-[14px] font-medium text-ink">{{ $nama }}</span>
+                            <span class="text-[13px] text-ink-muted">{{ $kata }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </x-si.kartu>
+
+        {{-- MODAL DAN PANEL RINCIAN --}}
+        <x-si.kartu judul="Modal dan panel rincian"
+                    keterangan="Modal hanya untuk hal yang butuh jawaban. Panel rincian mengambil isinya saat dibuka — satu untuk seluruh tabel, bukan satu per baris.">
+            <div class="flex flex-wrap gap-3">
+                <x-si.tombol tipe="button" varian="kedua"
+                             x-on:click="$dispatch('modal-open', 'contoh-modal')">
+                    Buka modal
+                </x-si.tombol>
+
+                <x-si.tombol tipe="button" varian="kedua"
+                             x-on:click="$dispatch('panel-rincian-buka', '/tidak-ada')">
+                    Buka panel rincian yang gagal dimuat
+                </x-si.tombol>
+            </div>
+
+            <x-si.modal id="contoh-modal" judul="Ubah gelanggang" ukuran="kecil">
+                <x-si.isian name="contoh-nama-gelanggang" label="Nama gelanggang" wajib />
+
+                <x-slot:footer>
+                    <x-si.tombol varian="kedua" tipe="button"
+                                 x-on:click="$dispatch('modal-close', 'contoh-modal')">Batal</x-si.tombol>
+                    <x-si.tombol tipe="button">Simpan</x-si.tombol>
+                </x-slot:footer>
+            </x-si.modal>
+
+            <x-si.panel-rincian judul="Detail contoh" />
+        </x-si.kartu>
+
+        {{-- HAPUS BARIS --}}
+        <x-si.kartu judul="Hapus satu baris"
+                    keterangan="Satu dialog untuk seluruh halaman. Barisnya mengirim muatannya lewat data-*, bukan lewat JSON di dalam atribut — tanda kutipnya menutup atribut lebih awal.">
+            <x-si.tombol tipe="button" varian="bahaya"
+                         data-aksi="#"
+                         data-nama="Bambang Sutrisno"
+                         data-rincian="Ia bertugas sebagai wasit di 3 partai yang sudah dijadwalkan."
+                         x-on:click="$dispatch('hapus-contoh', $el.dataset)">
+                Hapus pengguna
+            </x-si.tombol>
+
+            <x-si.hapus-baris benda="contoh"
+                              akibat="Akun ini kehilangan seluruh akses seketika, termasuk kalau sedang membuka panel gelanggang." />
+        </x-si.kartu>
+
+        {{-- MENU, TUTS, LINIMASA --}}
+        <x-si.kartu judul="Menu, tuts, dan linimasa"
+                    keterangan="Menu bertingkat lebih dari satu tidak dipakai: kalau butuh submenu, yang dibutuhkan sebenarnya halaman tersendiri.">
+            <div class="flex flex-col gap-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <x-si.menu label="Tindakan">
+                        <x-si.menu-butir tautan="#">
+                            <x-si.ikon nama="pencil" />
+                            Ubah kejuaraan
+                        </x-si.menu-butir>
+                        <x-si.menu-butir tautan="#" pintasan="⌘E">
+                            <x-si.ikon nama="download" />
+                            Ekspor peserta
+                        </x-si.menu-butir>
+                        <x-si.menu-butir bahaya>
+                            <x-si.ikon nama="trash-2" />
+                            Hapus kejuaraan
+                        </x-si.menu-butir>
+                    </x-si.menu>
+
+                    <p class="text-[14px] text-ink-secondary">
+                        Tekan <x-si.tuts>⌘K</x-si.tuts> untuk mencari halaman, <x-si.tuts>Esc</x-si.tuts> untuk menutup.
+                    </p>
+                </div>
+
+                <x-si.linimasa :daftar="[
+                    ['teks' => 'Bayu Pratama — menang angka · Putra Dewasa Kelas B', 'waktu' => '4 menit lalu'],
+                    ['teks' => 'Candra Setiawan — menang mutlak · Putra Dewasa Kelas B', 'waktu' => '31 menit lalu'],
+                    ['teks' => 'Tagihan INV-202608-00003 lunas', 'waktu' => '2 jam lalu'],
+                ]" />
+            </div>
         </x-si.kartu>
 
     </div>

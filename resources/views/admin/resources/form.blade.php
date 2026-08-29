@@ -10,28 +10,28 @@
 
 <div class="grid gap-6 lg:grid-cols-3" x-data="{ key: @js(old('key', $resource?->key ?? '')) }">
     <div class="lg:col-span-2 space-y-4">
-        <x-ui.card title="Identitas resource">
+        <x-si.kartu judul="Identitas resource">
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                    <x-ui.input name="key" label="Nama resource" :value="$resource?->key" required
+                    <x-si.isian name="key" label="Nama resource" :value="$resource?->key" wajib
                                 x-model="key"
-                                hint="Huruf kecil, tanpa spasi. Contoh: laporan_bulanan. Aksi tidak perlu diketik — pilih di sebelah kanan." />
+                                bantuan="Huruf kecil, tanpa spasi. Contoh: laporan_bulanan. Aksi tidak perlu diketik — pilih di sebelah kanan." />
                 </div>
 
-                <x-ui.input name="label" label="Label tampilan" :value="$resource?->label" required
-                            hint="Mis. Laporan Bulanan." />
+                <x-si.isian name="label" label="Label tampilan" :value="$resource?->label" wajib
+                            bantuan="Mis. Laporan Bulanan." />
 
-                <x-ui.input name="group" label="Grup" :value="$resource?->group"
-                            hint="Untuk mengelompokkan di daftar dan menu." />
+                <x-si.isian name="group" label="Grup" :value="$resource?->group"
+                            bantuan="Untuk mengelompokkan di daftar dan menu." />
 
                 <div class="sm:col-span-2">
-                    <x-ui.textarea name="description" label="Deskripsi" :value="$resource?->description" rows="2" />
+                    <x-si.isian-panjang name="description" label="Deskripsi" :value="$resource?->description" baris="2" />
                 </div>
             </div>
-        </x-ui.card>
+        </x-si.kartu>
 
-        <x-ui.card title="Pratinjau resource key"
-                   subtitle="Inilah string yang nanti dipakai di route, Blade, dan menu.">
+        <x-si.kartu judul="Pratinjau resource key"
+                    subjudul="Inilah string yang nanti dipakai di route, Blade, dan menu.">
             <div class="flex flex-wrap gap-2" id="key-preview">
                 <template x-for="action in $store.selectedActions.list" :key="action">
                     <code class="rounded-sm bg-code px-2 py-1 font-mono text-sm text-code-ink"
@@ -42,11 +42,11 @@
             <p class="mt-3 text-sm text-ink-muted" x-show="$store.selectedActions.list.length === 0">
                 Belum ada aksi yang dipilih.
             </p>
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 
     <div>
-        <x-ui.card title="Aksi" subtitle="Setiap aksi yang dicentang otomatis dibuatkan permission dan langsung dipetakan.">
+        <x-si.kartu judul="Aksi" subjudul="Setiap aksi yang dicentang otomatis dibuatkan permission dan langsung dipetakan.">
             <div class="space-y-2">
                 @foreach ($actions as $action)
                     <label class="flex items-start gap-2 rounded-lg border border-line p-3">
@@ -61,7 +61,7 @@
                                 {{ $action->label() }}
                                 <code class="text-xs font-normal text-ink-muted">{{ $action->value }}</code>
                                 @if ($action->isDestructive())
-                                    <x-ui.badge variant="danger" pill>berisiko</x-ui.badge>
+                                    <x-si.badge varian="bahaya">berisiko</x-si.badge>
                                 @endif
                             </span>
                             <span class="block text-xs text-ink-muted">{{ $action->description() }}</span>
@@ -73,7 +73,7 @@
             @error('actions')
                 <p class="mt-3 text-sm text-danger">{{ $message }}</p>
             @enderror
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 </div>
 

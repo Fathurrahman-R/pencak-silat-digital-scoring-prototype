@@ -14,7 +14,7 @@
         {{-- Status dan angka ringkas berdiri di satu baris: keduanya cuma
              sebaris nilai, dan memberi masing-masing satu kartu penuh
              menghabiskan tinggi layar sebelum formulirnya terlihat. --}}
-        <x-ui.card title="Status kejuaraan">
+        <x-si.kartu judul="Status kejuaraan">
             <x-slot:actions>
                 @resource(rk('turnamen', ResourceAction::Update))
                     @foreach ($tournament->status->transisiSah() as $tujuan)
@@ -23,11 +23,11 @@
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $tujuan->value }}">
 
-                            <x-ui.button type="submit"
-                                         :variant="$tujuan === StatusTurnamen::Berjalan ? 'primary' : 'secondary'"
-                                         size="sm">
+                            <x-si.tombol tipe="submit"
+                                         :varian="$tujuan === StatusTurnamen::Berjalan ? 'utama' : 'kedua'"
+                                         ukuran="kecil">
                                 Tandai {{ $tujuan->label() }}
-                            </x-ui.button>
+                            </x-si.tombol>
                         </form>
                     @endforeach
                 @endresource
@@ -58,7 +58,7 @@
                     @endforeach
                 </div>
             </div>
-        </x-ui.card>
+        </x-si.kartu>
 
         <form method="POST" action="{{ route('admin.turnamen.update', $tournament) }}" class="space-y-4">
             @csrf
@@ -67,8 +67,8 @@
             @include('admin.turnamen.form', ['tournament' => $tournament])
 
             <div class="flex items-center gap-2">
-                <x-ui.button type="submit">Simpan perubahan</x-ui.button>
-                <x-ui.button :href="route('admin.turnamen.index')" variant="secondary">Kembali</x-ui.button>
+                <x-si.tombol tipe="submit">Simpan perubahan</x-si.tombol>
+                <x-si.tombol :tautan="route('admin.turnamen.index')" varian="kedua">Kembali</x-si.tombol>
             </div>
         </form>
     </div>

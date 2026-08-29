@@ -13,8 +13,8 @@
         @include('admin.kontingen.form', ['contingent' => $contingent])
 
         <div class="flex items-center gap-2">
-            <x-ui.button type="submit">Simpan perubahan</x-ui.button>
-            <x-ui.button :href="route('admin.turnamen.kontingen.index', $tournament)" variant="secondary">Kembali</x-ui.button>
+            <x-si.tombol tipe="submit">Simpan perubahan</x-si.tombol>
+            <x-si.tombol :tautan="route('admin.turnamen.kontingen.index', $tournament)" varian="kedua">Kembali</x-si.tombol>
         </div>
     </form>
 </x-layouts.admin>

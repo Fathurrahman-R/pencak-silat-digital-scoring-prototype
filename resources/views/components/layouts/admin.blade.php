@@ -46,7 +46,7 @@
                 permintaannya ditolak.
             --}}
             @if ($errors->any())
-                <x-ui.alert variant="danger" title="Ada yang perlu diperbaiki">
+                <x-si.callout varian="bahaya" judul="Ada yang perlu diperbaiki">
                     @if ($errors->count() === 1)
                         {{ $errors->first() }}
                     @else
@@ -56,12 +56,12 @@
                             @endforeach
                         </ul>
                     @endif
-                </x-ui.alert>
+                </x-si.callout>
             @endif
 
             {{ $slot }}
         </main>
     </div>
 
-    <x-ui.command-palette />
+    <x-si.cari-menu />
 </x-layouts.base>

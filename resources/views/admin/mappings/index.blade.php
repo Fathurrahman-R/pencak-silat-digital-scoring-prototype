@@ -8,58 +8,64 @@
             @if ($unmappedCount > 0)
                 <form method="POST" action="{{ route('admin.mappings.auto') }}">
                     @csrf
-                    <x-ui.button type="submit" size="sm">
-                        <x-ui.icon name="link" class="h-4 w-4" />
+                    <x-si.tombol tipe="submit" ukuran="kecil" ikon="link">
                         Petakan otomatis {{ $unmappedCount }} key kosong
-                    </x-ui.button>
+                    </x-si.tombol>
                 </form>
             @endif
         </x-can>
     </x-slot:actions>
 
     @if ($unmappedCount > 0)
-        <x-ui.alert variant="warning" class="mb-4">
+        <x-si.callout varian="perhatian" class="mb-4">
             {{ $unmappedCount }} key belum menunjuk permission mana pun. Selama masih kosong, aksesnya tertutup untuk
             semua orang kecuali super admin.
-        </x-ui.alert>
+        </x-si.callout>
     @endif
 
-    <x-ui.table :table="$table" :headers="[0 => 'Resource key', 'action' => 'Aksi', 1 => 'Permission', 2 => '']">
+    <x-si.tabel :table="$table" :headers="[0 => 'Resource key', 'action' => 'Aksi', 1 => 'Permission', 2 => '']">
         <x-slot:toolbar>
-            <x-ui.table.toolbar :table="$table" placeholder="Cari key atau permission…">
+            <x-si.tabel.toolbar :table="$table" placeholder="Cari key atau permission…">
                 <x-slot:filters>
-                    <select name="status" class="form-select">
-                        <option value="">Semua</option>
-                        <option value="mapped" @selected(request('status') === 'mapped')>Sudah dipetakan</option>
-                        <option value="unmapped" @selected(request('status') === 'unmapped')>Belum dipetakan</option>
-                    </select>
+                    <x-si.pilihan name="status" :selected="request('status')"
+                                  placeholder="Semua"
+                                  :options="['mapped' => 'Sudah dipetakan', 'unmapped' => 'Belum dipetakan']"
+                                  aria-label="Saring menurut keadaan pemetaan" class="w-[200px]" />
                 </x-slot:filters>
-            </x-ui.table.toolbar>
+            </x-si.tabel.toolbar>
         </x-slot:toolbar>
 
-        @forelse ($mappings as $mapping)
-            <x-ui.table.row>
-                <x-ui.table.cell header>
+        @foreach ($mappings as $mapping)
+            <x-si.tabel.baris>
+                <x-si.tabel.sel header>
                     <code>{{ $mapping->key() }}</code>
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $mapping->action->label() }}</x-ui.table.cell>
+                <x-si.tabel.sel>{{ $mapping->action->label() }}</x-si.tabel.sel>
 
-                <x-ui.table.cell>
+                <x-si.tabel.sel>
                     <x-can :resource="rk('mappings', ResourceAction::Update)">
-                        <form method="POST" action="{{ route('admin.mappings.update', $mapping) }}" class="flex items-center gap-2">
+                        {{-- Select diberi lebar minimum: sebagai anak flex ia
+                             mau menyusut sampai tinggal kotak selebar panahnya,
+                             dan nama permission yang panjang jadi tak terbaca
+                             sama sekali. --}}
+                        <form method="POST" action="{{ route('admin.mappings.update', $mapping) }}"
+                              class="flex flex-wrap items-center gap-2">
                             @csrf
                             @method('PUT')
 
-                            <select name="permission_id"
-                                    class="form-select w-full max-w-xs">
-                                <option value="">— tidak dipetakan (akses tertutup) —</option>
-                                @foreach ($permissions as $id => $name)
-                                    <option value="{{ $id }}" @selected($mapping->permission_id === $id)>{{ $name }}</option>
-                                @endforeach
-                            </select>
+                            {{-- Pilihan kosongnya menyebut AKIBATNYA, bukan
+                                 sekadar "tidak dipetakan": key tanpa permission
+                                 menutup pintunya untuk semua orang. --}}
+                            <x-si.pilihan name="permission_id"
+                                          :selected="$mapping->permission_id"
+                                          placeholder="Tidak dipetakan — akses tertutup"
+                                          :options="$permissions"
+                                          :id="'permission-'.$mapping->id"
+                                          aria-label="Permission untuk {{ $mapping->key() }}"
+                                          class="min-w-[260px] flex-1" />
 
-                            <x-ui.button type="submit" variant="secondary" size="xs">Simpan</x-ui.button>
+                            <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">Simpan</x-si.tombol>
                         </form>
                     </x-can>
 
@@ -68,33 +74,33 @@
                         @if ($mapping->isMapped())
                             <code>{{ $mapping->permission->name }}</code>
                         @else
-                            <x-ui.badge variant="danger" dot>belum dipetakan</x-ui.badge>
+                            <x-si.badge varian="bahaya">belum dipetakan</x-si.badge>
                         @endif
                     @endunless
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell align="right">
+                <x-si.tabel.sel align="right">
                     @if ($mapping->isMapped())
                         <x-can :resource="rk('mappings', ResourceAction::Update)">
                             <form method="POST" action="{{ route('admin.mappings.destroy', $mapping) }}">
                                 @csrf
                                 @method('DELETE')
-                                <x-ui.button type="submit" variant="secondary" size="xs" title="Lepas pemetaan">
-                                    Lepas
-                                </x-ui.button>
+                                <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">
+                                    Lepas pemetaan
+                                </x-si.tombol>
                             </form>
                         </x-can>
                     @endif
-                </x-ui.table.cell>
-            </x-ui.table.row>
-        @empty
-            <tr>
-                <td colspan="4">
-                    <x-ui.empty-state title="Belum ada pemetaan"
-                                      description="Pemetaan dibuat otomatis saat Anda membuat resource." />
-                </td>
-            </tr>
-        @endforelse
+                </x-si.tabel.sel>
+            </x-si.tabel.baris>
+        @endforeach
+
+        @if ($mappings->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Belum ada pemetaan"
+                             syarat="Pemetaan dibuat sendiri begitu Anda membuat resource lewat menu Resource. Kalau daftar ini kosong padahal resource sudah ada, kosongkan penyaring di atas." />
+            </x-slot:kosong>
+        @endif
         <x-slot:footer>{{ $mappings->links() }}</x-slot:footer>
-    </x-ui.table>
+    </x-si.tabel>
 </x-layouts.admin>

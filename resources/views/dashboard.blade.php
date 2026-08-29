@@ -32,7 +32,7 @@
     @endif
 
     @if ($penugasan !== [])
-        <x-ui.card title="Partai saya" subtitle="Partai tempat Anda ditugaskan" class="mb-4">
+        <x-si.kartu judul="Partai saya" subjudul="Partai tempat Anda ditugaskan" class="mb-4">
             <div class="divide-y divide-line">
                 @foreach ($penugasan as $tugas)
                     <a href="{{ $tugas['url'] }}"
@@ -73,56 +73,54 @@
                              juri tidak bisa membedakan partai yang sudah dimulai dari
                              yang masih menunggu, dan harus membuka panel untuk tahu. --}}
                         @if ($tugas['berlangsung'])
-                            <x-ui.badge variant="success" dot>Berlangsung</x-ui.badge>
+                            <x-si.badge varian="sukses">Berlangsung</x-si.badge>
                         @else
-                            <x-ui.badge variant="neutral">Menunggu</x-ui.badge>
+                            <x-si.badge varian="netral">Menunggu</x-si.badge>
                         @endif
 
-                        <x-ui.icon name="chevron-right" class="size-4 shrink-0 text-ink-muted" />
+                        <x-si.ikon nama="chevron-right" class="size-4 shrink-0 text-ink-muted" />
                     </a>
                 @endforeach
             </div>
-        </x-ui.card>
+        </x-si.kartu>
     @endif
 
     @if (! $tampilkanRingkasan && $penugasan === [])
-        <x-ui.card class="mb-4">
-            <x-ui.empty-state icon="calendar-off"
-                              title="Belum ada partai untuk Anda"
-                              description="Kartu partai muncul di sini setelah panitia menugaskan Anda sebagai wasit atau juri. Untuk kategori Jurus, buka menu Pertandingan → Kategori Jurus." />
-        </x-ui.card>
+        <x-si.kartu class="mb-4">
+            <x-si.kosong judul="Belum ada partai untuk Anda"
+                         syarat="Kartu partai muncul di sini setelah panitia menugaskan Anda sebagai wasit atau juri. Untuk kategori Jurus, buka menu Pertandingan → Kategori Jurus." />
+        </x-si.kartu>
     @endif
 
     @if ($tampilkanRingkasan)
         @if ($unmappedCount > 0)
-            <x-ui.alert variant="warning" title="Ada resource key yang belum dipetakan" class="mb-6">
+            <x-si.callout varian="perhatian" judul="Ada resource key yang belum dipetakan" class="mb-6">
                 {{ $unmappedCount }} key belum menunjuk permission mana pun, jadi aksesnya tertutup untuk semua orang
                 kecuali super admin.
                 <a href="{{ route('admin.mappings.index', ['status' => 'unmapped']) }}" class="font-medium text-link underline-offset-2 hover:underline">
                     Lihat daftarnya
                 </a>
-            </x-ui.alert>
+            </x-si.callout>
         @endif
 
         @if ($turnamen === null)
-            <x-ui.card>
-                <x-ui.empty-state icon="trophy"
-                                  title="Belum ada kejuaraan"
-                                  description="Buat kejuaraan lebih dulu lewat menu Kejuaraan. Angka dan jadwal di halaman ini mengikuti kejuaraan yang sedang dibuka." />
-            </x-ui.card>
+            <x-si.kartu>
+                <x-si.kosong judul="Belum ada kejuaraan"
+                             syarat="Buat kejuaraan lebih dulu lewat menu Kejuaraan. Angka dan jadwal di halaman ini mengikuti kejuaraan yang sedang dibuka." />
+            </x-si.kartu>
         @else
             {{-- Baris metrik duduk di permukaan solid seperti sisi halaman lainnya —
                  kaca dipakai hanya sidebar dan topbar. --}}
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 @foreach ($stats as $stat)
-                    <x-ui.stat :label="$stat['label']"
-                               :value="number_format($stat['value'], 0, ',', '.')"
-                               :icon="$stat['icon']" />
+                    <x-si.angka :label="$stat['label']"
+                                :nilai="number_format($stat['value'], 0, ',', '.')"
+                                :ikon="$stat['icon']" />
                 @endforeach
             </div>
 
             <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-                <x-ui.card title="Partai hari ini" :subtitle="now()->translatedFormat('l, d F Y')">
+                <x-si.kartu judul="Partai hari ini" :subjudul="now()->translatedFormat('l, d F Y')">
                     @forelse ($partaiHariIni as $gelanggang => $daftar)
                         <div class="mb-4 last:mb-0">
                             <p class="eyebrow mb-2">{{ $gelanggang }}</p>
@@ -142,31 +140,30 @@
                                         </div>
 
                                         @if ($partai['berlangsung'])
-                                            <x-ui.badge variant="success" dot>Berlangsung</x-ui.badge>
+                                            <x-si.badge varian="sukses">Berlangsung</x-si.badge>
                                         @elseif ($partai['selesai'])
-                                            <x-ui.badge variant="neutral">Selesai</x-ui.badge>
+                                            <x-si.badge varian="netral">Selesai</x-si.badge>
                                         @endif
                                     </div>
                                 @endforeach
                             </div>
                         </div>
                     @empty
-                        <x-ui.empty-state icon="calendar-off"
-                                          title="Tidak ada partai terjadwal hari ini"
-                                          description="Partai muncul di sini setelah bagan dikunci dan jadwal ditetapkan lewat menu Pertandingan → Jadwal." />
+                        <x-si.kosong judul="Tidak ada partai terjadwal hari ini"
+                                     syarat="Partai muncul di sini setelah bagan dikunci dan jadwal ditetapkan lewat menu Pertandingan → Jadwal." />
                     @endforelse
-                </x-ui.card>
+                </x-si.kartu>
 
-                <x-ui.card title="Hasil terakhir" subtitle="Sudah disahkan Dewan Wasit Juri">
+                <x-si.kartu judul="Hasil terakhir" subjudul="Sudah disahkan Dewan Wasit Juri">
                     @if ($hasilTerakhir === [])
                         <p class="text-sm text-ink-muted">Belum ada hasil yang disahkan.</p>
                     @else
-                        <x-ui.timeline :items="$hasilTerakhir" />
+                        <x-si.linimasa :daftar="$hasilTerakhir" />
                     @endif
-                </x-ui.card>
+                </x-si.kartu>
             </div>
 
-            <x-ui.card title="Urutan kerja kejuaraan" class="mt-4">
+            <x-si.kartu judul="Urutan kerja kejuaraan" class="mt-4">
                 {{-- Bernomor karena urutannya memang mengikat: tiap tahap punya
                      prasyarat yang membuat tombol tahap berikutnya mati kalau
                      dilangkahi. Rinciannya ada di docs/PANDUAN-WORKFLOW.md. --}}
@@ -188,7 +185,7 @@
                         </li>
                     @endforeach
                 </ol>
-            </x-ui.card>
+            </x-si.kartu>
         @endif
     @endif
 </x-layouts.admin>

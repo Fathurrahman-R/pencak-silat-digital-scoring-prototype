@@ -5,22 +5,22 @@
 @endphp
 
 <div class="space-y-4">
-    <x-ui.card title="Identitas role">
+    <x-si.kartu judul="Identitas role">
         <div class="grid gap-4 sm:grid-cols-2">
-            <x-ui.input name="name" label="Nama sistem" :value="$role?->name" required
-                        hint="Huruf kecil tanpa spasi, mis. editor_konten. Dipakai di kode." />
+            <x-si.isian name="name" label="Nama sistem" :value="$role?->name" wajib
+                        bantuan="Huruf kecil tanpa spasi, mis. editor_konten. Dipakai di kode." />
 
-            <x-ui.input name="label" label="Label tampilan" :value="$role?->label"
-                        hint="Nama yang dilihat pengguna, mis. Editor Konten." />
+            <x-si.isian name="label" label="Label tampilan" :value="$role?->label"
+                        bantuan="Nama yang dilihat pengguna, mis. Editor Konten." />
 
             <div class="sm:col-span-2">
-                <x-ui.textarea name="description" label="Deskripsi" :value="$role?->description" rows="2" />
+                <x-si.isian-panjang name="description" label="Deskripsi" :value="$role?->description" baris="2" />
             </div>
         </div>
-    </x-ui.card>
+    </x-si.kartu>
 
-    <x-ui.card title="Permission"
-               subtitle="Baris adalah resource, kolom adalah aksi. Centang berarti role ini boleh melakukannya.">
+    <x-si.kartu judul="Permission"
+                subjudul="Baris adalah resource, kolom adalah aksi. Centang berarti role ini boleh melakukannya.">
         <div class="space-y-4">
             @forelse ($resources as $resource)
                 <div>
@@ -29,7 +29,7 @@
                         <code class="rounded-sm bg-code px-1.5 py-0.5 font-mono text-xs text-code-ink">{{ $resource->key }}</code>
 
                         @if ($resource->group)
-                            <x-ui.badge>{{ $resource->group }}</x-ui.badge>
+                            <x-si.badge>{{ $resource->group }}</x-si.badge>
                         @endif
 
                         <button type="button"
@@ -67,8 +67,8 @@
                     </div>
                 </div>
             @empty
-                <x-ui.empty-state title="Belum ada resource"
-                                  description="Buat resource lebih dulu supaya permission-nya bisa dibagikan ke role." />
+                <x-si.kosong judul="Belum ada resource"
+                             syarat="Buat resource lebih dulu supaya permission-nya bisa dibagikan ke role." />
             @endforelse
 
             @if ($loosePermissions->isNotEmpty())
@@ -91,7 +91,7 @@
                 </div>
             @endif
         </div>
-    </x-ui.card>
+    </x-si.kartu>
 </div>
 
 @push('scripts')

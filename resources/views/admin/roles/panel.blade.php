@@ -6,11 +6,11 @@
             <h4 class="font-display text-base font-semibold text-ink">{{ $role->name }}</h4>
 
             @if ($role->isSuperAdmin())
-                <x-ui.badge variant="purple" pill>super admin</x-ui.badge>
+                <x-si.badge varian="perhatian" ikon="shield">Super admin</x-si.badge>
             @endif
 
             @if ($role->is_locked)
-                <x-ui.badge variant="warning" pill>inti</x-ui.badge>
+                <x-si.badge varian="netral" ikon="lock">Bawaan sistem</x-si.badge>
             @endif
         </div>
 
@@ -42,10 +42,9 @@
 
         <div class="flex flex-wrap gap-2 border-t border-line pt-4">
             <x-can :resource="rk('roles', ResourceAction::Update)">
-                <x-ui.button :href="route('admin.roles.edit', $role)" size="sm">
-                    <x-ui.icon name="pencil" class="size-4" />
+                <x-si.tombol :tautan="route('admin.roles.edit', $role)" ukuran="kecil" ikon="pencil">
                     Ubah role
-                </x-ui.button>
+                </x-si.tombol>
             </x-can>
         </div>
     </div>

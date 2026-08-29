@@ -33,7 +33,7 @@
                 class="absolute end-[-13px] top-5 z-10 hidden size-[26px] items-center justify-center rounded-full border border-line-strong bg-[image:var(--mat-raised)] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none lg:flex">
             <span class="sr-only">Ciutkan menu</span>
             <span class="flex transition-transform duration-220 ease-rizz" data-rail="flip">
-                <x-ui.icon name="chevron-left" class="size-3.5" />
+                <x-si.ikon nama="chevron-left" class="size-3.5" />
             </span>
         </button>
 
@@ -66,7 +66,7 @@
                            'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $item['active'],
                        ])>
                         @if ($item['icon'])
-                            <x-ui.icon :name="$item['icon']" class="size-[17px] shrink-0" />
+                            <x-si.ikon :nama="$item['icon']" class="size-[17px] shrink-0" />
                         @endif
                         <span class="flex-1 truncate" data-rail="hide">{{ $item['label'] }}</span>
 
@@ -87,7 +87,7 @@
                                 class="flex w-full items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap text-ink-secondary transition-colors duration-160 hover:bg-surface-inset hover:text-ink"
                                 :aria-expanded="expanded">
                             @if ($item['icon'])
-                                <x-ui.icon :name="$item['icon']" class="size-[17px] shrink-0" />
+                                <x-si.ikon :nama="$item['icon']" class="size-[17px] shrink-0" />
                             @endif
                             <span class="min-w-0 flex-1 text-start" data-rail="hide">
                                 <span class="block truncate">{{ $item['label'] }}</span>
@@ -98,7 +98,7 @@
                             </span>
                             <span class="flex shrink-0 transition-transform duration-200" data-rail="hide"
                                   :class="expanded && 'rotate-180'">
-                                <x-ui.icon name="chevron-down" class="size-3.5" />
+                                <x-si.ikon nama="chevron-down" class="size-3.5" />
                             </span>
                         </button>
 
@@ -137,7 +137,7 @@
                title="Design system"
                data-rail="center"
                class="flex items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap text-ink-secondary transition-colors duration-160 hover:bg-surface-inset hover:text-ink">
-                <x-ui.icon name="swatch-book" class="size-[17px] shrink-0" />
+                <x-si.ikon nama="swatch-book" class="size-[17px] shrink-0" />
                 <span class="truncate" data-rail="hide">Design system</span>
             </a>
         @endif
@@ -147,7 +147,7 @@
                title="{{ auth()->user()->name }}"
                data-rail="center"
                class="flex items-center gap-2.5 overflow-hidden rounded-md px-2 py-1.5 whitespace-nowrap transition-colors duration-160 hover:bg-surface-inset">
-                <x-ui.avatar :user="auth()->user()" size="xs2" />
+                <x-si.foto :user="auth()->user()" ukuran="kecil" class="size-7" />
                 <span class="min-w-0 flex-1" data-rail="hide">
                     <span class="block truncate text-[13px] font-semibold text-ink">{{ auth()->user()->name }}</span>
                     <span class="block truncate text-xs2 text-ink-muted">{{ auth()->user()->email }}</span>

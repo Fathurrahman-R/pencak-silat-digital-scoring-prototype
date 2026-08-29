@@ -23,7 +23,7 @@
                                 :tampil="$contingents->count()" :total="$contingents->total()" />
         </x-slot:toolbar>
 
-        @forelse ($contingents as $contingent)
+        @foreach ($contingents as $contingent)
             <x-si.tabel.baris :panel="route('admin.turnamen.kontingen.panel', [$tournament, $contingent])">
                 <x-si.tabel.sel header>
                     {{ $contingent->name }}
@@ -117,14 +117,14 @@
                     </div>
                 </x-si.tabel.sel>
             </x-si.tabel.baris>
-        @empty
-            <tr>
-                <td colspan="7">
-                    <x-si.kosong judul="Belum ada kontingen"
-                                 syarat="Kontingen masuk setelah official mendaftarkannya lewat akunnya sendiri, atau setelah panitia menambahkannya di sini. Satu tagihan terbit per kontingen." />
-                </td>
-            </tr>
-        @endforelse
+        @endforeach
+
+        @if ($contingents->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Belum ada kontingen"
+                             syarat="Kontingen masuk setelah official mendaftarkannya lewat akunnya sendiri, atau setelah panitia menambahkannya di sini. Satu tagihan terbit per kontingen." />
+            </x-slot:kosong>
+        @endif
 
         <x-slot:footer>{{ $contingents->links() }}</x-slot:footer>
     </x-si.tabel>

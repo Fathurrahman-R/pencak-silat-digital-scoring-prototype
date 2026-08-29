@@ -3,42 +3,42 @@
                  :breadcrumb="['Profil' => null]">
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="space-y-4 lg:col-span-2">
-            <x-ui.card title="Data profil">
+            <x-si.kartu judul="Data profil">
                 <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
                     @csrf
                     @method('PATCH')
 
-                    <x-ui.input name="name" label="Nama lengkap" :value="$user->name" required />
-                    <x-ui.input name="email" type="email" label="Email" :value="$user->email" required
-                                hint="Mengganti email akan meminta verifikasi ulang." />
+                    <x-si.isian name="name" label="Nama lengkap" :value="$user->name" wajib />
+                    <x-si.isian name="email" tipe="email" label="Email" :value="$user->email" wajib
+                                bantuan="Mengganti email akan meminta verifikasi ulang." />
 
                     @if (! $user->hasVerifiedEmail())
-                        <x-ui.alert variant="warning">Email Anda belum diverifikasi.</x-ui.alert>
+                        <x-si.callout varian="perhatian">Email Anda belum diverifikasi.</x-si.callout>
                     @endif
 
-                    <x-ui.button type="submit">Simpan</x-ui.button>
+                    <x-si.tombol tipe="submit">Simpan</x-si.tombol>
                 </form>
-            </x-ui.card>
+            </x-si.kartu>
 
-            <x-ui.card title="Ganti kata sandi">
+            <x-si.kartu judul="Ganti kata sandi">
                 {{-- Route dan validasinya disediakan Fortify (Features::updatePasswords). --}}
                 <form method="POST" action="{{ route('user-password.update') }}" class="space-y-4">
                     @csrf
                     @method('PUT')
 
-                    <x-ui.input name="current_password" type="password" label="Kata sandi saat ini" required autocomplete="current-password" />
-                    <x-ui.input name="password" type="password" label="Kata sandi baru" required autocomplete="new-password" />
-                    <x-ui.input name="password_confirmation" type="password" label="Ulangi kata sandi baru" required autocomplete="new-password" />
+                    <x-si.isian name="current_password" tipe="password" label="Kata sandi saat ini" wajib autocomplete="current-password" />
+                    <x-si.isian name="password" tipe="password" label="Kata sandi baru" wajib autocomplete="new-password" />
+                    <x-si.isian name="password_confirmation" tipe="password" label="Ulangi kata sandi baru" wajib autocomplete="new-password" />
 
-                    <x-ui.button type="submit">Perbarui kata sandi</x-ui.button>
+                    <x-si.tombol tipe="submit">Perbarui kata sandi</x-si.tombol>
                 </form>
-            </x-ui.card>
+            </x-si.kartu>
 
-            <x-ui.card title="Verifikasi dua langkah"
-                       subtitle="Menambah kode sekali pakai dari aplikasi autentikator saat masuk.">
+            <x-si.kartu judul="Verifikasi dua langkah"
+                        subjudul="Menambah kode sekali pakai dari aplikasi autentikator saat masuk.">
                 @if ($user->two_factor_secret)
                     <div class="space-y-4">
-                        <x-ui.badge variant="success" dot>Aktif</x-ui.badge>
+                        <x-si.badge varian="sukses">Aktif</x-si.badge>
 
                         <div class="rounded-lg border border-line p-4">
                             {!! $user->twoFactorQrCodeSvg() !!}
@@ -56,69 +56,69 @@
                         <form method="POST" action="{{ route('two-factor.disable') }}">
                             @csrf
                             @method('DELETE')
-                            <x-ui.button type="submit" variant="danger" size="sm">Matikan</x-ui.button>
+                            <x-si.tombol tipe="submit" varian="bahaya" ukuran="kecil">Matikan</x-si.tombol>
                         </form>
                     </div>
                 @else
                     <form method="POST" action="{{ route('two-factor.enable') }}">
                         @csrf
-                        <x-ui.button type="submit" size="sm">Aktifkan</x-ui.button>
+                        <x-si.tombol tipe="submit" ukuran="kecil">Aktifkan</x-si.tombol>
                     </form>
                 @endif
-            </x-ui.card>
+            </x-si.kartu>
         </div>
 
         <div class="space-y-4">
-            <x-ui.card title="Foto profil">
+            <x-si.kartu judul="Foto profil">
                 <div class="flex flex-col items-center gap-4">
-                    <x-ui.avatar :user="$user" size="xl" />
+                    <x-si.foto :user="$user" ukuran="lebar" />
 
                     <form method="POST" action="{{ route('profile.avatar') }}" enctype="multipart/form-data" class="w-full space-y-3">
                         @csrf
-                        <x-ui.file-upload name="avatar" accept="image/*" hint="JPG atau PNG, maksimal 2 MB." />
-                        <x-ui.button type="submit" size="sm" block>Unggah</x-ui.button>
+                        <x-si.unggah name="avatar" accept="image/*" bantuan="JPG atau PNG, maksimal 2 MB." />
+                        <x-si.tombol tipe="submit" ukuran="kecil" block>Unggah</x-si.tombol>
                     </form>
 
                     @if ($user->avatar_path)
                         <form method="POST" action="{{ route('profile.avatar.destroy') }}" class="w-full">
                             @csrf
                             @method('DELETE')
-                            <x-ui.button type="submit" variant="secondary" size="sm" block>Hapus foto</x-ui.button>
+                            <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil" block>Hapus foto</x-si.tombol>
                         </form>
                     @endif
                 </div>
-            </x-ui.card>
+            </x-si.kartu>
 
-            <x-ui.card title="Role saya">
+            <x-si.kartu judul="Role saya">
                 <div class="flex flex-wrap gap-1">
                     @forelse ($user->roles as $role)
-                        <x-ui.badge :variant="$role->isSuperAdmin() ? 'purple' : 'primary'">{{ $role->displayName() }}</x-ui.badge>
+                        <x-si.badge :varian="$role->isSuperAdmin() ? 'purple' : 'primary'">{{ $role->displayName() }}</x-si.badge>
                     @empty
                         <span class="text-sm text-ink-muted">Belum punya role.</span>
                     @endforelse
                 </div>
-            </x-ui.card>
+            </x-si.kartu>
 
-            <x-ui.card title="Hapus akun" subtitle="Tindakan ini permanen dan tidak bisa dibatalkan.">
-                <x-ui.button type="button" variant="danger" size="sm" x-on:click="$dispatch('modal-open', 'hapus-akun')">
+            <x-si.kartu judul="Hapus akun" subjudul="Tindakan ini permanen dan tidak bisa dibatalkan.">
+                <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil" x-on:click="$dispatch('modal-open', 'hapus-akun')">
                     Hapus akun saya
-                </x-ui.button>
+                </x-si.tombol>
 
-                <x-ui.modal id="hapus-akun" title="Hapus akun" size="sm">
+                <x-si.modal id="hapus-akun" judul="Hapus akun" ukuran="kecil">
                     <p>Semua data yang terkait akun ini akan hilang. Masukkan kata sandi untuk mengonfirmasi.</p>
 
                     <form method="POST" action="{{ route('profile.destroy') }}" id="form-hapus-akun" class="mt-4">
                         @csrf
                         @method('DELETE')
-                        <x-ui.input name="password" type="password" label="Kata sandi" required />
+                        <x-si.isian name="password" tipe="password" label="Kata sandi" wajib />
                     </form>
 
                     <x-slot:footer>
-                        <x-ui.button variant="secondary" type="button" x-on:click="$dispatch('modal-close', 'hapus-akun')">Batal</x-ui.button>
-                        <x-ui.button variant="danger" type="submit" form="form-hapus-akun">Hapus akun</x-ui.button>
+                        <x-si.tombol varian="kedua" tipe="button" x-on:click="$dispatch('modal-close', 'hapus-akun')">Batal</x-si.tombol>
+                        <x-si.tombol varian="bahaya" tipe="submit" form="form-hapus-akun">Hapus akun</x-si.tombol>
                     </x-slot:footer>
-                </x-ui.modal>
-            </x-ui.card>
+                </x-si.modal>
+            </x-si.kartu>
         </div>
     </div>
 </x-layouts.admin>

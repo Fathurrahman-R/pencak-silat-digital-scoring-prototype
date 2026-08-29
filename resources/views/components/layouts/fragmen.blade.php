@@ -7,7 +7,7 @@
     Pembungkus untuk panel detail yang biasanya dimuat ke dalam drawer.
 
     Isi panel adalah fragmen HTML tanpa layout -- itu memang yang dibutuhkan
-    <x-ui.drawer-remote>, yang menyuntikkannya lewat x-html. Tapi rutenya
+    <x-si.panel-rincian>, yang menyuntikkannya lewat x-html. Tapi rutenya
     adalah GET biasa: bisa di-bookmark, dibuka di tab baru, atau sekadar
     ter-refresh. Tanpa pembungkus ini, ketiga hal itu menghasilkan halaman
     telanjang tanpa CSS -- teks polos dengan ikon SVG raksasa -- yang terbaca
@@ -23,8 +23,8 @@
     {{ $slot }}
 @else
     <x-layouts.admin :title="$title" :breadcrumb="$breadcrumb">
-        <x-ui.card>
+        <x-si.kartu>
             {{ $slot }}
-        </x-ui.card>
+        </x-si.kartu>
     </x-layouts.admin>
 @endif
