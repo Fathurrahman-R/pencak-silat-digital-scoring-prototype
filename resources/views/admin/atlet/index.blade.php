@@ -14,10 +14,10 @@
                  ]">
     <x-slot:actions>
         @resource(rk('atlet', ResourceAction::Create))
-            <x-ui.button type="button" size="sm" x-on:click="$dispatch('modal-open', 'atlet-baru')">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol tipe="button" ukuran="kecil" ikon="plus"
+                         x-on:click="$dispatch('modal-open', 'atlet-baru')">
                 Tambah atlet
-            </x-ui.button>
+            </x-si.tombol>
         @endresource
     </x-slot:actions>
 
@@ -27,12 +27,15 @@
         {{-- Kolom cari punya kedalaman (shadow-well), jadi ia harus duduk di
              permukaan — kepala kartu daftarnya — bukan mengambang di atas
              latar. --}}
-        <x-ui.card title="Daftar atlet" :subtitle="$athletes->total().' atlet terdaftar'">
-            <x-slot:actions>
-                <form method="GET" class="w-[230px] max-w-full">
-                    <x-ui.input name="q" :value="request('q')" placeholder="Cari nama atlet…" />
+        <x-si.kartu judul="Daftar atlet"
+                    :keterangan="$athletes->total().' atlet terdaftar di kontingen ini'">
+            <div class="mb-3 flex items-center gap-2 border-b border-line pb-3">
+                <form method="GET" class="flex items-center gap-2">
+                    <x-si.isian name="q" :value="request('q')" class="w-[260px]"
+                                placeholder="Cari nama atlet…" />
+                    <x-si.tombol tipe="submit" varian="kedua">Cari</x-si.tombol>
                 </form>
-            </x-slot:actions>
+            </div>
 
             @forelse ($athletes as $athlete)
                 @php
@@ -55,9 +58,9 @@
 
                     <div class="min-w-[140px]">
                         @if ($golongan)
-                            <x-ui.badge variant="neutral">{{ $golongan->label() }}</x-ui.badge>
+                            <x-si.badge varian="netral">{{ $golongan->label() }}</x-si.badge>
                         @else
-                            <x-ui.badge variant="danger">Di luar golongan</x-ui.badge>
+                            <x-si.badge varian="bahaya">Di luar golongan</x-si.badge>
                         @endif
                     </div>
 
@@ -69,9 +72,9 @@
                     --}}
                     <div class="min-w-[200px]">
                         @if ($kurang === [])
-                            <x-ui.badge variant="success">Berkas lengkap</x-ui.badge>
+                            <x-si.badge varian="sukses">Berkas lengkap</x-si.badge>
                         @else
-                            <x-ui.badge variant="warning">Kurang {{ count($kurang) }} berkas</x-ui.badge>
+                            <x-si.badge varian="perhatian">Kurang {{ count($kurang) }} berkas</x-si.badge>
                             <p class="mt-1 text-xs text-ink-muted">
                                 {{ implode(', ', array_map(fn (JenisBerkas $j) => $j->label(), $kurang)) }}
                             </p>
@@ -125,8 +128,8 @@
                 </div>
 
                 @resource(rk('atlet', ResourceAction::Update))
-                    <x-ui.modal :id="'atlet-ubah-'.$athlete->id" title="Ubah atlet" size="md"
-                                :open="$errors->any() && old('_form') === 'atlet-ubah-'.$athlete->id">
+                    <x-si.modal :id="'atlet-ubah-'.$athlete->id" judul="Ubah atlet" ukuran="sedang"
+                                :terbuka="$errors->any() && old('_form') === 'atlet-ubah-'.$athlete->id">
                         <form method="POST" id="ubah-atlet-{{ $athlete->id }}"
                               action="{{ route('admin.turnamen.kontingen.atlet.update', [$tournament, $contingent, $athlete]) }}"
                               class="space-y-4">
@@ -142,17 +145,17 @@
                         </form>
 
                         <x-slot:footer>
-                            <x-ui.button variant="secondary" type="button"
-                                         x-on:click="$dispatch('modal-close', 'atlet-ubah-{{ $athlete->id }}')">Batal</x-ui.button>
-                            <x-ui.button type="submit" form="ubah-atlet-{{ $athlete->id }}">Simpan</x-ui.button>
+                            <x-si.tombol varian="kedua" tipe="button"
+                                         x-on:click="$dispatch('modal-close', 'atlet-ubah-{{ $athlete->id }}')">Batal</x-si.tombol>
+                            <x-si.tombol tipe="submit" form="ubah-atlet-{{ $athlete->id }}">Simpan</x-si.tombol>
                         </x-slot:footer>
-                    </x-ui.modal>
+                    </x-si.modal>
 
-                    <x-ui.modal :id="'berkas-'.$athlete->id" :title="'Berkas '.$athlete->name" size="lg">
+                    <x-si.modal :id="'berkas-'.$athlete->id" :judul="'Berkas '.$athlete->name" ukuran="besar">
                         <div class="space-y-5">
                             @foreach ($athlete->documents as $document)
                                 <div class="flex items-center gap-3 border-b border-line pb-3">
-                                    <x-ui.icon name="file-text" class="size-5 shrink-0 text-ink-muted" />
+                                    <x-si.ikon nama="file-text" class="size-5 shrink-0 text-ink-muted" />
 
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-base2 text-ink">{{ $document->jenis->label() }}</p>
@@ -161,11 +164,11 @@
                                         </p>
                                     </div>
 
-                                    <x-ui.button size="xs" variant="secondary"
-                                                 :href="route('admin.turnamen.kontingen.atlet.berkas.show', [$tournament, $contingent, $athlete, $document])"
+                                    <x-si.tombol ukuran="kecil" varian="kedua"
+                                                 :tautan="route('admin.turnamen.kontingen.atlet.berkas.show', [$tournament, $contingent, $athlete, $document])"
                                                  target="_blank">
                                         Lihat
-                                    </x-ui.button>
+                                    </x-si.tombol>
 
                                     {{--
                                         Sebelumnya satu ikon tong sampah yang
@@ -190,18 +193,18 @@
                                   enctype="multipart/form-data" class="space-y-4">
                                 @csrf
 
-                                <x-ui.select name="jenis" label="Jenis berkas"
+                                <x-si.pilihan name="jenis" label="Jenis berkas"
                                              :id="'jenis-berkas-'.$athlete->id"
                                              :options="collect(JenisBerkas::cases())
                                                  ->mapWithKeys(fn (JenisBerkas $j) => [$j->value => $j->label()])
-                                                 ->all()" required />
+                                                 ->all()" wajib />
 
-                                <x-ui.file-upload name="berkas" label="Berkas" required
+                                <x-si.unggah name="berkas" label="Berkas" wajib
                                                   :id="'berkas-file-'.$athlete->id"
                                                   accept=".jpg,.jpeg,.png,.pdf"
-                                                  hint="JPG, PNG, atau PDF. Paling besar 4 MB. Mengunggah jenis yang sama akan menggantikan berkas sebelumnya." />
+                                                  bantuan="JPG, PNG, atau PDF. Paling besar 4 MB. Mengunggah jenis yang sama akan menggantikan berkas sebelumnya." />
 
-                                <x-ui.button type="submit" size="sm">Unggah</x-ui.button>
+                                <x-si.tombol tipe="submit" ukuran="kecil">Unggah</x-si.tombol>
                             </form>
 
                             <div class="rounded-lg bg-surface-inset p-3 text-xs text-ink-muted">
@@ -211,20 +214,20 @@
                         </div>
 
                         <x-slot:footer>
-                            <x-ui.button variant="secondary" type="button"
-                                         x-on:click="$dispatch('modal-close', 'berkas-{{ $athlete->id }}')">Tutup</x-ui.button>
+                            <x-si.tombol varian="kedua" tipe="button"
+                                         x-on:click="$dispatch('modal-close', 'berkas-{{ $athlete->id }}')">Tutup</x-si.tombol>
                         </x-slot:footer>
-                    </x-ui.modal>
+                    </x-si.modal>
                 @endresource
 
 
             @empty
-                <x-ui.empty-state title="Belum ada atlet"
-                                  description="Golongan usia dihitung sendiri dari tanggal lahir terhadap tanggal kejuaraan dimulai." />
+                <x-si.kosong judul="Belum ada atlet"
+                             syarat="Golongan usia dihitung sendiri dari tanggal lahir terhadap tanggal kejuaraan dimulai." />
             @endforelse
 
             <x-slot:footer>{{ $athletes->links() }}</x-slot:footer>
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 
     @resource(rk('atlet', ResourceAction::Create))
@@ -235,8 +238,8 @@
             satu kelas; yang tidak bisa ditentukan sendiri dilaporkan sebagai
             catatan setelah tersimpan.
         --}}
-        <x-ui.modal id="atlet-baru" title="Tambah atlet" size="md"
-                    :open="$errors->any() && old('_form') === 'atlet-baru'">
+        <x-si.modal id="atlet-baru" judul="Tambah atlet" ukuran="sedang"
+                    :terbuka="$errors->any() && old('_form') === 'atlet-baru'">
             <form method="POST" id="atlet-baru-form"
                   action="{{ route('admin.turnamen.kontingen.atlet.store', [$tournament, $contingent]) }}"
                   class="space-y-4">
@@ -249,28 +252,28 @@
                     <div class="space-y-3 border-t border-line pt-4">
                         <p class="text-[13px] font-semibold text-ink">Sekalian daftarkan nomor</p>
 
-                        <x-ui.toggle name="daftar_tanding" id="daftar-tanding-baru"
+                        <x-si.saklar name="daftar_tanding" id="daftar-tanding-baru"
                                      label="Daftarkan ke kelas tandingnya"
-                                     :checked="filter_var(old('daftar_tanding', '1'), FILTER_VALIDATE_BOOL)"
-                                     hint="Kelas dipilih otomatis dari jenis kelamin, golongan usia, dan berat badan di atas." />
+                                     :dicentang="filter_var(old('daftar_tanding', '1'), FILTER_VALIDATE_BOOL)"
+                                     bantuan="Kelas dipilih otomatis dari jenis kelamin, golongan usia, dan berat badan di atas." />
 
                         @if ($nomorJurusPerorangan->isNotEmpty())
-                            <x-ui.select name="jurus_event_id" id="jurus-baru" label="Nomor jurus perorangan"
+                            <x-si.pilihan name="jurus_event_id" id="jurus-baru" label="Nomor jurus perorangan"
                                          placeholder="Tidak mendaftar nomor jurus"
                                          :selected="old('jurus_event_id')"
                                          :options="$nomorJurusPerorangan->mapWithKeys(fn ($n) => [$n->id => $n->nama()])->all()"
-                                         hint="Nomor Ganda dan Regu didaftarkan di halaman Pendaftaran nomor, karena butuh dua sampai tiga pesilat." />
+                                         bantuan="Nomor Ganda dan Regu didaftarkan di halaman Pendaftaran nomor, karena butuh dua sampai tiga pesilat." />
                         @endif
                     </div>
                 @endresource
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" type="button"
-                             x-on:click="$dispatch('modal-close', 'atlet-baru')">Batal</x-ui.button>
-                <x-ui.button type="submit" form="atlet-baru-form">Simpan</x-ui.button>
+                <x-si.tombol varian="kedua" tipe="button"
+                             x-on:click="$dispatch('modal-close', 'atlet-baru')">Batal</x-si.tombol>
+                <x-si.tombol tipe="submit" form="atlet-baru-form">Simpan</x-si.tombol>
             </x-slot:footer>
-        </x-ui.modal>
+        </x-si.modal>
     @endresource
 
     {{--
