@@ -643,6 +643,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 1 — gelanggang** | Juri, wasit, operator, Dewan Wasit Juri, keberatan, Jurus. Nol `x-ui.*` |
 | **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
 | **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
+| **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
 | **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
 
 ### 12.2 Belum
@@ -650,7 +651,7 @@ Cabang kerja: `rombak-ui`.
 | Bagian | Kenapa belum |
 |---|---|
 | **Rombongan 4 — panitia/admin** | 906 pemanggilan `x-ui.*` di 49 berkas. Menunggu layarnya digambar di kanvas lebih dulu — keputusan pemilik produk, karena rombongan ini yang paling banyak alurnya dan paling mahal kalau salah arah |
-| ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, jejak di riwayat dan berita acara. Yang belum: panel Ketua Pertandingan, satu-satunya jalur lain yang boleh membuka verifikasi menurut Pasal 13 |
+| ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
 | **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
