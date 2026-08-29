@@ -261,3 +261,101 @@ it('tidak menampilkan peserta jurus di panel timbang badan', function () {
         ->assertOk()
         ->assertDontSee('Peserta Jurus Saja');
 });
+
+/*
+ * --------------------------------------------------------------------
+ * Panel timbang badan: antrean, penyaring, dan batas kelas
+ * --------------------------------------------------------------------
+ */
+
+it('mengurutkan antrean timbang menurut jadwal partai, bukan abjad nama', function () {
+    /*
+     * Petugas timbang bekerja mengikuti antrean gelanggang: yang bertanding
+     * jam sepuluh harus ditimbang sebelum yang bertanding jam satu. Daftar
+     * abjad tidak membawa satu pun petunjuk itu, dan petugas yang mengikutinya
+     * akan menahan partai pertama karena pesilatnya berhuruf Z.
+     */
+    $bracket = App\Models\Bracket::create(['weight_class_id' => $this->kelasC->id, 'size' => 2]);
+
+    $awal = Registration::factory()->for($this->kontingen)->terverifikasi()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $awal->athletes()->attach(pesilatDewasa($this->kontingen, ['name' => 'Zulkifli Akbar']));
+
+    $akhir = Registration::factory()->for($this->kontingen)->terverifikasi()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $akhir->athletes()->attach(pesilatDewasa($this->kontingen, ['name' => 'Andi Pratama']));
+
+    App\Models\SilatMatch::create([
+        'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
+        'red_registration_id' => $awal->id,
+        'status' => App\Models\SilatMatch::STATUS_TERJADWAL,
+        'scheduled_at' => now()->setTime(10, 0),
+    ]);
+
+    App\Models\SilatMatch::create([
+        'bracket_id' => $bracket->id, 'round' => 1, 'position' => 2,
+        'red_registration_id' => $akhir->id,
+        'status' => App\Models\SilatMatch::STATUS_TERJADWAL,
+        'scheduled_at' => now()->setTime(13, 0),
+    ]);
+
+    $urut = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/timbang?saringan=semua")
+        ->assertOk()
+        ->viewData('registrations')
+        ->pluck('id');
+
+    expect($urut->first())->toBe($awal->id)
+        ->and($urut[1])->toBe($akhir->id);
+});
+
+it('membawa hitungan tiap penyaring, dihitung sebelum penyaringan', function () {
+    /*
+     * Chip penyaring wajib membawa angkanya sendiri. Petugas perlu tahu masih
+     * ada berapa yang belum ditimbang SEBELUM menekan chipnya -- itulah
+     * satu-satunya angka yang menentukan ia boleh pulang atau tidak.
+     */
+    $lolos = Registration::factory()->for($this->kontingen)->terverifikasi()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $lolos->athletes()->attach(pesilatDewasa($this->kontingen));
+
+    $belum = Registration::factory()->for($this->kontingen)->terverifikasi()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $belum->athletes()->attach(pesilatDewasa($this->kontingen));
+
+    $this->actingAs($this->admin)
+        ->post("/admin/turnamen/{$this->tournament->id}/timbang/{$lolos->id}", ['weight' => 58]);
+
+    $hitungan = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/timbang?saringan=belum")
+        ->assertOk()
+        ->viewData('hitungan');
+
+    // Hitungan tidak ikut menyusut walau daftarnya sedang tersaring.
+    expect($hitungan['lolos'])->toBe(1)
+        ->and($hitungan['belum'])->toBe(1)
+        ->and($hitungan['semua'])->toBe(2);
+});
+
+it('membawa batas kelas peserta terpilih sebagai angka, bukan cuma kalimat', function () {
+    /*
+     * Panel menyatakan lolos atau tidak SAAT angkanya diketik, sebelum tangan
+     * petugas berpindah ke tombol. Itu hanya mungkin kalau batasnya sampai ke
+     * peramban sebagai angka, lengkap dengan aturan batas terbuka: kelas C
+     * dewasa putra berbunyi "di atas 55 sampai 60", jadi 55,0 kg tidak lolos
+     * sedangkan 60,0 kg lolos.
+     */
+    $pendaftaran = Registration::factory()->for($this->kontingen)->terverifikasi()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $pendaftaran->athletes()->attach(pesilatDewasa($this->kontingen));
+
+    $batas = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/timbang?saringan=semua&peserta={$pendaftaran->id}")
+        ->assertOk()
+        ->viewData('batas');
+
+    expect($batas['min'])->toBe(55.0)
+        ->and($batas['max'])->toBe(60.0)
+        ->and($batas['min_eksklusif'])->toBeTrue()
+        ->and($batas['nama'])->toBe($this->kelasC->name);
+});

@@ -71,6 +71,24 @@ class Registration extends Model
         return $this->hasMany(JurusPerformance::class);
     }
 
+    /*
+     * Partai yang diikuti pendaftaran ini, dipisah per sudut.
+     *
+     * Dua relasi, bukan satu: `matches` tunggal menuntut orWhere pada dua
+     * kolom kunci asing, dan Eloquent tidak bisa meng-eager-load bentuk itu --
+     * satu-satunya jalan tersisa adalah kueri per baris, yang di layar timbang
+     * badan berarti satu kueri untuk tiap peserta dalam daftar ratusan baris.
+     */
+    public function matchesAsRed(): HasMany
+    {
+        return $this->hasMany(SilatMatch::class, 'red_registration_id');
+    }
+
+    public function matchesAsBlue(): HasMany
+    {
+        return $this->hasMany(SilatMatch::class, 'blue_registration_id');
+    }
+
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
