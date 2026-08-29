@@ -311,6 +311,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/{match}/tetapkan', 'tetapkan')->name('tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
                     Route::post('/{match}/lepas', 'lepas')->name('lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
                     Route::post('/{match}/urutkan', 'urutkan')->name('urutkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                    /*
+                     * Memindahkan langsung ke urutan tujuan. `urutkan` menukar
+                     * dengan tetangga sebelah -- memindahkan partai dari urutan
+                     * 14 ke 2 lewat jalur itu berarti dua belas permintaan dan
+                     * dua belas pemuatan ulang halaman.
+                     */
+                    Route::post('/{match}/pindahkan', 'pindahkan')->name('pindahkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
                 });
 
             Route::controller(AparatController::class)

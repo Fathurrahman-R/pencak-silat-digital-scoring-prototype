@@ -60,6 +60,52 @@ class PenjadwalPartai
     }
 
     /** Menukar urutan tayang partai dengan tetangganya dalam gelanggang yang sama. */
+    /**
+     * Memindahkan partai ke urutan tertentu, menggeser yang lain sekali jalan.
+     *
+     * Bedanya dengan urutkan(): yang itu menukar dengan tetangga sebelah, satu
+     * langkah per panggilan. Memindahkan partai dari urutan 14 ke urutan 2
+     * berarti dua belas panggilan, masing-masing satu permintaan HTTP dan satu
+     * pemuatan ulang halaman -- dan panitia yang menyusun jadwal pagi hari
+     * melakukannya berkali-kali untuk gelanggang yang isinya empat puluh
+     * partai.
+     */
+    public function pindahkan(SilatMatch $match, int $tujuan): SilatMatch
+    {
+        if ($match->arena_id === null) {
+            throw new RuntimeException('Partai ini belum dijadwalkan ke gelanggang mana pun.');
+        }
+
+        return DB::transaction(function () use ($match, $tujuan) {
+            $urut = SilatMatch::where('arena_id', $match->arena_id)
+                ->orderBy('order_in_arena')
+                ->lockForUpdate()
+                ->get();
+
+            $tujuan = max(1, min($tujuan, $urut->count()));
+
+            $tanpa = $urut->reject(fn (SilatMatch $m) => $m->id === $match->id)->values();
+            $baru = $tanpa->splice(0, $tujuan - 1)
+                ->push($match)
+                ->concat($tanpa)
+                ->values();
+
+            /*
+             * Ditulis ulang seluruhnya, bukan cuma yang bergeser. Menghitung
+             * mana saja yang berubah menghemat beberapa UPDATE dan membuka
+             * celah nomor ganda kalau urutan awalnya sudah tidak rapat --
+             * yang terjadi tiap kali satu partai dilepas dari jadwal.
+             */
+            foreach ($baru as $i => $m) {
+                if ($m->order_in_arena !== $i + 1) {
+                    $m->update(['order_in_arena' => $i + 1]);
+                }
+            }
+
+            return $match->refresh();
+        });
+    }
+
     public function urutkan(SilatMatch $match, int $langkah): SilatMatch
     {
         if ($match->arena_id === null) {

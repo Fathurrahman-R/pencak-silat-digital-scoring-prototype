@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Arena;
+use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Support\Bagan\PenjadwalPartai;
@@ -52,11 +53,52 @@ class JadwalController extends Controller
                 ->whereNotNull('blue_registration_id'),
         )->get();
 
+        /*
+         * Kelengkapan aparat per partai.
+         *
+         * Partai yang jurinya belum lengkap sebelumnya tampil sama persis
+         * dengan yang sudah siap. Panel juri tidak akan menerima nilai sampai
+         * ketiganya ditugaskan, dan itu baru ketahuan saat partai dimulai di
+         * depan penonton.
+         */
+        $jumlahJuri = $tournament->peraturan()->jumlah_juri_tanding;
+
+        $terpasang = MatchOfficial::query()
+            ->whereIn('match_id', $arenas->flatMap->matches->pluck('id'))
+            ->get()
+            ->groupBy('match_id');
+
+        $aparat = $terpasang->map(fn ($baris) => [
+            'wasit' => $baris->firstWhere('role', MatchOfficial::ROLE_WASIT)?->user_id !== null,
+            'juri' => $baris->where('role', MatchOfficial::ROLE_JURI)->whereNotNull('user_id')->count(),
+        ]);
+
         return view('admin.jadwal.index', [
             'tournament' => $tournament,
             'arenas' => $arenas,
             'belumDijadwalkan' => $belumDijadwalkan,
+            'aparat' => $aparat,
+            'jumlahJuri' => $jumlahJuri,
         ]);
+    }
+
+    /** Memindahkan partai ke urutan tertentu dalam satu tindakan. */
+    public function pindahkan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        $data = $request->validate(
+            ['urutan' => ['required', 'integer', 'min:1']],
+            attributes: ['urutan' => 'Nomor urut'],
+        );
+
+        try {
+            $this->penjadwal->pindahkan($match, (int) $data['urutan']);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Partai {$match->id} dipindahkan ke urutan {$data['urutan']}.");
     }
 
     public function tetapkan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse

@@ -118,3 +118,95 @@ it('menolak partai yang bukan milik kejuaraan di alamat', function () {
         ->post(route('admin.turnamen.jadwal.lepas', [$this->tournament, $partaiLain]))
         ->assertNotFound();
 });
+
+/*
+ * --------------------------------------------------------------------
+ * Memindahkan urutan, dan kelengkapan aparat
+ * --------------------------------------------------------------------
+ */
+
+it('memindahkan partai ke urutan tujuan dalam satu tindakan', function () {
+    /*
+     * Jalur urutkan() menukar dengan tetangga sebelah: memindahkan partai dari
+     * urutan 4 ke urutan 1 lewat jalur itu berarti tiga permintaan dan tiga
+     * pemuatan ulang halaman. Panitia yang menyusun jadwal pagi hari
+     * melakukannya berkali-kali untuk gelanggang berisi puluhan partai.
+     */
+    // Empat partai dalam SATU bracket: satu kelas hanya boleh punya satu bagan.
+    $partai = collect(['C', 'B', 'A', 'D'])->map(function (string $kode) {
+        $m = ($this->buatPartai)($kode);
+        $this->actingAs($this->admin)->post(
+            "/admin/turnamen/{$this->tournament->id}/jadwal/{$m->id}/tetapkan",
+            ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+        );
+
+        return $m->refresh();
+    });
+
+    $terakhir = $partai->last();
+    expect($terakhir->order_in_arena)->toBe(4);
+
+    $this->actingAs($this->admin)
+        ->post("/admin/turnamen/{$this->tournament->id}/jadwal/{$terakhir->id}/pindahkan", ['urutan' => 1])
+        ->assertRedirect();
+
+    $urut = SilatMatch::where('arena_id', $this->arena->id)
+        ->orderBy('order_in_arena')->pluck('id')->all();
+
+    expect($urut[0])->toBe($terakhir->id)
+        // Sisanya bergeser rapat, tanpa nomor ganda maupun bolong.
+        ->and(SilatMatch::where('arena_id', $this->arena->id)->orderBy('order_in_arena')
+            ->pluck('order_in_arena')->all())->toBe([1, 2, 3, 4]);
+});
+
+it('merapatkan nomor urut yang bolong saat memindahkan', function () {
+    /*
+     * Nomor urut jadi bolong tiap kali satu partai dilepas dari jadwal.
+     * Pemindahan menulis ulang seluruh urutan, bukan cuma yang bergeser —
+     * menghitung mana saja yang berubah menghemat beberapa UPDATE dan membuka
+     * celah nomor ganda.
+     */
+    $a = ($this->buatPartai)();
+    $b = ($this->buatPartai)('B');
+
+    foreach ([$a, $b] as $m) {
+        $this->actingAs($this->admin)->post(
+            "/admin/turnamen/{$this->tournament->id}/jadwal/{$m->id}/tetapkan",
+            ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+        );
+    }
+
+    // Bolong dibuat langsung, meniru sisa penghapusan.
+    SilatMatch::whereKey($b->id)->update(['order_in_arena' => 9]);
+
+    $this->actingAs($this->admin)
+        ->post("/admin/turnamen/{$this->tournament->id}/jadwal/{$b->id}/pindahkan", ['urutan' => 1])
+        ->assertRedirect();
+
+    expect(SilatMatch::where('arena_id', $this->arena->id)->orderBy('order_in_arena')
+        ->pluck('order_in_arena')->all())->toBe([1, 2]);
+});
+
+it('menyatakan partai yang aparatnya belum lengkap', function () {
+    /*
+     * Partai yang jurinya belum lengkap sebelumnya tampil sama persis dengan
+     * yang siap. Panel juri tidak akan menerima nilai sampai ketiganya
+     * ditugaskan, dan itu baru ketahuan saat partai dimulai di depan penonton.
+     */
+    $partai = ($this->buatPartai)();
+
+    $this->actingAs($this->admin)->post(
+        "/admin/turnamen/{$this->tournament->id}/jadwal/{$partai->id}/tetapkan",
+        ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+    );
+
+    $halaman = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/jadwal")
+        ->assertOk();
+
+    // Belum ada satu pun aparat: wasit belum ada.
+    $halaman->assertSee('Wasit belum ada')->assertSee('Lengkapi aparat');
+
+    $aparat = $halaman->viewData('aparat');
+    expect($aparat->get($partai->id))->toBeNull();
+});
