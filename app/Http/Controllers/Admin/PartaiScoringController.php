@@ -160,6 +160,31 @@ class PartaiScoringController extends Controller
 
         $pencatat = $hukuman->mapWithKeys(fn ($h) => [$h->id => $sebutan[$h->created_by] ?? null]);
 
+        /*
+         * Verifikasi juri -- Pasal 13.
+         *
+         * Wajib masuk berita acara, dan bukan sekadar sebagai catatan kaki.
+         * Nilai yang lahir dari verifikasi tidak punya judge_inputs (tidak ada
+         * juri yang menekan tombolnya), jadi tanpa bagian ini kolom "Juri" di
+         * Daftar Nilai kosong dan dokumen yang ditandatangani mencatat sebuah
+         * jatuhan +3 yang seolah muncul tanpa penerbit -- justru baris yang
+         * paling dipersoalkan saat hasilnya digugat.
+         *
+         * Jawaban tiap juri ditampilkan satu per satu, bukan cuma hasil
+         * akhirnya, karena Pasal 15 membolehkan pelatih memprotes keputusan
+         * verifikasi: yang diprotes adalah jawabannya, dan protes tanpa akses
+         * ke jawaban itu tidak bisa disusun.
+         *
+         * Yang dibatalkan ikut tercatat. Verifikasi yang dibatalkan adalah
+         * bagian dari yang terjadi di gelanggang.
+         */
+        $verifikasi = JudgeVerification::query()
+            ->where('match_id', $match->id)
+            ->whereIn('status', [JudgeVerification::SELESAI, JudgeVerification::DIBATALKAN])
+            ->with(['answers' => fn ($q) => $q->orderBy('judge_number'), 'peminta:id,name'])
+            ->orderBy('diminta_at')
+            ->get();
+
         $pdf = Pdf::loadView('admin.rekap.berita-acara', [
             'match' => $match,
             'rounds' => $rounds,
@@ -168,6 +193,7 @@ class PartaiScoringController extends Controller
             'hukuman' => $hukuman,
             'penekan' => $penekan,
             'pencatat' => $pencatat,
+            'verifikasi' => $verifikasi,
             'peraturan' => $babakSekarang,
         ])->setPaper('a4');
 
@@ -712,6 +738,21 @@ class PartaiScoringController extends Controller
         $sebutan = $match->officials()->with('user:id,name')->get()
             ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
 
+        /*
+         * Nilai dan hukuman yang lahir dari verifikasi juri tidak punya
+         * judge_inputs -- tidak ada juri yang menekan tombolnya. Tanpa
+         * penandaan ini, riwayat menampilkan jatuhan +3 yang seolah muncul
+         * sendiri tanpa satu pun penekan, dan itu justru baris yang paling
+         * dipersoalkan saat hasilnya digugat.
+         */
+        $dariVerifikasi = JudgeVerification::query()
+            ->where('match_id', $match->id)
+            ->where('status', JudgeVerification::SELESAI)
+            ->get(['id', 'score_event_id', 'penalty_id']);
+
+        $verifikasiNilai = $dariVerifikasi->whereNotNull('score_event_id')->pluck('id', 'score_event_id');
+        $verifikasiHukuman = $dariVerifikasi->whereNotNull('penalty_id')->pluck('id', 'penalty_id');
+
         $nilai = $match->scoreEvents()->berlaku()->with('judgeInputs:id,score_event_id,judge_user_id')
             ->latest('id')->limit(30)->get()->map(fn ($s) => [
                 'tipe' => 'nilai',
@@ -720,10 +761,13 @@ class PartaiScoringController extends Controller
                 'corner' => $s->corner->value,
                 'label' => "{$s->point_type->label()} ({$s->value})",
                 'waktu' => $s->server_ts->toIso8601String(),
+                'verifikasi_id' => $verifikasiNilai[$s->id] ?? null,
                 // Urut supaya "Juri 1, Juri 3" tidak berganti-ganti urutan tiap resync.
-                'oleh' => $s->judgeInputs
-                    ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
-                    ->filter()->unique()->sort()->values()->implode(', ') ?: null,
+                'oleh' => isset($verifikasiNilai[$s->id])
+                    ? 'Verifikasi juri'
+                    : ($s->judgeInputs
+                        ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
+                        ->filter()->unique()->sort()->values()->implode(', ') ?: null),
             ]);
 
         $hukuman = $match->penalties()->berlaku()->with('pencatat:id,name')
@@ -734,7 +778,10 @@ class PartaiScoringController extends Controller
                 'corner' => $p->corner->value,
                 'label' => "{$p->tier->label()} ".($p->points !== null ? $p->points : '(DQ)'),
                 'waktu' => $p->created_at->toIso8601String(),
-                'oleh' => $sebutan[$p->created_by] ?? $p->pencatat?->name,
+                'verifikasi_id' => $verifikasiHukuman[$p->id] ?? null,
+                'oleh' => isset($verifikasiHukuman[$p->id])
+                    ? 'Verifikasi juri'
+                    : ($sebutan[$p->created_by] ?? $p->pencatat?->name),
             ]);
 
         return $nilai->concat($hukuman)->sortByDesc('waktu')->values()->all();

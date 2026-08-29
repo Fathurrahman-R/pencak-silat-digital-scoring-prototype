@@ -100,6 +100,48 @@
         @endforelse
     </table>
 
+    @if ($verifikasi->isNotEmpty())
+        {{--
+            Verifikasi juri -- Pasal 13.
+
+            Jawaban tiap juri ditulis satu per satu, bukan cuma hasil akhirnya.
+            Pasal 15 membolehkan pelatih memprotes keputusan verifikasi, dan
+            yang diprotes adalah jawabannya; protes tanpa akses ke jawaban itu
+            tidak bisa disusun sama sekali.
+        --}}
+        <p class="section-title">Verifikasi Juri (Pasal 13)</p>
+        <table>
+            <tr><th>Babak</th><th>Waktu</th><th>Diminta oleh</th><th>Pertanyaan</th><th>Jawaban juri</th><th>Hasil</th><th>Akibat</th></tr>
+            @foreach ($verifikasi as $v)
+                <tr>
+                    <td class="center">{{ $v->round }}</td>
+                    <td>{{ $v->diminta_at?->format('H:i:s') }}</td>
+                    <td>{{ $v->peminta?->name ?? '—' }}</td>
+                    <td>{{ $v->jenis->pertanyaan() }}</td>
+                    <td>
+                        @forelse ($v->answers as $j)
+                            {{ $j->sebutan() }}: {{ $j->jawaban->label() }}@if (! $loop->last)<br>@endif
+                        @empty
+                            Tidak ada jawaban masuk.
+                        @endforelse
+                    </td>
+                    <td>{{ $v->hasil?->label() ?? '—' }}</td>
+                    <td>
+                        @if ($v->status === \App\Models\JudgeVerification::DIBATALKAN)
+                            Dibatalkan{{ $v->catatan ? ' — '.$v->catatan : '' }}
+                        @elseif ($v->score_event_id)
+                            Nilai jatuhan diterbitkan
+                        @elseif ($v->penalty_id)
+                            Sanksi {{ $v->tingkat_pelanggaran?->label() }} dijatuhkan
+                        @else
+                            Tidak ada nilai maupun hukuman
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     <p class="section-title">Pengesahan</p>
     <table>
         <tr>

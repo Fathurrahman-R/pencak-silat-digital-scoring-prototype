@@ -650,7 +650,7 @@ Cabang kerja: `rombak-ui`.
 | Bagian | Kenapa belum |
 |---|---|
 | **Rombongan 4 — panitia/admin** | 906 pemanggilan `x-ui.*` di 49 berkas. Menunggu layarnya digambar di kanvas lebih dulu — keputusan pemilik produk, karena rombongan ini yang paling banyak alurnya dan paling mahal kalau salah arah |
-| **Verifikasi juri** | Fitur baru (rute, controller, kejadian realtime, kemungkinan migrasi). Dikerjakan setelah rupa selesai supaya tidak menumpuk dua jenis perubahan dalam satu peninjauan |
+| ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, jejak di riwayat dan berita acara. Yang belum: panel Ketua Pertandingan, satu-satunya jalur lain yang boleh membuka verifikasi menurut Pasal 13 |
 | **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak

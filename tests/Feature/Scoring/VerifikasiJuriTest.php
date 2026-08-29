@@ -373,3 +373,87 @@ it('menolak verifikasi milik partai lain', function () {
         ])
         ->assertNotFound();
 });
+
+/*
+ * --------------------------------------------------------------------
+ * Jejak: riwayat panel dan berita acara
+ * --------------------------------------------------------------------
+ */
+
+it('menandai nilai yang lahir dari verifikasi di riwayat panel', function () {
+    /*
+     * Nilai dari verifikasi tidak punya judge_inputs -- tidak ada juri yang
+     * menekan tombolnya. Tanpa penandaan, riwayat menampilkan jatuhan +3 yang
+     * seolah muncul sendiri tanpa satu pun penekan.
+     */
+    $verifikasi = ($this->minta)();
+    $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
+    $verifikasi = $this->polling->jawab($verifikasi, $this->juri[1], JawabanVerifikasi::Merah);
+    $this->polling->terapkan($verifikasi, $this->wasit);
+
+    $riwayat = $this->actingAs($this->wasit)
+        ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->json('riwayat');
+
+    $baris = collect($riwayat)->firstWhere('tipe', 'nilai');
+
+    expect($baris['oleh'])->toBe('Verifikasi juri')
+        ->and($baris['verifikasi_id'])->toBe($verifikasi->id);
+});
+
+it('mencatat verifikasi beserta jawaban tiap juri di berita acara', function () {
+    /*
+     * Pasal 15 membolehkan pelatih memprotes keputusan verifikasi, dan yang
+     * diprotes adalah jawaban juri. Berita acara yang cuma memuat hasil
+     * akhirnya membuat protes itu tidak bisa disusun.
+     */
+    $verifikasi = ($this->minta)();
+    $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
+    $this->polling->jawab($verifikasi, $this->juri[1], JawabanVerifikasi::Biru);
+    $verifikasi = $this->polling->jawab($verifikasi, $this->juri[2], JawabanVerifikasi::Merah);
+    $this->polling->terapkan($verifikasi, $this->wasit);
+
+    $html = view('admin.rekap.berita-acara', [
+        'match' => $this->match->load(['red.athletes', 'blue.athletes', 'bracket.weightClass.tournament', 'rounds', 'officials.user']),
+        'rounds' => collect(),
+        'skorTotal' => ['merah' => 3, 'biru' => 0],
+        'nilai' => collect(),
+        'hukuman' => collect(),
+        'penekan' => collect(),
+        'pencatat' => collect(),
+        'verifikasi' => JudgeVerification::where('match_id', $this->match->id)
+            ->with(['answers' => fn ($q) => $q->orderBy('judge_number'), 'peminta:id,name'])->get(),
+        'peraturan' => 1,
+    ])->render();
+
+    expect($html)
+        ->toContain('Verifikasi Juri (Pasal 13)')
+        ->toContain('Sudut mana yang menjatuhkan?')
+        // Jawaban tiap juri, satu per satu -- termasuk yang kalah suara.
+        ->toContain('Juri 1: Sudut merah')
+        ->toContain('Juri 2: Sudut biru')
+        ->toContain('Juri 3: Sudut merah')
+        ->toContain('Nilai jatuhan diterbitkan');
+});
+
+it('mencatat verifikasi yang dibatalkan di berita acara', function () {
+    $verifikasi = ($this->minta)();
+    $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
+    $this->polling->batalkan($verifikasi, $this->wasit, 'Wasit salah memilih jenis pertanyaan.');
+
+    $html = view('admin.rekap.berita-acara', [
+        'match' => $this->match->load(['red.athletes', 'blue.athletes', 'bracket.weightClass.tournament', 'rounds', 'officials.user']),
+        'rounds' => collect(),
+        'skorTotal' => ['merah' => 0, 'biru' => 0],
+        'nilai' => collect(),
+        'hukuman' => collect(),
+        'penekan' => collect(),
+        'pencatat' => collect(),
+        'verifikasi' => JudgeVerification::where('match_id', $this->match->id)
+            ->with(['answers' => fn ($q) => $q->orderBy('judge_number'), 'peminta:id,name'])->get(),
+        'peraturan' => 1,
+    ])->render();
+
+    expect($html)->toContain('Dibatalkan — Wasit salah memilih jenis pertanyaan.');
+});

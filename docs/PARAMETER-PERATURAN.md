@@ -49,7 +49,7 @@
 |---|---|---|---|
 | `var.kartu_protes.tanding` | 2 per partai | 15.2.a | Berlaku sepanjang tiga babak — dihitung per sudut per partai, bukan per babak |
 | `var.kartu_protes.jurus` | 1 per penampilan | 15.3.a | Skema `protest_cards` sudah generik lewat `match_id`; kartu Jurus belum dipakai UI karena kategori Jurus tidak memakai alur protes bernomor partai yang sama — menyusul kalau dibutuhkan |
-| `var.tenggat_keputusan_detik` | 300 | 15 | Lewat tenggat, sistem hanya menampilkan peringatan visual — proses lanjutan (verifikasi juri dipimpin Ketua Pertandingan) di luar cakupan sistem digital ini |
+| `var.tenggat_keputusan_detik` | 300 | 15 | Lewat tenggat, sistem hanya menampilkan peringatan visual. Proses lanjutannya — verifikasi juri yang dipimpin Ketua Pertandingan — **sekarang ada di dalam sistem**; lihat `App\Support\Scoring\PollingVerifikasi` dan resource key `verifikasi-juri`. Baris ini sebelumnya menyebutnya di luar cakupan |
 | `protes_manajer.tingkat_pertama` | 10/20/120 menit | 15 ayat 4 | Ambil formulir, kembalikan formulir, keputusan |
 | `protes_manajer.banding` | 10/20/120 menit | 15 ayat 4 | Keputusan banding final, tidak bisa dibanding lagi |
 
