@@ -1,0 +1,382 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}
+    .items-baseline{align-items:baseline}.items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-around{justify-content:space-around}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}.text-right{text-align:right}
+    .border{border-width:1px}.border-2{border-width:2px}
+    .border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l{border-left-width:1px}.border-l-3{border-left-width:3px}
+    .relative{position:relative}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-dalam{background-color:#dcd8d0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+    .bg-merah{background-color:#a3221c}
+    .bg-biru{background-color:#12439e}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}.f26{font-size:26px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}.g24{gap:24px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}
+    .pt10{padding-top:10px}.pt12{padding-top:12px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}.h48{height:48px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+    .slot{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px;padding:8px 10px;
+          display:flex;align-items:center;gap:8px}
+    .garis-pohon{width:22px;border-top:1px solid #d4cfc6}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:900px">
+
+  <!-- KEPALA -->
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Kejuaraan Terbuka Kalimantan Barat 2026 · Bagan</div>
+      <div class="f22 w600 lh12">Putra Dewasa — Kelas B (55–60 kg)</div>
+    </div>
+    <div class="flex items-center g10">
+      <span class="inline-flex items-center g6 px12 py6 r-full bg-perhatian-lembut t-perhatian f13 w600">
+        <span class="r-full" style="width:8px;height:8px;background:#7a4a00"></span> Draf · 8 tempat
+      </span>
+      <button class="h40 px14 r6 border b-kendali bg-naik f14 w500">Susun ulang</button>
+      <button class="h40 px16 r6 bg-tinta t-putih f14 w600">Kunci bagan</button>
+    </div>
+  </div>
+
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+
+    <!-- ============ POHON ============ -->
+    <div class="flex flex-col flex-1 min-w-0 p16 g12 overflow-hidden">
+
+      <!--
+        Draf dinyatakan sebagai prasyarat, bukan sekadar label warna. Yang
+        harus diketahui panitia bukan "ini draf" melainkan APA YANG BELUM
+        TERJADI dan apa yang mengunci setelahnya.
+      -->
+      <div class="border-l-3 b-perhatian bg-perhatian-lembut px14 py10 r6 shrink-0">
+        <div class="f14 w600 t-perhatian">Bagan ini masih draf</div>
+        <div class="f13 t-perhatian lh16 mt2">
+          Undian masih bisa diacak ulang dan tempat masih bisa ditukar. Setelah dikunci, susunan ini
+          jadi dasar jadwal dan tidak bisa diubah lagi — koreksinya lewat Ketua Pertandingan.
+        </div>
+      </div>
+
+      <div class="kartu flex-1 p16 overflow-hidden flex flex-col g12">
+        <div class="flex items-baseline justify-between">
+          <span class="f11 tr10 uppercase t-redup">Babak penyisihan · 8 tempat, 6 peserta sah</span>
+          <span class="f12 t-redup">2 tempat kosong jadi bye</span>
+        </div>
+
+        <div class="flex g24 flex-1">
+
+          <!-- Kolom babak 1 -->
+          <div class="flex flex-col justify-between" style="width:300px">
+            <div class="f11 tr10 uppercase t-redup">Perempat final</div>
+
+            <!-- Partai 1 -->
+            <div class="flex flex-col g4">
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">1</span>
+                <span class="f14 w500 flex-1 min-w-0">Bayu Pratama</span>
+                <span class="f12 t-redup">Harimau Putih</span>
+              </div>
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#12439e"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">2</span>
+                <span class="f14 w500 flex-1 min-w-0">Candra Setiawan</span>
+                <span class="f12 t-redup">PSHT Pontianak</span>
+              </div>
+            </div>
+
+            <!-- Partai 2 -->
+            <div class="flex flex-col g4">
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">3</span>
+                <span class="f14 w500 flex-1 min-w-0">Rangga Saputra</span>
+                <span class="f12 t-redup">Merpati Singkawang</span>
+              </div>
+              <!--
+                Tempat kosong ditulis sebagai KALIMAT, bukan garis putus tanpa
+                keterangan. Panitia yang melihat slot kosong perlu tahu itu
+                bye, bukan data yang gagal termuat.
+              -->
+              <div class="slot" style="background:#f4f2ee;border-style:dashed">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#d4cfc6"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">4</span>
+                <span class="f13 t-redup flex-1">Kosong — Rangga langsung ke semifinal</span>
+              </div>
+            </div>
+
+            <!-- Partai 3 -->
+            <div class="flex flex-col g4">
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">5</span>
+                <span class="f14 w500 flex-1 min-w-0">Yusuf Hidayat</span>
+                <span class="f12 t-redup">Perisai Diri</span>
+              </div>
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#12439e"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">6</span>
+                <span class="f14 w500 flex-1 min-w-0">Ilham Nugraha</span>
+                <span class="f12 t-redup">Tapak Suci</span>
+              </div>
+            </div>
+
+            <!-- Partai 4 -->
+            <div class="flex flex-col g4">
+              <div class="slot">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">7</span>
+                <span class="f14 w500 flex-1 min-w-0">Dimas Arya</span>
+                <span class="f12 t-redup">Setia Hati</span>
+              </div>
+              <div class="slot" style="background:#f4f2ee;border-style:dashed">
+                <span class="shrink-0 r6" style="width:4px;height:26px;background:#d4cfc6"></span>
+                <span class="font-mono tabular-nums f12 t-redup shrink-0">8</span>
+                <span class="f13 t-redup flex-1">Kosong — Dimas langsung ke semifinal</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kolom semifinal -->
+          <div class="flex flex-col justify-around" style="width:240px">
+            <div class="f11 tr10 uppercase t-redup">Semifinal</div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f13 t-redup flex-1">Pemenang partai 1</span>
+            </div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f14 w500 flex-1">Rangga Saputra</span>
+              <span class="f11 t-sukses w600 uppercase">bye</span>
+            </div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f13 t-redup flex-1">Pemenang partai 3</span>
+            </div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f14 w500 flex-1">Dimas Arya</span>
+              <span class="f11 t-sukses w600 uppercase">bye</span>
+            </div>
+          </div>
+
+          <!-- Kolom final -->
+          <div class="flex flex-col justify-center g16" style="width:200px">
+            <div class="f11 tr10 uppercase t-redup">Final</div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f13 t-redup flex-1">Pemenang semifinal 1</span>
+            </div>
+            <div class="slot" style="background:#f4f2ee">
+              <span class="f13 t-redup flex-1">Pemenang semifinal 2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PANEL TUKAR ============ -->
+    <div class="flex flex-col shrink-0 border-l b-garis bg-naik" style="width:360px">
+      <div class="px16 py12 border-b b-garis">
+        <div class="f16 w600">Tukar tempat</div>
+        <div class="f13 t-kedua lh16 mt2">
+          Dipakai saat dua pesilat dari kontingen yang sama bertemu di babak pertama.
+        </div>
+      </div>
+
+      <div class="flex flex-col flex-1 p16 g12">
+        <!--
+          MEMILIH ORANG, BUKAN NOMOR POSISI.
+          Layar yang ada memakai dua dropdown "Tempat pertama" dan "Tempat
+          kedua" berisi nomor slot. Panitia yang ingin memindahkan Bayu harus
+          menerjemahkan namanya jadi angka lebih dulu, di layar yang justru
+          menampilkan nama-nama itu tepat di sebelahnya.
+        -->
+        <div class="flex flex-col g6">
+          <div class="f13 w600">Pesilat pertama</div>
+          <div class="flex items-center g8 border b-kendali r6 px12 h44 bg-naik">
+            <span class="shrink-0 r6" style="width:4px;height:22px;background:#a3221c"></span>
+            <span class="f14 flex-1">Bayu Pratama</span>
+            <span class="f12 t-redup">tempat 1</span>
+          </div>
+        </div>
+
+        <div class="text-center f13 t-redup">tukar dengan</div>
+
+        <div class="flex flex-col g6">
+          <div class="f13 w600">Pesilat kedua</div>
+          <div class="flex items-center g8 border b-kendali r6 px12 h44 bg-naik">
+            <span class="shrink-0 r6" style="width:4px;height:22px;background:#a3221c"></span>
+            <span class="f14 flex-1">Yusuf Hidayat</span>
+            <span class="f12 t-redup">tempat 5</span>
+          </div>
+        </div>
+
+        <!-- Akibatnya dinyatakan sebelum tombolnya ditekan. -->
+        <div class="border-l-3 b-garis bg-turun px14 py10 r6">
+          <div class="f13 w600">Setelah ditukar</div>
+          <div class="f13 t-kedua lh16 mt2">
+            Bayu Pratama melawan Ilham Nugraha di partai 3.<br>
+            Yusuf Hidayat melawan Candra Setiawan di partai 1.
+          </div>
+        </div>
+
+        <button class="h48 r6 bg-tinta t-putih f15 w600">Tukar tempat keduanya</button>
+
+        <div class="border-t b-garis pt12 mt8 flex flex-col g8">
+          <div class="f11 tr10 uppercase t-redup">Peserta yang tidak masuk bagan</div>
+          <!--
+            Yang TIDAK masuk sama pentingnya dengan yang masuk. Official yang
+            protes "kenapa atlet saya tidak ada" dijawab di sini, bukan lewat
+            telepon ke panitia.
+          -->
+          <div class="flex items-start justify-between g8 border b-garis r6 px12 py10">
+            <div class="min-w-0">
+              <div class="f14 w500">Ahmad Fauzi</div>
+              <div class="f12 t-redup mt2">Tapak Suci Mempawah</div>
+            </div>
+            <span class="f12 t-perhatian w600 shrink-0 text-right">Belum<br>ditimbang</span>
+          </div>
+          <div class="flex items-start justify-between g8 border b-garis r6 px12 py10">
+            <div class="min-w-0">
+              <div class="f14 w500">Reza Maulana</div>
+              <div class="f12 t-redup mt2">Perisai Diri Jakarta</div>
+            </div>
+            <span class="f12 t-bahaya w600 shrink-0 text-right">Tagihan<br>belum lunas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- KEADAAN KEDUA: SUSUN ULANG — MENGACAK UNDIAN                      -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:900px;margin-top:80px">
+
+  <div class="px16 py12 border-b b-garis bg-naik shrink-0 flex items-baseline g10">
+    <div class="f22 w600 lh12">Bagan</div>
+    <div class="f13 t-redup">— keadaan kedua: menyusun ulang bagan yang sudah ada</div>
+  </div>
+
+  <div class="flex flex-1 items-center justify-center p20">
+    <div class="flex g24 items-start" style="max-width:1100px">
+
+      <div class="flex flex-col g12 flex-1">
+        <div class="f11 tr28 uppercase t-redup">Kenapa keadaan ini digambar terpisah</div>
+        <div class="f16 lh16 t-kedua">
+          Layar yang ada memakai <span class="font-mono f14">confirm()</span> bawaan peramban:
+          satu kotak abu-abu tanpa rupa, dengan tombol "OK" dan "Cancel" yang bahasanya mengikuti
+          bahasa peramban — bukan bahasa aplikasi.
+        </div>
+        <div class="f16 lh16 t-kedua">
+          Yang dikonfirmasi bukan hal kecil. Menyusun ulang <strong>mengacak undian dari nol</strong>:
+          seluruh pasangan berubah, dan pasangan itu sudah diumumkan ke official kontingen yang
+          menyiapkan atletnya berdasarkan lawan yang mereka lihat.
+        </div>
+        <div class="f16 lh16 t-kedua">
+          Karena itu dialognya menyebutkan <strong>apa yang hilang</strong>, bukan bertanya
+          "yakin?" — dan menawarkan jalan yang lebih kecil lebih dulu.
+        </div>
+      </div>
+
+      <div class="kartu p20 flex flex-col g12 shrink-0" style="width:480px">
+        <div class="f11 tr10 uppercase t-perhatian">Undian akan berubah seluruhnya</div>
+        <div class="f20 w600 lh12">Susun ulang bagan Putra Dewasa — Kelas B?</div>
+
+        <div class="f14 lh16 t-kedua">
+          Undian diacak ulang dari enam peserta sah yang ada sekarang. Seluruh pasangan berubah,
+          termasuk yang sudah diumumkan ke kontingen.
+        </div>
+
+        <div class="border-l-3 b-garis bg-turun px14 py10 r6 flex flex-col g6">
+          <div class="f13 w600">Yang berubah</div>
+          <div class="f13 t-kedua lh16">
+            Empat pasangan babak pertama · dua bye · dua penukaran tempat yang sudah kamu lakukan
+          </div>
+          <div class="f13 w600 mt4">Yang tidak berubah</div>
+          <div class="f13 t-kedua lh16">
+            Peserta yang masuk bagan tetap enam orang yang sama. Bagan kelas lain tidak tersentuh.
+          </div>
+        </div>
+
+        <!--
+          Jalan yang lebih kecil ditawarkan LEBIH DULU. Panitia yang mengklik
+          "Susun ulang" sering sebenarnya hanya ingin memindahkan satu orang.
+        -->
+        <div class="border b-garis r6 px14 py12 flex items-center justify-between g12">
+          <div class="f13 t-kedua lh16 flex-1">
+            Hanya ingin memindahkan satu pesilat? Tukar tempat tidak mengubah pasangan lain.
+          </div>
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600 shrink-0">Tukar tempat</button>
+        </div>
+
+        <div class="flex items-center g10 pt10">
+          <button class="h44 px16 r6 border b-garis bg-naik f14 w500">Tidak jadi</button>
+          <button class="h44 px16 r6 bg-tinta t-putih f14 w600 flex-1">Acak ulang undian</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

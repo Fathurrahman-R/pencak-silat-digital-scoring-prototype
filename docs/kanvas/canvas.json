@@ -263,6 +263,24 @@
       "y": 0,
       "w": 1440,
       "h": 1880
+    },
+    {
+      "file": "Bagan.dc.html",
+      "title": "Bagan — susun dan kunci",
+      "page": "page-5",
+      "x": 5960,
+      "y": 0,
+      "w": 1440,
+      "h": 1880
+    },
+    {
+      "file": "Jadwal.dc.html",
+      "title": "Jadwal dan penugasan aparat",
+      "page": "page-5",
+      "x": 7520,
+      "y": 0,
+      "w": 1440,
+      "h": 1462
     }
   ],
   "annotations": [
