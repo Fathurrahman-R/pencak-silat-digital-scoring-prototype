@@ -78,33 +78,48 @@
                         @endif
                     </div>
 
-                    <div class="flex gap-1">
+                    {{--
+                        Tombol BERKATA, bukan empat ikon telanjang berjajar.
+
+                        Susunan lama memasang clipboard, penjepit kertas, pensil,
+                        dan tong sampah sebagai ikon 16px yang hanya berlabel
+                        `title` — dan tooltip tidak pernah muncul di layar sentuh.
+                        Tong sampah di ujung deret itu menghapus atlet beserta
+                        seluruh berkas dan pendaftarannya.
+                    --}}
+                    <div class="flex items-center gap-2">
                         @resource(rk('pendaftaran', ResourceAction::Create))
                             {{-- Membuka formulir pendaftaran nomor dengan atlet ini
                                  sudah terpilih, bukan menyuruh mencarinya lagi. --}}
-                            <x-ui.button :href="route('admin.turnamen.kontingen.pendaftaran.index', [$tournament, $contingent, 'atlet' => $athlete->id])"
-                                         variant="secondary" size="xs" title="Daftarkan nomor">
-                                <x-ui.icon name="clipboard-list" class="h-4 w-4" />
-                            </x-ui.button>
+                            <a href="{{ route('admin.turnamen.kontingen.pendaftaran.index', [$tournament, $contingent, 'atlet' => $athlete->id]) }}"
+                               class="inline-flex h-9 items-center rounded-[var(--radius)] border border-line bg-surface-raised px-3 text-[13px] font-medium text-ink">
+                                Daftarkan nomor
+                            </a>
                         @endresource
 
                         @resource(rk('atlet', ResourceAction::Update))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Berkas"
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                                          x-on:click="$dispatch('modal-open', 'berkas-{{ $athlete->id }}')">
-                                <x-ui.icon name="paperclip" class="h-4 w-4" />
-                            </x-ui.button>
+                                Berkas
+                            </x-si.tombol>
 
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Ubah"
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                                          x-on:click="$dispatch('modal-open', 'atlet-ubah-{{ $athlete->id }}')">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                                Ubah
+                            </x-si.tombol>
                         @endresource
 
                         @resource(rk('atlet', ResourceAction::Delete))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
-                                         x-on:click="$dispatch('modal-open', 'atlet-hapus-{{ $athlete->id }}')">
-                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                            </x-ui.button>
+                            {{-- Muatan lewat data-*, bukan @js() di dalam ekspresi
+                                 atribut: tanda kutip di dalam JSON memutus
+                                 pembacaannya. --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                         data-aksi="{{ route('admin.turnamen.kontingen.atlet.destroy', [$tournament, $contingent, $athlete]) }}"
+                                         data-nama="{{ $athlete->name }}"
+                                         data-berkas="{{ $athlete->documents->count() }}"
+                                         x-on:click="$dispatch('hapus-atlet', $el.dataset)">
+                                Hapus
+                            </x-si.tombol>
                         @endresource
                     </div>
                 </div>
@@ -195,22 +210,7 @@
                     </x-ui.modal>
                 @endresource
 
-                @resource(rk('atlet', ResourceAction::Delete))
-                    <x-ui.modal :id="'atlet-hapus-'.$athlete->id" title="Hapus atlet" size="sm">
-                        Yakin menghapus <strong>{{ $athlete->name }}</strong>? Berkas dan pendaftarannya ikut terhapus.
 
-                        <x-slot:footer>
-                            <x-ui.button variant="secondary" type="button"
-                                         x-on:click="$dispatch('modal-close', 'atlet-hapus-{{ $athlete->id }}')">Batal</x-ui.button>
-
-                            <form method="POST" action="{{ route('admin.turnamen.kontingen.atlet.destroy', [$tournament, $contingent, $athlete]) }}">
-                                @csrf
-                                @method('DELETE')
-                                <x-ui.button variant="danger" type="submit">Hapus</x-ui.button>
-                            </form>
-                        </x-slot:footer>
-                    </x-ui.modal>
-                @endresource
             @empty
                 <x-ui.empty-state title="Belum ada atlet"
                                   description="Golongan usia dihitung sendiri dari tanggal lahir terhadap tanggal kejuaraan dimulai." />
@@ -264,5 +264,48 @@
                 <x-ui.button type="submit" form="atlet-baru-form">Simpan</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+    @endresource
+
+    {{--
+        SATU dialog hapus untuk seluruh halaman, bukan satu per baris.
+
+        Susunan lama merender dialog untuk setiap atlet; satu kontingen berisi
+        dua puluh lima atlet berarti dua puluh lima dialog tersembunyi di
+        halaman yang sama.
+
+        Dialog Ubah dan Berkas MASIH per baris: keduanya memuat formulir dan
+        daftar unggahan milik atlet tertentu, dan menyatukannya menuntut isinya
+        diambil lewat permintaan terpisah — perubahan arsitektur halaman, bukan
+        perapian tampilan. Dicatat supaya tidak terlupakan.
+    --}}
+    @resource(rk('atlet', ResourceAction::Delete))
+        <div x-data="{ terbuka: false, aksi: '', nama: '', berkas: 0 }"
+             x-on:hapus-atlet.window="aksi = $event.detail.aksi; nama = $event.detail.nama;
+                                      berkas = $event.detail.berkas; terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[460px] rounded-[var(--radius)] border border-danger bg-surface-raised p-5">
+                    <p class="text-[11px] tracking-[.1em] text-danger uppercase">Tidak bisa dibatalkan</p>
+                    <p class="mt-1 text-[20px] leading-tight font-semibold text-ink">
+                        Hapus atlet <span x-text="nama"></span>?
+                    </p>
+
+                    <p class="mt-2 text-[14px] leading-relaxed text-ink-secondary">
+                        Ikut terhapus: <span class="font-semibold text-ink" x-text="berkas"></span> berkas
+                        yang sudah diunggah, beserta seluruh pendaftaran nomornya. Kalau atlet ini sudah
+                        masuk bagan, tempatnya jadi kosong dan lawannya menang tanpa bertanding.
+                    </p>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        @method('DELETE')
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit" varian="bahaya-tegas">Hapus atlet</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endresource
 </x-layouts.admin>
