@@ -53,32 +53,23 @@
                         @endif
 
                         @resource(rk('pendaftaran', ResourceAction::Delete))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Batalkan"
-                                         x-on:click="$dispatch('modal-open', 'batal-daftar-{{ $registration->id }}')">
-                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                            </x-ui.button>
-
-                            <x-ui.modal :id="'batal-daftar-'.$registration->id" title="Batalkan pendaftaran" size="sm">
-                                Batalkan pendaftaran <strong>{{ $registration->namaNomor() }}</strong>?
-
-                                <x-slot:footer>
-                                    <x-ui.button variant="secondary" type="button"
-                                                 x-on:click="$dispatch('modal-close', 'batal-daftar-{{ $registration->id }}')">Tidak</x-ui.button>
-
-                                    <form method="POST"
-                                          action="{{ route('admin.turnamen.kontingen.pendaftaran.destroy', [$tournament, $contingent, $registration]) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button variant="danger" type="submit">Batalkan</x-ui.button>
-                                    </form>
-                                </x-slot:footer>
-                            </x-ui.modal>
+                            {{-- Kata, bukan tong sampah telanjang. Muatan lewat
+                                 data-*: tanda kutip di dalam JSON memutus
+                                 pembacaan ekspresi atribut. --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                         data-aksi="{{ route('admin.turnamen.kontingen.pendaftaran.destroy', [$tournament, $contingent, $registration]) }}"
+                                         data-nomor="{{ $registration->namaNomor() }}"
+                                         data-atlet="{{ $registration->athletes->pluck('name')->implode(', ') }}"
+                                         data-status="{{ $registration->status->label() }}"
+                                         x-on:click="$dispatch('batal-pendaftaran', $el.dataset)">
+                                Batalkan
+                            </x-si.tombol>
                         @endresource
                     </div>
                 </div>
             @empty
-                <x-ui.empty-state title="Belum ada pendaftaran nomor"
-                                  description="Kelas tanding yang ditawarkan sudah disaring menurut gender, golongan usia, dan berat klaim tiap atlet." />
+                <x-si.kosong judul="Belum ada pendaftaran nomor"
+                             syarat="Daftarkan atlet ke kelas tanding atau nomor jurus lewat tombol di kanan atas. Kelas yang ditawarkan sudah disaring menurut gender, golongan usia, dan berat klaim tiap atlet." />
             @endforelse
         </x-ui.card>
     </div>
@@ -161,5 +152,48 @@
                 <x-ui.button type="submit" form="daftar-jurus-form">Daftarkan</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+    @endresource
+
+    {{--
+        SATU dialog batal untuk seluruh halaman, bukan satu per baris.
+
+        Membatalkan pendaftaran menarik atlet dari nomor itu — bukan menghapus
+        atletnya. Bedanya disebutkan, karena "batalkan" tanpa keterangan
+        terbaca seperti menghapus orangnya, dan official yang ragu akan
+        menelepon panitia alih-alih menekan tombolnya sendiri.
+    --}}
+    @resource(rk('pendaftaran', ResourceAction::Delete))
+        <div x-data="{ terbuka: false, aksi: '', nomor: '', atlet: '', status: '' }"
+             x-on:batal-pendaftaran.window="aksi = $event.detail.aksi; nomor = $event.detail.nomor;
+                                            atlet = $event.detail.atlet; status = $event.detail.status;
+                                            terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[460px] rounded-[var(--radius)] border border-line bg-surface-raised p-5">
+                    <p class="text-[20px] leading-tight font-semibold text-ink">
+                        Batalkan pendaftaran <span x-text="nomor"></span>?
+                    </p>
+
+                    <div class="mt-3 flex items-baseline justify-between gap-3 rounded-[var(--radius)] border border-line bg-surface-inset px-3.5 py-2.5">
+                        <span class="text-[14px] text-ink" x-text="atlet"></span>
+                        <span class="shrink-0 text-[13px] text-ink-muted" x-text="status"></span>
+                    </div>
+
+                    <p class="mt-3 text-[14px] leading-relaxed text-ink-secondary">
+                        Atletnya tetap terdaftar di kontingen — yang ditarik hanya pendaftarannya di nomor
+                        ini. Bisa didaftarkan lagi selama pendaftaran kejuaraan masih dibuka.
+                    </p>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        @method('DELETE')
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit" varian="bahaya">Batalkan pendaftaran</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endresource
 </x-layouts.admin>
