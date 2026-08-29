@@ -37,4 +37,20 @@ enum JenisVerifikasi: string
             self::Pelanggaran => 'Pelanggaran',
         };
     }
+
+    /**
+     * Bunyi pilihan "tidak ada" untuk pertanyaan ini.
+     *
+     * Ditulis lengkap, bukan cuma "Tidak ada". Juri menekan tombol ini
+     * justru saat ia yakin -- yakin tidak ada jatuhan yang sah, atau yakin
+     * tidak ada yang melanggar -- dan kata "tidak ada" sendirian terbaca
+     * seperti "saya tidak tahu".
+     */
+    public function pilihanTidakAda(): string
+    {
+        return match ($this) {
+            self::Jatuhan => 'Tidak ada yang menjatuhkan',
+            self::Pelanggaran => 'Tidak ada yang melanggar',
+        };
+    }
 }

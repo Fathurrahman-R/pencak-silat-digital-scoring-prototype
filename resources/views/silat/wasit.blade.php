@@ -14,8 +14,35 @@
         mudah dan mahal. Sudut yang sedang terpilih dinyatakan besar-besar di
         label langkah 2, jadi tidak ada keadaan "terpilih tapi lupa".
     --}}
+    {{--
+        `menyusunVerifikasi` hidup di x-data ANAK, bukan disebar ke
+        partaiPanel(cfg) lewat {...partaiPanel(cfg), menyusunVerifikasi: false}.
+        Penyebaran objek mengevaluasi getter-nya sekali lalu membekukan
+        hasilnya jadi nilai statis -- cacat yang sudah pernah membuat label
+        babak macet permanen di panel juri (commit fa068e0).
+    --}}
     <div x-data="partaiPanel(@js($config))"
          class="flex h-dvh flex-col gap-2 overflow-hidden p-2 select-none">
+      <div x-data="{ menyusunVerifikasi: false, _adaYangBerjalan: false }"
+           x-on:tutup-verifikasi="menyusunVerifikasi = false"
+           {{--
+               Menutup layar penyusunan begitu sebuah verifikasi yang tadinya
+               berjalan berakhir -- diterapkan maupun dibatalkan.
+
+               Tidak cukup "tutup kalau tidak ada yang berjalan": wasit yang
+               baru menekan "Minta verifikasi juri" juga belum punya verifikasi
+               berjalan, dan layarnya akan tertutup seketika. Yang menentukan
+               adalah PERALIHANNYA, jadi keadaan sebelumnya ikut dicatat.
+           --}}
+           x-effect="
+               if (verifikasiBerjalan) {
+                   _adaYangBerjalan = true;
+               } else if (_adaYangBerjalan) {
+                   _adaYangBerjalan = false;
+                   menyusunVerifikasi = false;
+               }
+           "
+           class="flex min-h-0 flex-1 flex-col gap-2">
 
         <header class="flex shrink-0 items-center justify-between gap-4">
             <div class="flex items-baseline gap-3">
@@ -36,6 +63,22 @@
                             class="rounded-silat border border-silat-tepi-kendali px-3 py-1 text-[12px] text-silat-teks">Hentikan</button>
                     <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
                             class="rounded-silat bg-silat-aksi px-3 py-1 text-[12px] font-medium text-silat-aksi-teks">Lanjutkan</button>
+                @endresource
+
+                {{--
+                    Pemicu verifikasi duduk di sebelah "Hentikan" karena
+                    keduanya dipakai berurutan: wasit menghentikan pertandingan
+                    lebih dulu, lalu bertanya. Kalau verifikasi sedang berjalan,
+                    tombolnya hilang -- yang tampil sudah layar verifikasinya
+                    sendiri.
+                --}}
+                @resource(rk('verifikasi-juri', ResourceAction::Create))
+                    <button type="button"
+                            x-show="! verifikasiBerjalan && ! menyusunVerifikasi && ! sudahSelesai"
+                            x-on:click="menyusunVerifikasi = true"
+                            class="rounded-silat border border-silat-tepi-kendali px-3 py-1 text-[12px] text-silat-teks">
+                        Minta verifikasi juri
+                    </button>
                 @endresource
             </div>
 
@@ -59,6 +102,19 @@
         <p x-show="pesan && ! galat" x-text="pesan" x-cloak
            class="shrink-0 rounded-silat bg-silat-panel px-3 py-1 text-center text-[12px] text-silat-teks-redup"></p>
 
+        {{--
+            Verifikasi MENGGANTIKAN tangga hukuman, tidak menumpang di bawahnya.
+            Panel ini dirancang untuk 844x390 dan sudah penuh; menambah bagian
+            baru berarti memaksa gulir di layar yang dipegang sambil berdiri.
+        --}}
+        <template x-if="verifikasiBerjalan || menyusunVerifikasi">
+            <div class="flex min-h-0 flex-1 flex-col">
+                <x-silat.verifikasi-wasit :tournament="$tournament" :match="$match" />
+            </div>
+        </template>
+
+        <template x-if="! verifikasiBerjalan && ! menyusunVerifikasi">
+          <div class="flex min-h-0 flex-1 flex-col">
         @resource(rk('hukuman', ResourceAction::Create))
             <div class="grid min-h-0 flex-1 grid-cols-[300px_1fr] gap-3"
                  x-data="{ sudut: 'red', hitungan: 1,
@@ -166,5 +222,8 @@
                 </div>
             </div>
         @endresource
+          </div>
+        </template>
+      </div>
     </div>
 </x-layouts.silat>

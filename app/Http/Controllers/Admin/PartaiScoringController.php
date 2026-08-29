@@ -218,6 +218,14 @@ class PartaiScoringController extends Controller
         return [
             'matchId' => $match->id,
             'arenaId' => $match->arena_id,
+            /*
+             * Panel perlu tahu ia sedang dipegang siapa, bukan cuma partai
+             * apa. Layar verifikasi juri memakainya untuk membedakan "kamu
+             * belum menjawab" dari "kamu sudah, tinggal menunggu yang lain" --
+             * dua keadaan yang tampilannya harus jauh berbeda supaya juri
+             * tidak menekan dua kali.
+             */
+            'userId' => auth()->id(),
             'state' => route('admin.turnamen.partai.state', [$tournament, $match]),
             'timerMulai' => route('admin.turnamen.partai.timer.mulai', [$tournament, $match]),
             'timerJeda' => route('admin.turnamen.partai.timer.jeda', [$tournament, $match]),
@@ -579,7 +587,7 @@ class PartaiScoringController extends Controller
     {
         $verifikasi = JudgeVerification::query()
             ->where('match_id', $match->id)
-            ->with(['answers.judge:id,name'])
+            ->with(['answers.judge:id,name', 'peminta:id,name'])
             ->latest('id')
             ->first();
 
@@ -594,11 +602,19 @@ class PartaiScoringController extends Controller
             'round' => $verifikasi->round,
             'jenis' => $verifikasi->jenis->value,
             'pertanyaan' => $verifikasi->jenis->pertanyaan(),
+            'pilihan_tidak_ada' => $verifikasi->jenis->pilihanTidakAda(),
             'tingkat_pelanggaran' => $verifikasi->tingkat_pelanggaran?->value,
             'tingkat_pelanggaran_label' => $verifikasi->tingkat_pelanggaran?->label(),
             'status' => $verifikasi->status,
             'berjalan' => $verifikasi->berjalan(),
             'diminta_at' => $verifikasi->diminta_at?->toIso8601String(),
+            /*
+             * Pasal 13 menyebut verifikasi datang dari Ketua Pertandingan
+             * maupun Wasit. Panel juri menyebutkan yang mana -- juri yang
+             * ditanya berhak tahu siapa yang menghentikan pertandingan, dan
+             * dua jabatan itu punya bobot berbeda di gelanggang.
+             */
+            'diminta_oleh' => $verifikasi->peminta?->name,
             'hasil' => $verifikasi->hasil?->value,
             'hasil_label' => $verifikasi->hasil?->label(),
             'sudah_diterapkan' => $verifikasi->sudahDiterapkan(),

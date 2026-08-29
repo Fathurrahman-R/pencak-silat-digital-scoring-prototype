@@ -38,6 +38,22 @@
             tombolnya. Tanpa itu juri harus mengingat sendiri siapa yang berdiri
             di sudut mana, dan kolom yang ditekannya hanya berlabel warna.
         --}}
+        {{--
+            Verifikasi MENGGANTIKAN seluruh isi panel, bukan menutupinya.
+
+            <template x-if> membongkar tombol nilai dari DOM, sedangkan x-show
+            hanya menyembunyikannya -- dan tombol yang cuma tersembunyi masih
+            bisa tertekan lewat celah render, fokus keyboard, atau kesalahan
+            urutan lapisan. Juri yang sedang diminta menjawab tidak boleh bisa
+            memberi nilai untuk kejadian yang justru sedang dipertanyakan.
+        --}}
+        <template x-if="verifikasiBerjalan">
+            <x-silat.verifikasi-juri />
+        </template>
+
+        <template x-if="! verifikasiBerjalan">
+            <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+
         <header class="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 py-1.5">
             <div class="flex min-w-0 items-center gap-2">
                 <span class="size-2.5 shrink-0 rounded-full bg-silat-merah"></span>
@@ -89,5 +105,7 @@
                 @endforeach
             </div>
         </div>
+            </div>
+        </template>
     </div>
 </x-layouts.silat>

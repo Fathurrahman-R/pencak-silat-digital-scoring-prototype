@@ -141,6 +141,7 @@ Alpine.data('partaiPanel', (cfg) => ({
     officials: [],
     riwayat: [],
     keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
+    verifikasi: null,
     pesan: null,
     galat: null,
     indikator: { red: [], blue: [] },
@@ -320,6 +321,82 @@ Alpine.data('partaiPanel', (cfg) => ({
         return this.kirim(this.cfg.sahkan);
     },
 
+    /*
+     * ----------------------------------------------------------------
+     * Verifikasi juri -- Pasal 13
+     * ----------------------------------------------------------------
+     */
+
+    /**
+     * Verifikasi sedang menahan pertandingan.
+     *
+     * Panel juri memakai ini untuk MENGAMBIL ALIH layarnya sepenuhnya:
+     * tombol nilai tidak boleh tersisa di belakang layar verifikasi, karena
+     * juri yang sedang diminta menjawab tidak boleh salah tekan dan memberi
+     * nilai untuk kejadian yang justru sedang dipertanyakan.
+     */
+    get verifikasiBerjalan() {
+        return this.verifikasi?.berjalan === true;
+    },
+
+    /** Apakah pengguna panel ini sudah menjawab verifikasi yang berjalan. */
+    get sudahMenjawabVerifikasi() {
+        if (!this.verifikasi) {
+            return false;
+        }
+
+        return this.verifikasi.jawaban.some((j) => j.judge_user_id === this.cfg.userId);
+    },
+
+    /**
+     * Verifikasi yang sudah punya hasil tapi belum diterapkan.
+     *
+     * Panel wasit memakai ini untuk menampilkan akibatnya SEBELUM tombol
+     * "Terapkan" ditekan -- yang menekan harus tahu apa yang akan terjadi,
+     * bukan membacanya di riwayat setelahnya.
+     */
+    get verifikasiMenungguPenerapan() {
+        return this.verifikasi?.berjalan === true && this.verifikasi?.hasil !== null;
+    },
+
+    mintaVerifikasi(jenis, tingkat = null, kejadian = {}) {
+        return this.kirim(this.cfg.verifikasiMinta, {
+            babak: this.match.current_round,
+            jenis,
+            tingkat_pelanggaran: tingkat,
+            score_event_id: kejadian.score_event_id ?? null,
+            penalty_id: kejadian.penalty_id ?? null,
+        });
+    },
+
+    jawabVerifikasi(jawaban) {
+        if (!this.verifikasi) {
+            return;
+        }
+
+        return this.kirim(this._alamatVerifikasi(this.cfg.verifikasiJawab), { jawaban });
+    },
+
+    terapkanVerifikasi() {
+        if (!this.verifikasi) {
+            return;
+        }
+
+        return this.kirim(this._alamatVerifikasi(this.cfg.verifikasiTerapkan));
+    },
+
+    batalkanVerifikasi(alasan = null) {
+        if (!this.verifikasi) {
+            return;
+        }
+
+        return this.kirim(this._alamatVerifikasi(this.cfg.verifikasiBatalkan), { alasan });
+    },
+
+    _alamatVerifikasi(pola) {
+        return pola.replace('__ID__', this.verifikasi.id);
+    },
+
     /**
      * Juri mengirim satu nilai. Babak selalu diambil dari state yang
      * sedang berjalan di server (bukan dari tebakan lokal) -- kalau babak
@@ -382,6 +459,7 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.officials = data.officials;
         this.riwayat = data.riwayat;
         this.keberatan = data.keberatan;
+        this.verifikasi = data.verifikasi;
         this._petaJuri = Object.fromEntries(
             data.officials.filter((o) => o.role === 'juri').map((o) => [o.user_id, o.number]),
         );
@@ -455,7 +533,19 @@ Alpine.data('partaiPanel', (cfg) => ({
             })
             .listen('.hukuman.terbit', segarkan)
             .listen('.partai.berubah', segarkan)
-            .listen('.juri.input', (e) => this._padaInputJuri(e));
+            .listen('.juri.input', (e) => this._padaInputJuri(e))
+            /*
+             * Panel juri harus beralih SERENTAK. Juri yang panelnya terlambat
+             * beralih akan menekan tombol nilai untuk kejadian yang sedang
+             * dipertanyakan, dan nilai itu terbit atas kejadian yang belum
+             * diputuskan siapa pemiliknya.
+             *
+             * Siaran ini tidak membawa isi jawaban siapa pun -- lihat
+             * App\Events\Scoring\VerifikasiJuriBerubah. Yang dipakai di sini
+             * cuma pemicunya; isinya diambil dari state, yang memang disaring
+             * menurut peran yang memintanya.
+             */
+            .listen('.verifikasi.berubah', segarkan);
     },
 
     /** Titik indikator "juri menekan" -- murni tampilan sementara, dibersihkan sendiri setelah window konsensus lewat atau nilainya terbit. */
