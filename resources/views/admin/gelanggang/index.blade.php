@@ -40,10 +40,12 @@
 
                     <div class="flex gap-1">
                         @resource(rk('gelanggang', ResourceAction::Update))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Ubah"
+                            {{-- Kata, bukan pensil telanjang: tooltip tidak pernah
+                                 muncul di layar sentuh. --}}
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                                          x-on:click="$dispatch('modal-open', 'gelanggang-ubah-{{ $arena->id }}')">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                                Ubah
+                            </x-si.tombol>
 
                             <x-ui.modal :id="'gelanggang-ubah-'.$arena->id" title="Ubah gelanggang" size="sm">
                                 <form method="POST" action="{{ route('admin.turnamen.gelanggang.update', [$tournament, $arena]) }}"
@@ -70,25 +72,15 @@
                         @endresource
 
                         @resource(rk('gelanggang', ResourceAction::Delete))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
-                                         x-on:click="$dispatch('modal-open', 'gelanggang-hapus-{{ $arena->id }}')">
-                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                            </x-ui.button>
-
-                            <x-ui.modal :id="'gelanggang-hapus-'.$arena->id" title="Hapus gelanggang" size="sm">
-                                Yakin menghapus <strong>{{ $arena->name }}</strong>?
-
-                                <x-slot:footer>
-                                    <x-ui.button variant="secondary" type="button"
-                                                 x-on:click="$dispatch('modal-close', 'gelanggang-hapus-{{ $arena->id }}')">Batal</x-ui.button>
-
-                                    <form method="POST" action="{{ route('admin.turnamen.gelanggang.destroy', [$tournament, $arena]) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button variant="danger" type="submit">Hapus</x-ui.button>
-                                    </form>
-                                </x-slot:footer>
-                            </x-ui.modal>
+                            {{-- Muatan lewat data-*: tanda kutip di dalam JSON
+                                 memutus pembacaan ekspresi atribut. --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                         data-aksi="{{ route('admin.turnamen.gelanggang.destroy', [$tournament, $arena]) }}"
+                                         data-nama="{{ $arena->name }}"
+                                         data-partai="{{ $arena->matches()->count() }}"
+                                         x-on:click="$dispatch('hapus-gelanggang', $el.dataset)">
+                                Hapus
+                            </x-si.tombol>
                         @endresource
                     </div>
                 </div>
@@ -118,5 +110,47 @@
                 <x-ui.button type="submit" form="gelanggang-baru-form">Simpan</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+    @endresource
+
+    {{--
+        SATU dialog hapus untuk seluruh halaman, bukan satu per gelanggang.
+
+        Menghapus gelanggang bukan tindakan kecil: partai yang dijadwalkan di
+        sana kehilangan tempatnya, dan alamat overlay siaran yang sudah dipasang
+        di vMix ikut mati. Keduanya disebut, beserta jumlah partainya —
+        "yakin menghapus?" tidak memberi tahu apa pun tentang itu.
+    --}}
+    @resource(rk('gelanggang', ResourceAction::Delete))
+        <div x-data="{ terbuka: false, aksi: '', nama: '', partai: 0 }"
+             x-on:hapus-gelanggang.window="aksi = $event.detail.aksi; nama = $event.detail.nama;
+                                           partai = $event.detail.partai; terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[460px] rounded-[var(--radius)] border border-danger bg-surface-raised p-5">
+                    <p class="text-[11px] tracking-[.1em] text-danger uppercase">Tidak bisa dibatalkan</p>
+                    <p class="mt-1 text-[20px] leading-tight font-semibold text-ink">
+                        Hapus gelanggang <span x-text="nama"></span>?
+                    </p>
+
+                    <p class="mt-2 text-[14px] leading-relaxed text-ink-secondary">
+                        <span x-show="partai > 0">
+                            <span class="font-semibold text-ink" x-text="partai"></span> partai kehilangan
+                            tempatnya dan harus dijadwalkan ulang.
+                        </span>
+                        Alamat overlay siaran gelanggang ini ikut mati — kalau sudah dipasang di vMix,
+                        sumbernya berhenti mengirim gambar.
+                    </p>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        @method('DELETE')
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit" varian="bahaya-tegas">Hapus gelanggang</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endresource
 </x-layouts.admin>
