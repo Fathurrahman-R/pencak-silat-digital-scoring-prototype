@@ -167,14 +167,21 @@
                                         Lihat
                                     </x-ui.button>
 
-                                    <form method="POST"
-                                          action="{{ route('admin.turnamen.kontingen.atlet.berkas.destroy', [$tournament, $contingent, $athlete, $document]) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button type="submit" size="xs" variant="secondary" title="Hapus berkas">
-                                            <x-ui.icon name="trash-2" class="size-4 text-danger" />
-                                        </x-ui.button>
-                                    </form>
+                                    {{--
+                                        Sebelumnya satu ikon tong sampah yang
+                                        menghapus berkas SEKETIKA. Yang harus
+                                        mengunggah ulang bukan panitia melainkan
+                                        official kontingen, lewat akunnya sendiri —
+                                        satu salah tekan di sini jadi satu panggilan
+                                        telepon dan satu pendaftaran yang tertahan.
+                                    --}}
+                                    <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                                 data-aksi="{{ route('admin.turnamen.kontingen.atlet.berkas.destroy', [$tournament, $contingent, $athlete, $document]) }}"
+                                                 data-jenis="{{ $document->jenis->label() }}"
+                                                 data-atlet="{{ $athlete->name }}"
+                                                 x-on:click="$dispatch('hapus-berkas', $el.dataset)">
+                                        Hapus
+                                    </x-si.tombol>
                                 </div>
                             @endforeach
 
@@ -264,6 +271,43 @@
                 <x-ui.button type="submit" form="atlet-baru-form">Simpan</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+    @endresource
+
+    {{--
+        Dialog hapus berkas.
+
+        Berkas yang dihapus harus diunggah ulang oleh OFFICIAL KONTINGEN lewat
+        akunnya sendiri — panitia tidak bisa menggantikannya. Satu salah tekan
+        di sini jadi satu panggilan telepon dan satu pendaftaran yang tertahan
+        sampai berkasnya kembali.
+    --}}
+    @resource(rk('atlet', ResourceAction::Update))
+        <div x-data="{ terbuka: false, aksi: '', jenis: '', atlet: '' }"
+             x-on:hapus-berkas.window="aksi = $event.detail.aksi; jenis = $event.detail.jenis;
+                                       atlet = $event.detail.atlet; terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[440px] rounded-[var(--radius)] border border-danger bg-surface-raised p-5">
+                    <p class="text-[20px] leading-tight font-semibold text-ink">
+                        Hapus <span x-text="jenis"></span> milik <span x-text="atlet"></span>?
+                    </p>
+
+                    <p class="mt-2 text-[14px] leading-relaxed text-ink-secondary">
+                        Yang mengunggah ulang adalah official kontingen lewat akunnya sendiri — panitia
+                        tidak bisa menggantikannya. Pendaftaran atlet ini tertahan sampai berkasnya kembali.
+                    </p>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        @method('DELETE')
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit" varian="bahaya-tegas">Hapus berkas</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endresource
 
     {{--
