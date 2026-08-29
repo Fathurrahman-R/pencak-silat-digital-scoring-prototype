@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Support\Bagan\KetersediaanAparat;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -23,16 +24,37 @@ use Illuminate\Validation\ValidationException;
  */
 class AparatController extends Controller
 {
+    public function __construct(private readonly KetersediaanAparat $ketersediaan) {}
+
     public function show(Tournament $tournament, SilatMatch $match): View
     {
         $this->pastikanMilik($tournament, $match);
 
+        $wasit = User::role(MatchOfficial::ROLE_WASIT)->orderBy('name')->pluck('name', 'id');
+        $juri = User::role(MatchOfficial::ROLE_JURI)->orderBy('name')->pluck('name', 'id');
+
+        /*
+         * Siapa yang sedang dipakai di gelanggang lain ikut dibawa, beserta
+         * SEBABNYA. Daftar yang menawarkan semua orang membuat panitia
+         * menugaskan bentrok tanpa tahu, dan yang ketahuan bukan sistemnya
+         * melainkan kursi juri yang kosong saat partai dimulai.
+         *
+         * Yang bentrok tidak dihapus dari daftar: panitia yang mencari nama
+         * dan tidak menemukannya akan mengira orangnya belum terdaftar sama
+         * sekali, lalu membuat akun kedua.
+         */
+        $bentrok = $this->ketersediaan->bentrok(
+            $match,
+            $wasit->keys()->merge($juri->keys())->unique()->values(),
+        );
+
         return view('admin.partai.aparat', [
             'tournament' => $tournament,
-            'match' => $match->load(['red.athletes', 'blue.athletes', 'bracket.weightClass', 'officials.user']),
+            'match' => $match->load(['red.athletes', 'blue.athletes', 'bracket.weightClass', 'officials.user', 'arena']),
             'jumlahJuri' => $tournament->peraturan()->jumlah_juri_tanding,
-            'wasitTersedia' => User::role(MatchOfficial::ROLE_WASIT)->orderBy('name')->pluck('name', 'id'),
-            'juriTersedia' => User::role(MatchOfficial::ROLE_JURI)->orderBy('name')->pluck('name', 'id'),
+            'wasitTersedia' => $wasit,
+            'juriTersedia' => $juri,
+            'bentrok' => $bentrok,
         ]);
     }
 
@@ -53,6 +75,26 @@ class AparatController extends Controller
 
         if (in_array((int) $data['wasit_id'], array_map('intval', $data['juri_id']), true)) {
             throw ValidationException::withMessages(['wasit_id' => 'Wasit tidak boleh merangkap juri dalam partai yang sama.']);
+        }
+
+        /*
+         * Penjaga bentrok ditegakkan di sini, bukan hanya ditampilkan di
+         * daftar. Satu orang tidak bisa berdiri di dua gelanggang sekaligus,
+         * dan penugasan yang lolos akan berakhir jadi kursi kosong saat partai
+         * dimulai -- kesalahan yang baru terlihat di depan penonton.
+         */
+        $dipilih = collect([$data['wasit_id']])->merge($data['juri_id'])->map(fn ($id) => (int) $id);
+        $bentrok = $this->ketersediaan->bentrok($match, $dipilih);
+
+        if ($bentrok !== []) {
+            $nama = User::whereIn('id', array_keys($bentrok))->pluck('name', 'id');
+
+            throw ValidationException::withMessages([
+                'wasit_id' => collect($bentrok)
+                    ->map(fn (string $sebab, int $id) => ($nama[$id] ?? 'Aparat').' sudah bertugas — '.$sebab.'.')
+                    ->values()
+                    ->all(),
+            ]);
         }
 
         DB::transaction(function () use ($match, $data) {

@@ -34,23 +34,107 @@
         </x-ui.alert>
 
         @resource(rk('penugasan-aparat', ResourceAction::Assign))
-            <x-ui.card title="Tetapkan aparat">
+            {{--
+                Yang sedang bertugas di gelanggang lain tetap muncul di daftar,
+                tapi mati dan bersebab.
+
+                Menghapusnya sama sekali akan membuat panitia yang mencari nama
+                dan tidak menemukannya mengira orangnya belum terdaftar, lalu
+                membuat akun kedua. Menampilkannya tanpa keterangan membuatnya
+                memilih orang yang tidak akan datang.
+            --}}
+            @php
+                $opsiAparat = function ($daftar, $terpilih) use ($bentrok) {
+                    return collect($daftar)->map(fn ($nama, $id) => [
+                        'id' => $id,
+                        'nama' => $nama,
+                        'terpilih' => (int) $terpilih === (int) $id,
+                        'sebab' => $bentrok[$id] ?? null,
+                    ]);
+                };
+            @endphp
+
+            @php
+                $sudahBentrok = collect([$wasitSaatIni?->user_id])
+                    ->merge($juriSaatIni->pluck('user_id'))
+                    ->filter()
+                    ->filter(fn ($id) => isset($bentrok[$id]))
+                    ->values();
+            @endphp
+
+            {{--
+                Aparat yang SUDAH ditugaskan di partai ini tetap bisa dipilih —
+                kalau dimatikan, peramban tidak mengirim nilainya sama sekali
+                dan formulirnya gagal dengan alasan yang keliru ("wasit wajib
+                diisi").
+
+                Tapi kalau ia bentrok, penjaga server akan menolak penyimpanan.
+                Menyatakannya di sini menghemat satu kali tekan-lalu-ditolak.
+            --}}
+            @if ($sudahBentrok->isNotEmpty())
+                <x-si.callout varian="bahaya" judul="Aparat yang sudah tertugas di partai ini sedang bertugas di tempat lain">
+                    Penugasan ini tidak bisa disimpan ulang sebelum yang bentrok diganti:
+                    @foreach ($sudahBentrok as $id)
+                        <span class="block">
+                            {{ $wasitTersedia[$id] ?? $juriTersedia[$id] ?? 'Aparat' }} — {{ $bentrok[$id] }}.
+                        </span>
+                    @endforeach
+                </x-si.callout>
+            @endif
+
+            <x-si.kartu judul="Tetapkan aparat"
+                        keterangan="Satu orang tidak bisa berdiri di dua gelanggang sekaligus. Yang sedang bertugas di jam berdekatan tampil mati beserta sebabnya.">
                 <form method="POST" action="{{ route('admin.turnamen.partai.aparat.store', [$tournament, $match]) }}"
-                      class="space-y-4">
+                      class="flex flex-col gap-4">
                     @csrf
 
-                    <x-ui.select name="wasit_id" label="Wasit" :options="$wasitTersedia" :selected="$wasitSaatIni?->user_id"
-                                 placeholder="Pilih wasit" />
+                    <div class="flex flex-col gap-1.5">
+                        <label for="wasit_id" class="text-[14px] font-semibold text-ink">
+                            Wasit <span class="font-normal text-ink-muted">— wajib diisi</span>
+                        </label>
+                        <select id="wasit_id" name="wasit_id" required
+                                class="h-11 w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3 text-[15px] text-ink">
+                            <option value="">Pilih wasit…</option>
+                            @foreach ($opsiAparat($wasitTersedia, $wasitSaatIni?->user_id) as $opsi)
+                                <option value="{{ $opsi['id'] }}"
+                                        @selected($opsi['terpilih'])
+                                        @disabled($opsi['sebab'] !== null && ! $opsi['terpilih'])>
+                                    {{ $opsi['nama'] }}{{ $opsi['sebab'] ? ' — '.$opsi['sebab'] : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
                     @for ($nomor = 1; $nomor <= $jumlahJuri; $nomor++)
-                        <x-ui.select :name="'juri_id['.($nomor - 1).']'" :label="'Juri '.$nomor" :options="$juriTersedia"
-                                     :selected="$juriSaatIni->firstWhere('number', $nomor)?->user_id"
-                                     :id="'juri-'.$nomor" placeholder="Pilih juri" />
+                        @php($terpilihJuri = $juriSaatIni->firstWhere('number', $nomor)?->user_id)
+
+                        <div class="flex flex-col gap-1.5">
+                            <label for="juri-{{ $nomor }}" class="text-[14px] font-semibold text-ink">
+                                Juri {{ $nomor }} <span class="font-normal text-ink-muted">— wajib diisi</span>
+                            </label>
+                            <select id="juri-{{ $nomor }}" name="juri_id[{{ $nomor - 1 }}]" required
+                                    class="h-11 w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3 text-[15px] text-ink">
+                                <option value="">Pilih juri…</option>
+                                @foreach ($opsiAparat($juriTersedia, $terpilihJuri) as $opsi)
+                                    <option value="{{ $opsi['id'] }}"
+                                            @selected($opsi['terpilih'])
+                                            @disabled($opsi['sebab'] !== null && ! $opsi['terpilih'])>
+                                        {{ $opsi['nama'] }}{{ $opsi['sebab'] ? ' — '.$opsi['sebab'] : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     @endfor
 
-                    <x-ui.button type="submit">Simpan</x-ui.button>
+                    <div class="flex items-center gap-2 border-t border-line pt-3">
+                        <x-si.tombol tipe="submit">Simpan penugasan</x-si.tombol>
+                        <a href="{{ route('admin.turnamen.jadwal.index', $tournament) }}"
+                           class="inline-flex h-11 items-center rounded-[var(--radius)] border border-line px-4 text-[15px] font-medium text-ink">
+                            Kembali ke jadwal
+                        </a>
+                    </div>
                 </form>
-            </x-ui.card>
+            </x-si.kartu>
         @else
             <x-ui.card title="Aparat bertugas">
                 <p class="text-sm text-ink">Wasit: {{ $wasitSaatIni?->user->name ?? '—' }}</p>
