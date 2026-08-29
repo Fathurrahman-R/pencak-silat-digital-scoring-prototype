@@ -129,7 +129,7 @@
         <x-slot:footer>{{ $contingents->links() }}</x-slot:footer>
     </x-si.tabel>
 
-    <x-ui.drawer-remote title="Detail kontingen" />
+    <x-si.panel-rincian judul="Detail kontingen" />
 
     {{--
         SATU dialog hapus untuk seluruh halaman, bukan satu per baris.

@@ -5,30 +5,27 @@
                  :breadcrumb="['Permission' => null]">
     <x-slot:actions>
         <x-can :resource="rk('permissions', ResourceAction::Create)">
-            <x-ui.button :href="route('admin.permissions.create')" size="sm">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol :tautan="route('admin.permissions.create')" ukuran="kecil" ikon="plus">
                 Tambah permission
-            </x-ui.button>
+            </x-si.tombol>
         </x-can>
     </x-slot:actions>
 
-    <x-ui.table :table="$table"
+    <x-si.tabel :table="$table"
                 :selectable="$permissions->reject(fn ($permission) => $permission->is_locked)->pluck('id')->all()"
                 :headers="['name' => 'Nama', 'group' => 'Grup', 0 => 'Dipetakan dari key', 1 => 'Role', 2 => '']">
         <x-slot:toolbar>
-            <x-ui.table.toolbar :table="$table" placeholder="Cari nama permission…">
+            <x-si.tabel.toolbar :table="$table" placeholder="Cari nama permission…"
+                                :tampil="$permissions->count()" :total="$permissions->total()">
                 <x-slot:filters>
-                    <select name="group" class="form-select">
-                        <option value="">Semua grup</option>
-                        @foreach ($groups as $value => $label)
-                            <option value="{{ $value }}" @selected(request('group') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <x-si.pilihan name="group" :selected="request('group')" :options="$groups"
+                                  placeholder="Semua grup" aria-label="Saring menurut grup"
+                                  class="w-[200px]" />
                 </x-slot:filters>
 
                 <x-slot:chips>
-                    <x-ui.filter-chips param="status" all="Semua"
-                                       :options="['dipakai' => 'Dipakai resource key', 'yatim' => 'Tidak dipakai']" />
+                    <x-si.saring param="status" semua="Semua"
+                                 :pilihan="['dipakai' => 'Dipakai resource key', 'yatim' => 'Tidak dipakai']" />
                 </x-slot:chips>
 
                 <x-slot:bulk>
@@ -40,94 +37,83 @@
                                              akibat="Resource key yang menunjuk permission ini jadi tidak terpetakan, dan pintu yang dijaganya tertutup untuk semua orang sampai dipetakan ulang." />
                     </x-can>
                 </x-slot:bulk>
-            </x-ui.table.toolbar>
+            </x-si.tabel.toolbar>
         </x-slot:toolbar>
 
-        @forelse ($permissions as $permission)
-            <x-ui.table.row :id="$permission->is_locked ? null : $permission->id">
-                <x-ui.table.cell header>
+        @foreach ($permissions as $permission)
+            <x-si.tabel.baris :id="$permission->is_locked ? null : $permission->id">
+                <x-si.tabel.sel header>
                     <div class="flex items-center gap-2">
                         <code>{{ $permission->name }}</code>
+
                         @if ($permission->is_locked)
-                            <x-ui.badge variant="warning" pill>inti</x-ui.badge>
+                            <x-si.badge varian="netral" ikon="lock">Bawaan sistem</x-si.badge>
                         @endif
                     </div>
 
                     @if ($permission->label)
-                        <span class="block text-xs font-normal text-ink-muted">{{ $permission->label }}</span>
+                        <span class="block text-[13px] font-normal text-ink-muted">{{ $permission->label }}</span>
                     @endif
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $permission->group ?: '—' }}</x-ui.table.cell>
+                <x-si.tabel.sel>{{ $permission->group ?: 'Tanpa grup' }}</x-si.tabel.sel>
 
-                <x-ui.table.cell>
+                <x-si.tabel.sel>
                     @if ($permission->mappings_count === 0)
-                        <x-ui.badge variant="warning">tidak dipakai key</x-ui.badge>
+                        <x-si.badge varian="perhatian">Tidak dipakai key mana pun</x-si.badge>
                     @else
                         <div class="flex flex-wrap gap-1">
                             @foreach ($permission->mappings as $mapping)
-                                <code class="rounded-sm bg-code px-1.5 py-0.5 font-mono text-xs text-code-ink">{{ $mapping->key() }}</code>
+                                <code class="rounded-[var(--radius-kecil)] bg-surface-inset px-1.5 py-0.5 font-mono text-[13px] text-ink">{{ $mapping->key() }}</code>
                             @endforeach
                         </div>
                     @endif
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $permission->roles_count }}</x-ui.table.cell>
+                <x-si.tabel.sel numeric>{{ $permission->roles_count }}</x-si.tabel.sel>
 
-                <x-ui.table.cell align="right">
-                    <div class="flex justify-end gap-1">
+                <x-si.tabel.sel align="right">
+                    {{-- Kata, bukan pensil dan tong sampah telanjang: `title`
+                         tidak pernah muncul di layar sentuh. --}}
+                    <div class="flex justify-end gap-1.5">
                         <x-can :resource="rk('permissions', ResourceAction::Update)">
-                            <x-ui.button :href="route('admin.permissions.edit', $permission)" variant="secondary" size="xs" title="Ubah">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                            <x-si.tombol :tautan="route('admin.permissions.edit', $permission)"
+                                         varian="kedua" ukuran="kecil">
+                                Ubah
+                            </x-si.tombol>
                         </x-can>
 
                         @unless ($permission->is_locked)
                             <x-can :resource="rk('permissions', ResourceAction::Delete)">
-                                <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
-                                             x-on:click="$dispatch('modal-open', 'hapus-permission-{{ $permission->id }}')">
-                                    <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                                </x-ui.button>
-
-                                <x-ui.modal :id="'hapus-permission-'.$permission->id" title="Hapus permission">
-                                    <p>Yakin menghapus <code>{{ $permission->name }}</code>?</p>
-
-                                    @if ($permission->mappings_count > 0)
-                                        <x-ui.alert variant="warning">
-                                            {{ $permission->mappings_count }} resource key menunjuk permission ini.
-                                            Key-nya tidak ikut terhapus, tapi berubah jadi tak terpetakan — dan aksesnya
-                                            langsung tertutup untuk semua orang kecuali super admin.
-                                        </x-ui.alert>
-                                    @endif
-
-                                    @if ($permission->roles_count > 0)
-                                        <p class="text-ink-muted">
-                                            {{ $permission->roles_count }} role kehilangan izin ini.
-                                        </p>
-                                    @endif
-
-                                    <x-slot:footer>
-                                        <x-ui.button variant="secondary" type="button" x-on:click="$dispatch('modal-close', 'hapus-permission-{{ $permission->id }}')">Batal</x-ui.button>
-
-                                        <form method="POST" action="{{ route('admin.permissions.destroy', $permission) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-ui.button variant="danger" type="submit">Hapus</x-ui.button>
-                                        </form>
-                                    </x-slot:footer>
-                                </x-ui.modal>
+                                {{-- Kedua angkanya dikirim bersama tombolnya: dialog
+                                     yang menyebut "beberapa key" tidak memberi tahu
+                                     apakah yang tertutup satu pintu atau dua belas. --}}
+                                <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                             data-aksi="{{ route('admin.permissions.destroy', $permission) }}"
+                                             data-nama="{{ $permission->name }}"
+                                             data-rincian="{{ $permission->mappings_count }} resource key menunjuk permission ini, dan {{ $permission->roles_count }} role memegangnya."
+                                             x-on:click="$dispatch('hapus-permission', $el.dataset)">
+                                    Hapus
+                                </x-si.tombol>
                             </x-can>
                         @endunless
                     </div>
-                </x-ui.table.cell>
-            </x-ui.table.row>
-        @empty
-            <tr>
-                <td colspan="6">
-                    <x-ui.empty-state title="Belum ada permission" />
-                </td>
-            </tr>
-        @endforelse
+                </x-si.tabel.sel>
+            </x-si.tabel.baris>
+        @endforeach
+
+        @if ($permissions->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Belum ada permission"
+                             syarat="Permission adalah izin mentah yang ditunjuk resource key. Buat satu lebih dulu, lalu petakan key ke sana lewat menu Pemetaan." />
+            </x-slot:kosong>
+        @endif
+
         <x-slot:footer>{{ $permissions->links() }}</x-slot:footer>
-    </x-ui.table>
+    </x-si.tabel>
+
+    <x-can :resource="rk('permissions', ResourceAction::Delete)">
+        <x-si.hapus-baris benda="permission"
+                          akibat="Key-nya sendiri tidak ikut terhapus, tapi berubah jadi tak terpetakan — dan pintu yang dijaganya langsung tertutup untuk semua orang kecuali super admin, sampai dipetakan ulang lewat menu Pemetaan." />
+    </x-can>
 </x-layouts.admin>

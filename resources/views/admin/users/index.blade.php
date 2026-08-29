@@ -5,39 +5,37 @@
                  :breadcrumb="['Pengguna' => null]">
     <x-slot:actions>
         <x-can :resource="rk('users', ResourceAction::Export)">
-            <x-ui.button :href="route('admin.users.export', request()->query())" variant="secondary" size="sm">
-                <x-ui.icon name="download" class="h-4 w-4" />
+            <x-si.tombol :tautan="route('admin.users.export', request()->query())"
+                         varian="kedua" ukuran="kecil" ikon="download">
                 Ekspor CSV
-            </x-ui.button>
+            </x-si.tombol>
         </x-can>
 
         <x-can :resource="rk('users', ResourceAction::Create)">
-            <x-ui.button :href="route('admin.users.create')" size="sm">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol :tautan="route('admin.users.create')" ukuran="kecil" ikon="plus">
                 Tambah pengguna
-            </x-ui.button>
+            </x-si.tombol>
         </x-can>
     </x-slot:actions>
 
-    <x-ui.table :table="$table"
+    <x-si.tabel :table="$table"
                 :selectable="$users->pluck('id')->all()"
                 openable
                 :headers="['name' => 'Nama', 'email' => 'Email', 0 => 'Role', 1 => 'Status', 'created_at' => 'Dibuat', 2 => '']">
         <x-slot:toolbar>
-            <x-ui.table.toolbar :table="$table" placeholder="Cari nama atau email…">
+            <x-si.tabel.toolbar :table="$table" placeholder="Cari nama atau email…"
+                                :tampil="$users->count()" :total="$users->total()">
                 <x-slot:filters>
-                    <select name="role" class="form-select">
-                        <option value="">Semua role</option>
-                        @foreach ($roles as $value => $label)
-                            <option value="{{ $value }}" @selected(request('role') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    {{-- Tanpa label tampak, namanya tetap harus ada: select
+                         telanjang hanya dibacakan sebagai "kotak pilihan". --}}
+                    <x-si.pilihan name="role" :selected="request('role')"
+                                  :options="$roles" placeholder="Semua role"
+                                  aria-label="Saring menurut role" class="w-[200px]" />
                 </x-slot:filters>
 
                 <x-slot:chips>
-                    <x-ui.filter-chips param="status"
-                                       all="Semua status"
-                                       :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" />
+                    <x-si.saring param="status" semua="Semua status"
+                                 :pilihan="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" />
                 </x-slot:chips>
 
                 <x-slot:bulk>
@@ -49,78 +47,91 @@
                                              akibat="Akun yang terhapus kehilangan seluruh akses seketika, termasuk yang sedang membuka panel gelanggang. Penugasannya sebagai wasit atau juri di partai yang sudah dijadwalkan ikut kosong." />
                     </x-can>
                 </x-slot:bulk>
-            </x-ui.table.toolbar>
+            </x-si.tabel.toolbar>
         </x-slot:toolbar>
 
-        @forelse ($users as $user)
-            <x-ui.table.row :id="$user->id" :panel="route('admin.users.panel', $user)">
-                <x-ui.table.cell header>
+        @foreach ($users as $user)
+            <x-si.tabel.baris :id="$user->id" :panel="route('admin.users.panel', $user)">
+                <x-si.tabel.sel header>
                     <div class="flex items-center gap-3">
-                        <x-ui.avatar :user="$user" size="sm" />
+                        <x-si.foto :user="$user" ukuran="kecil" />
                         {{ $user->name }}
                     </div>
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $user->email }}</x-ui.table.cell>
+                <x-si.tabel.sel>{{ $user->email }}</x-si.tabel.sel>
 
-                <x-ui.table.cell>
+                <x-si.tabel.sel>
                     <div class="flex flex-wrap gap-1">
                         @forelse ($user->roles as $role)
-                            <x-ui.badge :variant="$role->isSuperAdmin() ? 'purple' : 'primary'">{{ $role->displayName() }}</x-ui.badge>
+                            {{-- Super admin dibedakan kata, bukan rona ungu yang
+                                 tidak ada di palet mana pun dan diam-diam jatuh
+                                 ke abu-abu. --}}
+                            <x-si.badge :varian="$role->isSuperAdmin() ? 'perhatian' : 'netral'"
+                                        :ikon="$role->isSuperAdmin() ? 'shield' : null">
+                                {{ $role->displayName() }}
+                            </x-si.badge>
                         @empty
-                            <span class="text-ink-muted">—</span>
+                            <span class="text-ink-muted">Tanpa role</span>
                         @endforelse
                     </div>
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>
-                    <x-ui.badge :variant="$user->is_active ? 'success' : 'danger'" dot>
+                <x-si.tabel.sel>
+                    <x-si.badge :varian="$user->is_active ? 'sukses' : 'bahaya'">
                         {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
-                    </x-ui.badge>
-                </x-ui.table.cell>
+                    </x-si.badge>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $user->created_at?->translatedFormat('d M Y') }}</x-ui.table.cell>
+                <x-si.tabel.sel>{{ $user->created_at?->translatedFormat('d M Y') }}</x-si.tabel.sel>
 
-                <x-ui.table.cell align="right">
-                    <div class="flex justify-end gap-1" data-row-action>
+                <x-si.tabel.sel align="right">
+                    {{-- Kata, bukan pensil dan tong sampah telanjang: `title`
+                         hanya muncul saat kursor berdiam di atasnya, dan di
+                         layar sentuh tidak pernah muncul sama sekali. Yang
+                         tersisa di sana dua gambar kecil yang harus ditebak,
+                         dan salah satunya menghapus akun. --}}
+                    <div class="flex justify-end gap-1.5" data-row-action>
                         <x-can :resource="rk('users', ResourceAction::Update)">
-                            <x-ui.button :href="route('admin.users.edit', $user)" variant="secondary" size="xs" title="Ubah">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                            <x-si.tombol :tautan="route('admin.users.edit', $user)"
+                                         varian="kedua" ukuran="kecil">
+                                Ubah
+                            </x-si.tombol>
                         </x-can>
 
                         <x-can :resource="rk('users', ResourceAction::Delete)">
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
-                                         x-on:click="$dispatch('modal-open', 'hapus-user-{{ $user->id }}')">
-                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                            </x-ui.button>
-
-                            <x-ui.modal :id="'hapus-user-'.$user->id" title="Hapus pengguna" size="sm">
-                                Yakin menghapus <strong>{{ $user->name }}</strong>? Tindakan ini tidak bisa dibatalkan.
-
-                                <x-slot:footer>
-                                    <x-ui.button variant="secondary" type="button" x-on:click="$dispatch('modal-close', 'hapus-user-{{ $user->id }}')">Batal</x-ui.button>
-
-                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button variant="danger" type="submit">Hapus</x-ui.button>
-                                    </form>
-                                </x-slot:footer>
-                            </x-ui.modal>
+                            {{-- Muatan lewat data-*: tanda kutip di dalam JSON
+                                 memutus pembacaan ekspresi atribut. --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                         data-aksi="{{ route('admin.users.destroy', $user) }}"
+                                         data-nama="{{ $user->name }}"
+                                         x-on:click="$dispatch('hapus-pengguna', $el.dataset)">
+                                Hapus
+                            </x-si.tombol>
                         </x-can>
                     </div>
-                </x-ui.table.cell>
-            </x-ui.table.row>
-        @empty
-            <tr>
-                <td colspan="8">
-                    <x-ui.empty-state title="Tidak ada pengguna" description="Ubah kata kunci pencarian atau tambahkan pengguna baru." />
-                </td>
-            </tr>
-        @endforelse
-        <x-slot:footer>{{ $users->links() }}</x-slot:footer>
-    </x-ui.table>
+                </x-si.tabel.sel>
+            </x-si.tabel.baris>
+        @endforeach
 
-    <x-ui.drawer-remote title="Detail pengguna" />
+        @if ($users->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Tidak ada pengguna"
+                             syarat="Kosongkan penyaring di atas, atau tambahkan pengguna baru lewat tombol di kanan atas." />
+            </x-slot:kosong>
+        @endif
+
+        <x-slot:footer>{{ $users->links() }}</x-slot:footer>
+    </x-si.tabel>
+
+    {{-- SATU dialog hapus untuk seluruh halaman, bukan satu per baris.
+         Sebelumnya tiap baris menanam modalnya sendiri, dan kalimatnya hanya
+         "Yakin menghapus? Tindakan ini tidak bisa dibatalkan" — tidak ada
+         satu pun kata tentang apa yang ikut hilang. --}}
+    <x-can :resource="rk('users', ResourceAction::Delete)">
+        <x-si.hapus-baris benda="pengguna"
+                          akibat="Akun ini kehilangan seluruh akses seketika, termasuk kalau sedang membuka panel gelanggang. Penugasannya sebagai wasit atau juri di partai yang sudah dijadwalkan ikut kosong dan harus diisi ulang." />
+    </x-can>
+
+    <x-si.panel-rincian judul="Detail pengguna" />
 </x-layouts.admin>

@@ -24,7 +24,7 @@
 @php($bisaDipilih = $selectable !== [])
 
 <tr @if ($panel)
-        x-on:click="$event.target.closest('[data-row-action]') || $dispatch('drawer-remote-open', @js($panel))"
+        x-on:click="$event.target.closest('[data-row-action]') || $dispatch('panel-rincian-buka', @js($panel))"
     @endif
     @if ($bisaDipilih && $id !== null)
         :class="has(@js($id)) && 'bg-accent-soft'"
@@ -48,12 +48,22 @@
     {{ $slot }}
 
     @if ($panel)
-        {{-- Penanda arah, bukan tombol. Yang bisa ditekan adalah seluruh
-             barisnya; ikon ini hanya memberi tahu bahwa baris itu membuka
-             sesuatu. Karena itu ia disembunyikan dari pembaca layar — barisnya
-             sendiri yang membawa arti. --}}
-        <td class="w-11 py-2.5 pe-4 ps-0 text-end align-middle">
-            <x-si.ikon nama="chevron-right" class="inline size-4 text-ink-muted" />
+        {{-- Tombol sungguhan, bukan sekadar penanda arah.
+
+             Klik pada seluruh baris tetap membuka panelnya, tapi <tr> tidak
+             bisa difokus dan tidak menanggapi Enter — tanpa tombol ini, rincian
+             tiap baris tidak terjangkau sama sekali oleh papan ketik, dan
+             panitia yang memakai pembaca layar tidak punya jalan ke sana.
+
+             Tombolnya ber-data-row-action supaya kliknya tidak dihitung dua
+             kali oleh penangan baris. --}}
+        <td class="w-11 py-2.5 pe-4 ps-0 text-end align-middle" data-row-action>
+            <button type="button"
+                    x-on:click="$dispatch('panel-rincian-buka', @js($panel))"
+                    class="grid size-8 place-items-center rounded-[var(--radius-kecil)] text-ink-muted hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+                <span class="sr-only">Buka rincian baris ini</span>
+                <x-si.ikon nama="chevron-right" class="size-4" />
+            </button>
         </td>
     @endif
 </tr>

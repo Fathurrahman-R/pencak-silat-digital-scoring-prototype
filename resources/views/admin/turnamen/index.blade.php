@@ -119,7 +119,7 @@
         <x-slot:footer>{{ $tournaments->links() }}</x-slot:footer>
     </x-si.tabel>
 
-    <x-ui.drawer-remote title="Detail kejuaraan" />
+    <x-si.panel-rincian judul="Detail kejuaraan" />
 
     @resource(rk('turnamen', ResourceAction::Delete))
         {{--

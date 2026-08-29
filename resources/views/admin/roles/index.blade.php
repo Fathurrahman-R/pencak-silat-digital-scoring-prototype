@@ -5,19 +5,19 @@
                  :breadcrumb="['Role' => null]">
     <x-slot:actions>
         <x-can :resource="rk('roles', ResourceAction::Create)">
-            <x-ui.button :href="route('admin.roles.create')" size="sm">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol :tautan="route('admin.roles.create')" ukuran="kecil" ikon="plus">
                 Tambah role
-            </x-ui.button>
+            </x-si.tombol>
         </x-can>
     </x-slot:actions>
 
-    <x-ui.table :table="$table"
+    <x-si.tabel :table="$table"
                 :selectable="$roles->reject(fn ($role) => $role->is_locked || $role->isSuperAdmin())->pluck('id')->all()"
                 openable
                 :headers="['name' => 'Nama', 0 => 'Label', 1 => 'Permission', 2 => 'Pengguna', 3 => '']">
         <x-slot:toolbar>
-            <x-ui.table.toolbar :table="$table" placeholder="Cari role…">
+            <x-si.tabel.toolbar :table="$table" placeholder="Cari role…"
+                                :tampil="$roles->count()" :total="$roles->total()">
                 <x-slot:bulk>
                     <x-can :resource="rk('roles', ResourceAction::Delete)">
                         {{-- Sebelumnya tombol ini mengirim langsung, tanpa satu pun
@@ -27,68 +27,78 @@
                                              akibat="Setiap pengguna yang memegang role ini kehilangan izin yang dibawanya. Role terkunci dilewati, tapi sisanya terhapus permanen." />
                     </x-can>
                 </x-slot:bulk>
-            </x-ui.table.toolbar>
+            </x-si.tabel.toolbar>
         </x-slot:toolbar>
 
-        @forelse ($roles as $role)
-            <x-ui.table.row :id="$role->is_locked || $role->isSuperAdmin() ? null : $role->id"
-                            :panel="route('admin.roles.panel', $role)">
-                <x-ui.table.cell header>
+        @foreach ($roles as $role)
+            <x-si.tabel.baris :id="$role->is_locked || $role->isSuperAdmin() ? null : $role->id"
+                              :panel="route('admin.roles.panel', $role)">
+                <x-si.tabel.sel header>
                     <div class="flex items-center gap-2">
                         {{ $role->name }}
+
+                        {{-- Ungu tidak ada di palet mana pun; badge itu diam-diam
+                             tampil abu-abu sama seperti role biasa. Yang
+                             membedakannya sekarang kata dan perisainya. --}}
                         @if ($role->isSuperAdmin())
-                            <x-ui.badge variant="purple" pill>super admin</x-ui.badge>
+                            <x-si.badge varian="perhatian" ikon="shield">Super admin</x-si.badge>
+                        @elseif ($role->is_locked)
+                            <x-si.badge varian="netral" ikon="lock">Terkunci</x-si.badge>
                         @endif
                     </div>
-                </x-ui.table.cell>
+                </x-si.tabel.sel>
 
-                <x-ui.table.cell>{{ $role->label ?: '—' }}</x-ui.table.cell>
-                <x-ui.table.cell>{{ $role->isSuperAdmin() ? 'semua' : $role->permissions_count }}</x-ui.table.cell>
-                <x-ui.table.cell>{{ $role->users_count }}</x-ui.table.cell>
+                <x-si.tabel.sel>{{ $role->label ?: 'Tanpa label' }}</x-si.tabel.sel>
 
-                <x-ui.table.cell align="right">
-                    <div class="flex justify-end gap-1" data-row-action>
+                {{-- Super admin memegang seluruh permission tanpa didaftar satu
+                     per satu, jadi angkanya memang tidak ada. Ditulis katanya. --}}
+                <x-si.tabel.sel :numeric="! $role->isSuperAdmin()">
+                    {{ $role->isSuperAdmin() ? 'Semua' : $role->permissions_count }}
+                </x-si.tabel.sel>
+
+                <x-si.tabel.sel numeric>{{ $role->users_count }}</x-si.tabel.sel>
+
+                <x-si.tabel.sel align="right">
+                    {{-- Kata, bukan pensil dan tong sampah telanjang: `title`
+                         tidak pernah muncul di layar sentuh. --}}
+                    <div class="flex justify-end gap-1.5" data-row-action>
                         <x-can :resource="rk('roles', ResourceAction::Update)">
-                            <x-ui.button :href="route('admin.roles.edit', $role)" variant="secondary" size="xs" title="Ubah">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                            <x-si.tombol :tautan="route('admin.roles.edit', $role)"
+                                         varian="kedua" ukuran="kecil">
+                                Ubah
+                            </x-si.tombol>
                         </x-can>
 
                         @if (! $role->is_locked && ! $role->isSuperAdmin())
                             <x-can :resource="rk('roles', ResourceAction::Delete)">
-                                <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
-                                             x-on:click="$dispatch('modal-open', 'hapus-role-{{ $role->id }}')">
-                                    <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                                </x-ui.button>
-
-                                <x-ui.modal :id="'hapus-role-'.$role->id" title="Hapus role" size="sm">
-                                    Yakin menghapus role <strong>{{ $role->name }}</strong>?
-                                    {{ $role->users_count }} pengguna akan kehilangan permission dari role ini.
-
-                                    <x-slot:footer>
-                                        <x-ui.button variant="secondary" type="button" x-on:click="$dispatch('modal-close', 'hapus-role-{{ $role->id }}')">Batal</x-ui.button>
-
-                                        <form method="POST" action="{{ route('admin.roles.destroy', $role) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-ui.button variant="danger" type="submit">Hapus</x-ui.button>
-                                        </form>
-                                    </x-slot:footer>
-                                </x-ui.modal>
+                                <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                             data-aksi="{{ route('admin.roles.destroy', $role) }}"
+                                             data-nama="{{ $role->name }}"
+                                             data-rincian="{{ $role->users_count }} pengguna memegang role ini."
+                                             x-on:click="$dispatch('hapus-role', $el.dataset)">
+                                    Hapus
+                                </x-si.tombol>
                             </x-can>
                         @endif
                     </div>
-                </x-ui.table.cell>
-            </x-ui.table.row>
-        @empty
-            <tr>
-                <td colspan="7">
-                    <x-ui.empty-state title="Belum ada role" />
-                </td>
-            </tr>
-        @endforelse
-        <x-slot:footer>{{ $roles->links() }}</x-slot:footer>
-    </x-ui.table>
+                </x-si.tabel.sel>
+            </x-si.tabel.baris>
+        @endforeach
 
-    <x-ui.drawer-remote title="Detail role" />
+        @if ($roles->isEmpty())
+            <x-slot:kosong>
+                <x-si.kosong judul="Belum ada role"
+                             syarat="Role adalah sekumpulan permission yang dipakai bersama. Buat satu lebih dulu lewat tombol di kanan atas, lalu tugaskan ke pengguna." />
+            </x-slot:kosong>
+        @endif
+
+        <x-slot:footer>{{ $roles->links() }}</x-slot:footer>
+    </x-si.tabel>
+
+    <x-can :resource="rk('roles', ResourceAction::Delete)">
+        <x-si.hapus-baris benda="role"
+                          akibat="Mereka kehilangan seluruh izin yang dibawa role ini seketika — termasuk yang sedang membuka panel gelanggang. Izin dari role lain yang mereka pegang tetap berlaku." />
+    </x-can>
+
+    <x-si.panel-rincian judul="Detail role" />
 </x-layouts.admin>
