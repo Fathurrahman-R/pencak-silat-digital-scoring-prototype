@@ -78,9 +78,38 @@
 
     .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
     .baris{border-bottom:1px solid #d4cfc6}
-    .slot{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px;padding:8px 10px;
-          display:flex;align-items:center;gap:8px}
-    .garis-pohon{width:22px;border-top:1px solid #d4cfc6}
+
+    /*
+     * Pohon bagan.
+     *
+     * Slot diletakkan dengan posisi mutlak, bukan flex. Garis penghubung
+     * harus bertemu tepat di tengah slot pasangannya; flex `space-around`
+     * mendekati itu tapi meleset satu-dua piksel begitu tinggi slot atau
+     * jarak antar pasangan berubah, dan garis yang meleset terbaca sebagai
+     * bagan yang salah sambung -- persis kesalahan yang paling mahal di
+     * layar ini.
+     *
+     * Ukuran yang mengikat: slot 40px, jarak dalam pasangan 6px, jarak antar
+     * pasangan 70px. Tengah pasangan ke-n = n*116 + 43.
+     */
+    .pohon{position:relative;height:434px}
+    .slot{position:absolute;height:40px;border-radius:6px;padding:0 10px;
+          display:flex;align-items:center;gap:8px;overflow:hidden}
+
+    /* Bidang sudut PENUH, bukan batang tepi. Merah kiri biru kanan sudah
+       jadi arti tetap di seluruh sistem; di bagan pun sudut harus terbaca
+       tanpa menghitung urutan slot. Putih di #a3221c = 7.49, di #12439e = 9.04. */
+    .slot-merah{background:#a3221c;color:#ffffff}
+    .slot-biru{background:#12439e;color:#ffffff}
+    .slot-kosong{background:#f4f2ee;border:1px dashed #d4cfc6;color:#5f5c66}
+    .slot-nanti{background:#f4f2ee;border:1px solid #d4cfc6;color:#5f5c66}
+    .kontingen-merah{color:#fff0f0;opacity:.9}
+    .kontingen-biru{color:#cbdbf7}
+
+    /* Garis penghubung: horizontal keluar dari slot, vertikal menyatukan
+       pasangan, horizontal masuk ke slot babak berikutnya. */
+    .garis-h{position:absolute;border-top:1px solid #7d7668;height:0}
+    .garis-v{position:absolute;border-left:1px solid #7d7668;width:0}
   </style>
 </helmet>
 
@@ -125,108 +154,98 @@
           <span class="f12 t-redup">2 tempat kosong jadi bye</span>
         </div>
 
-        <div class="flex g24 flex-1">
+        <div class="pohon flex-1" style="max-width:900px">
+          <div class="f11 tr10 uppercase t-redup" style="position:absolute;left:0;top:-22px">Perempat final</div>
+          <div class="f11 tr10 uppercase t-redup" style="position:absolute;left:340px;top:-22px">Semifinal</div>
+          <div class="f11 tr10 uppercase t-redup" style="position:absolute;left:640px;top:-22px">Final</div>
 
-          <!-- Kolom babak 1 -->
-          <div class="flex flex-col justify-between" style="width:300px">
-            <div class="f11 tr10 uppercase t-redup">Perempat final</div>
-
-            <!-- Partai 1 -->
-            <div class="flex flex-col g4">
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">1</span>
-                <span class="f14 w500 flex-1 min-w-0">Bayu Pratama</span>
-                <span class="f12 t-redup">Harimau Putih</span>
-              </div>
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#12439e"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">2</span>
-                <span class="f14 w500 flex-1 min-w-0">Candra Setiawan</span>
-                <span class="f12 t-redup">PSHT Pontianak</span>
-              </div>
-            </div>
-
-            <!-- Partai 2 -->
-            <div class="flex flex-col g4">
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">3</span>
-                <span class="f14 w500 flex-1 min-w-0">Rangga Saputra</span>
-                <span class="f12 t-redup">Merpati Singkawang</span>
-              </div>
-              <!--
-                Tempat kosong ditulis sebagai KALIMAT, bukan garis putus tanpa
-                keterangan. Panitia yang melihat slot kosong perlu tahu itu
-                bye, bukan data yang gagal termuat.
-              -->
-              <div class="slot" style="background:#f4f2ee;border-style:dashed">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#d4cfc6"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">4</span>
-                <span class="f13 t-redup flex-1">Kosong — Rangga langsung ke semifinal</span>
-              </div>
-            </div>
-
-            <!-- Partai 3 -->
-            <div class="flex flex-col g4">
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">5</span>
-                <span class="f14 w500 flex-1 min-w-0">Yusuf Hidayat</span>
-                <span class="f12 t-redup">Perisai Diri</span>
-              </div>
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#12439e"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">6</span>
-                <span class="f14 w500 flex-1 min-w-0">Ilham Nugraha</span>
-                <span class="f12 t-redup">Tapak Suci</span>
-              </div>
-            </div>
-
-            <!-- Partai 4 -->
-            <div class="flex flex-col g4">
-              <div class="slot">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#a3221c"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">7</span>
-                <span class="f14 w500 flex-1 min-w-0">Dimas Arya</span>
-                <span class="f12 t-redup">Setia Hati</span>
-              </div>
-              <div class="slot" style="background:#f4f2ee;border-style:dashed">
-                <span class="shrink-0 r6" style="width:4px;height:26px;background:#d4cfc6"></span>
-                <span class="font-mono tabular-nums f12 t-redup shrink-0">8</span>
-                <span class="f13 t-redup flex-1">Kosong — Dimas langsung ke semifinal</span>
-              </div>
-            </div>
+          <div class="slot slot-merah" style="left:0;top:0px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">1</span>
+            <span class="f14 w600 flex-1 min-w-0">Bayu Pratama</span>
+            <span class="f12 kontingen-merah shrink-0">Harimau Putih</span>
+          </div>
+          <div class="slot slot-biru" style="left:0;top:46px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">2</span>
+            <span class="f14 w600 flex-1 min-w-0">Candra Setiawan</span>
+            <span class="f12 kontingen-biru shrink-0">PSHT Pontianak</span>
+          </div>
+          <div class="slot slot-merah" style="left:0;top:116px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">3</span>
+            <span class="f14 w600 flex-1 min-w-0">Rangga Saputra</span>
+            <span class="f12 kontingen-merah shrink-0">Merpati Singkawang</span>
+          </div>
+          <div class="slot slot-kosong" style="left:0;top:162px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0">4</span>
+            <span class="f13 flex-1">Kosong — Rangga Saputra langsung ke semifinal</span>
+          </div>
+          <div class="slot slot-merah" style="left:0;top:232px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">5</span>
+            <span class="f14 w600 flex-1 min-w-0">Yusuf Hidayat</span>
+            <span class="f12 kontingen-merah shrink-0">Perisai Diri</span>
+          </div>
+          <div class="slot slot-biru" style="left:0;top:278px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">6</span>
+            <span class="f14 w600 flex-1 min-w-0">Ilham Nugraha</span>
+            <span class="f12 kontingen-biru shrink-0">Tapak Suci</span>
+          </div>
+          <div class="slot slot-merah" style="left:0;top:348px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0" style="opacity:.75">7</span>
+            <span class="f14 w600 flex-1 min-w-0">Dimas Arya</span>
+            <span class="f12 kontingen-merah shrink-0">Setia Hati</span>
+          </div>
+          <div class="slot slot-kosong" style="left:0;top:394px;width:300px">
+            <span class="font-mono tabular-nums f12 shrink-0">8</span>
+            <span class="f13 flex-1">Kosong — Dimas Arya langsung ke semifinal</span>
           </div>
 
-          <!-- Kolom semifinal -->
-          <div class="flex flex-col justify-around" style="width:240px">
-            <div class="f11 tr10 uppercase t-redup">Semifinal</div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f13 t-redup flex-1">Pemenang partai 1</span>
-            </div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f14 w500 flex-1">Rangga Saputra</span>
-              <span class="f11 t-sukses w600 uppercase">bye</span>
-            </div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f13 t-redup flex-1">Pemenang partai 3</span>
-            </div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f14 w500 flex-1">Dimas Arya</span>
-              <span class="f11 t-sukses w600 uppercase">bye</span>
-            </div>
+          <div class="garis-h" style="left:300px;top:20px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:66px;width:20px"></div>
+          <div class="garis-v" style="left:320px;top:20px;height:46px"></div>
+          <div class="garis-h" style="left:320px;top:43px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:136px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:182px;width:20px"></div>
+          <div class="garis-v" style="left:320px;top:136px;height:46px"></div>
+          <div class="garis-h" style="left:320px;top:159px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:252px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:298px;width:20px"></div>
+          <div class="garis-v" style="left:320px;top:252px;height:46px"></div>
+          <div class="garis-h" style="left:320px;top:275px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:368px;width:20px"></div>
+          <div class="garis-h" style="left:300px;top:414px;width:20px"></div>
+          <div class="garis-v" style="left:320px;top:368px;height:46px"></div>
+          <div class="garis-h" style="left:320px;top:391px;width:20px"></div>
+
+          <div class="slot slot-nanti" style="left:340px;top:23px;width:260px">
+            <span class="f14 flex-1 min-w-0 ">Pemenang partai 1</span>
+            
+          </div>
+          <div class="slot slot-nanti" style="left:340px;top:139px;width:260px">
+            <span class="f14 flex-1 min-w-0 w600 t-tinta">Rangga Saputra</span>
+            <span class="f11 t-sukses w600 uppercase shrink-0">bye</span>
+          </div>
+          <div class="slot slot-nanti" style="left:340px;top:255px;width:260px">
+            <span class="f14 flex-1 min-w-0 ">Pemenang partai 3</span>
+            
+          </div>
+          <div class="slot slot-nanti" style="left:340px;top:371px;width:260px">
+            <span class="f14 flex-1 min-w-0 w600 t-tinta">Dimas Arya</span>
+            <span class="f11 t-sukses w600 uppercase shrink-0">bye</span>
           </div>
 
-          <!-- Kolom final -->
-          <div class="flex flex-col justify-center g16" style="width:200px">
-            <div class="f11 tr10 uppercase t-redup">Final</div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f13 t-redup flex-1">Pemenang semifinal 1</span>
-            </div>
-            <div class="slot" style="background:#f4f2ee">
-              <span class="f13 t-redup flex-1">Pemenang semifinal 2</span>
-            </div>
+          <div class="garis-h" style="left:600px;top:43px;width:20px"></div>
+          <div class="garis-h" style="left:600px;top:159px;width:20px"></div>
+          <div class="garis-v" style="left:620px;top:43px;height:116px"></div>
+          <div class="garis-h" style="left:620px;top:101px;width:20px"></div>
+          <div class="garis-h" style="left:600px;top:275px;width:20px"></div>
+          <div class="garis-h" style="left:600px;top:391px;width:20px"></div>
+          <div class="garis-v" style="left:620px;top:275px;height:116px"></div>
+          <div class="garis-h" style="left:620px;top:333px;width:20px"></div>
+
+          <div class="slot slot-nanti" style="left:640px;top:81px;width:240px">
+            <span class="f14 flex-1">Pemenang semifinal 1</span>
+          </div>
+          <div class="slot slot-nanti" style="left:640px;top:313px;width:240px">
+            <span class="f14 flex-1">Pemenang semifinal 2</span>
           </div>
         </div>
       </div>
