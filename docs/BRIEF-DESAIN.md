@@ -644,7 +644,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
 | **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
-| **Rombongan 4 — sebagian** | Timbang badan, verifikasi, bagan bergaris pohon, jadwal, aparat, kontingen, atlet, gelanggang, tarif, bendahara |
+| **Rombongan 4 — sebagian** | Timbang badan, verifikasi, bagan, jadwal, aparat, kontingen, atlet, gelanggang, tarif, bendahara, pendaftaran nomor, rekap, setelan peraturan, daftar kejuaraan |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
 
@@ -652,7 +652,7 @@ Cabang kerja: `rombak-ui`.
 
 | Bagian | Kenapa belum |
 |---|---|
-| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk). Sudah jadi kode: timbang badan, verifikasi pendaftaran, bagan, jadwal, penugasan aparat, kontingen, atlet, gelanggang, tarif, bendahara, daftar kejuaraan. Lapisan `si/tabel` sudah ada dengan API sepadan. Pemakaian `x-ui.*` di admin turun 906 → 756 |
+| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk). Enam belas layar sudah jadi kode; `si/tabel` dan `si/hapus-borongan` tersedia. Pemakaian `x-ui.*` di admin turun 906 → 636. Sisanya layar formulir dan boilerplate manajemen akses |
 | ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
 | **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
 
@@ -676,3 +676,5 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Tarif dihapus tanpa satu pun konfirmasi,** dan tagihan seluruh kontingen ikut berubah — termasuk yang sudah dikirim
 - **Berkas atlet dihapus tanpa konfirmasi,** padahal yang harus mengunggah ulang adalah official kontingen, bukan panitia
 - **Dialog dirender per baris** di enam layar: satu halaman berisi dua puluh lima baris berarti dua puluh lima dialog tersembunyi
+- **Hapus borongan mengirim langsung di lima layar** — kejuaraan, pengguna, role, permission, resource. Satu tekan menghapus setiap baris yang tercentang, tanpa konfirmasi dan tanpa menyebut berapa banyak yang terpilih
+- **Emoji medali di layar rekap panitia,** layar yang justru dipakai menyusun berita acara
