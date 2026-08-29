@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\VarController;
 use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\VerificationController;
@@ -356,6 +357,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/hukuman', 'hukuman')->name('hukuman')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
                     Route::post('/hukuman/{penalty}/batal', 'batalkanHukuman')->name('hukuman.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
                     Route::post('/hitungan', 'hitungan')->name('hitungan')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
+                });
+
+            /*
+             * Panel Ketua Pertandingan -- Pasal 13.4.
+             *
+             * Dijaga resource `partai` Manage, bukan `verifikasi-juri`: panel
+             * ini memantau seluruh gelanggang dan menampilkan protes serta
+             * VAR, jadi izin membuka verifikasi saja tidak cukup untuk
+             * membenarkan melihat isinya.
+             */
+            Route::controller(KetuaPertandinganController::class)
+                ->prefix('{tournament}/ketua-pertandingan')
+                ->name('ketua-pertandingan.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index')->middleware('resource:'.rk('partai', ResourceAction::Manage));
+                    Route::get('/state', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::Manage));
                 });
 
             /*

@@ -580,6 +580,142 @@ Alpine.data('partaiPanel', (cfg) => ({
 }));
 
 /**
+ * Panel Ketua Pertandingan -- Pasal 13.4.
+ *
+ * Berdiri sendiri, tidak memakai partaiPanel: tidak ada satu partai yang jadi
+ * pusatnya, dan tidak ada timer yang dikendalikannya sendiri.
+ *
+ * Disegarkan lewat polling berkala, bukan Reverb. Panel ini memantau banyak
+ * gelanggang sekaligus; berlangganan semua presence channel gelanggang akan
+ * membuat Ketua Pertandingan terhitung sebagai "petugas tersambung" di setiap
+ * gelanggang yang tidak ditungguinya, dan panel lain memakai hitungan itu.
+ */
+Alpine.data('panelKetua', (cfg) => ({
+    cfg,
+    memuat: true,
+    gelanggang: [],
+    antrean: [],
+    pesan: null,
+    galat: null,
+    _timer: null,
+
+    async init() {
+        await this.muatUlang();
+
+        /*
+         * Enam detik. Cukup jarang supaya tidak membebani basis data yang
+         * sedang melayani panel gelanggang sungguhan, dan cukup sering supaya
+         * perkara yang tenggatnya lewat tidak luput lebih dari satu tarikan
+         * napas. Ketua Pertandingan tidak menekan tombol per detik seperti
+         * juri -- yang dibacanya adalah keadaan, bukan kejadian.
+         */
+        this._timer = setInterval(() => this.muatUlang(), 6000);
+    },
+
+    destroy() {
+        clearInterval(this._timer);
+    },
+
+    async muatUlang() {
+        try {
+            const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+
+            if (!res.ok) {
+                this.galat = 'Gagal memuat keadaan gelanggang.';
+                return;
+            }
+
+            const data = await res.json();
+            this.gelanggang = data.gelanggang;
+            this.antrean = data.antrean;
+            this.galat = null;
+            this.memuat = false;
+        } catch (e) {
+            this.galat = 'Tidak bisa menghubungi server.';
+        }
+    },
+
+    /** Alamat aksi partai dibuat di sini: partai yang berjalan berganti tanpa halaman dimuat ulang. */
+    alamat(pola, matchId) {
+        return pola.replace('__MATCH__', matchId);
+    },
+
+    waktu(sisaMs) {
+        if (sisaMs === null || sisaMs === undefined) {
+            return '--:--';
+        }
+
+        const total = Math.max(0, Math.ceil(sisaMs / 1000));
+
+        return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    },
+
+    /**
+     * Sisa tenggat sebagai kalimat, bukan jam mundur.
+     *
+     * "96 menit lagi" terbaca sekali lihat; "01:36:12" menuntut pembacanya
+     * menghitung sendiri. Yang sudah lewat dinyatakan lewat, bukan sebagai
+     * angka negatif.
+     */
+    sisaTenggat(iso) {
+        if (!iso) {
+            return null;
+        }
+
+        const selisihMenit = Math.round((new Date(iso) - Date.now()) / 60000);
+
+        if (selisihMenit < 0) {
+            return `${Math.abs(selisihMenit)} mnt lewat`;
+        }
+
+        return `${selisihMenit} mnt lagi`;
+    },
+
+    async kirim(url, data = {}) {
+        this.galat = null;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify(data),
+            });
+
+            const body = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                this.galat = body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+                return false;
+            }
+
+            this.pesan = body.pesan ?? null;
+            await this.muatUlang();
+
+            return true;
+        } catch (e) {
+            this.galat = 'Tidak bisa menghubungi server.';
+
+            return false;
+        }
+    },
+
+    mintaVerifikasi(papan) {
+        return this.kirim(this.alamat(this.cfg.verifikasiMinta, papan.tanding.id), {
+            babak: papan.tanding.babak,
+            jenis: 'jatuhan',
+        });
+    },
+
+    hentikan(papan) {
+        return this.kirim(this.alamat(this.cfg.timerJeda, papan.tanding.id));
+    },
+}));
+
+/**
  * Panel Jurus: operator/pengawas dan juri berbagi factory ini, sama seperti
  * `partaiPanel` dipakai bersama operator/wasit/dewan juri Tanding.
  *
