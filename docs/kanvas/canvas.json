@@ -15,6 +15,10 @@
     {
       "id": "page-4",
       "name": "Verifikasi juri"
+    },
+    {
+      "id": "page-5",
+      "name": "Layar panitia"
     }
   ],
   "artboards": [
@@ -221,6 +225,26 @@
       "y": 0,
       "w": 1440,
       "h": 900
+    },
+    {
+      "file": "AlurPanitia.dc.html",
+      "title": "Alur kerja kejuaraan",
+      "page": "page-5",
+      "x": 0,
+      "y": 0,
+      "w": 1200,
+      "h": 2600,
+      "print": "flow"
+    },
+    {
+      "file": "KomponenPanitia.dc.html",
+      "title": "Komponen panitia",
+      "page": "page-5",
+      "x": 1320,
+      "y": 0,
+      "w": 1400,
+      "h": 2600,
+      "print": "flow"
     }
   ],
   "annotations": [

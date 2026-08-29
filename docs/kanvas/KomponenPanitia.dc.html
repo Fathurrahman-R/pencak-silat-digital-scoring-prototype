@@ -1,0 +1,457 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+    input,select{font:inherit;color:inherit;background:none;border:0}
+    table{border-collapse:collapse;width:100%}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .block{display:block}.flex{display:flex}.grid{display:grid}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}.items-baseline{align-items:baseline}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}
+    .relative{position:relative}.absolute{position:absolute}
+    .overflow-hidden{overflow:hidden}
+    .text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}
+    .uppercase{text-transform:uppercase}
+    .w-full{width:100%}
+    .border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}
+    .border-b-2{border-bottom-width:2px}.border-l-3{border-left-width:3px}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-dalam{background-color:#dcd8d0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+    .bg-bahaya{background-color:#a3221c}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}
+    .t-kedua{color:#45434a}
+    .t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}
+    .t-sukses{color:#14663f}
+    .t-perhatian{color:#7a4a00}
+    .t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r4{border-radius:4px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f17{font-size:17px}.f18{font-size:18px}
+    .f20{font-size:20px}.f22{font-size:22px}.f26{font-size:26px}.f32{font-size:32px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}.g24{gap:24px}.g32{gap:32px}
+    .p8{padding:8px}.p12{padding:12px}.p16{padding:16px}.p20{padding:20px}.p24{padding:24px}.p32{padding:32px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}.px20{padding-left:20px;padding-right:20px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}.py14{padding-top:14px;padding-bottom:14px}
+    .pb6{padding-bottom:6px}.pb8{padding-bottom:8px}.pt12{padding-top:12px}.pt16{padding-top:16px}
+    .mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+
+    .h36{height:36px}.h44{height:44px}.h48{height:48px}
+    .w120{width:120px}.w160{width:160px}.w200{width:200px}.w240{width:240px}.w280{width:280px}
+    .maxw60{max-width:60ch}.maxw70{max-width:70ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5f5c66;text-align:left;
+        padding:8px 12px;border-bottom:1px solid #d4cfc6;font-weight:600}
+    .td{font-size:14px;color:#17161a;padding:11px 12px;border-bottom:1px solid #d4cfc6;vertical-align:middle}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta p32 flex flex-col g32" style="width:1400px">
+
+  <!-- ================= KOP ================= -->
+  <div class="flex flex-col g8">
+    <div class="f11 tr28 uppercase t-redup">Rombongan 4 — panitia</div>
+    <div class="f32 w600 lh12">Komponen panitia</div>
+    <div class="f15 lh16 t-kedua maxw70">
+      Suasana terang, radius 6px. Yang dipakai hampir seluruh layar panitia: tabel berdaftar panjang,
+      toolbar penyaring, formulir, dan dialog. Digambar lebih dulu karena tiga puluh layar admin
+      memakai kelima pola ini berulang-ulang — memperbaikinya di sini memperbaiki semuanya sekaligus.
+    </div>
+  </div>
+
+  <!-- ================= 1. TOOLBAR TABEL ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">1 · Toolbar tabel</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Jumlah hasil ditulis sebagai angka, bukan disimpulkan pembaca dari panjang daftar.
+      Chip penyaring membawa hitungannya sendiri: panitia perlu tahu ada berapa yang belum diverifikasi
+      <em>sebelum</em> menekan chipnya, bukan sesudah.
+    </div>
+
+    <div class="kartu p16 flex flex-col g12">
+      <div class="flex items-center justify-between g16 flex-wrap">
+        <div class="flex items-center g8">
+          <div class="flex items-center g8 border b-kendali r6 px12 h44 w280 bg-naik">
+            <span class="f14 t-redup">Cari nama atlet atau kontingen…</span>
+          </div>
+          <button class="h44 px16 r6 border b-kendali bg-naik f14 w500 t-tinta">Cari</button>
+        </div>
+
+        <div class="flex items-center g10">
+          <span class="f13 t-redup">Menampilkan</span>
+          <span class="f15 w600 font-mono tabular-nums">174</span>
+          <span class="f13 t-redup">dari</span>
+          <span class="f15 w600 font-mono tabular-nums">312</span>
+          <span class="f13 t-redup">pendaftaran</span>
+        </div>
+      </div>
+
+      <div class="flex items-center g8 flex-wrap">
+        <button class="h36 px14 r-full bg-tinta t-putih f13 w600 flex items-center g6">
+          Semua <span class="font-mono tabular-nums" style="opacity:.7">312</span>
+        </button>
+        <button class="h36 px14 r-full border b-garis bg-naik f13 w500 t-tinta flex items-center g6">
+          Belum diverifikasi <span class="font-mono tabular-nums t-redup">28</span>
+        </button>
+        <button class="h36 px14 r-full border b-garis bg-naik f13 w500 t-tinta flex items-center g6">
+          Sudah disahkan <span class="font-mono tabular-nums t-redup">174</span>
+        </button>
+        <button class="h36 px14 r-full border b-garis bg-naik f13 w500 t-tinta flex items-center g6">
+          Ditolak <span class="font-mono tabular-nums t-redup">6</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 2. TABEL ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">2 · Tabel</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Aksi baris memakai <strong>kata</strong>, bukan ikon telanjang. Layar panitia yang ada sekarang
+      memakai tombol berikon saja dengan tooltip — panah atas-bawah untuk urutan, tong sampah untuk
+      membatalkan — dan tooltip tidak muncul di layar sentuh sama sekali. Orang yang tidak terbiasa
+      dengan aplikasi web tidak menebak arti gambar.
+    </div>
+
+    <div class="kartu overflow-hidden">
+      <table>
+        <thead>
+          <tr>
+            <th class="th" style="width:52px">No</th>
+            <th class="th">Atlet</th>
+            <th class="th">Kontingen</th>
+            <th class="th">Kelas</th>
+            <th class="th" style="width:150px">Status</th>
+            <th class="th text-right" style="width:230px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td font-mono tabular-nums t-redup">1</td>
+            <td class="td w500">Bayu Pratama</td>
+            <td class="td">Padepokan Harimau Putih</td>
+            <td class="td">Putra Dewasa — Kelas B</td>
+            <td class="td">
+              <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600">
+                <span class="r-full" style="width:7px;height:7px;background:#14663f"></span> Disahkan
+              </span>
+            </td>
+            <td class="td text-right">
+              <div class="flex items-center justify-end g8">
+                <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Lihat</button>
+                <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Ubah</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="td font-mono tabular-nums t-redup">2</td>
+            <td class="td w500">Candra Setiawan</td>
+            <td class="td">PSHT Cabang Pontianak</td>
+            <td class="td">Putra Dewasa — Kelas B</td>
+            <td class="td">
+              <span class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600">
+                <span class="r-full" style="width:7px;height:7px;background:#7a4a00"></span> Menunggu verifikasi
+              </span>
+            </td>
+            <td class="td text-right">
+              <div class="flex items-center justify-end g8">
+                <button class="h36 px12 r6 bg-tinta t-putih f13 w600">Verifikasi</button>
+                <button class="h36 px12 r6 border b-bahaya t-bahaya bg-naik f13 w600">Tolak</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="td font-mono tabular-nums t-redup">3</td>
+            <td class="td w500">Sari Wulandari</td>
+            <td class="td">Perisai Diri Jakarta</td>
+            <td class="td">Putri Dewasa — Kelas A</td>
+            <td class="td">
+              <span class="inline-flex items-center g6 px10 py4 r-full bg-bahaya-lembut t-bahaya f12 w600">
+                <span class="r-full" style="width:7px;height:7px;background:#a3221c"></span> Ditolak
+              </span>
+            </td>
+            <td class="td text-right">
+              <div class="flex items-center justify-end g8">
+                <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Lihat alasan</button>
+                <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Tinjau ulang</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="flex items-center justify-between px16 py12 border-t b-garis">
+        <span class="f13 t-redup">Halaman 1 dari 13</span>
+        <div class="flex items-center g8">
+          <button class="h36 px14 r6 border b-garis bg-naik f13 w500">Sebelumnya</button>
+          <button class="h36 px14 r6 border b-garis bg-naik f13 w500">Berikutnya</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 3. STATUS ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">3 · Badge status</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Selalu membawa <strong>kata dan bentuk</strong>. Titik berwarna di sebelah kata bukan
+      pengganti kata — ia penanda kedua untuk mata yang membaca cepat, bukan pembawa arti tunggal.
+    </div>
+    <div class="kartu p16 flex items-center g10 flex-wrap">
+      <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600">
+        <span class="r-full" style="width:7px;height:7px;background:#14663f"></span> Disahkan
+      </span>
+      <span class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600">
+        <span class="r-full" style="width:7px;height:7px;background:#7a4a00"></span> Menunggu verifikasi
+      </span>
+      <span class="inline-flex items-center g6 px10 py4 r-full bg-bahaya-lembut t-bahaya f12 w600">
+        <span class="r-full" style="width:7px;height:7px;background:#a3221c"></span> Ditolak
+      </span>
+      <span class="inline-flex items-center g6 px10 py4 r-full bg-turun t-kedua f12 w600">
+        <span class="r-full" style="width:7px;height:7px;background:#5f5c66"></span> Belum diajukan
+      </span>
+      <span class="inline-flex items-center g6 px10 py4 r-full border b-garis bg-naik t-kedua f12 w600">
+        Draf · 16 tempat
+      </span>
+    </div>
+  </div>
+
+  <!-- ================= 4. FORMULIR ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">4 · Formulir</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Tanda wajib berupa <strong>kata</strong>, bukan tanda bintang: bintang hanya dipahami orang yang
+      sudah terbiasa mengisi formulir web. Keterangan bantu menyebutkan siapa yang mengisi dan ke mana
+      angkanya pergi, bukan mengulang label.
+    </div>
+
+    <div class="kartu p20 flex flex-col g16" style="max-width:640px">
+      <div class="flex flex-col g6">
+        <div class="f14 w600">Berat badan <span class="w400 t-redup">— wajib diisi</span></div>
+        <div class="flex items-center g8 border b-kendali r6 px14 h44 bg-naik">
+          <span class="f15 t-redup shrink-0">kg</span>
+          <span class="f15 t-tinta">52,4</span>
+        </div>
+        <div class="f13 lh16 t-redup">Diisi petugas timbang, bukan official kontingen.</div>
+      </div>
+
+      <div class="flex flex-col g6">
+        <div class="f14 w600">Nomor peserta <span class="w400 t-redup">— wajib diisi</span></div>
+        <div class="flex items-center g8 border b-bahaya r6 px14 h44 bg-naik">
+          <span class="f15 t-redup">Belum diisi</span>
+        </div>
+        <div class="f13 lh16 t-bahaya">Isi nomor peserta lebih dulu; nomor ini tercetak di berita acara.</div>
+        <div class="f13 lh16 t-redup">Angka saja, tanpa huruf. Diberikan panitia saat daftar ulang.</div>
+      </div>
+
+      <div class="flex flex-col g6">
+        <div class="f14 w600">Kelas yang diikuti</div>
+        <div class="flex items-center justify-between border b-kendali r6 px14 h44 bg-naik">
+          <span class="f15">Putra Dewasa — Kelas B (55–60 kg)</span>
+          <span class="f13 t-redup">ubah</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col g6" style="opacity:.45">
+        <div class="f14 w600">Kontingen</div>
+        <div class="flex items-center border b-kendali r6 px14 h44 bg-turun">
+          <span class="f15">Padepokan Harimau Putih</span>
+        </div>
+        <div class="f13 lh16 t-redup">Terkunci setelah pendaftaran disahkan.</div>
+      </div>
+
+      <div class="flex items-center g10 pt12 border-t b-garis">
+        <button class="h48 px20 r6 bg-tinta t-putih f15 w600">Simpan hasil timbang</button>
+        <button class="h48 px20 r6 border b-garis bg-naik f15 w500">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5. PRASYARAT ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">5 · Prasyarat dan akibat</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Menyatakan <strong>kenapa</strong> sebuah tombol belum bisa ditekan dan apa yang harus
+      diselesaikan lebih dulu. Tombol mati tanpa penjelasan sama membingungkannya dengan tombol yang
+      gagal diam-diam.
+    </div>
+
+    <div class="flex flex-col g10" style="max-width:820px">
+      <div class="border-l-3 b-garis bg-turun px16 py12 r6">
+        <div class="f15 w600">Bagan belum bisa disusun</div>
+        <div class="f14 lh16 t-kedua mt4">
+          Tiga pesilat belum ditimbang. Selesaikan timbang badan lebih dulu, lalu tombol
+          <strong>Susun bagan</strong> terbuka sendiri.
+        </div>
+      </div>
+
+      <div class="border-l-3 b-perhatian bg-perhatian-lembut px16 py12 r6">
+        <div class="f15 w600 t-perhatian">Protes VAR lewat tenggat</div>
+        <div class="f14 lh16 t-perhatian mt4">
+          Wasit Komisi Protes belum memutus dalam 5 menit. Pasal 15 menyerahkan kelanjutannya ke
+          verifikasi juri yang dipimpin Ketua Pertandingan.
+        </div>
+      </div>
+
+      <div class="border-l-3 b-bahaya bg-bahaya-lembut px16 py12 r6">
+        <div class="f15 w600 t-bahaya">Hasil sudah disahkan</div>
+        <div class="f14 lh16 t-bahaya mt4">
+          Nilai dan hukuman partai ini tidak bisa diubah lagi. Koreksi hanya lewat protes manajer.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 6. KEADAAN KOSONG ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">6 · Keadaan kosong</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Wajib menyebutkan <strong>apa yang membuka isinya</strong>. "Tidak ada data" memberi tahu panitia
+      bahwa layarnya kosong — sesuatu yang sudah ia lihat sendiri — dan tidak memberi tahu apa pun
+      tentang langkah berikutnya.
+    </div>
+
+    <div class="kartu p32 flex flex-col items-center text-center g8" style="max-width:820px">
+      <div class="f18 w600">Belum ada kelas yang bisa disusun bagannya</div>
+      <div class="f14 lh16 t-kedua maxw60">
+        Bagan tersusun dari peserta yang pendaftarannya sudah disahkan dan sudah lolos timbang badan.
+        Sekarang ada 28 pendaftaran yang menunggu verifikasi.
+      </div>
+      <button class="h44 px16 r6 bg-tinta t-putih f14 w600 mt8">Buka daftar verifikasi</button>
+    </div>
+  </div>
+
+  <!-- ================= 7. DIALOG ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">7 · Dialog konfirmasi</div>
+    <div class="f14 lh16 t-kedua maxw70">
+      Komponen paling menentukan apakah panitia berani memakai aplikasi. Batal di kiri; tombol
+      berbahaya tidak pernah di posisi refleks. Untuk tindakan yang tidak bisa dibatalkan, nama
+      objeknya diketik ulang — bukan karena panitia perlu dites, melainkan karena mengetik memaksa
+      mata membaca <em>apa</em> yang sedang dihapus.
+    </div>
+
+    <div class="flex g16 items-start flex-wrap">
+      <div class="kartu p20 flex flex-col g12" style="width:440px">
+        <div class="f18 w600">Batalkan pendaftaran Bayu Pratama?</div>
+        <div class="f14 lh16 t-kedua">
+          Pendaftaran ditarik dari kelas Putra Dewasa — Kelas B. Bisa didaftarkan lagi selama
+          pendaftaran kejuaraan masih dibuka.
+        </div>
+        <div class="flex items-center g10 pt12">
+          <button class="h44 px16 r6 border b-garis bg-naik f14 w500">Tidak jadi</button>
+          <button class="h44 px16 r6 border b-bahaya t-bahaya bg-naik f14 w600">Batalkan pendaftaran</button>
+        </div>
+      </div>
+
+      <div class="kartu p20 flex flex-col g12 b-bahaya" style="width:440px;border-color:#a3221c">
+        <div class="f11 tr10 uppercase t-bahaya">Tidak bisa dibatalkan</div>
+        <div class="f18 w600">Hapus kontingen Padepokan Harimau Putih?</div>
+        <div class="f14 lh16 t-kedua">
+          Ikut terhapus: 24 atlet, 41 pendaftaran, dan seluruh riwayat timbang badannya.
+          Partai yang sudah berjalan tidak ikut terhapus, tapi sudutnya jadi kosong.
+        </div>
+        <div class="flex flex-col g6">
+          <div class="f13 w600">Ketik <span class="font-mono">Padepokan Harimau Putih</span> untuk melanjutkan</div>
+          <div class="flex items-center border b-kendali r6 px14 h44 bg-naik">
+            <span class="f15 t-redup">Ketik nama kontingen…</span>
+          </div>
+        </div>
+        <div class="flex items-center g10 pt12">
+          <button class="h44 px16 r6 border b-garis bg-naik f14 w500">Tidak jadi</button>
+          <button class="h44 px16 r6 bg-bahaya t-putih f14 w600" style="opacity:.45">Hapus kontingen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. YANG DIBUANG ================= -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr10 uppercase t-redup">8 · Yang dibuang dari layar panitia sekarang</div>
+    <div class="kartu p20 flex flex-col g12" style="max-width:900px">
+
+      <div class="flex g16 items-start">
+        <div class="shrink-0 w160 f13 w600 t-bahaya">Tombol ikon telanjang</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          Panah atas-bawah untuk urutan partai, tong sampah untuk membatalkan pendaftaran — keduanya
+          hanya berlabel <span class="font-mono f13">title</span>, dan tooltip tidak pernah muncul di
+          layar sentuh. Diganti tombol berkata.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w160 f13 w600 t-bahaya">Lima tombol berjajar</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          Tiap baris jadwal memasang Aparat · Operator · Wasit · Dewan · Keberatan sekaligus. Lima
+          sasaran berdekatan yang membuka lima panel berbeda; empat di antaranya jarang dipakai dari
+          sini. Sisanya pindah ke satu tombol "Buka panel" dengan pilihan.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w160 f13 w600 t-bahaya">Modal per baris</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          Dialog konfirmasi dirender untuk <em>setiap</em> baris tabel. Dua ratus pendaftaran berarti
+          dua ratus dialog tersembunyi di halaman yang sama. Satu dialog dipakai bersama, isinya
+          diganti saat dibuka.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w160 f13 w600 t-bahaya">"Tidak ada data"</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          Memberi tahu panitia bahwa layarnya kosong — sesuatu yang sudah ia lihat sendiri.
+          Setiap keadaan kosong menyebutkan apa yang membuka isinya.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

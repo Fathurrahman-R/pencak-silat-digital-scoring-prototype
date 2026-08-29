@@ -1,0 +1,375 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.grid{display:grid}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}.items-baseline{align-items:baseline}.items-stretch{align-items:stretch}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}
+    .border{border-width:1px}.border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l-3{border-left-width:3px}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}.f26{font-size:26px}.f32{font-size:32px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}.g16{gap:16px}
+    .g20{gap:20px}.g24{gap:24px}.g32{gap:32px}
+    .p12{padding:12px}.p16{padding:16px}.p20{padding:20px}.p32{padding:32px}
+    .px10{padding-left:10px;padding-right:10px}.px12{padding-left:12px;padding-right:12px}
+    .px14{padding-left:14px;padding-right:14px}.px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py12{padding-top:12px;padding-bottom:12px}
+    .pt12{padding-top:12px}.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .maxw60{max-width:60ch}.maxw70{max-width:70ch}
+    .w150{width:150px}.w160{width:160px}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .nomor{width:30px;height:30px;border-radius:9999px;background:#17161a;color:#fff;
+           display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
+    /* Panah adalah TEKS, bukan tepi. Warna tepi kendali #7d7668 hanya
+       lolos ambang non-teks (3:1); di kertas ia 4.03 — di bawah 4.5. */
+    .panah{color:#5f5c66;font-size:20px;padding:0 4px}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta p32 flex flex-col g32" style="width:1200px">
+
+  <!-- KOP -->
+  <div class="flex flex-col g8">
+    <div class="f11 tr28 uppercase t-redup">Rombongan 4 — panitia</div>
+    <div class="f32 w600 lh12">Alur kerja kejuaraan</div>
+    <div class="f15 lh16 t-kedua maxw70">
+      Urutan sebenarnya yang dijalankan panitia dari hari nol sampai medali dibagikan. Digambar
+      sebelum satu pun layar admin disentuh, karena yang paling sering salah di aplikasi panitia
+      bukan rupa satu layar melainkan <strong>urutan antar layar</strong>: tombol yang terbuka
+      sebelum syaratnya selesai, dan langkah yang tidak menyatakan apa yang menghambatnya.
+    </div>
+  </div>
+
+  <!-- ATURAN -->
+  <div class="kartu p20 flex flex-col g10">
+    <div class="f11 tr10 uppercase t-redup">Aturan yang mengikat seluruh alur</div>
+    <div class="flex g16 items-start">
+      <div class="nomor" style="background:#7d7668">A</div>
+      <div class="f14 lh16 t-kedua flex-1">
+        <strong class="t-tinta">Langkah yang belum siap tidak disembunyikan, melainkan dinyatakan
+        prasyaratnya.</strong> Menu yang hilang membuat panitia mengira aplikasinya rusak; tombol mati
+        berkalimat membuatnya tahu apa yang harus diselesaikan lebih dulu.
+      </div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="nomor" style="background:#7d7668">B</div>
+      <div class="f14 lh16 t-kedua flex-1">
+        <strong class="t-tinta">Satu langkah mundur selalu mungkin, kecuali yang ditandai
+        merah.</strong> Yang merah mengunci data yang sudah dipakai pertandingan berjalan, dan
+        koreksinya lewat jalur protes, bukan lewat tombol yang sama.
+      </div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="nomor" style="background:#7d7668">C</div>
+      <div class="f14 lh16 t-kedua flex-1">
+        <strong class="t-tinta">Angka di tiap langkah adalah angka nyata, bukan lencana.</strong>
+        "28 menunggu verifikasi" memberi tahu panitia harus ke mana; "Peserta" saja tidak.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAHAP 1 -->
+  <div class="flex flex-col g12">
+    <div class="flex items-baseline g10">
+      <span class="f11 tr28 uppercase t-redup">Sebelum hari-H</span>
+      <span class="f13 t-redup">— menyiapkan kejuaraan</span>
+    </div>
+
+    <div class="flex items-stretch g8 flex-wrap">
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">1</div>
+          <div class="f16 w600">Buat kejuaraan</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Nama, tanggal, tempat, dan setelan peraturan yang dipakai.</div>
+        <div class="f12 t-redup mt4">Membuka: seluruh menu di bawahnya.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">2</div>
+          <div class="f16 w600">Kelas &amp; nomor</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Kelas Tanding dan nomor Jurus disusun otomatis dari naskah peraturan; panitia menyunting yang dipertandingkan saja.</div>
+        <div class="f12 t-redup mt4">Kejuaraan daerah lazim membuka 100+ kelas.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">3</div>
+          <div class="f16 w600">Gelanggang &amp; tarif</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Berapa gelanggang berjalan bersamaan, dan berapa biaya per pendaftaran.</div>
+        <div class="f12 t-redup mt4">Tarif menentukan tagihan kontingen di langkah 9.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAHAP 2 -->
+  <div class="flex flex-col g12">
+    <div class="flex items-baseline g10">
+      <span class="f11 tr28 uppercase t-redup">Pendaftaran</span>
+      <span class="f13 t-redup">— tahap dengan baris terbanyak, dan paling sering dicari ulang</span>
+    </div>
+
+    <div class="flex items-stretch g8 flex-wrap">
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">4</div>
+          <div class="f16 w600">Kontingen</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Official mendaftarkan kontingennya sendiri lewat akun; panitia menambahkan yang datang tanpa akun.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">5</div>
+          <div class="f16 w600">Verifikasi berkas</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Akta, foto, surat sehat. Ditolak berarti dikembalikan ke official beserta alasannya, bukan dihapus.</div>
+        <div class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600 mt4" style="align-self:flex-start">
+          28 menunggu
+        </div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">6</div>
+          <div class="f16 w600">Timbang badan</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Hasilnya menggugurkan pesilat dari kelasnya kalau di luar batas. Dicatat petugas timbang di tempat.</div>
+        <div class="f12 t-bahaya w600 mt4">Menggugurkan — butuh konfirmasi.</div>
+      </div>
+    </div>
+
+    <div class="border-l-3 b-perhatian bg-perhatian-lembut px16 py12 r6" style="max-width:840px">
+      <div class="f15 w600 t-perhatian">Di sinilah panitia menghabiskan waktu terbanyak</div>
+      <div class="f14 lh16 t-perhatian mt4">
+        Tiga ratus pendaftaran, dicari berulang kali dengan nama yang salah eja. Pencarian dan
+        penyaringan di layar ini bukan kelengkapan — ia alat kerja utamanya. Chip penyaring wajib
+        membawa hitungan, dan pencarian harus memaafkan ejaan.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAHAP 3 -->
+  <div class="flex flex-col g12">
+    <div class="flex items-baseline g10">
+      <span class="f11 tr28 uppercase t-redup">Menyusun pertandingan</span>
+      <span class="f13 t-redup">— sekali salah, seluruh hari ikut salah</span>
+    </div>
+
+    <div class="flex items-stretch g8 flex-wrap">
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">7</div>
+          <div class="f16 w600">Susun bagan</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Undian per kelas dari peserta yang sudah disahkan dan lolos timbang. Bisa diacak ulang selama belum dikunci.</div>
+        <div class="f12 t-bahaya w600 mt4">Terkunci setelah partai pertama dimulai.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">8</div>
+          <div class="f16 w600">Jadwal &amp; aparat</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Urutan partai per gelanggang, lalu wasit dan tiga juri untuk tiap partai.</div>
+        <div class="f12 t-redup mt4">Aparat yang belum lengkap menahan panel juri.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">9</div>
+          <div class="f16 w600">Tagihan kontingen</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Dihitung dari tarif dikali pendaftaran yang disahkan. Pembayaran dicatat bendahara.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAHAP 4 -->
+  <div class="flex flex-col g12">
+    <div class="flex items-baseline g10">
+      <span class="f11 tr28 uppercase t-redup">Hari-H</span>
+      <span class="f13 t-redup">— panitia berhenti mengetik, gelanggang yang bekerja</span>
+    </div>
+
+    <div class="kartu p20 flex flex-col g12">
+      <div class="f14 lh16 t-kedua maxw70">
+        Pada hari pertandingan, layar panitia berubah peran: dari tempat memasukkan data jadi tempat
+        <strong>menonton dan menambal</strong>. Yang dipakai tinggal empat, dan tiga di antaranya
+        sudah digambar di rombongan gelanggang.
+      </div>
+
+      <div class="flex g10 flex-wrap">
+        <div class="border b-garis r6 px14 py12 bg-turun" style="width:224px">
+          <div class="f14 w600">Panel gelanggang</div>
+          <div class="f12 lh16 t-redup mt4">Operator, wasit, juri, Dewan Wasit Juri, keberatan</div>
+          <div class="f11 t-sukses w600 mt4">SUDAH DIGAMBAR</div>
+        </div>
+        <div class="border b-garis r6 px14 py12 bg-turun" style="width:224px">
+          <div class="f14 w600">Ketua Pertandingan</div>
+          <div class="f12 lh16 t-redup mt4">Seluruh gelanggang sekaligus, antrean keputusan</div>
+          <div class="f11 t-sukses w600 mt4">SUDAH DIGAMBAR</div>
+        </div>
+        <div class="border b-garis r6 px14 py12 bg-naik" style="width:224px">
+          <div class="f14 w600">Overlay siaran</div>
+          <div class="f12 lh16 t-redup mt4">Alamat sumber vMix per gelanggang</div>
+          <div class="f11 t-perhatian w600 mt4">BELUM DIGAMBAR</div>
+        </div>
+        <div class="border b-garis r6 px14 py12 bg-naik" style="width:224px">
+          <div class="f14 w600">Ganti aparat mendadak</div>
+          <div class="f12 lh16 t-redup mt4">Juri yang tidak hadir diganti tanpa menghentikan partai</div>
+          <div class="f11 t-perhatian w600 mt4">BELUM DIGAMBAR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAHAP 5 -->
+  <div class="flex flex-col g12">
+    <div class="flex items-baseline g10">
+      <span class="f11 tr28 uppercase t-redup">Setelah pertandingan</span>
+    </div>
+
+    <div class="flex items-stretch g8 flex-wrap">
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">10</div>
+          <div class="f16 w600">Sahkan hasil</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Dewan Wasit Juri mengesahkan tiap partai. Sebelum disahkan, nilai masih bisa dibatalkan.</div>
+        <div class="f12 t-bahaya w600 mt4">Setelah disahkan: terkunci total.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">11</div>
+          <div class="f16 w600">Berita acara</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Satu PDF per partai: skor per babak, tiap nilai berikut juri yang menekannya, hukuman, verifikasi juri, kolom tanda tangan.</div>
+      </div>
+
+      <div class="flex items-center panah">→</div>
+
+      <div class="kartu p16 flex flex-col g6" style="width:264px">
+        <div class="flex items-center g10">
+          <div class="nomor">12</div>
+          <div class="f16 w600">Rekap medali</div>
+        </div>
+        <div class="f13 lh16 t-kedua">Peringkat kontingen dan juara tiap kelas, terbit sendiri dari hasil yang sudah disahkan.</div>
+        <div class="f12 t-redup mt4">Sudah tampil di halaman publik.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- URUTAN GAMBAR -->
+  <div class="flex flex-col g12">
+    <div class="f11 tr28 uppercase t-redup">Urutan menggambar layarnya</div>
+    <div class="kartu p20 flex flex-col g12">
+      <div class="f14 lh16 t-kedua maxw70">
+        Bukan menurut urutan alur, melainkan menurut <strong>biaya kalau salah</strong> dan
+        <strong>berapa layar lain yang ikut terbawa</strong>.
+      </div>
+
+      <div class="flex g16 items-start">
+        <div class="shrink-0 w150 f13 w600">Sudah digambar</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          <strong>Komponen panitia</strong> — tabel, toolbar, formulir, badge, prasyarat, keadaan
+          kosong, dialog. Tiga puluh layar admin memakai kelimanya berulang-ulang.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w150 f13 w600">Berikutnya</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          <strong>Verifikasi &amp; timbang badan</strong> (langkah 5–6) — daftar terpanjang, dicari
+          berulang kali, dan hasilnya menggugurkan pesilat.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w150 f13 w600">Lalu</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          <strong>Bagan &amp; jadwal</strong> (langkah 7–8) — sekali salah, seluruh hari
+          pertandingan ikut salah.
+        </div>
+      </div>
+
+      <div class="flex g16 items-start border-t b-garis pt12">
+        <div class="shrink-0 w150 f13 w600">Terakhir</div>
+        <div class="f14 lh16 t-kedua flex-1">
+          <strong>Kejuaraan, kontingen, tarif, tagihan, rekap</strong> — semuanya tabel dan formulir
+          biasa yang sudah tercakup artboard komponen; digambar hanya kalau alurnya menyimpang dari
+          pola itu.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
