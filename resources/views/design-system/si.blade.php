@@ -98,6 +98,48 @@
             </div>
         </x-si.kartu>
 
+        {{-- TABEL --}}
+        <x-si.kartu judul="Tabel"
+                    keterangan="Padanan x-ui.table dengan API yang sepadan — memindahkan layar admin cukup dengan mengganti nama komponennya.">
+            <x-si.tabel :headers="['Atlet', 'Kontingen', 'Kelas', 'Berat', '']">
+                <x-slot:toolbar>
+                    <x-si.tabel.toolbar placeholder="Cari nama atlet…" :tampil="3" :total="312" />
+                </x-slot:toolbar>
+
+                <x-si.tabel.baris>
+                    <x-si.tabel.sel header>Bayu Pratama</x-si.tabel.sel>
+                    <x-si.tabel.sel>Padepokan Harimau Putih</x-si.tabel.sel>
+                    <x-si.tabel.sel>Putra Dewasa — Kelas B</x-si.tabel.sel>
+                    <x-si.tabel.sel numeric>57,3</x-si.tabel.sel>
+                    <x-si.tabel.sel align="right">
+                        <x-si.badge varian="sukses">Lolos</x-si.badge>
+                    </x-si.tabel.sel>
+                </x-si.tabel.baris>
+
+                <x-si.tabel.baris>
+                    <x-si.tabel.sel header>Candra Setiawan</x-si.tabel.sel>
+                    <x-si.tabel.sel>PSHT Cabang Pontianak</x-si.tabel.sel>
+                    <x-si.tabel.sel>Putra Dewasa — Kelas B</x-si.tabel.sel>
+                    <x-si.tabel.sel numeric>58,4</x-si.tabel.sel>
+                    <x-si.tabel.sel align="right">
+                        <x-si.badge varian="netral">Belum ditimbang</x-si.badge>
+                    </x-si.tabel.sel>
+                </x-si.tabel.baris>
+
+                <x-si.tabel.baris>
+                    <x-si.tabel.sel header>Ilham Nugraha</x-si.tabel.sel>
+                    <x-si.tabel.sel>Merpati Putih Singkawang</x-si.tabel.sel>
+                    <x-si.tabel.sel>Putra Remaja — Kelas A</x-si.tabel.sel>
+                    <x-si.tabel.sel numeric>51,2</x-si.tabel.sel>
+                    <x-si.tabel.sel align="right">
+                        <x-si.badge varian="bahaya">Tidak lolos</x-si.badge>
+                    </x-si.tabel.sel>
+                </x-si.tabel.baris>
+
+                <x-slot:footer>Halaman 1 dari 13</x-slot:footer>
+            </x-si.tabel>
+        </x-si.kartu>
+
         {{-- PESAN KILAT --}}
         <x-si.kartu judul="Pesan hasil tindakan"
                     keterangan="Tidak hilang sendiri. Pendahulunya menutup diri setelah 6 detik — cukup buat orang yang sudah tahu pesan apa yang ditunggunya, tidak cukup buat orang yang baru pertama memakai aplikasi.">
