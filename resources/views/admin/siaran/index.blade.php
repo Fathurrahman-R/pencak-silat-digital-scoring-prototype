@@ -27,7 +27,7 @@
          }"
          class="space-y-4">
 
-        <x-ui.alert variant="info" title="Cara memasangnya di vMix">
+        <x-si.callout varian="keterangan" judul="Cara memasangnya di vMix">
             <span class="block">
                 <strong class="font-semibold">Add Input → Web Browser</strong>, tempelkan alamat di bawah,
                 centang <strong class="font-semibold">Transparent Background</strong>, dan set resolusi
@@ -38,55 +38,53 @@
                 Halaman overlay hanya bisa dibuka dari jaringan lokal dan tidak pernah diteruskan lewat tunnel publik.
                 Kalau vMix berjalan di mesin lain, ganti bagian host alamat dengan alamat LAN server ini.
             </span>
-        </x-ui.alert>
+        </x-si.callout>
 
         @forelse ($gelanggang as $baris)
-            <x-ui.card :title="$baris['arena']->name"
-                       :subtitle="'Gelanggang #'.$baris['arena']->id.($baris['arena']->code ? ' · kode '.$baris['arena']->code : '')">
+            <x-si.kartu :judul="$baris['arena']->name"
+                        :keterangan="'Gelanggang #'.$baris['arena']->id.($baris['arena']->code ? ' · kode '.$baris['arena']->code : '')">
                 <div class="divide-y divide-line">
                     @foreach ($baris['halaman'] as $halaman)
                         <div class="flex flex-wrap items-center gap-3 py-3">
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm text-ink">
                                     {{ $halaman['nama'] }}
-                                    <x-ui.badge size="sm">{{ $halaman['channel'] }}</x-ui.badge>
+                                    <x-si.badge>{{ $halaman['channel'] }}</x-si.badge>
                                 </p>
                                 <p class="truncate text-xs text-ink-muted">{{ $halaman['isi'] }}</p>
                                 <p class="mt-1 truncate font-mono text-xs text-ink-secondary">{{ $halaman['url'] }}</p>
                             </div>
 
                             <div class="flex shrink-0 items-center gap-2">
-                                <x-ui.button type="button" variant="secondary" size="sm"
+                                <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                                              x-on:click="salin('{{ $halaman['url'] }}')">
                                     <span x-show="tersalin !== '{{ $halaman['url'] }}'">Salin alamat</span>
                                     <span x-show="tersalin === '{{ $halaman['url'] }}'" x-cloak>Tersalin</span>
-                                </x-ui.button>
+                                </x-si.tombol>
 
-                                <x-ui.button :href="$halaman['url']" variant="ghost" size="sm" target="_blank" rel="noopener">
+                                <x-si.tombol :tautan="$halaman['url']" varian="polos" ukuran="kecil" target="_blank" rel="noopener">
                                     Pratinjau
-                                </x-ui.button>
+                                </x-si.tombol>
                             </div>
                         </div>
                     @endforeach
                 </div>
-            </x-ui.card>
+            </x-si.kartu>
         @empty
-            <x-ui.card>
-                <x-ui.empty-state icon="tv-minimal"
-                                  title="Belum ada gelanggang"
-                                  description="Overlay mengikuti partai aktif tiap gelanggang. Tambahkan gelanggang lebih dulu lewat menu Kejuaraan aktif → Gelanggang." />
-            </x-ui.card>
+            <x-si.kartu>
+                <x-si.kosong judul="Belum ada gelanggang"
+                             syarat="Overlay mengikuti partai aktif tiap gelanggang. Tambahkan gelanggang lebih dulu lewat menu Kejuaraan aktif → Gelanggang." />
+            </x-si.kartu>
         @endforelse
 
         {{-- Bagan berdiri terpisah dari kelima halaman di atas: ia mengikuti
              kelas tanding, bukan gelanggang, dan dipakai sebagai tayangan
              pengisi di antara partai. --}}
-        <x-ui.card title="Bagan untuk tayangan antar partai"
-                   subtitle="Dipasang sebagai input tersendiri, bukan sebagai Overlay Channel">
+        <x-si.kartu judul="Bagan untuk tayangan antar partai"
+                    keterangan="Dipasang sebagai input tersendiri, bukan sebagai Overlay Channel">
             @if ($kelas->isEmpty())
-                <x-ui.empty-state icon="network"
-                                  title="Belum ada bagan"
-                                  description="Susun bagan lebih dulu lewat menu Pertandingan → Bagan." />
+                <x-si.kosong judul="Belum ada bagan"
+                             syarat="Susun bagan lebih dulu lewat menu Pertandingan → Bagan." />
             @else
                 <div class="divide-y divide-line">
                     @foreach ($kelas as $satu)
@@ -101,19 +99,19 @@
                             </div>
 
                             <div class="flex shrink-0 items-center gap-2">
-                                <x-ui.button type="button" variant="secondary" size="sm" x-on:click="salin('{{ $url }}')">
+                                <x-si.tombol tipe="button" varian="kedua" ukuran="kecil" x-on:click="salin('{{ $url }}')">
                                     <span x-show="tersalin !== '{{ $url }}'">Salin alamat</span>
                                     <span x-show="tersalin === '{{ $url }}'" x-cloak>Tersalin</span>
-                                </x-ui.button>
+                                </x-si.tombol>
 
-                                <x-ui.button :href="$url" variant="ghost" size="sm" target="_blank" rel="noopener">
+                                <x-si.tombol :tautan="$url" varian="polos" ukuran="kecil" target="_blank" rel="noopener">
                                     Pratinjau
-                                </x-ui.button>
+                                </x-si.tombol>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 </x-layouts.admin>

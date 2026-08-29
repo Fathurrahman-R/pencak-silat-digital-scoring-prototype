@@ -8,28 +8,28 @@
                      'Bagan' => null,
                  ]">
     <div class="space-y-4">
-        <x-ui.alert variant="info" title="Bagan disusun dari peserta yang sudah disahkan">
+        <x-si.callout varian="keterangan" judul="Bagan disusun dari peserta yang sudah disahkan">
             Peserta yang berkasnya belum lengkap atau tagihan kontingennya belum lunas tidak ikut
             masuk hitungan, meski sudah mendaftar. Susun bagan setelah verifikasi dan timbang badan
             selesai untuk kelas yang bersangkutan.
-        </x-ui.alert>
+        </x-si.callout>
 
-        <x-ui.card title="Kelas tanding">
-            <x-slot:actions>
+        <x-si.kartu judul="Kelas tanding">
+            <x-slot:aksi>
                 <form method="GET" class="flex flex-wrap items-center gap-2">
                     @if ($tampil !== 'terpakai')
                         <input type="hidden" name="tampil" value="{{ $tampil }}">
                     @endif
 
-                    <x-ui.input name="q" :value="$cari" placeholder="Cari kelas…" class="w-[200px]" />
+                    <x-si.isian name="q" :value="$cari" placeholder="Cari kelas…" class="w-[200px]" />
                 </form>
-            </x-slot:actions>
+            </x-slot:aksi>
 
             <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <x-ui.filter-chips param="tampil" all="Semua kelas" :current="$tampil === 'semua' ? null : $tampil" :options="[
-                    'terpakai' => 'Ada peserta atau bagan',
-                    'tersusun' => 'Sudah disusun',
-                ]" />
+                <x-si.saring param="tampil" semua="Semua kelas" :sekarang="$tampil === 'semua' ? null : $tampil" :pilihan="[
+                             'terpakai' => 'Ada peserta atau bagan',
+                             'tersusun' => 'Sudah disusun',
+                             ]" />
 
                 <p class="text-xs text-ink-muted">
                     Menampilkan {{ $kelas->count() }} dari {{ $jumlahSemua }} kelas.
@@ -57,18 +57,18 @@
                     <span class="text-sm text-ink-muted">{{ $k->peserta_sah }} peserta sah</span>
 
                     @if ($bracket && $bracket->terkunci())
-                        <x-ui.badge variant="success">Terkunci · {{ $bracket->size }} tempat</x-ui.badge>
+                        <x-si.badge varian="sukses">Terkunci · {{ $bracket->size }} tempat</x-si.badge>
                     @elseif ($bracket)
-                        <x-ui.badge variant="warning">Draf · {{ $bracket->size }} tempat</x-ui.badge>
+                        <x-si.badge varian="perhatian">Draf · {{ $bracket->size }} tempat</x-si.badge>
                     @else
-                        <x-ui.badge variant="neutral">Belum disusun</x-ui.badge>
+                        <x-si.badge varian="netral">Belum disusun</x-si.badge>
                     @endif
 
                     <div class="flex gap-1">
                         @if ($bracket)
-                            <x-ui.button :href="route('admin.turnamen.bagan.show', [$tournament, $k])" variant="secondary" size="xs">
+                            <x-si.tombol :tautan="route('admin.turnamen.bagan.show', [$tournament, $k])" varian="kedua" ukuran="kecil">
                                 Lihat
-                            </x-ui.button>
+                            </x-si.tombol>
                         @endif
 
                         @resource(rk('bagan', ResourceAction::Create))
@@ -95,20 +95,20 @@
                                         Alpine melapor "Invalid or unexpected token"
                                         dan tombolnya diam.
                                     --}}
-                                    <x-ui.button type="button" size="xs" :disabled="! $bisaSusun"
+                                    <x-si.tombol tipe="button" ukuran="kecil" :nonaktif="! $bisaSusun"
                                                  data-aksi="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}"
                                                  data-bagan="{{ route('admin.turnamen.bagan.show', [$tournament, $k]) }}"
                                                  data-kelas="{{ $k->jenis_kelamin->label().' '.$k->golongan_usia->label().' — '.$k->name }}"
                                                  data-peserta="{{ $k->peserta_sah }}"
                                                  x-on:click="$dispatch('susun-ulang', $el.dataset)">
                                         Susun ulang
-                                    </x-ui.button>
+                                    </x-si.tombol>
                                 @else
                                     <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}">
                                         @csrf
-                                        <x-ui.button type="submit" size="xs" :disabled="! $bisaSusun">
+                                        <x-si.tombol tipe="submit" ukuran="kecil" :nonaktif="! $bisaSusun">
                                             Susun bagan
-                                        </x-ui.button>
+                                        </x-si.tombol>
                                     </form>
                                 @endif
                             @endif
@@ -117,14 +117,14 @@
                 </div>
             @empty
                 @if ($cari !== '' || $tampil !== 'semua')
-                    <x-ui.empty-state title="Tidak ada kelas yang cocok"
-                                      description="Belum ada kelas dengan peserta sah atau bagan. Ubah penyaring di atas untuk melihat seluruh kelas yang diturunkan dari naskah." />
+                    <x-si.kosong judul="Tidak ada kelas yang cocok"
+                                 syarat="Belum ada kelas dengan peserta sah atau bagan. Ubah penyaring di atas untuk melihat seluruh kelas yang diturunkan dari naskah." />
                 @else
-                    <x-ui.empty-state title="Belum ada kelas tanding"
-                                      description="Kelas tanding diturunkan dari naskah peraturan saat kejuaraan dibuat." />
+                    <x-si.kosong judul="Belum ada kelas tanding"
+                                 syarat="Kelas tanding diturunkan dari naskah peraturan saat kejuaraan dibuat." />
                 @endif
             @endforelse
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 
     {{--

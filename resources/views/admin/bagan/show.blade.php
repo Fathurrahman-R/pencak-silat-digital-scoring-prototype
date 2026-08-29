@@ -10,32 +10,31 @@
                  ]">
     <x-slot:actions>
         @if ($bracket->terkunci())
-            <x-ui.badge variant="success">
+            <x-si.badge varian="sukses">
                 Terkunci oleh {{ $bracket->locker?->name ?? '—' }} · {{ $bracket->locked_at->translatedFormat('d M Y, H:i') }}
-            </x-ui.badge>
+            </x-si.badge>
 
             @resource(rk('bagan', ResourceAction::Delete))
-                <x-ui.button type="button" variant="secondary" size="sm"
+                <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                              x-on:click="$dispatch('modal-open', 'buka-kunci')">
                     Buka kunci
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
         @else
             @resource(rk('bagan', ResourceAction::Update))
-                <x-ui.button type="button" size="sm" x-on:click="$dispatch('modal-open', 'kunci-bagan')">
-                    <x-ui.icon name="lock" class="h-4 w-4" />
+                <x-si.tombol tipe="button" ukuran="kecil" x-on:click="$dispatch('modal-open', 'kunci-bagan')" ikon="lock">
                     Kunci bagan
-                </x-ui.button>
+                </x-si.tombol>
             @endresource
         @endif
     </x-slot:actions>
 
     <div class="space-y-4">
         @unless ($bracket->terkunci())
-            <x-ui.alert variant="warning" title="Bagan ini masih draf">
+            <x-si.callout varian="perhatian" judul="Bagan ini masih draf">
                 Susunannya masih bisa ditukar. Setelah dikunci, tempat yang bergeser berarti kontingen
                 menyiapkan lawan yang keliru — kesalahan yang tidak bisa diperbaiki di hari-H.
-            </x-ui.alert>
+            </x-si.callout>
 
             @resource(rk('bagan', ResourceAction::Update))
                 {{--
@@ -100,44 +99,44 @@
 
     @unless ($bracket->terkunci())
         @resource(rk('bagan', ResourceAction::Update))
-            <x-ui.modal id="kunci-bagan" title="Kunci bagan" size="sm">
+            <x-si.modal id="kunci-bagan" judul="Kunci bagan" ukuran="kecil">
                 Setelah dikunci, susunan <strong>{{ $weightClass->name }}</strong> tidak bisa disusun ulang
                 maupun ditukar lagi. Yakin melanjutkan?
 
                 <x-slot:footer>
-                    <x-ui.button variant="secondary" type="button"
-                                 x-on:click="$dispatch('modal-close', 'kunci-bagan')">Batal</x-ui.button>
+                    <x-si.tombol varian="kedua" tipe="button"
+                                 x-on:click="$dispatch('modal-close', 'kunci-bagan')">Batal</x-si.tombol>
 
                     <form method="POST" action="{{ route('admin.turnamen.bagan.kunci', [$tournament, $weightClass]) }}">
                         @csrf
-                        <x-ui.button type="submit">Kunci</x-ui.button>
+                        <x-si.tombol tipe="submit">Kunci</x-si.tombol>
                     </form>
                 </x-slot:footer>
-            </x-ui.modal>
+            </x-si.modal>
         @endresource
     @else
         @resource(rk('bagan', ResourceAction::Delete))
-            <x-ui.modal id="buka-kunci" title="Buka kunci bagan" size="sm">
+            <x-si.modal id="buka-kunci" judul="Buka kunci bagan" ukuran="kecil">
                 <form method="POST" id="buka-kunci-form"
                       action="{{ route('admin.turnamen.bagan.buka-kunci', [$tournament, $weightClass]) }}"
                       class="space-y-4">
                     @csrf
 
-                    <x-ui.alert variant="danger" title="Tindakan ini tercatat di jejak audit">
+                    <x-si.callout varian="bahaya" judul="Tindakan ini tercatat di jejak audit">
                         Kontingen mungkin sudah melihat bagan ini dan menyiapkan lawannya. Gunakan hanya
                         untuk memperbaiki kesalahan penyusunan, bukan untuk mengubah hasil undian.
-                    </x-ui.alert>
+                    </x-si.callout>
 
-                    <x-ui.textarea name="alasan" label="Alasan" rows="3" required
-                                   hint="Dibaca dari jejak audit bila kelak dipertanyakan." />
+                    <x-si.isian-panjang name="alasan" label="Alasan" baris="3" wajib
+                                        bantuan="Dibaca dari jejak audit bila kelak dipertanyakan." />
                 </form>
 
                 <x-slot:footer>
-                    <x-ui.button variant="secondary" type="button"
-                                 x-on:click="$dispatch('modal-close', 'buka-kunci')">Batal</x-ui.button>
-                    <x-ui.button variant="danger" type="submit" form="buka-kunci-form">Buka kunci</x-ui.button>
+                    <x-si.tombol varian="kedua" tipe="button"
+                                 x-on:click="$dispatch('modal-close', 'buka-kunci')">Batal</x-si.tombol>
+                    <x-si.tombol varian="bahaya" tipe="submit" form="buka-kunci-form">Buka kunci</x-si.tombol>
                 </x-slot:footer>
-            </x-ui.modal>
+            </x-si.modal>
         @endresource
     @endif
 </x-layouts.admin>

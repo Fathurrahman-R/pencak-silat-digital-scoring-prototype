@@ -14,10 +14,9 @@
                  ]">
     <x-slot:actions>
         @resource(rk('invoice', ResourceAction::Export))
-            <x-ui.button :href="route('admin.turnamen.bendahara.export', $tournament)" variant="secondary" size="sm">
-                <x-ui.icon name="download" class="h-4 w-4" />
+            <x-si.tombol :tautan="route('admin.turnamen.bendahara.export', $tournament)" varian="kedua" ukuran="kecil" ikon="download">
                 Ekspor rekap
-            </x-ui.button>
+            </x-si.tombol>
         @endresource
     </x-slot:actions>
 
@@ -28,28 +27,19 @@
             perlu melihat total masuk yang sebenarnya, bukan nol.
         --}}
         <div class="grid gap-4 sm:grid-cols-4">
-            <x-ui.stat label="Total masuk" :value="$rupiah($ringkasan['masuk'])" />
-            <x-ui.stat label="Tunggakan" :value="$rupiah($ringkasan['tunggakan'])" />
-            <x-ui.stat label="Kontingen lunas" :value="$ringkasan['lunas']" />
-            <x-ui.stat label="Belum lunas" :value="$ringkasan['belum']" />
+            <x-si.angka label="Total masuk" :nilai="$rupiah($ringkasan['masuk'])" />
+            <x-si.angka label="Tunggakan" :nilai="$rupiah($ringkasan['tunggakan'])" />
+            <x-si.angka label="Kontingen lunas" :nilai="$ringkasan['lunas']" />
+            <x-si.angka label="Belum lunas" :nilai="$ringkasan['belum']" />
         </div>
 
         {{-- Penyaring tinggal di kepala kartu yang disaringnya: satu benda,
              bukan dua potong yang kebetulan bertumpuk. --}}
-        <x-ui.card title="Tagihan kontingen">
-            <x-slot:actions>
-                <x-ui.button :href="route('admin.turnamen.bendahara.index', $tournament)"
-                             :variant="$status === '' ? 'primary' : 'secondary'" size="sm">
-                    Semua
-                </x-ui.button>
-
-                @foreach ($statuses as $nilai => $label)
-                    <x-ui.button :href="route('admin.turnamen.bendahara.index', [$tournament, 'status' => $nilai])"
-                                 :variant="$status === $nilai ? 'primary' : 'secondary'" size="sm">
-                        {{ $label }}
-                    </x-ui.button>
-                @endforeach
-            </x-slot:actions>
+        <x-si.kartu judul="Tagihan kontingen">
+            <x-slot:aksi>
+                <x-si.saring param="status" semua="Semua tagihan"
+                             :pilihan="$statuses" :sekarang="$status ?: null" />
+            </x-slot:aksi>
 
             @forelse ($invoices as $invoice)
                 <div class="flex flex-wrap items-center gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
@@ -58,7 +48,7 @@
                         <p class="font-mono text-xs text-ink-muted">{{ $invoice->number }}</p>
                     </div>
 
-                    <x-ui.badge :variant="$invoice->status->variant()">{{ $invoice->status->label() }}</x-ui.badge>
+                    <x-si.badge :varian="$invoice->status->varian()">{{ $invoice->status->label() }}</x-si.badge>
 
                     <p class="silat-angka min-w-[130px] text-right font-mono text-base2 text-ink">
                         {{ $invoice->rupiah() }}
@@ -75,10 +65,10 @@
 
                         @if (! $invoice->lunas())
                             @resource(rk('invoice', ResourceAction::Approve))
-                                <x-ui.button type="button" size="xs"
+                                <x-si.tombol tipe="button" ukuran="kecil"
                                              x-on:click="$dispatch('modal-open', 'lunas-{{ $invoice->id }}')">
                                     Tandai lunas
-                                </x-ui.button>
+                                </x-si.tombol>
                             @endresource
                         @elseif ($invoice->paid_via === 'manual')
                             @php($manual = $invoice->manualPayments()->first())
@@ -95,7 +85,7 @@
 
                 @if (! $invoice->lunas())
                     @resource(rk('invoice', ResourceAction::Approve))
-                        <x-ui.modal :id="'lunas-'.$invoice->id" title="Tandai lunas manual" size="md">
+                        <x-si.modal :id="'lunas-'.$invoice->id" judul="Tandai lunas manual" ukuran="sedang">
                             <form method="POST" id="lunas-form-{{ $invoice->id }}"
                                   action="{{ route('admin.turnamen.bendahara.lunas', [$tournament, $invoice]) }}"
                                   enctype="multipart/form-data" class="space-y-4">
@@ -114,32 +104,32 @@
                                     jejak audit — karena itu keduanya wajib.
                                 </p>
 
-                                <x-ui.input name="note" label="Keterangan" required
+                                <x-si.isian name="note" label="Keterangan" wajib
                                             :id="'note-'.$invoice->id"
-                                            hint="Nomor referensi transfer, nama penyetor, atau sebab lain yang bisa ditelusuri." />
+                                            bantuan="Nomor referensi transfer, nama penyetor, atau sebab lain yang bisa ditelusuri." />
 
-                                <x-ui.input type="datetime-local" name="paid_at" label="Tanggal pembayaran" required
+                                <x-si.isian tipe="datetime-local" name="paid_at" label="Tanggal pembayaran" wajib
                                             :id="'paid-at-'.$invoice->id"
                                             :value="now()->format('Y-m-d\TH:i')" />
 
-                                <x-ui.file-upload name="proof" label="Bukti pembayaran" required
-                                                  :id="'proof-'.$invoice->id"
-                                                  accept=".jpg,.jpeg,.png,.pdf"
-                                                  hint="JPG, PNG, atau PDF. Paling besar 4 MB." />
+                                <x-si.unggah name="proof" label="Bukti pembayaran" wajib
+                                             :id="'proof-'.$invoice->id"
+                                             accept=".jpg,.jpeg,.png,.pdf"
+                                             bantuan="JPG, PNG, atau PDF. Paling besar 4 MB." />
                             </form>
 
                             <x-slot:footer>
-                                <x-ui.button variant="secondary" type="button"
-                                             x-on:click="$dispatch('modal-close', 'lunas-{{ $invoice->id }}')">Batal</x-ui.button>
-                                <x-ui.button type="submit" form="lunas-form-{{ $invoice->id }}">Tandai lunas</x-ui.button>
+                                <x-si.tombol varian="kedua" tipe="button"
+                                             x-on:click="$dispatch('modal-close', 'lunas-{{ $invoice->id }}')">Batal</x-si.tombol>
+                                <x-si.tombol tipe="submit" form="lunas-form-{{ $invoice->id }}">Tandai lunas</x-si.tombol>
                             </x-slot:footer>
-                        </x-ui.modal>
+                        </x-si.modal>
                     @endresource
                 @endif
             @empty
-                <x-ui.empty-state title="Belum ada tagihan"
-                                  description="Tagihan terbit begitu kontingen membuka halaman tagihannya." />
+                <x-si.kosong judul="Belum ada tagihan"
+                             syarat="Tagihan terbit begitu kontingen membuka halaman tagihannya." />
             @endforelse
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 </x-layouts.admin>

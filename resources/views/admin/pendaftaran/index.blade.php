@@ -11,23 +11,21 @@
                  ]">
     <x-slot:actions>
         @resource(rk('pendaftaran', ResourceAction::Create))
-            <x-ui.button type="button" variant="secondary" size="sm"
-                         x-on:click="$dispatch('modal-open', 'daftar-jurus')">
-                <x-ui.icon name="drama" class="h-4 w-4" />
+            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
+                         x-on:click="$dispatch('modal-open', 'daftar-jurus')" ikon="drama">
                 Daftarkan nomor jurus
-            </x-ui.button>
+            </x-si.tombol>
 
-            <x-ui.button type="button" size="sm" x-on:click="$dispatch('modal-open', 'daftar-tanding')">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol tipe="button" ukuran="kecil" x-on:click="$dispatch('modal-open', 'daftar-tanding')" ikon="plus">
                 Daftarkan kelas tanding
-            </x-ui.button>
+            </x-si.tombol>
         @endresource
     </x-slot:actions>
 
     @include('admin.kontingen.tabs')
 
     <div class="space-y-4">
-        <x-ui.card>
+        <x-si.kartu>
             @forelse ($registrations as $registration)
                 <div class="flex flex-wrap items-start gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="min-w-[260px] flex-1">
@@ -37,9 +35,9 @@
                         </p>
                     </div>
 
-                    <x-ui.badge :variant="$registration->status->variant()">
+                    <x-si.badge :varian="$registration->status->varian()">
                         {{ $registration->status->label() }}
-                    </x-ui.badge>
+                    </x-si.badge>
 
                     <div class="flex gap-1">
                         @if ($registration->status->bolehDisuntingKontingen())
@@ -47,7 +45,7 @@
                                 <form method="POST"
                                       action="{{ route('admin.turnamen.kontingen.pendaftaran.ajukan', [$tournament, $contingent, $registration]) }}">
                                     @csrf
-                                    <x-ui.button type="submit" size="xs" variant="secondary">Ajukan</x-ui.button>
+                                    <x-si.tombol tipe="submit" ukuran="kecil" varian="kedua">Ajukan</x-si.tombol>
                                 </form>
                             @endresource
                         @endif
@@ -71,7 +69,7 @@
                 <x-si.kosong judul="Belum ada pendaftaran nomor"
                              syarat="Daftarkan atlet ke kelas tanding atau nomor jurus lewat tombol di kanan atas. Kelas yang ditawarkan sudah disaring menurut gender, golongan usia, dan berat klaim tiap atlet." />
             @endforelse
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 
     @resource(rk('pendaftaran', ResourceAction::Create))
@@ -81,8 +79,8 @@
             validasi adalah cara tercepat membuat orang berhenti memakai
             sistemnya.
         --}}
-        <x-ui.modal id="daftar-tanding" title="Daftarkan kelas tanding" size="md"
-                    :open="request()->filled('atlet') || ($errors->any() && old('_form') === 'daftar-tanding')">
+        <x-si.modal id="daftar-tanding" judul="Daftarkan kelas tanding" ukuran="sedang"
+                    :terbuka="request()->filled('atlet') || ($errors->any() && old('_form') === 'daftar-tanding')">
             <div x-data="{
                     peta: {{ Js::from($kelasPerAtlet) }},
                     atlet: @js((string) old('athlete_id', request('atlet', ''))),
@@ -96,19 +94,19 @@
                          yang terbuka kembali. --}}
                     <input type="hidden" name="_form" value="daftar-tanding">
 
-                    <x-ui.select name="athlete_id" id="atlet-tanding" label="Atlet" required
-                                 placeholder="Pilih atlet…" x-model="atlet"
-                                 :options="$athletes->mapWithKeys(fn ($a) => [
-                                     $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
-                                         .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
-                                 ])->all()" />
+                    <x-si.pilihan name="athlete_id" id="atlet-tanding" label="Atlet" wajib
+                                  placeholder="Pilih atlet…" x-model="atlet"
+                                  :options="$athletes->mapWithKeys(fn ($a) => [
+                                  $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
+                                  .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
+                                  ])->all()" />
 
-                    <x-ui.select name="weight_class_id" id="kelas-tanding" label="Kelas" required
-                                 hint="Hanya kelas yang cocok dengan gender, golongan usia, dan berat klaim atlet terpilih.">
+                    <x-si.pilihan name="weight_class_id" id="kelas-tanding" label="Kelas" wajib
+                                  bantuan="Hanya kelas yang cocok dengan gender, golongan usia, dan berat klaim atlet terpilih.">
                         <template x-for="k in kelas" :key="k.id">
                             <option :value="k.id" x-text="k.label"></option>
                         </template>
-                    </x-ui.select>
+                    </x-si.pilihan>
 
                     <p class="text-xs text-warning" x-show="atlet && kelas.length === 0" x-cloak>
                         Tidak ada kelas yang cocok. Golongan usianya mungkin tidak memakai kelas
@@ -118,40 +116,40 @@
             </div>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" type="button"
-                             x-on:click="$dispatch('modal-close', 'daftar-tanding')">Batal</x-ui.button>
-                <x-ui.button type="submit" form="daftar-tanding-form">Daftarkan</x-ui.button>
+                <x-si.tombol varian="kedua" tipe="button"
+                             x-on:click="$dispatch('modal-close', 'daftar-tanding')">Batal</x-si.tombol>
+                <x-si.tombol tipe="submit" form="daftar-tanding-form">Daftarkan</x-si.tombol>
             </x-slot:footer>
-        </x-ui.modal>
+        </x-si.modal>
 
-        <x-ui.modal id="daftar-jurus" title="Daftarkan nomor jurus" size="md"
-                    :open="$errors->any() && old('_form') === 'daftar-jurus'">
+        <x-si.modal id="daftar-jurus" judul="Daftarkan nomor jurus" ukuran="sedang"
+                    :terbuka="$errors->any() && old('_form') === 'daftar-jurus'">
             <form method="POST" id="daftar-jurus-form"
                   action="{{ route('admin.turnamen.kontingen.pendaftaran.jurus', [$tournament, $contingent]) }}"
                   class="space-y-4">
                 @csrf
                 <input type="hidden" name="_form" value="daftar-jurus">
 
-                <x-ui.select name="jurus_event_id" id="nomor-jurus" label="Nomor" required
-                             placeholder="Pilih nomor…"
-                             :options="$nomorJurus->mapWithKeys(fn ($n) => [
-                                 $n->id => $n->nama().' ('.$n->jenis->jumlahPesilat().' pesilat)',
-                             ])->all()" />
+                <x-si.pilihan name="jurus_event_id" id="nomor-jurus" label="Nomor" wajib
+                              placeholder="Pilih nomor…"
+                              :options="$nomorJurus->mapWithKeys(fn ($n) => [
+                              $n->id => $n->nama().' ('.$n->jenis->jumlahPesilat().' pesilat)',
+                              ])->all()" />
 
-                <x-ui.select name="athlete_ids" id="pesilat-jurus" label="Pesilat" required multiple size="8"
-                             hint="Tahan Ctrl untuk memilih lebih dari satu. Ganda diisi dua pesilat, Regu tiga, dan seluruhnya harus dari kontingen yang sama."
-                             :options="$athletes->mapWithKeys(fn ($a) => [
-                                 $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
-                                     .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
-                             ])->all()" />
+                <x-si.pilihan name="athlete_ids" id="pesilat-jurus" label="Pesilat" wajib multiple size="8"
+                              bantuan="Tahan Ctrl untuk memilih lebih dari satu. Ganda diisi dua pesilat, Regu tiga, dan seluruhnya harus dari kontingen yang sama."
+                              :options="$athletes->mapWithKeys(fn ($a) => [
+                              $a->id => $a->name.' — '.$a->jenis_kelamin->label().', '
+                              .($a->golonganUsia($tournament)?->label() ?? 'di luar golongan'),
+                              ])->all()" />
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" type="button"
-                             x-on:click="$dispatch('modal-close', 'daftar-jurus')">Batal</x-ui.button>
-                <x-ui.button type="submit" form="daftar-jurus-form">Daftarkan</x-ui.button>
+                <x-si.tombol varian="kedua" tipe="button"
+                             x-on:click="$dispatch('modal-close', 'daftar-jurus')">Batal</x-si.tombol>
+                <x-si.tombol tipe="submit" form="daftar-jurus-form">Daftarkan</x-si.tombol>
             </x-slot:footer>
-        </x-ui.modal>
+        </x-si.modal>
     @endresource
 
     {{--

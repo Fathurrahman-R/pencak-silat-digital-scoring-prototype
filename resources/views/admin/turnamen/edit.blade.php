@@ -34,7 +34,7 @@
             </x-slot:actions>
 
             <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
-                <x-ui.badge :variant="$tournament->status->variant()">{{ $tournament->status->label() }}</x-ui.badge>
+                <x-si.badge :varian="$tournament->status->varian()">{{ $tournament->status->label() }}</x-si.badge>
 
                 <p class="max-w-[70ch] flex-1 text-base2 text-ink-secondary">
                     @if ($tournament->status->bolehUbahAturan())

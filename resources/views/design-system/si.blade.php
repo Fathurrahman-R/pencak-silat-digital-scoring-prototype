@@ -31,9 +31,9 @@
                     <div class="flex flex-col gap-2">
                         <div class="text-[13px] font-semibold text-ink-muted">{{ $keterangan }}</div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <x-si.tombol :varian="$varian" type="button">Simpan</x-si.tombol>
-                            <x-si.tombol :varian="$varian" type="button" ikon="check">Dengan ikon</x-si.tombol>
-                            <x-si.tombol :varian="$varian" type="button" nonaktif>Nonaktif</x-si.tombol>
+                            <x-si.tombol :varian="$varian" tipe="button">Simpan</x-si.tombol>
+                            <x-si.tombol :varian="$varian" tipe="button" ikon="check">Dengan ikon</x-si.tombol>
+                            <x-si.tombol :varian="$varian" tipe="button" nonaktif>Nonaktif</x-si.tombol>
                         </div>
                     </div>
                 @endforeach
@@ -41,10 +41,10 @@
                 <div class="flex flex-col gap-2">
                     <div class="text-[13px] font-semibold text-ink-muted">Ukuran</div>
                     <div class="flex flex-wrap items-center gap-3">
-                        <x-si.tombol ukuran="kecil" varian="kedua" type="button">Kecil</x-si.tombol>
-                        <x-si.tombol ukuran="sedang" varian="kedua" type="button">Sedang · 44px</x-si.tombol>
-                        <x-si.tombol ukuran="besar" varian="kedua" type="button">Besar</x-si.tombol>
-                        <x-si.tombol ukuran="gelanggang" varian="utama" type="button">Gelanggang · 64px</x-si.tombol>
+                        <x-si.tombol ukuran="kecil" varian="kedua" tipe="button">Kecil</x-si.tombol>
+                        <x-si.tombol ukuran="sedang" varian="kedua" tipe="button">Sedang · 44px</x-si.tombol>
+                        <x-si.tombol ukuran="besar" varian="kedua" tipe="button">Besar</x-si.tombol>
+                        <x-si.tombol ukuran="gelanggang" varian="utama" tipe="button">Gelanggang · 64px</x-si.tombol>
                     </div>
                 </div>
             </div>
@@ -168,12 +168,12 @@
         {{-- KONFIRMASI --}}
         <x-si.kartu judul="Dialog konfirmasi" keterangan="Komponen paling menentukan apakah panitia berani memakai aplikasi. Batal di kiri; tombol berbahaya tidak pernah di posisi refleks.">
             <div class="flex flex-wrap items-center gap-3">
-                <x-si.tombol varian="bahaya" type="button"
+                <x-si.tombol varian="bahaya" tipe="button"
                              x-on:click="$dispatch('buka-konfirmasi-contoh-sahkan')">
                     Sahkan hasil partai
                 </x-si.tombol>
 
-                <x-si.tombol varian="bahaya" type="button"
+                <x-si.tombol varian="bahaya" tipe="button"
                              x-on:click="$dispatch('buka-konfirmasi-contoh-hapus')">
                     Hapus kontingen
                 </x-si.tombol>

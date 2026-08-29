@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-5">
         <div class="flex items-start justify-between gap-3">
             <h4 class="font-display text-base font-semibold text-ink">{{ $tournament->name }}</h4>
-            <x-ui.badge :variant="$tournament->status->variant()">{{ $tournament->status->label() }}</x-ui.badge>
+            <x-si.badge :varian="$tournament->status->varian()">{{ $tournament->status->label() }}</x-si.badge>
         </div>
 
         @if ($tournament->description)

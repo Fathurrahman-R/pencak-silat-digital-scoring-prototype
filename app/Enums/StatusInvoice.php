@@ -29,12 +29,13 @@ enum StatusInvoice: string
         };
     }
 
-    public function variant(): string
+    /** Nama varian <x-si.badge> untuk status ini. */
+    public function varian(): string
     {
         return match ($this) {
-            self::Draf => 'neutral',
-            self::MenungguPembayaran => 'warning',
-            self::Lunas => 'success',
+            self::Draf => 'netral',
+            self::MenungguPembayaran => 'perhatian',
+            self::Lunas => 'sukses',
         };
     }
 

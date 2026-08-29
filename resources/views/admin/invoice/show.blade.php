@@ -25,7 +25,7 @@
                     <p class="font-mono text-base2 text-ink">{{ $invoice->number }}</p>
                 </div>
 
-                <x-ui.badge :variant="$invoice->status->variant()">{{ $invoice->status->label() }}</x-ui.badge>
+                <x-si.badge :varian="$invoice->status->varian()">{{ $invoice->status->label() }}</x-si.badge>
 
                 <div class="ms-auto text-right">
                     <p class="eyebrow">Total</p>

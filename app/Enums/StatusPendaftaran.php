@@ -39,13 +39,14 @@ enum StatusPendaftaran: string
         };
     }
 
-    public function variant(): string
+    /** Nama varian <x-si.badge> untuk status ini. */
+    public function varian(): string
     {
         return match ($this) {
-            self::Draf => 'neutral',
-            self::Diajukan => 'info',
-            self::Terverifikasi => 'success',
-            self::Ditolak, self::Gugur => 'danger',
+            self::Draf => 'netral',
+            self::Diajukan => 'netral',
+            self::Terverifikasi => 'sukses',
+            self::Ditolak, self::Gugur => 'bahaya',
         };
     }
 

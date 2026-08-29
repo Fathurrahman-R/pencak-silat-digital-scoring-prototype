@@ -75,7 +75,7 @@
                 @endif
 
                 <div class="mt-6 flex items-center justify-between gap-3 border-t border-line px-6 py-4">
-                    <x-si.tombol varian="polos" type="button" x-on:click="buka = false; ketikan = ''">
+                    <x-si.tombol varian="polos" tipe="button" x-on:click="buka = false; ketikan = ''">
                         Batal
                     </x-si.tombol>
 

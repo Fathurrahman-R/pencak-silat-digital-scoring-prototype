@@ -25,12 +25,13 @@ enum StatusTurnamen: string
         };
     }
 
-    public function variant(): string
+    /** Nama varian <x-si.badge> untuk status ini. */
+    public function varian(): string
     {
         return match ($this) {
-            self::Draf => 'neutral',
-            self::Berjalan => 'success',
-            self::Selesai => 'info',
+            self::Draf => 'netral',
+            self::Berjalan => 'sukses',
+            self::Selesai => 'netral',
         };
     }
 

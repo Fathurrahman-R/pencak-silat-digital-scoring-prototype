@@ -9,20 +9,19 @@
                  ]">
     <x-slot:actions>
         @resource(rk('gelanggang', ResourceAction::Create))
-            <x-ui.button type="button" size="sm" x-on:click="$dispatch('modal-open', 'gelanggang-baru')">
-                <x-ui.icon name="plus" class="h-4 w-4" />
+            <x-si.tombol tipe="button" ukuran="kecil" x-on:click="$dispatch('modal-open', 'gelanggang-baru')" ikon="plus">
                 Tambah gelanggang
-            </x-ui.button>
+            </x-si.tombol>
         @endresource
     </x-slot:actions>
 
     <div class="space-y-4">
-        <x-ui.alert variant="info" title="Kode gelanggang dipakai di alamat siaran">
+        <x-si.callout varian="keterangan" judul="Kode gelanggang dipakai di alamat siaran">
             Kode inilah yang muncul di alamat halaman siaran langsung dan overlay vMix, jadi
             sebaiknya pendek dan tidak diubah lagi setelah kejuaraan berjalan.
-        </x-ui.alert>
+        </x-si.callout>
 
-        <x-ui.card>
+        <x-si.kartu>
             @forelse ($arenas as $arena)
                 <div class="flex items-center gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
                     <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-inset font-mono text-sm text-ink">
@@ -34,9 +33,9 @@
                         <p class="text-xs text-ink-muted">Urutan {{ $arena->sort_order }}</p>
                     </div>
 
-                    <x-ui.badge :variant="$arena->is_active ? 'success' : 'neutral'">
+                    <x-si.badge :varian="$arena->is_active ? 'sukses' : 'netral'">
                         {{ $arena->is_active ? 'Aktif' : 'Nonaktif' }}
-                    </x-ui.badge>
+                    </x-si.badge>
 
                     <div class="flex gap-1">
                         @resource(rk('gelanggang', ResourceAction::Update))
@@ -47,28 +46,28 @@
                                 Ubah
                             </x-si.tombol>
 
-                            <x-ui.modal :id="'gelanggang-ubah-'.$arena->id" title="Ubah gelanggang" size="sm">
+                            <x-si.modal :id="'gelanggang-ubah-'.$arena->id" judul="Ubah gelanggang" ukuran="kecil">
                                 <form method="POST" action="{{ route('admin.turnamen.gelanggang.update', [$tournament, $arena]) }}"
                                       id="ubah-gelanggang-{{ $arena->id }}" class="space-y-4">
                                     @csrf
                                     @method('PUT')
 
-                                    <x-ui.input name="name" label="Nama gelanggang" :value="$arena->name" required
+                                    <x-si.isian name="name" label="Nama gelanggang" :value="$arena->name" wajib
                                                 :id="'nama-'.$arena->id" />
-                                    <x-ui.input name="code" label="Kode" :value="$arena->code" required
+                                    <x-si.isian name="code" label="Kode" :value="$arena->code" wajib
                                                 :id="'kode-'.$arena->id" />
-                                    <x-ui.input type="number" name="sort_order" label="Urutan" :value="$arena->sort_order"
+                                    <x-si.isian tipe="number" name="sort_order" label="Urutan" :value="$arena->sort_order"
                                                 :id="'urutan-'.$arena->id" />
-                                    <x-ui.toggle name="is_active" label="Aktif" :checked="$arena->is_active"
+                                    <x-si.saklar name="is_active" label="Aktif" :dicentang="$arena->is_active"
                                                  :id="'aktif-'.$arena->id" />
                                 </form>
 
                                 <x-slot:footer>
-                                    <x-ui.button variant="secondary" type="button"
-                                                 x-on:click="$dispatch('modal-close', 'gelanggang-ubah-{{ $arena->id }}')">Batal</x-ui.button>
-                                    <x-ui.button type="submit" form="ubah-gelanggang-{{ $arena->id }}">Simpan</x-ui.button>
+                                    <x-si.tombol varian="kedua" tipe="button"
+                                                 x-on:click="$dispatch('modal-close', 'gelanggang-ubah-{{ $arena->id }}')">Batal</x-si.tombol>
+                                    <x-si.tombol tipe="submit" form="ubah-gelanggang-{{ $arena->id }}">Simpan</x-si.tombol>
                                 </x-slot:footer>
-                            </x-ui.modal>
+                            </x-si.modal>
                         @endresource
 
                         @resource(rk('gelanggang', ResourceAction::Delete))
@@ -85,31 +84,31 @@
                     </div>
                 </div>
             @empty
-                <x-ui.empty-state title="Belum ada gelanggang"
-                                  description="Satu kejuaraan dapat menjalankan beberapa gelanggang sekaligus, masing-masing dengan wasit juri dan papan skornya sendiri." />
+                <x-si.kosong judul="Belum ada gelanggang"
+                             syarat="Satu kejuaraan dapat menjalankan beberapa gelanggang sekaligus, masing-masing dengan wasit juri dan papan skornya sendiri." />
             @endforelse
-        </x-ui.card>
+        </x-si.kartu>
     </div>
 
     @resource(rk('gelanggang', ResourceAction::Create))
-        <x-ui.modal id="gelanggang-baru" title="Tambah gelanggang" size="sm">
+        <x-si.modal id="gelanggang-baru" judul="Tambah gelanggang" ukuran="kecil">
             <form method="POST" action="{{ route('admin.turnamen.gelanggang.store', $tournament) }}"
                   id="gelanggang-baru-form" class="space-y-4">
                 @csrf
 
-                <x-ui.input name="name" label="Nama gelanggang" required
-                            hint="Mis. Gelanggang 1." />
-                <x-ui.input name="code" label="Kode" required
-                            hint="Huruf, angka, dan tanda hubung. Mis. G1." />
-                <x-ui.toggle name="is_active" label="Aktif" checked />
+                <x-si.isian name="name" label="Nama gelanggang" wajib
+                            bantuan="Mis. Gelanggang 1." />
+                <x-si.isian name="code" label="Kode" wajib
+                            bantuan="Huruf, angka, dan tanda hubung. Mis. G1." />
+                <x-si.saklar name="is_active" label="Aktif" dicentang />
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" type="button"
-                             x-on:click="$dispatch('modal-close', 'gelanggang-baru')">Batal</x-ui.button>
-                <x-ui.button type="submit" form="gelanggang-baru-form">Simpan</x-ui.button>
+                <x-si.tombol varian="kedua" tipe="button"
+                             x-on:click="$dispatch('modal-close', 'gelanggang-baru')">Batal</x-si.tombol>
+                <x-si.tombol tipe="submit" form="gelanggang-baru-form">Simpan</x-si.tombol>
             </x-slot:footer>
-        </x-ui.modal>
+        </x-si.modal>
     @endresource
 
     {{--
