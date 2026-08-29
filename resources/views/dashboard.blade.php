@@ -15,6 +15,22 @@
     {{-- Paling atas, sebelum apa pun: wasit dan juri membuka halaman ini di HP
          di pinggir gelanggang, dan satu-satunya hal yang mereka butuhkan
          adalah pintu masuk ke partainya. --}}
+    {{--
+        Ketua Pertandingan tidak ditugaskan ke satu partai, jadi kartu "Partai
+        saya" di bawah selalu kosong untuknya. Tanpa pintu ini panelnya hanya
+        bisa dicapai dengan mengetik alamatnya sendiri — dan panel yang tidak
+        punya pintu masuk sama saja tidak ada.
+    --}}
+    @if ($turnamen && resource_allows(rk('partai', App\Enums\ResourceAction::Manage)))
+        <x-si.kartu judul="Panel Ketua Pertandingan"
+                    keterangan="Seluruh gelanggang sekaligus, dan perkara yang menunggu keputusanmu."
+                    class="mb-4">
+            <x-si.tombol tautan="{{ route('admin.turnamen.ketua-pertandingan.index', $turnamen) }}" varian="utama">
+                Buka panel
+            </x-si.tombol>
+        </x-si.kartu>
+    @endif
+
     @if ($penugasan !== [])
         <x-ui.card title="Partai saya" subtitle="Partai tempat Anda ditugaskan" class="mb-4">
             <div class="divide-y divide-line">
