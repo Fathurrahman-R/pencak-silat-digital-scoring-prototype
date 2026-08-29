@@ -35,13 +35,21 @@
 
                     @unless ($terkunci)
                         @resource(rk('tarif', ResourceAction::Update))
-                            <form method="POST" action="{{ route('admin.turnamen.tarif.destroy', [$tournament, $tarif]) }}">
-                                @csrf
-                                @method('DELETE')
-                                <x-ui.button type="submit" variant="secondary" size="xs" title="Hapus tarif">
-                                    <x-ui.icon name="trash-2" class="size-4 text-danger" />
-                                </x-ui.button>
-                            </form>
+                            {{--
+                                Sebelumnya tombol ini menghapus tarif SEKETIKA,
+                                tanpa satu pun konfirmasi — satu ikon tong sampah
+                                16px, dan tagihan seluruh kontingen berubah.
+
+                                Sekarang berkata, dan lewat dialog yang menyebut
+                                akibatnya.
+                            --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
+                                         data-aksi="{{ route('admin.turnamen.tarif.destroy', [$tournament, $tarif]) }}"
+                                         data-nama="{{ $tarif->keterangan() }}"
+                                         data-jumlah="{{ $tarif->rupiah() }}"
+                                         x-on:click="$dispatch('hapus-tarif', $el.dataset)">
+                                Hapus
+                            </x-si.tombol>
                         @endresource
                     @endunless
                 </div>
@@ -98,4 +106,45 @@
             @endunless
         </x-ui.card>
     </div>
+
+    {{--
+        Dialog hapus tarif.
+
+        Menghapus tarif mengubah tagihan SETIAP kontingen yang punya pendaftaran
+        di nomor itu — termasuk yang tagihannya sudah dikirim. Angka yang sudah
+        dibayar tidak ikut kembali sendiri, dan bendahara baru tahu saat
+        jumlahnya tidak cocok.
+    --}}
+    @resource(rk('tarif', ResourceAction::Update))
+        <div x-data="{ terbuka: false, aksi: '', nama: '', jumlah: '' }"
+             x-on:hapus-tarif.window="aksi = $event.detail.aksi; nama = $event.detail.nama;
+                                      jumlah = $event.detail.jumlah; terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[460px] rounded-[var(--radius)] border border-danger bg-surface-raised p-5">
+                    <p class="text-[11px] tracking-[.1em] text-danger uppercase">Mengubah tagihan yang sudah terbit</p>
+                    <p class="mt-1 text-[20px] leading-tight font-semibold text-ink">Hapus tarif ini?</p>
+
+                    <div class="mt-3 flex items-baseline justify-between gap-3 rounded-[var(--radius)] border border-line bg-surface-inset px-3.5 py-2.5">
+                        <span class="text-[14px] text-ink" x-text="nama"></span>
+                        <span class="font-mono text-[15px] font-semibold text-ink tabular-nums" x-text="jumlah"></span>
+                    </div>
+
+                    <p class="mt-3 text-[14px] leading-relaxed text-ink-secondary">
+                        Tagihan setiap kontingen yang punya pendaftaran di nomor ini ikut berubah, termasuk
+                        yang tagihannya sudah dikirim. Angka yang sudah dibayar tidak kembali sendiri.
+                    </p>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        @method('DELETE')
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit" varian="bahaya-tegas">Hapus tarif</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endresource
 </x-layouts.admin>
