@@ -75,6 +75,10 @@ class SilatRoleSeeder extends Seeder
                     // gelanggang, bukan lewat akun sistem sendiri), lalu
                     // memutus tingkat pertama Protes Manajer.
                     'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                    // Pasal 13 menyebut verifikasi juri datang dari Ketua
+                    // Pertandingan maupun Wasit. Deskripsi peran ini sudah
+                    // berbunyi "memimpin verifikasi juri" sejak awal.
+                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                     'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                     'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
                     'hasil-jurus' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
@@ -92,6 +96,10 @@ class SilatRoleSeeder extends Seeder
                     'penilaian' => $lihat,
                     'hukuman' => [ResourceAction::View, ResourceAction::Create],
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Update],
+                    // Melihat saja: hasil verifikasi masuk bahan evaluasi
+                    // penilaian juri, tapi memintanya adalah wewenang Wasit
+                    // dan Ketua Pertandingan.
+                    'verifikasi-juri' => $lihat,
                     'var' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
                     'penampilan-jurus' => $lihat,
                     'pengurangan-jurus' => [ResourceAction::View, ResourceAction::Create],
@@ -117,6 +125,7 @@ class SilatRoleSeeder extends Seeder
                     'partai' => [ResourceAction::View, ResourceAction::Update],
                     'hukuman' => [ResourceAction::View, ResourceAction::Create],
                     'penilaian' => $lihat,
+                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                 ],
             ],
             [
@@ -126,6 +135,10 @@ class SilatRoleSeeder extends Seeder
                 'grants' => [
                     'partai' => $lihat,
                     'penilaian' => [ResourceAction::View, ResourceAction::Create],
+                    // Menjawab verifikasi, tidak pernah membukanya. Juri yang
+                    // bisa membuka pertanyaan sendiri bisa memaksa polling
+                    // atas kejadian yang menguntungkan sudut yang dinilainya.
+                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Update],
                     // Sama seperti Tanding: juri Jurus hanya melihat penampilan
                     // dan mengirim nilai, tidak pernah mengendalikan timer.
                     'penampilan-jurus' => $lihat,

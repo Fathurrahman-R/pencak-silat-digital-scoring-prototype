@@ -9,14 +9,17 @@ use App\Events\Scoring\MatchStateChanged;
 use App\Events\Scoring\PenaltyIssued;
 use App\Events\Scoring\TimerTicked;
 use App\Http\Controllers\Controller;
+use App\Models\JudgeVerification;
 use App\Models\MatchOfficial;
 use App\Models\Penalty;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Models\User;
 use App\Support\Scoring\CatatInputJuri;
 use App\Support\Scoring\HitunganTeknik;
 use App\Support\Scoring\MatchTimer;
+use App\Support\Scoring\PollingVerifikasi;
 use App\Support\Scoring\TandingScoreCalculator;
 use App\Support\Scoring\TanggaHukuman;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -53,14 +56,15 @@ class PartaiScoringController extends Controller
         private readonly HitunganTeknik $hitungan,
         private readonly CatatInputJuri $catatInput,
         private readonly TandingScoreCalculator $kalkulator,
+        private readonly PollingVerifikasi $polling,
     ) {}
 
     /** Resync state penuh -- dipanggil tiap panel memuat ulang atau tersambung kembali. */
-    public function state(Tournament $tournament, SilatMatch $match): JsonResponse
+    public function state(Request $request, Tournament $tournament, SilatMatch $match): JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
 
-        return response()->json($this->stateArray($match));
+        return response()->json($this->stateArray($match, $request->user()));
     }
 
     public function operator(Tournament $tournament, SilatMatch $match): View
@@ -227,6 +231,10 @@ class PartaiScoringController extends Controller
             'hitungan' => route('admin.turnamen.partai.hitungan', [$tournament, $match]),
             'nilaiBatal' => route('admin.turnamen.partai.nilai.batal', [$tournament, $match, '__ID__']),
             'hukumanBatal' => route('admin.turnamen.partai.hukuman.batal', [$tournament, $match, '__ID__']),
+            'verifikasiMinta' => route('admin.turnamen.partai.verifikasi.minta', [$tournament, $match]),
+            'verifikasiJawab' => route('admin.turnamen.partai.verifikasi.jawab', [$tournament, $match, '__ID__']),
+            'verifikasiTerapkan' => route('admin.turnamen.partai.verifikasi.terapkan', [$tournament, $match, '__ID__']),
+            'verifikasiBatalkan' => route('admin.turnamen.partai.verifikasi.batalkan', [$tournament, $match, '__ID__']),
             'varAjukan' => route('admin.turnamen.partai.keberatan.var.ajukan', [$tournament, $match]),
             'varPutuskan' => route('admin.turnamen.partai.keberatan.var.putuskan', [$tournament, $match, '__ID__']),
             'protesManajerAjukan' => route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$tournament, $match]),
@@ -477,7 +485,7 @@ class PartaiScoringController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function stateArray(SilatMatch $match): array
+    private function stateArray(SilatMatch $match, ?User $untuk = null): array
     {
         $match->load([
             'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
@@ -543,7 +551,92 @@ class PartaiScoringController extends Controller
             ]),
             'riwayat' => $this->riwayat($match),
             'keberatan' => $this->keberatanArray($match),
+            'verifikasi' => $this->verifikasiArray($match, $untuk),
         ];
+    }
+
+    /**
+     * Verifikasi juri yang sedang berjalan -- Pasal 13.
+     *
+     * # Kenapa disaring menurut siapa yang meminta
+     *
+     * Satu endpoint state melayani semua panel di gelanggang, panel juri
+     * termasuk. Kalau jawaban tiap juri ikut dikirim apa adanya, juri yang
+     * membuka panelnya akan melihat rekannya sudah menjawab "sudut merah",
+     * lalu tidak lagi menjawab apa yang dilihatnya sendiri.
+     *
+     * Maka: juri partai ini hanya menerima SIAPA yang sudah menjawab, tanpa
+     * jawabannya, selama pollingnya berjalan. Wasit, Ketua Pertandingan, dan
+     * Dewan Wasit Juri menerima jawabannya -- mereka memang harus melihat
+     * jawaban masuk satu per satu untuk tahu siapa yang masih ditunggu.
+     *
+     * Begitu polling ditutup, jawabannya terbuka untuk semua: tidak ada lagi
+     * juri yang bisa terpengaruh, dan berita acara memang memuatnya.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function verifikasiArray(SilatMatch $match, ?User $untuk): ?array
+    {
+        $verifikasi = JudgeVerification::query()
+            ->where('match_id', $match->id)
+            ->with(['answers.judge:id,name'])
+            ->latest('id')
+            ->first();
+
+        if ($verifikasi === null) {
+            return null;
+        }
+
+        $bolehLihatJawaban = ! $verifikasi->berjalan() || ! $this->juriPartaiIni($match, $untuk);
+
+        return [
+            'id' => $verifikasi->id,
+            'round' => $verifikasi->round,
+            'jenis' => $verifikasi->jenis->value,
+            'pertanyaan' => $verifikasi->jenis->pertanyaan(),
+            'tingkat_pelanggaran' => $verifikasi->tingkat_pelanggaran?->value,
+            'tingkat_pelanggaran_label' => $verifikasi->tingkat_pelanggaran?->label(),
+            'status' => $verifikasi->status,
+            'berjalan' => $verifikasi->berjalan(),
+            'diminta_at' => $verifikasi->diminta_at?->toIso8601String(),
+            'hasil' => $verifikasi->hasil?->value,
+            'hasil_label' => $verifikasi->hasil?->label(),
+            'sudah_diterapkan' => $verifikasi->sudahDiterapkan(),
+            'akibat' => $verifikasi->hasil ? $this->polling->akibat($verifikasi) : null,
+            'ambang' => $match->bracket->weightClass->tournament->peraturan()->ambang_sepakat,
+            'jumlah_juri' => $this->polling->jumlahJuri($verifikasi),
+            'hitungan' => $bolehLihatJawaban ? $this->polling->hitungan($verifikasi) : null,
+            'jawaban' => $verifikasi->answers->sortBy('judge_number')->values()->map(fn ($j) => [
+                'judge_user_id' => $j->judge_user_id,
+                'judge_number' => $j->judge_number,
+                'judge_name' => $j->judge?->name,
+                'sebutan' => $j->sebutan(),
+                // Yang disembunyikan cuma ini. Siapa yang sudah menjawab tetap
+                // terlihat -- itu tidak menggiring siapa pun.
+                'jawaban' => $bolehLihatJawaban ? $j->jawaban->value : null,
+                'jawaban_label' => $bolehLihatJawaban ? $j->jawaban->label() : null,
+                'server_ts' => $j->server_ts?->toIso8601String(),
+            ]),
+            'menunggu' => $this->polling->belumMenjawab($verifikasi)->map(fn ($o) => [
+                'judge_user_id' => $o->user_id,
+                'judge_number' => $o->number,
+                'sebutan' => $o->sebutan(),
+            ])->values(),
+        ];
+    }
+
+    /** Apakah pengguna ini juri yang ditugaskan di partai ini. */
+    private function juriPartaiIni(SilatMatch $match, ?User $untuk): bool
+    {
+        if ($untuk === null) {
+            return false;
+        }
+
+        return MatchOfficial::query()
+            ->where('match_id', $match->id)
+            ->where('user_id', $untuk->id)
+            ->where('role', MatchOfficial::ROLE_JURI)
+            ->exists();
     }
 
     /** @return array<string, mixed> */

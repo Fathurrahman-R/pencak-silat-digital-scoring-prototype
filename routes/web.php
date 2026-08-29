@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VarController;
+use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
@@ -355,6 +356,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/hukuman', 'hukuman')->name('hukuman')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
                     Route::post('/hukuman/{penalty}/batal', 'batalkanHukuman')->name('hukuman.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
                     Route::post('/hitungan', 'hitungan')->name('hitungan')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
+                });
+
+            /*
+             * Verifikasi juri -- Pasal 13.
+             *
+             * `minta` dijaga Create: Wasit dan Ketua Pertandingan, bukan juri.
+             * `jawab` dijaga Update, satu-satunya aksi verifikasi yang dipunyai
+             * juri -- dan di dalamnya masih diperiksa lagi bahwa penjawabnya
+             * memang juri yang ditugaskan di partai itu, karena izin peran
+             * hanya menyatakan "boleh menjawab verifikasi", bukan "boleh
+             * menjawab verifikasi partai ini".
+             */
+            Route::controller(VerifikasiJuriController::class)
+                ->prefix('{tournament}/partai/{match}/verifikasi')
+                ->name('partai.verifikasi.')
+                ->group(function () {
+                    Route::post('/', 'minta')->name('minta')->middleware('resource:'.rk('verifikasi-juri', ResourceAction::Create));
+                    Route::post('/{verifikasi}/jawab', 'jawab')->name('jawab')->middleware('resource:'.rk('verifikasi-juri', ResourceAction::Update));
+                    Route::post('/{verifikasi}/terapkan', 'terapkan')->name('terapkan')->middleware('resource:'.rk('verifikasi-juri', ResourceAction::Approve));
+                    Route::post('/{verifikasi}/batalkan', 'batalkan')->name('batalkan')->middleware('resource:'.rk('verifikasi-juri', ResourceAction::Reject));
                 });
 
             /*

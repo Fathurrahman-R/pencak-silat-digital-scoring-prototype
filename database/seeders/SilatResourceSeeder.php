@@ -231,6 +231,27 @@ class SilatResourceSeeder extends Seeder
 
             // ── Keberatan ────────────────────────────────────────────────────
             [
+                'key' => 'verifikasi-juri',
+                'label' => 'Verifikasi Juri',
+                'group' => 'Keberatan',
+                'description' => 'Pertanyaan Wasit atau Ketua Pertandingan ke tiga juri saat ragu sudut mana yang menjatuhkan atau melanggar (Pasal 13).',
+                /*
+                 * Empat aksi dengan pembagian yang tegas, karena empat peran
+                 * berbeda menyentuhnya:
+                 *
+                 * - Create  membuka pertanyaan (Wasit, Ketua Pertandingan)
+                 * - Update  menjawab (Juri, dan hanya juri partai itu)
+                 * - Approve menerapkan hasil jadi nilai atau sanksi
+                 * - Reject  membatalkan tanpa menerapkan apa pun
+                 *
+                 * Juri sengaja tidak diberi Create: juri yang bisa membuka
+                 * pertanyaan sendiri bisa memaksa polling atas kejadian yang
+                 * menguntungkan sudut yang dinilainya.
+                 */
+                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Reject],
+                'locked' => true,
+            ],
+            [
                 'key' => 'var',
                 'label' => 'Protes VAR',
                 'group' => 'Keberatan',
