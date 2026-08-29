@@ -21,64 +21,130 @@
     </x-slot:actions>
 
     <div class="space-y-4">
-        <x-ui.card title="Peringkat Umum Kontingen">
+        {{--
+            Kolom berjudul dengan angka rata kanan, bukan label yang diulang di
+            tiap baris ("Emas 5 Perak 3 Perunggu 2").
+
+            Label berulang menuntut pembacanya membaca kata sebelum angka pada
+            setiap baris, dan angkanya tidak pernah lurus antar-baris — padahal
+            membandingkan perolehan antar kontingen justru satu-satunya gunanya
+            tabel peringkat. Kolom jumlah baru: sebelumnya pembaca harus
+            menjumlah tiga angka sendiri.
+        --}}
+        <x-si.kartu judul="Peringkat umum kontingen">
             @if ($peringkatUmum->isEmpty())
-                <x-ui.empty-state title="Belum ada medali" description="Medali muncul setelah hasil partai atau penampilan Jurus disahkan." />
+                <x-si.kosong judul="Belum ada medali"
+                             syarat="Medali muncul setelah hasil partai atau penampilan Jurus disahkan Dewan Wasit Juri." />
             @else
-                <div class="divide-y divide-line">
-                    @foreach ($peringkatUmum as $i => $baris)
-                        <div class="flex items-center gap-3 py-2.5">
-                            <span class="w-6 text-center font-mono text-sm text-ink-muted">{{ $i + 1 }}</span>
-                            <span class="flex-1 text-sm text-ink">{{ $baris['kontingen'] }}</span>
-                            <span class="text-xs text-ink-muted">Emas {{ $baris['emas'] }}</span>
-                            <span class="text-xs text-ink-muted">Perak {{ $baris['perak'] }}</span>
-                            <span class="text-xs text-ink-muted">Perunggu {{ $baris['perunggu'] }}</span>
-                        </div>
-                    @endforeach
+                <div class="flex items-baseline justify-between gap-4 border-b-2 border-line pb-2">
+                    <span class="text-[11px] tracking-[.1em] text-ink-muted uppercase">Kontingen</span>
+                    <div class="flex items-baseline gap-4 text-[11px] tracking-[.1em] text-ink-muted uppercase">
+                        <span class="w-12 text-right">Emas</span>
+                        <span class="w-12 text-right">Perak</span>
+                        <span class="w-14 text-right">Perunggu</span>
+                        <span class="w-12 text-right">Jumlah</span>
+                    </div>
                 </div>
-            @endif
-        </x-ui.card>
 
-        <x-ui.card title="Juara Kelas Tanding">
+                @foreach ($peringkatUmum as $i => $baris)
+                    @php($juara = $i === 0)
+                    <div class="flex items-baseline gap-4 border-b border-line py-2.5 last:border-0">
+                        <span @class(['w-6 font-mono text-[14px] tabular-nums', 'font-semibold text-ink' => $juara, 'text-ink-muted' => ! $juara])>{{ $i + 1 }}</span>
+                        <span @class(['min-w-0 flex-1 truncate text-[15px] text-ink', 'font-semibold' => $juara])>{{ $baris['kontingen'] }}</span>
+                        <span class="w-12 text-right font-mono text-[15px] font-medium text-ink tabular-nums">{{ $baris['emas'] }}</span>
+                        <span class="w-12 text-right font-mono text-[15px] text-ink-secondary tabular-nums">{{ $baris['perak'] }}</span>
+                        <span class="w-14 text-right font-mono text-[15px] text-ink-secondary tabular-nums">{{ $baris['perunggu'] }}</span>
+                        <span class="w-12 text-right font-mono text-[15px] font-medium text-ink tabular-nums">{{ $baris['emas'] + $baris['perak'] + $baris['perunggu'] }}</span>
+                    </div>
+                @endforeach
+            @endif
+        </x-si.kartu>
+
+        {{--
+            Emoji medali dibuang. Ia dirender berbeda di tiap sistem — datar di
+            Windows, timbul di iOS, kadang kotak kosong — dan tidak pernah jadi
+            bagian sistem desain, jadi tidak ada satu pun angka kontras yang
+            berlaku untuknya. Halaman medali publik sudah melepasnya lebih dulu;
+            layar panitia yang dipakai menyusun berita acara justru lebih tidak
+            boleh bergantung padanya.
+        --}}
+        <x-si.kartu judul="Juara kelas Tanding">
             @if ($tanding->isEmpty())
-                <x-ui.empty-state title="Belum ada kelas yang selesai" description="Juara muncul setelah hasil final disahkan Dewan Wasit Juri." />
+                <x-si.kosong judul="Belum ada kelas yang selesai"
+                             syarat="Juara muncul setelah hasil final disahkan Dewan Wasit Juri." />
             @else
-                <div class="divide-y divide-line">
-                    @foreach ($tanding as $baris)
-                        <div class="py-2.5">
-                            <p class="text-sm text-ink">
-                                {{ $baris['kelas']->jenis_kelamin->label() }} {{ $baris['kelas']->golongan_usia->label() }} — {{ $baris['kelas']->name }}
-                            </p>
-                            <p class="text-xs text-ink-muted">
-                                🥇 {{ $baris['emas']->athletes->pluck('name')->implode(', ') }} ({{ $baris['emas']->contingent->name }})
-                                · 🥈 {{ $baris['perak']->athletes->pluck('name')->implode(', ') }} ({{ $baris['perak']->contingent->name }})
-                                @if ($baris['perunggu']->isNotEmpty())
-                                    · 🥉 {{ $baris['perunggu']->map(fn ($r) => $r->athletes->pluck('name')->implode(', ').' ('.$r->contingent->name.')')->implode(', ') }}
-                                @endif
-                            </p>
+                @foreach ($tanding as $baris)
+                    <div class="flex flex-col gap-1 border-b border-line py-3 last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
+                        <div class="w-full shrink-0 truncate text-[14px] text-ink-secondary sm:w-[240px]">
+                            {{ $baris['kelas']->jenis_kelamin->label() }} {{ $baris['kelas']->golongan_usia->label() }} — {{ $baris['kelas']->name }}
                         </div>
-                    @endforeach
-                </div>
-            @endif
-        </x-ui.card>
 
-        <x-ui.card title="Juara Nomor Jurus">
-            @if ($jurus->isEmpty())
-                <x-ui.empty-state title="Belum ada nomor yang selesai" description="Juara muncul setelah skor penampilan disahkan." />
-            @else
-                <div class="divide-y divide-line">
-                    @foreach ($jurus as $baris)
-                        <div class="py-2.5">
-                            <p class="text-sm text-ink">{{ $baris['nomor']->nama() }}</p>
-                            <p class="text-xs text-ink-muted">
-                                @if ($baris['emas']) 🥇 {{ $baris['emas']->athletes->pluck('name')->implode(', ') }} ({{ $baris['emas']->contingent->name }}) @endif
-                                @if ($baris['perak']) · 🥈 {{ $baris['perak']->athletes->pluck('name')->implode(', ') }} ({{ $baris['perak']->contingent->name }}) @endif
-                                @if ($baris['perunggu']) · 🥉 {{ $baris['perunggu']->athletes->pluck('name')->implode(', ') }} ({{ $baris['perunggu']->contingent->name }}) @endif
-                            </p>
+                        <div class="min-w-0 flex-1 flex flex-col gap-1">
+                            <div class="flex items-baseline gap-3">
+                                <span class="w-[68px] shrink-0 text-[11px] tracking-[.1em] text-ink uppercase">Emas</span>
+                                <span class="min-w-0 flex-1 truncate text-[15px] font-medium text-ink">
+                                    {{ $baris['emas']->athletes->pluck('name')->implode(', ') }}
+                                    <span class="font-normal text-ink-muted">· {{ $baris['emas']->contingent->name }}</span>
+                                </span>
+                            </div>
+
+                            <div class="flex items-baseline gap-3">
+                                <span class="w-[68px] shrink-0 text-[11px] tracking-[.1em] text-ink-muted uppercase">Perak</span>
+                                <span class="min-w-0 flex-1 truncate text-[14px] text-ink-secondary">
+                                    {{ $baris['perak']->athletes->pluck('name')->implode(', ') }}
+                                    <span class="text-ink-muted">· {{ $baris['perak']->contingent->name }}</span>
+                                </span>
+                            </div>
+
+                            @if ($baris['perunggu']->isNotEmpty())
+                                <div class="flex items-baseline gap-3">
+                                    <span class="w-[68px] shrink-0 text-[11px] tracking-[.1em] text-ink-muted uppercase">Perunggu</span>
+                                    <span class="min-w-0 flex-1 text-[14px] text-ink-secondary">
+                                        {{ $baris['perunggu']->map(fn ($r) => $r->athletes->pluck('name')->implode(', ').' · '.$r->contingent->name)->implode('; ') }}
+                                    </span>
+                                </div>
+                            @endif
                         </div>
-                    @endforeach
-                </div>
+                    </div>
+                @endforeach
             @endif
-        </x-ui.card>
+        </x-si.kartu>
+
+        <x-si.kartu judul="Juara nomor Jurus">
+            @if ($jurus->isEmpty())
+                <x-si.kosong judul="Belum ada nomor yang selesai"
+                             syarat="Juara muncul setelah skor penampilan disahkan Dewan Wasit Juri." />
+            @else
+                @foreach ($jurus as $baris)
+                    <div class="flex flex-col gap-1 border-b border-line py-3 last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
+                        <div class="w-full shrink-0 truncate text-[14px] text-ink-secondary sm:w-[240px]">
+                            {{ $baris['nomor']->nama() }}
+                        </div>
+
+                        <div class="min-w-0 flex-1 flex flex-col gap-1">
+                            @foreach ([['emas', 'Emas'], ['perak', 'Perak'], ['perunggu', 'Perunggu']] as [$kunci, $label])
+                                @if ($baris[$kunci])
+                                    <div class="flex items-baseline gap-3">
+                                        <span @class([
+                                            'w-[68px] shrink-0 text-[11px] tracking-[.1em] uppercase',
+                                            'text-ink' => $kunci === 'emas',
+                                            'text-ink-muted' => $kunci !== 'emas',
+                                        ])>{{ $label }}</span>
+                                        <span @class([
+                                            'min-w-0 flex-1 truncate',
+                                            'text-[15px] font-medium text-ink' => $kunci === 'emas',
+                                            'text-[14px] text-ink-secondary' => $kunci !== 'emas',
+                                        ])>
+                                            {{ $baris[$kunci]->athletes->pluck('name')->implode(', ') }}
+                                            <span class="font-normal text-ink-muted">· {{ $baris[$kunci]->contingent->name }}</span>
+                                        </span>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            @endif
+        </x-si.kartu>
     </div>
 </x-layouts.admin>

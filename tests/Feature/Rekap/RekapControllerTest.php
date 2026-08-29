@@ -22,7 +22,7 @@ it('menampilkan halaman rekap', function () {
     $this->actingAs($this->sekretaris)
         ->get(route('admin.turnamen.rekap.index', $this->tournament))
         ->assertOk()
-        ->assertSee('Peringkat Umum Kontingen');
+        ->assertSee('Peringkat umum kontingen');
 });
 
 it('mengekspor rekap medali sebagai PDF', function () {
@@ -57,4 +57,63 @@ it('user tanpa izin rekap ditolak', function () {
     $this->actingAs($tanpaIzin)
         ->get(route('admin.turnamen.rekap.index', $this->tournament))
         ->assertForbidden();
+});
+
+/*
+ * --------------------------------------------------------------------
+ * Rekap tanpa emoji medali
+ * --------------------------------------------------------------------
+ */
+
+it('menampilkan medali sebagai kolom berjudul, bukan emoji', function () {
+    /*
+     * Emoji medali dirender berbeda di tiap sistem — datar di Windows, timbul
+     * di iOS, kadang kotak kosong — dan tidak pernah jadi bagian sistem
+     * desain, jadi tidak ada satu pun angka kontras yang berlaku untuknya.
+     *
+     * Layar ini dipakai menyusun berita acara; ia justru paling tidak boleh
+     * bergantung pada glif yang bisa hilang di perangkat panitia.
+     *
+     * Medalinya dibuat lewat partai final yang benar-benar disahkan, bukan
+     * data karangan yang disuntik ke view — supaya uji ini ikut menjaga jalur
+     * yang menghasilkan angkanya.
+     */
+    $kontingen = App\Models\Contingent::factory()->for($this->tournament)->create(['name' => 'Padepokan Uji']);
+    $kelas = $this->tournament->weightClasses()
+        ->untuk(App\Enums\GolonganUsia::Dewasa, App\Enums\JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
+    $bracket = App\Models\Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
+
+    $peserta = function (string $nama) use ($kontingen, $kelas) {
+        $reg = App\Models\Registration::factory()->for($kontingen)->terverifikasi()
+            ->create(['weight_class_id' => $kelas->id]);
+        $reg->athletes()->attach(App\Models\Athlete::factory()->for($kontingen)->create(['name' => $nama]));
+
+        return $reg;
+    };
+
+    $juara = $peserta('Juara Emas');
+    $runner = $peserta('Juara Perak');
+
+    App\Models\SilatMatch::create([
+        'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
+        'red_registration_id' => $juara->id, 'blue_registration_id' => $runner->id,
+        'winner_registration_id' => $juara->id, 'win_reason' => 'angka',
+        'status' => App\Models\SilatMatch::STATUS_SELESAI,
+        'ratified_at' => now(), 'ratified_by' => $this->sekretaris->id,
+    ]);
+
+    $halaman = $this->actingAs($this->sekretaris)
+        ->get(route('admin.turnamen.rekap.index', $this->tournament))
+        ->assertOk();
+
+    $halaman
+        ->assertDontSee('🥇')
+        ->assertDontSee('🥈')
+        ->assertDontSee('🥉')
+        // Kolom berjudul, dan jumlah yang tidak perlu dihitung sendiri.
+        ->assertSee('Jumlah')
+        ->assertSee('Padepokan Uji')
+        // Emas dan perak disebut sebagai kata, bukan gambar.
+        ->assertSee('Juara Emas')
+        ->assertSee('Juara Perak');
 });
