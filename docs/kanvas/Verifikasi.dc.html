@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}.items-baseline{align-items:baseline}
+    .justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-right{text-align:right}
+    .border{border-width:1px}.border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l-3{border-left-width:3px}
+    .border-l{border-left-width:1px}.items-end{align-items:flex-end}
+    .h-full{height:100%}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+    .b-sukses{border-color:#14663f}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f22{font-size:22px}.f26{font-size:26px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}
+    .pt10{padding-top:10px}.pb8{padding-bottom:8px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}
+    .w150{width:150px}.w180{width:180px}.w260{width:260px}.w300{width:300px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:900px">
+
+  <!-- KEPALA HALAMAN -->
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Kejuaraan Terbuka Kalimantan Barat 2026</div>
+      <div class="f22 w600 lh12">Verifikasi pendaftaran</div>
+    </div>
+    <div class="flex items-baseline g8">
+      <span class="f13 t-redup">Sisa hari pendaftaran</span>
+      <span class="f16 w600 font-mono tabular-nums">2</span>
+    </div>
+  </div>
+
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+
+    <!-- ============ KOLOM DAFTAR ============ -->
+    <div class="flex flex-col flex-1 min-w-0 p16 g12">
+
+      <!-- TOOLBAR -->
+      <div class="kartu p12 flex flex-col g10 shrink-0">
+        <div class="flex items-center justify-between g16 flex-wrap">
+          <div class="flex items-center g8">
+            <!--
+              PENCARIAN. Layar yang ada sekarang tidak punya satu pun kotak cari,
+              padahal daftarnya tiga ratus baris dan panitia mencari orang yang
+              namanya baru saja disebut lewat pengeras suara.
+            -->
+            <div class="flex items-center g8 border b-kendali r6 px12 h40 w300 bg-naik">
+              <span class="f14 t-redup">Cari nama atlet, kontingen, atau kelas…</span>
+            </div>
+            <button class="h40 px14 r6 border b-kendali bg-naik f14 w500">Cari</button>
+          </div>
+
+          <div class="flex items-baseline g8">
+            <span class="f13 t-redup">Menampilkan</span>
+            <span class="f15 w600 font-mono tabular-nums">28</span>
+            <span class="f13 t-redup">dari</span>
+            <span class="f15 w600 font-mono tabular-nums">312</span>
+          </div>
+        </div>
+
+        <div class="flex items-center g6 flex-wrap">
+          <button class="h32 px12 r-full bg-tinta t-putih f12 w600 flex items-center g6">
+            Menunggu <span class="font-mono tabular-nums" style="opacity:.75">28</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500 flex items-center g6">
+            Disahkan <span class="font-mono tabular-nums t-redup">274</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500 flex items-center g6">
+            Ditolak <span class="font-mono tabular-nums t-redup">6</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500 flex items-center g6">
+            Belum diajukan <span class="font-mono tabular-nums t-redup">4</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500">Semua</button>
+
+          <div class="flex-1"></div>
+
+          <!-- Tindakan borongan hanya untuk yang SUDAH memenuhi syarat. -->
+          <button class="h32 px12 r6 border b-garis bg-naik f12 w600">
+            Sahkan 19 yang sudah lengkap
+          </button>
+        </div>
+      </div>
+
+      <!-- DAFTAR -->
+      <div class="kartu flex flex-col flex-1 min-w-0 overflow-hidden">
+
+        <!-- Baris: siap disahkan -->
+        <div class="baris px16 py12 flex items-start g12">
+          <div class="flex-1 min-w-0">
+            <div class="f15 w600">Putra Dewasa — Kelas B (55–60 kg)</div>
+            <div class="f13 t-kedua mt2">Bayu Pratama · Padepokan Harimau Putih</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600 shrink-0">
+            <span class="r-full" style="width:7px;height:7px;background:#7a4a00"></span> Menunggu
+          </span>
+          <div class="flex items-center g8 shrink-0">
+            <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Lihat berkas</button>
+            <button class="h36 px14 r6 bg-tinta t-putih f13 w600">Sahkan</button>
+            <button class="h36 px12 r6 border b-bahaya t-bahaya bg-naik f13 w600">Tolak</button>
+          </div>
+        </div>
+
+        <!-- Baris: tertahan, sebab tertulis penuh -->
+        <div class="baris px16 py12 flex flex-col g8" style="background:#fbf7ef">
+          <div class="flex items-start g12">
+            <div class="flex-1 min-w-0">
+              <div class="f15 w600">Putri Remaja — Kelas C (50–54 kg)</div>
+              <div class="f13 t-kedua mt2">Sari Wulandari · Perisai Diri Jakarta</div>
+            </div>
+            <span class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600 shrink-0">
+              <span class="r-full" style="width:7px;height:7px;background:#7a4a00"></span> Menunggu
+            </span>
+            <div class="flex items-center g8 shrink-0">
+              <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Lihat berkas</button>
+              <button class="h36 px14 r6 bg-tinta t-putih f13 w600" style="opacity:.4">Sahkan</button>
+              <button class="h36 px12 r6 border b-bahaya t-bahaya bg-naik f13 w600">Tolak</button>
+            </div>
+          </div>
+
+          <!--
+            SEBAB TOMBOL MATI, satu kalimat utuh per syarat — bukan deretan
+            potongan kecil berwarna oranye. Tiap sebab membawa tombol yang
+            menuju tempat menyelesaikannya, karena panitia yang membaca
+            "tagihan belum lunas" tetap harus tahu ke mana perginya.
+          -->
+          <div class="border-l-3 b-perhatian bg-perhatian-lembut px14 py10 r6 flex flex-col g6">
+            <div class="f13 w600 t-perhatian">Belum bisa disahkan — dua hal tertahan</div>
+            <div class="flex items-center justify-between g12">
+              <span class="f13 t-perhatian">Tagihan Perisai Diri Jakarta belum lunas (Rp 2.400.000 dari Rp 6.000.000).</span>
+              <button class="h32 px12 r6 border b-perhatian bg-naik f12 w600 t-perhatian shrink-0">Buka tagihan</button>
+            </div>
+            <div class="flex items-center justify-between g12">
+              <span class="f13 t-perhatian">Berkas kurang — Sari Wulandari: surat keterangan sehat.</span>
+              <button class="h32 px12 r6 border b-perhatian bg-naik f12 w600 t-perhatian shrink-0">Buka berkas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Baris: regu, tiga atlet -->
+        <div class="baris px16 py12 flex items-start g12">
+          <div class="flex-1 min-w-0">
+            <div class="f15 w600">Regu Putra Dewasa</div>
+            <div class="f13 t-kedua mt2">Rangga Saputra, Yusuf Hidayat, Dewi Anggara · PSHT Cabang Pontianak</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-perhatian-lembut t-perhatian f12 w600 shrink-0">
+            <span class="r-full" style="width:7px;height:7px;background:#7a4a00"></span> Menunggu
+          </span>
+          <div class="flex items-center g8 shrink-0">
+            <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Lihat berkas</button>
+            <button class="h36 px14 r6 bg-tinta t-putih f13 w600">Sahkan</button>
+            <button class="h36 px12 r6 border b-bahaya t-bahaya bg-naik f13 w600">Tolak</button>
+          </div>
+        </div>
+
+        <!-- Baris: sudah ditolak -->
+        <div class="baris px16 py12 flex flex-col g8">
+          <div class="flex items-start g12">
+            <div class="flex-1 min-w-0">
+              <div class="f15 w600">Putra Remaja — Kelas A (45–50 kg)</div>
+              <div class="f13 t-kedua mt2">Ilham Nugraha · Merpati Putih Singkawang</div>
+            </div>
+            <span class="inline-flex items-center g6 px10 py4 r-full bg-bahaya-lembut t-bahaya f12 w600 shrink-0">
+              <span class="r-full" style="width:7px;height:7px;background:#a3221c"></span> Ditolak
+            </span>
+            <div class="flex items-center g8 shrink-0">
+              <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Tinjau ulang</button>
+            </div>
+          </div>
+          <div class="border-l-3 b-bahaya bg-bahaya-lembut px14 py10 r6">
+            <div class="f13 t-bahaya">
+              <strong>Alasan:</strong> Akta kelahiran tidak terbaca. Sudah dikembalikan ke official
+              kontingen untuk diunggah ulang.
+            </div>
+            <div class="f12 t-bahaya mt4" style="opacity:.85">Ditolak Ahmad Riyadi · 27 Agu 2026, 14:12</div>
+          </div>
+        </div>
+
+        <!-- Baris: sudah disahkan -->
+        <div class="px16 py12 flex items-start g12">
+          <div class="flex-1 min-w-0">
+            <div class="f15 w600">Tunggal Putri Dewasa</div>
+            <div class="f13 t-kedua mt2">Melati Kusuma · Padepokan Harimau Putih</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600 shrink-0">
+            <span class="r-full" style="width:7px;height:7px;background:#14663f"></span> Disahkan
+          </span>
+          <div class="flex items-center g8 shrink-0">
+            <button class="h36 px12 r6 border b-garis bg-naik f13 w500">Tinjau ulang</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px16 py10 border-t b-garis bg-turun">
+          <span class="f13 t-redup">Halaman 1 dari 2 · 28 menunggu verifikasi</span>
+          <div class="flex items-center g8">
+            <button class="h32 px12 r6 border b-garis bg-naik f12 w500" style="opacity:.45">Sebelumnya</button>
+            <button class="h32 px12 r6 border b-garis bg-naik f12 w500">Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PANEL BERKAS ============ -->
+    <div class="flex flex-col w300 shrink-0 border-l b-garis bg-naik" style="width:340px">
+      <div class="px16 py12 border-b b-garis">
+        <div class="f11 tr10 uppercase t-redup">Berkas peserta</div>
+        <div class="f16 w600 mt2">Sari Wulandari</div>
+        <div class="f13 t-kedua">Perisai Diri Jakarta</div>
+      </div>
+
+      <div class="flex flex-col flex-1 p16 g10">
+        <!--
+          Berkas dibuka DI SAMPING daftarnya, bukan di halaman lain. Panitia
+          memeriksa akta lalu langsung menekan Sahkan; memaksanya berpindah
+          halaman berarti kehilangan tempat di daftar tiga ratus baris dan
+          mengulang pencarian dari awal.
+        -->
+        <div class="flex items-center justify-between g8 border b-garis r6 px12 py10">
+          <div class="min-w-0">
+            <div class="f14 w500">Akta kelahiran</div>
+            <div class="f12 t-redup mt2">JPG · 1,2 MB · diunggah 21 Agu</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600 shrink-0">Ada</span>
+        </div>
+
+        <div class="flex items-center justify-between g8 border b-garis r6 px12 py10">
+          <div class="min-w-0">
+            <div class="f14 w500">Kartu identitas</div>
+            <div class="f12 t-redup mt2">PDF · 340 KB · diunggah 21 Agu</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600 shrink-0">Ada</span>
+        </div>
+
+        <div class="flex items-center justify-between g8 border b-bahaya r6 px12 py10 bg-bahaya-lembut">
+          <div class="min-w-0">
+            <div class="f14 w500 t-bahaya">Surat keterangan sehat</div>
+            <div class="f12 t-bahaya mt2" style="opacity:.85">Belum diunggah official</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-naik t-bahaya f12 w600 shrink-0 border b-bahaya">Kurang</span>
+        </div>
+
+        <div class="flex items-center justify-between g8 border b-garis r6 px12 py10">
+          <div class="min-w-0">
+            <div class="f14 w500">Foto pesilat</div>
+            <div class="f12 t-redup mt2">JPG · 780 KB · diunggah 21 Agu</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600 shrink-0">Ada</span>
+        </div>
+
+        <div class="border-t b-garis pt10 mt8 flex flex-col g6">
+          <div class="f13 t-kedua lh16">
+            Kekurangan berkas dikirim balik ke official kontingen lewat akunnya sendiri —
+            panitia tidak mengunggahkan berkas milik orang lain.
+          </div>
+          <button class="h40 px14 r6 border b-kendali bg-naik f14 w600 mt4">Kirim pemberitahuan ke official</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

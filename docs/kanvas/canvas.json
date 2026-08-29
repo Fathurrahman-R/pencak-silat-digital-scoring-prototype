@@ -245,6 +245,24 @@
       "w": 1400,
       "h": 2600,
       "print": "flow"
+    },
+    {
+      "file": "Verifikasi.dc.html",
+      "title": "Verifikasi pendaftaran",
+      "page": "page-5",
+      "x": 2840,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "TimbangBadan.dc.html",
+      "title": "Timbang badan",
+      "page": "page-5",
+      "x": 4400,
+      "y": 0,
+      "w": 1440,
+      "h": 1880
     }
   ],
   "annotations": [

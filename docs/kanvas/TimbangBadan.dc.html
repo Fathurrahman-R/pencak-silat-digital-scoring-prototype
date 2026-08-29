@@ -1,0 +1,374 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}.items-baseline{align-items:baseline}
+    .items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}.text-right{text-align:right}
+    .border{border-width:1px}.border-2{border-width:2px}
+    .border-t{border-top-width:1px}.border-b{border-bottom-width:1px}.border-l-3{border-left-width:3px}
+    .border-l{border-left-width:1px}
+    .relative{position:relative}.absolute{position:absolute}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-dalam{background-color:#dcd8d0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses{background-color:#14663f}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya{background-color:#a3221c}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}.f26{font-size:26px}.f34{font-size:34px}.f44{font-size:44px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh10{line-height:1}.lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px10{padding-left:10px;padding-right:10px}.px12{padding-left:12px;padding-right:12px}
+    .px14{padding-left:14px;padding-right:14px}.px16{padding-left:16px;padding-right:16px}
+    .px20{padding-left:20px;padding-right:20px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}.py16{padding-top:16px;padding-bottom:16px}
+    .pt10{padding-top:10px}.pt12{padding-top:12px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}.h56{height:56px}.h64{height:64px}
+    .w300{width:300px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:900px">
+
+  <!-- KEPALA -->
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Kejuaraan Terbuka Kalimantan Barat 2026</div>
+      <div class="f22 w600 lh12">Timbang badan</div>
+    </div>
+    <div class="flex items-center g16">
+      <div class="text-right">
+        <div class="f11 tr10 uppercase t-redup">Belum ditimbang</div>
+        <div class="f20 w600 font-mono tabular-nums">41</div>
+      </div>
+      <div class="text-right">
+        <div class="f11 tr10 uppercase t-redup">Tidak lolos</div>
+        <div class="f20 w600 font-mono tabular-nums t-bahaya">3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+
+    <!-- ============ ANTREAN ============ -->
+    <div class="flex flex-col flex-1 min-w-0 p16 g12">
+
+      <div class="kartu p12 flex items-center justify-between g12 shrink-0 flex-wrap">
+        <div class="flex items-center g8">
+          <div class="flex items-center border b-kendali r6 px12 h40 bg-naik" style="width:280px">
+            <span class="f14 t-redup">Cari nama atlet…</span>
+          </div>
+          <button class="h40 px14 r6 border b-kendali bg-naik f14 w500">Cari</button>
+        </div>
+
+        <div class="flex items-center g6 flex-wrap">
+          <button class="h32 px12 r-full bg-tinta t-putih f12 w600 flex items-center g6">
+            Belum ditimbang <span class="font-mono tabular-nums" style="opacity:.75">41</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500 flex items-center g6">
+            Lolos <span class="font-mono tabular-nums t-redup">128</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500 flex items-center g6">
+            Tidak lolos <span class="font-mono tabular-nums t-redup">3</span>
+          </button>
+          <button class="h32 px12 r-full border b-garis bg-naik f12 w500">Semua</button>
+        </div>
+      </div>
+
+      <div class="kartu flex flex-col flex-1 overflow-hidden">
+        <div class="px16 py8 border-b b-garis bg-turun f11 tr10 uppercase t-redup">
+          Antrean · urut menurut jadwal partai paling awal
+        </div>
+
+        <!-- Baris terpilih -->
+        <div class="baris px16 py12 flex items-center g12" style="background:#eef4f0;border-left:3px solid #14663f">
+          <div class="flex-1 min-w-0">
+            <div class="f16 w600">Bayu Pratama</div>
+            <div class="f13 t-kedua mt2">Padepokan Harimau Putih · Putra Dewasa — Kelas B</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="f13 t-redup">Partai 14 · 10:30</div>
+            <div class="f12 t-redup mt2">Klaim 57,0 kg</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full bg-turun t-kedua f12 w600 shrink-0">
+            Sedang ditimbang
+          </span>
+        </div>
+
+        <div class="baris px16 py12 flex items-center g12">
+          <div class="flex-1 min-w-0">
+            <div class="f16 w600">Candra Setiawan</div>
+            <div class="f13 t-kedua mt2">PSHT Cabang Pontianak · Putra Dewasa — Kelas B</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="f13 t-redup">Partai 14 · 10:30</div>
+            <div class="f12 t-redup mt2">Klaim 58,4 kg</div>
+          </div>
+          <span class="inline-flex items-center g6 px10 py4 r-full border b-garis bg-naik t-kedua f12 w600 shrink-0">
+            Belum ditimbang
+          </span>
+        </div>
+
+        <div class="baris px16 py12 flex items-center g12">
+          <div class="flex-1 min-w-0">
+            <div class="f16 w600">Melati Kusuma</div>
+            <div class="f13 t-kedua mt2">Perisai Diri Jakarta · Putri Remaja — Kelas C</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="f13 t-redup">Partai 17 · 11:05</div>
+          </div>
+          <div class="flex flex-col items-end g2 shrink-0">
+            <span class="inline-flex items-center g6 px10 py4 r-full bg-sukses-lembut t-sukses f12 w600">
+              <span class="r-full" style="width:7px;height:7px;background:#14663f"></span> 52,4 kg · Lolos
+            </span>
+            <span class="f12 t-redup">28 Agu, 08:14</span>
+          </div>
+        </div>
+
+        <!-- Tidak lolos: sebab dan akibat ditulis, bukan cuma label merah -->
+        <div class="baris px16 py12 flex flex-col g8">
+          <div class="flex items-center g12">
+            <div class="flex-1 min-w-0">
+              <div class="f16 w600">Ilham Nugraha</div>
+              <div class="f13 t-kedua mt2">Merpati Putih Singkawang · Putra Remaja — Kelas A</div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="f13 t-redup">Partai 21 · 13:40</div>
+            </div>
+            <div class="flex flex-col items-end g2 shrink-0">
+              <span class="inline-flex items-center g6 px10 py4 r-full bg-bahaya-lembut t-bahaya f12 w600">
+                <span class="r-full" style="width:7px;height:7px;background:#a3221c"></span> 51,2 kg · Tidak lolos
+              </span>
+              <span class="f12 t-redup">28 Agu, 08:31 · ditimbang 2 kali</span>
+            </div>
+          </div>
+
+          <div class="border-l-3 b-bahaya bg-bahaya-lembut px14 py10 r6 flex items-center justify-between g12">
+            <div class="f13 t-bahaya">
+              Lebih 1,2 kg dari batas Kelas A (45–50 kg). Gugur dari kelas ini; bagannya menyusut
+              jadi 7 peserta.
+            </div>
+            <button class="h32 px12 r6 border b-bahaya bg-naik f12 w600 t-bahaya shrink-0">Timbang ulang</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px16 py10 border-t b-garis bg-turun">
+          <span class="f13 t-redup">Halaman 1 dari 4 · 41 belum ditimbang</span>
+          <div class="flex items-center g8">
+            <button class="h32 px12 r6 border b-garis bg-naik f12 w500" style="opacity:.45">Sebelumnya</button>
+            <button class="h32 px12 r6 border b-garis bg-naik f12 w500">Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PANEL TIMBANG ============ -->
+    <div class="flex flex-col shrink-0 border-l b-garis bg-naik" style="width:400px">
+      <div class="px16 py12 border-b b-garis">
+        <div class="f11 tr10 uppercase t-redup">Sedang ditimbang</div>
+        <div class="f20 w600 mt2">Bayu Pratama</div>
+        <div class="f13 t-kedua">Padepokan Harimau Putih</div>
+      </div>
+
+      <div class="flex flex-col flex-1 p16 g16">
+
+        <!--
+          BATAS KELAS DITULIS BESAR, SEBELUM ANGKANYA DIKETIK.
+          Layar yang ada sekarang menaruh rentang sebagai teks 12px di baris
+          identitas, dan petugas yang sedang menatap jarum timbangan tidak
+          membacanya. Di sini batas itu jadi hal kedua terbesar di panel.
+        -->
+        <div class="border b-garis r6 p14 bg-turun flex items-center justify-between g12">
+          <div>
+            <div class="f11 tr10 uppercase t-redup">Batas Kelas B</div>
+            <div class="f13 t-kedua mt2">Putra Dewasa</div>
+          </div>
+          <div class="font-mono tabular-nums f26 w600">55,0 – 60,0 kg</div>
+        </div>
+
+        <!-- Isian besar: petugas berdiri di dekat timbangan, sering pakai tablet -->
+        <div class="flex flex-col g6">
+          <div class="f14 w600">Berat hasil timbangan <span class="w400 t-redup">— wajib diisi</span></div>
+          <div class="flex items-center g10 border-2 b-tinta r6 px16 h64 bg-naik">
+            <span class="font-mono tabular-nums f34 w600 flex-1">57,3</span>
+            <span class="f20 t-redup">kg</span>
+          </div>
+          <!--
+            Penilaian muncul SAAT MENGETIK, bukan setelah menekan. Petugas
+            melihat "di dalam batas" sebelum tangannya berpindah ke tombol.
+          -->
+          <div class="flex items-center g8 px12 py8 r6 bg-sukses-lembut">
+            <span class="r-full shrink-0" style="width:9px;height:9px;background:#14663f"></span>
+            <span class="f14 w600 t-sukses">Di dalam batas — lolos</span>
+            <span class="f13 t-sukses" style="opacity:.85">2,7 kg di bawah batas atas</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col g8">
+          <button class="h56 r6 bg-tinta t-putih f16 w600">Catat hasil timbang</button>
+          <button class="h44 r6 border b-garis bg-naik f14 w500">Lewati, timbang berikutnya</button>
+        </div>
+
+        <div class="border-t b-garis pt12 flex flex-col g6">
+          <div class="f11 tr10 uppercase t-redup">Riwayat penimbangan</div>
+          <div class="f13 t-kedua lh16">
+            Belum pernah ditimbang. Penimbangan ulang dicatat sebagai baris baru — yang sebelumnya
+            tetap tersimpan dan ikut tercetak di berita acara.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- KEADAAN KEDUA: ANGKA DI LUAR BATAS                                -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:900px;margin-top:80px">
+
+  <div class="px16 py12 border-b b-garis bg-naik shrink-0 flex items-baseline g10">
+    <div class="f22 w600 lh12">Timbang badan</div>
+    <div class="f13 t-redup">— keadaan kedua: angka yang diketik di luar batas kelas</div>
+  </div>
+
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+
+    <div class="flex flex-col flex-1 min-w-0 p16 g12 justify-center items-center">
+      <div class="maxw60 flex flex-col g12" style="max-width:56ch">
+        <div class="f11 tr28 uppercase t-redup">Kenapa keadaan ini digambar terpisah</div>
+        <div class="f16 lh16 t-kedua">
+          Menekan <strong>Catat hasil timbang</strong> dengan angka di luar batas
+          <strong>menggugurkan pesilat dari kelasnya</strong>. Layar yang ada sekarang menjalankannya
+          seketika, tanpa satu kalimat pun sebelum atau sesudah.
+        </div>
+        <div class="f16 lh16 t-kedua">
+          Ini satu-satunya tindakan di seluruh layar panitia yang mencabut hak seseorang untuk
+          bertanding hari itu, dan orang yang menjalankannya sedang berdiri di dekat timbangan,
+          dikejar antrean, menatap jarum — bukan duduk di depan layar.
+        </div>
+        <div class="f16 lh16 t-kedua">
+          Karena itu akibatnya dinyatakan <strong>sebelum</strong> tombolnya ditekan, dan tombolnya
+          sendiri berganti kata: bukan lagi "Catat hasil timbang" melainkan menyebutkan apa yang
+          akan terjadi.
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col shrink-0 border-l b-garis bg-naik" style="width:400px">
+      <div class="px16 py12 border-b b-garis">
+        <div class="f11 tr10 uppercase t-redup">Sedang ditimbang</div>
+        <div class="f20 w600 mt2">Ilham Nugraha</div>
+        <div class="f13 t-kedua">Merpati Putih Singkawang</div>
+      </div>
+
+      <div class="flex flex-col flex-1 p16 g16">
+        <div class="border b-garis r6 p14 bg-turun flex items-center justify-between g12">
+          <div>
+            <div class="f11 tr10 uppercase t-redup">Batas Kelas A</div>
+            <div class="f13 t-kedua mt2">Putra Remaja</div>
+          </div>
+          <div class="font-mono tabular-nums f26 w600">45,0 – 50,0 kg</div>
+        </div>
+
+        <div class="flex flex-col g6">
+          <div class="f14 w600">Berat hasil timbangan <span class="w400 t-redup">— wajib diisi</span></div>
+          <div class="flex items-center g10 border-2 b-bahaya r6 px16 h64 bg-naik">
+            <span class="font-mono tabular-nums f34 w600 flex-1 t-bahaya">51,2</span>
+            <span class="f20 t-redup">kg</span>
+          </div>
+          <div class="flex items-start g8 px12 py10 r6 bg-bahaya-lembut">
+            <span class="r-full shrink-0" style="width:9px;height:9px;background:#a3221c;margin-top:5px"></span>
+            <div>
+              <div class="f14 w600 t-bahaya">Lebih 1,2 kg dari batas atas</div>
+              <div class="f13 t-bahaya lh16 mt2" style="opacity:.9">
+                Mencatat angka ini <strong>menggugurkan Ilham Nugraha dari Kelas A</strong>.
+                Bagan kelas itu menyusut dari 8 jadi 7 peserta, dan lawannya di partai 21 menang WO.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--
+          Tombol menyebutkan AKIBAT, bukan tindakan. "Catat" tidak memberi
+          tahu apa pun; "Catat dan gugurkan" memberi tahu persis apa yang
+          terjadi setelah jari diangkat.
+        -->
+        <div class="flex flex-col g8">
+          <button class="h56 r6 bg-bahaya t-putih f16 w600" style="padding:0 12px;line-height:1.2">
+            Catat 51,2 kg dan gugurkan dari Kelas A
+          </button>
+          <button class="h44 r6 border b-kendali bg-naik f14 w600">Timbang ulang, jangan catat</button>
+        </div>
+
+        <div class="border-t b-garis pt12 flex flex-col g6">
+          <div class="f11 tr10 uppercase t-redup">Riwayat penimbangan</div>
+          <div class="flex items-baseline justify-between g8">
+            <span class="f13 t-kedua">Timbangan pertama</span>
+            <span class="f13 font-mono tabular-nums">51,6 kg · 08:22</span>
+          </div>
+          <div class="f13 t-kedua lh16 mt4">
+            Yang sebelumnya tetap tersimpan dan ikut tercetak di berita acara. Hasil ditetapkan
+            terhadap kelas yang berlaku saat ditimbang, lalu tidak dihitung ulang lagi.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
