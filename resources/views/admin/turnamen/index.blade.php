@@ -80,17 +80,19 @@
                         {{-- Membuka kejuaraan menjadikannya kejuaraan aktif,
                              dan seluruh bagiannya muncul di sidebar. --}}
                         @resource(rk('turnamen', ResourceAction::Update))
-                            <x-ui.button :href="route('admin.turnamen.edit', $tournament)"
-                                         variant="secondary" size="xs" title="Ubah">
-                                <x-ui.icon name="pencil" class="h-4 w-4" />
-                            </x-ui.button>
+                            <x-si.tombol :tautan="route('admin.turnamen.edit', $tournament)"
+                                         varian="kedua" ukuran="kecil">
+                                Ubah
+                            </x-si.tombol>
                         @endresource
 
                         @resource(rk('turnamen', ResourceAction::Delete))
-                            <x-ui.button type="button" variant="secondary" size="xs" title="Hapus"
+                            {{-- Kata, bukan tong sampah telanjang. Menghapus
+                                 kejuaraan menghapus seluruh isinya. --}}
+                            <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
                                          x-on:click="$dispatch('modal-open', 'hapus-turnamen-{{ $tournament->id }}')">
-                                <x-ui.icon name="trash-2" class="h-4 w-4 text-danger" />
-                            </x-ui.button>
+                                Hapus
+                            </x-si.tombol>
 
                             <x-ui.modal :id="'hapus-turnamen-'.$tournament->id" title="Hapus kejuaraan" size="sm">
                                 Yakin menghapus <strong>{{ $tournament->name }}</strong>? Seluruh gelanggang,

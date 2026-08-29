@@ -66,10 +66,11 @@
 
                     <div class="flex gap-1">
                         @resource(rk('invoice', ResourceAction::View))
-                            <x-ui.button :href="route('admin.turnamen.kontingen.tagihan.show', [$tournament, $invoice->contingent])"
-                                         variant="secondary" size="xs" title="Lihat rincian">
-                                <x-ui.icon name="receipt" class="h-4 w-4" />
-                            </x-ui.button>
+                            {{-- Kata, bukan ikon struk: tooltip tidak muncul di layar sentuh. --}}
+                            <x-si.tombol :tautan="route('admin.turnamen.kontingen.tagihan.show', [$tournament, $invoice->contingent])"
+                                         varian="kedua" ukuran="kecil">
+                                Rincian tagihan
+                            </x-si.tombol>
                         @endresource
 
                         @if (! $invoice->lunas())
@@ -83,10 +84,10 @@
                             @php($manual = $invoice->manualPayments()->first())
 
                             @if ($manual)
-                                <x-ui.button :href="route('admin.turnamen.bendahara.bukti', [$tournament, $invoice, $manual->id])"
-                                             variant="secondary" size="xs" target="_blank" title="Lihat bukti">
-                                    <x-ui.icon name="file-text" class="h-4 w-4" />
-                                </x-ui.button>
+                                <x-si.tombol :tautan="route('admin.turnamen.bendahara.bukti', [$tournament, $invoice, $manual->id])"
+                                             varian="kedua" ukuran="kecil" target="_blank">
+                                    Lihat bukti bayar
+                                </x-si.tombol>
                             @endif
                         @endif
                     </div>
