@@ -73,13 +73,44 @@
 
                         @resource(rk('bagan', ResourceAction::Create))
                             @if (! $bracket?->terkunci())
-                                <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}"
-                                      x-on:submit="{{ $bracket ? "confirm('Bagan {$k->name} sudah ada — susun ulang dari peserta sah saat ini?') || event.preventDefault()" : '' }}">
-                                    @csrf
-                                    <x-ui.button type="submit" size="xs" :disabled="! $bisaSusun">
-                                        {{ $bracket ? 'Susun ulang' : 'Susun bagan' }}
+                                @if ($bracket)
+                                    {{--
+                                        Menyusun ulang MENGACAK UNDIAN DARI NOL:
+                                        seluruh pasangan berubah, termasuk yang
+                                        sudah diumumkan ke official kontingen yang
+                                        menyiapkan atletnya berdasarkan lawan yang
+                                        mereka lihat.
+
+                                        Sebelumnya dikonfirmasi dengan confirm()
+                                        bawaan peramban — kotak abu-abu tanpa rupa,
+                                        dengan tombol "OK" dan "Cancel" yang
+                                        bahasanya mengikuti bahasa peramban, bukan
+                                        bahasa aplikasi.
+                                    --}}
+                                    {{--
+                                        Muatan dibawa lewat data-*, bukan @js() di
+                                        dalam x-on:click. JSON yang dihasilkan @js
+                                        memuat tanda kutip, dan tanda kutip di dalam
+                                        atribut memutus pembacaan ekspresinya —
+                                        Alpine melapor "Invalid or unexpected token"
+                                        dan tombolnya diam.
+                                    --}}
+                                    <x-ui.button type="button" size="xs" :disabled="! $bisaSusun"
+                                                 data-aksi="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}"
+                                                 data-bagan="{{ route('admin.turnamen.bagan.show', [$tournament, $k]) }}"
+                                                 data-kelas="{{ $k->jenis_kelamin->label().' '.$k->golongan_usia->label().' — '.$k->name }}"
+                                                 data-peserta="{{ $k->peserta_sah }}"
+                                                 x-on:click="$dispatch('susun-ulang', $el.dataset)">
+                                        Susun ulang
                                     </x-ui.button>
-                                </form>
+                                @else
+                                    <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}">
+                                        @csrf
+                                        <x-ui.button type="submit" size="xs" :disabled="! $bisaSusun">
+                                            Susun bagan
+                                        </x-ui.button>
+                                    </form>
+                                @endif
                             @endif
                         @endresource
                     </div>
@@ -95,4 +126,60 @@
             @endforelse
         </x-ui.card>
     </div>
+
+    {{--
+        SATU dialog untuk seluruh halaman, bukan satu per baris. Kejuaraan
+        daerah punya seratus lebih kelas, dan dialog per baris berarti seratus
+        dialog tersembunyi di halaman yang sama.
+    --}}
+    @resource(rk('bagan', ResourceAction::Create))
+        <div x-data="{ terbuka: false, aksi: '', bagan: '', kelas: '', peserta: 0 }"
+             x-on:susun-ulang.window="aksi = $event.detail.aksi; bagan = $event.detail.bagan;
+                                      kelas = $event.detail.kelas; peserta = $event.detail.peserta;
+                                      terbuka = true"
+             x-on:keydown.escape.window="terbuka = false">
+            <div x-show="terbuka" x-cloak
+                 class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+                 x-on:click.self="terbuka = false">
+                <div class="w-full max-w-[480px] rounded-[var(--radius)] border border-line bg-surface-raised p-5">
+                    <p class="text-[11px] tracking-[.1em] text-warning uppercase">Undian akan berubah seluruhnya</p>
+                    <p class="mt-1 text-[20px] leading-tight font-semibold text-ink">
+                        Susun ulang bagan <span x-text="kelas"></span>?
+                    </p>
+
+                    <p class="mt-2 text-[14px] leading-relaxed text-ink-secondary">
+                        Undian diacak ulang dari <span class="font-semibold text-ink" x-text="peserta"></span>
+                        peserta sah yang ada sekarang. Seluruh pasangan berubah, termasuk yang sudah
+                        diumumkan ke kontingen.
+                    </p>
+
+                    <div class="mt-3 rounded-[var(--radius)] border-l-[3px] border-line bg-surface-inset px-3.5 py-2.5">
+                        <p class="text-[13px] font-semibold text-ink">Yang tidak berubah</p>
+                        <p class="mt-0.5 text-[13px] leading-relaxed text-ink-secondary">
+                            Peserta yang masuk bagan tetap orang yang sama. Bagan kelas lain tidak tersentuh.
+                        </p>
+                    </div>
+
+                    {{-- Jalan yang lebih kecil ditawarkan lebih dulu: panitia yang
+                         menekan "Susun ulang" sering sebenarnya hanya ingin
+                         memindahkan satu orang. --}}
+                    <div class="mt-3 flex items-center justify-between gap-3 rounded-[var(--radius)] border border-line px-3.5 py-3">
+                        <p class="flex-1 text-[13px] leading-relaxed text-ink-secondary">
+                            Hanya ingin memindahkan satu pesilat? Tukar tempat tidak mengubah pasangan lain.
+                        </p>
+                        <a x-bind:href="bagan"
+                           class="inline-flex h-9 shrink-0 items-center rounded-[var(--radius)] border border-line-strong px-3 text-[13px] font-semibold text-ink">
+                            Buka bagan
+                        </a>
+                    </div>
+
+                    <form method="POST" x-bind:action="aksi" class="mt-4 flex items-center gap-2">
+                        @csrf
+                        <x-si.tombol tipe="button" varian="kedua" x-on:click="terbuka = false">Tidak jadi</x-si.tombol>
+                        <x-si.tombol tipe="submit">Acak ulang undian</x-si.tombol>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endresource
 </x-layouts.admin>

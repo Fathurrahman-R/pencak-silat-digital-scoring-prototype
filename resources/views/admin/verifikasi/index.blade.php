@@ -135,12 +135,13 @@
                                     @endresource
 
                                     @resource(rk('pendaftaran', ResourceAction::Reject))
+                                        {{-- Muatan lewat data-*, bukan @js() di dalam
+                                             x-on:click: tanda kutip di dalam JSON
+                                             memutus pembacaan ekspresi atributnya. --}}
                                         <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil"
-                                                     x-on:click="$dispatch('modal-open', 'tolak-pendaftaran')
-                                                                 || 0; window.__tolak = @js([
-                                                                     'aksi' => route('admin.turnamen.verifikasi.tolak', [$tournament, $registration]),
-                                                                     'nama' => $registration->namaNomor(),
-                                                                 ])">Tolak</x-si.tombol>
+                                                     data-aksi="{{ route('admin.turnamen.verifikasi.tolak', [$tournament, $registration]) }}"
+                                                     data-nama="{{ $registration->namaNomor() }}"
+                                                     x-on:click="$dispatch('tolak-pendaftaran', $el.dataset)">Tolak</x-si.tombol>
                                     @endresource
                                 @else
                                     @resource(rk('pendaftaran', ResourceAction::Approve))
@@ -283,7 +284,7 @@
     --}}
     @resource(rk('pendaftaran', ResourceAction::Reject))
         <div x-data="{ terbuka: false, aksi: '', nama: '' }"
-             x-on:modal-open.window="if ($event.detail === 'tolak-pendaftaran') { aksi = window.__tolak.aksi; nama = window.__tolak.nama; terbuka = true }"
+             x-on:tolak-pendaftaran.window="aksi = $event.detail.aksi; nama = $event.detail.nama; terbuka = true"
              x-on:keydown.escape.window="terbuka = false">
             <div x-show="terbuka" x-cloak
                  class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"

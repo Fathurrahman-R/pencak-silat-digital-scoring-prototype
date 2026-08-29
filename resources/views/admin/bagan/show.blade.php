@@ -38,68 +38,64 @@
             </x-ui.alert>
 
             @resource(rk('bagan', ResourceAction::Update))
-                <x-ui.card title="Tukar tempat">
+                {{--
+                    MEMILIH ORANG, BUKAN NOMOR POSISI.
+
+                    Susunan lama memberi dua dropdown berisi "Posisi 1", "Posisi 2",
+                    dan seterusnya. Panitia yang ingin memindahkan Bayu harus
+                    menerjemahkan namanya jadi angka lebih dulu — di layar yang
+                    justru menampilkan nama itu tepat di sebelahnya.
+
+                    Sekarang yang dipilih adalah pesilatnya, dan nomor tempat
+                    ikut sebagai keterangan. Akibatnya dinyatakan sebelum
+                    tombolnya ditekan.
+                --}}
+                @php
+                    $pilihan = $bracket->slots->sortBy('position')->mapWithKeys(fn ($s) => [
+                        $s->position => $s->registration
+                            ? $s->registration->athletes->pluck('name')->implode(', ')
+                                .' — '.$s->registration->contingent->name.' (tempat '.$s->position.')'
+                            : 'Tempat '.$s->position.' — kosong (bye)',
+                    ]);
+                @endphp
+
+                <x-si.kartu judul="Tukar tempat"
+                            keterangan="Dipakai saat dua pesilat dari kontingen yang sama bertemu di babak pertama.">
                     <form method="POST" action="{{ route('admin.turnamen.bagan.tukar', [$tournament, $weightClass]) }}"
                           class="flex flex-wrap items-end gap-3">
                         @csrf
 
-                        <div class="w-56">
-                            <x-ui.select name="posisi_a" label="Tempat pertama" :options="$bracket->slots->mapWithKeys(fn ($s) => [
-                                $s->position => 'Posisi '.$s->position.' — '.($s->registration ? $s->registration->contingent->name.' ('.$s->registration->athletes->pluck('name')->implode(', ').')' : 'Bye'),
-                            ])" placeholder="Pilih tempat" />
+                        <div class="w-[320px]">
+                            <label for="posisi_a" class="text-[14px] font-semibold text-ink">Pesilat pertama</label>
+                            <select id="posisi_a" name="posisi_a" required
+                                    class="mt-1.5 h-11 w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3 text-[15px] text-ink">
+                                <option value="">Pilih pesilat…</option>
+                                @foreach ($pilihan as $posisi => $label)
+                                    <option value="{{ $posisi }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="w-56">
-                            <x-ui.select name="posisi_b" label="Tempat kedua" :options="$bracket->slots->mapWithKeys(fn ($s) => [
-                                $s->position => 'Posisi '.$s->position.' — '.($s->registration ? $s->registration->contingent->name.' ('.$s->registration->athletes->pluck('name')->implode(', ').')' : 'Bye'),
-                            ])" placeholder="Pilih tempat" />
+                        <div class="w-[320px]">
+                            <label for="posisi_b" class="text-[14px] font-semibold text-ink">Tukar dengan</label>
+                            <select id="posisi_b" name="posisi_b" required
+                                    class="mt-1.5 h-11 w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3 text-[15px] text-ink">
+                                <option value="">Pilih pesilat…</option>
+                                @foreach ($pilihan as $posisi => $label)
+                                    <option value="{{ $posisi }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <x-ui.button type="submit" variant="secondary" size="sm">Tukar</x-ui.button>
+                        <x-si.tombol tipe="submit" varian="kedua">Tukar tempat keduanya</x-si.tombol>
                     </form>
-                </x-ui.card>
+                </x-si.kartu>
             @endresource
         @endunless
 
-        @foreach ($babak as $round => $partaiSatuBabak)
-            <x-ui.card :title="$bracket->namaBabak($round)">
-                <div class="grid gap-3 sm:grid-cols-2">
-                    @foreach ($partaiSatuBabak->sortBy('position') as $partai)
-                        <div class="rounded-lg border border-line p-3">
-                            <p class="mb-2 text-xs text-ink-muted">Partai {{ $partai->position }}</p>
-
-                            @foreach (['red' => $partai->red, 'blue' => $partai->blue] as $sudut => $peserta)
-                                <div @class([
-                                    'flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm',
-                                    'bg-success-soft text-success' => $partai->winner_registration_id && $partai->winner_registration_id === $peserta?->id,
-                                ])>
-                                    <span class="min-w-0 truncate">
-                                        @if ($peserta)
-                                            {{ $peserta->athletes->pluck('name')->implode(', ') }}
-                                            <span class="text-ink-muted">· {{ $peserta->contingent->name }}</span>
-                                        @else
-                                            <span class="text-ink-muted">
-                                                {{ $partai->bye() ? 'Bye' : 'Menunggu babak sebelumnya' }}
-                                            </span>
-                                        @endif
-                                    </span>
-
-                                    <span class="shrink-0 text-[10px] tracking-wide text-ink-muted uppercase">
-                                        {{ $sudut === 'red' ? 'Merah' : 'Biru' }}
-                                    </span>
-                                </div>
-                            @endforeach
-
-                            @if ($partai->win_reason)
-                                <p class="mt-1.5 text-[11px] text-ink-muted">
-                                    Menang {{ $partai->win_reason === 'bye' ? 'bye' : $partai->win_reason }}
-                                </p>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </x-ui.card>
-        @endforeach
+        <x-si.kartu>
+            <x-si.pohon-bagan :pohon="$pohon" />
+        </x-si.kartu>
     </div>
 
     @unless ($bracket->terkunci())

@@ -91,6 +91,24 @@
     --code-bg: var(--k-kertas-turun);
     --code-text: var(--k-tinta-kedua);
 
+    /*
+     * Sudut pesilat di suasana terang.
+     *
+     * Bagan panitia menggambar sudut sebagai BIDANG PENUH, sama seperti papan
+     * skor gelanggang: merah kiri biru kanan adalah arti tetap di seluruh
+     * sistem, dan di bagan pun sudut harus terbaca tanpa menghitung urutan
+     * slot. Nilainya berbeda dari palet gelanggang karena latarnya kertas,
+     * bukan panggung -- yang dipakai gelanggang (#7a1418, #0c2a63) terlalu
+     * gelap untuk berdampingan dengan kertas dan terbaca seperti lubang.
+     *
+     * Putih di atasnya: 7.49 dan 9.04. Bidangnya sendiri terhadap kertas:
+     * 6.70 dan 8.09.
+     */
+    --corner-red: #a3221c;
+    --corner-blue: #12439e;
+    --corner-red-on: #ffe6e4;   /* kontingen di dalam bidang merah, 6.31 */
+    --corner-blue-on: #ccdcf8;  /* kontingen di dalam bidang biru, 6.53 */
+
     /* Palet grafik. Merah dan biru sengaja TIDAK ikut: keduanya berarti sudut
        pesilat, dan sebuah batang grafik berwarna sudut akan terbaca sebagai
        identitas. */
@@ -182,6 +200,11 @@
     --color-success-soft: var(--success-soft);
     --color-warning: var(--warning);
     --color-warning-soft: var(--warning-soft);
+    --color-corner-red: var(--corner-red);
+    --color-corner-blue: var(--corner-blue);
+    --color-corner-red-on: var(--corner-red-on);
+    --color-corner-blue-on: var(--corner-blue-on);
+
     --color-danger: var(--danger);
     --color-danger-on: var(--danger-on);
     --color-danger-soft: var(--danger-soft);

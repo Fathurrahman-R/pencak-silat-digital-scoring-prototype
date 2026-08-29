@@ -67,6 +67,17 @@ const T = {
     kBahayaLembut: '#f8e3e1',
     kBahayaTeks: '#ffffff',
 
+    /*
+     * Sudut pesilat di suasana terang -- bagan panitia menggambarnya sebagai
+     * bidang penuh, sama seperti papan skor gelanggang. Nilainya berbeda dari
+     * palet gelanggang karena latarnya kertas: #7a1418 dan #0c2a63 terlalu
+     * gelap berdampingan dengan kertas dan terbaca seperti lubang.
+     */
+    kSudutMerah: '#a3221c',
+    kSudutBiru: '#12439e',
+    kSudutMerahTeks: '#ffe6e4',
+    kSudutBiruTeks: '#ccdcf8',
+
     // Mode gelap admin (:root[data-theme='dark']) memakai palet gelanggang.
     // Tidak ada set token tersendiri -- panitia yang berpindah antara layar
     // admin dan panel gelanggang melihat satu keluarga warna.
@@ -149,6 +160,14 @@ const PASANGAN = [
     // bukan warna suksesnya -- kalimatnya panjang dan harus terbaca sebagai
     // teks biasa, bukan sebagai peringatan berwarna.
     ['TERANG · tinta di sukses lembut', T.kTinta, T.kSuksesLembut],
+
+    // Bagan panitia: bidang sudut penuh di atas kertas.
+    ['TERANG · putih di merah sudut', '#ffffff', T.kSudutMerah],
+    ['TERANG · putih di biru sudut', '#ffffff', T.kSudutBiru],
+    ['TERANG · kontingen di merah sudut', T.kSudutMerahTeks, T.kSudutMerah],
+    ['TERANG · kontingen di biru sudut', T.kSudutBiruTeks, T.kSudutBiru],
+    ['TERANG · bidang merah sudut di kertas (non-teks)', T.kSudutMerah, T.kKertas],
+    ['TERANG · bidang biru sudut di kertas (non-teks)', T.kSudutBiru, T.kKertas],
     ['TERANG · sukses di kertas', T.kSukses, T.kKertas],
     ['TERANG · perhatian di lembutnya', T.kPerhatian, T.kPerhatianLembut],
     ['TERANG · perhatian di kertas', T.kPerhatian, T.kKertas],

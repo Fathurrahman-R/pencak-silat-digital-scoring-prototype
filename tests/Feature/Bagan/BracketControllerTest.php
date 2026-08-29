@@ -154,3 +154,98 @@ it('menolak kelas tanding yang bukan milik kejuaraan di alamat', function () {
         ->get(route('admin.turnamen.bagan.show', [$this->tournament, $kelasLain]))
         ->assertNotFound();
 });
+
+/*
+ * --------------------------------------------------------------------
+ * Tata letak pohon bagan
+ * --------------------------------------------------------------------
+ */
+
+it('menyusun kolom pohon sebanyak babak, tidak lebih', function () {
+    /*
+     * Bagan 8 peserta punya TIGA babak: perempat final, semifinal, final.
+     * Satu kolom kelebihan akan menggambar papan kosong berlabel "Final" di
+     * sebelah final yang sebenarnya — dan panitia yang melihatnya menyimpulkan
+     * ada babak yang belum terisi.
+     */
+    ($this->buatPeserta)(8);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $pohon = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->viewData('pohon');
+
+    expect($pohon['kolom'])->toHaveCount(3)
+        ->and(collect($pohon['kolom'])->pluck('judul')->all())
+        ->toBe(['Perempat final', 'Semifinal', 'Final'])
+        ->and($pohon['kolom'][0]['slot'])->toHaveCount(8)
+        ->and($pohon['kolom'][1]['slot'])->toHaveCount(4)
+        ->and($pohon['kolom'][2]['slot'])->toHaveCount(2);
+});
+
+it('menempatkan garis penghubung tepat di tengah slot pasangannya', function () {
+    /*
+     * Ini alasan tata letaknya dihitung sebagai koordinat mutlak, bukan flex.
+     * Garis yang meleset satu-dua piksel terbaca sebagai bagan yang salah
+     * sambung, dan itu kesalahan paling mahal di layar ini: kontingen
+     * menyiapkan atlet untuk lawan yang keliru.
+     */
+    ($this->buatPeserta)(4);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $pohon = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->viewData('pohon');
+
+    $tinggi = $pohon['slot_tinggi'];
+    $tengah = fn (array $slot) => $slot['y'] + intdiv($tinggi, 2);
+
+    $garisH = collect($pohon['garis'])->where('jenis', 'h');
+    $garisV = collect($pohon['garis'])->where('jenis', 'v');
+
+    // Tiap slot babak pertama punya garis mendatar sejajar tengahnya.
+    foreach ($pohon['kolom'][0]['slot'] as $slot) {
+        expect($garisH->contains(fn ($g) => $g['y'] === $tengah($slot)))->toBeTrue();
+    }
+
+    // Tiap slot babak kedua disambut garis mendatar sejajar tengahnya.
+    foreach ($pohon['kolom'][1]['slot'] as $slot) {
+        expect($garisH->contains(fn ($g) => $g['y'] === $tengah($slot)))->toBeTrue();
+    }
+
+    // Garis tegak berhenti tepat di tengah kedua slot yang disatukannya.
+    $slotBabak1 = $pohon['kolom'][0]['slot'];
+    expect($garisV->first()['y'])->toBe($tengah($slotBabak1[0]))
+        ->and($garisV->first()['y'] + $garisV->first()['panjang'])->toBe($tengah($slotBabak1[1]));
+});
+
+it('mewarnai slot menurut sudut, dan membiarkan yang belum berpenghuni tetap netral', function () {
+    /*
+     * Slot ganjil adalah sudut merah — berlaku sebelum partainya dijadwalkan,
+     * dan kontingen memakai nomor itu untuk menyiapkan sudutnya.
+     *
+     * Slot babak lanjut yang penghuninya belum pasti TIDAK diwarnai:
+     * mewarnainya berarti menjanjikan sudut yang belum diputuskan.
+     */
+    ($this->buatPeserta)(4);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $pohon = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->viewData('pohon');
+
+    $babak1 = $pohon['kolom'][0]['slot'];
+
+    expect($babak1[0]['sudut'])->toBe('merah')
+        ->and($babak1[1]['sudut'])->toBe('biru')
+        ->and($babak1[2]['sudut'])->toBe('merah')
+        ->and($babak1[3]['sudut'])->toBe('biru');
+
+    // Final belum punya penghuni: keduanya menunggu.
+    foreach ($pohon['kolom'][1]['slot'] as $slot) {
+        expect($slot['menunggu'])->toBeTrue();
+    }
+});
