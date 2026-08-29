@@ -26,25 +26,104 @@ class VerificationController extends Controller
     public function index(Request $request, Tournament $tournament): View
     {
         $status = $request->string('status')->toString() ?: StatusPendaftaran::Diajukan->value;
+        $cari = $request->string('q')->toString();
 
-        $registrations = Registration::query()
-            ->whereHas('contingent', fn ($query) => $query->where('tournament_id', $tournament->id))
+        /*
+         * Dipaginasi, bukan ->get() seluruhnya.
+         *
+         * Susunan lama memuat SETIAP pendaftaran kejuaraan sekaligus beserta
+         * dokumen tiap atletnya. Kejuaraan daerah punya tiga ratus lebih
+         * pendaftaran, dan halaman itu dibuka berulang kali sepanjang hari
+         * pendaftaran -- justru saat basis datanya paling sibuk melayani
+         * official yang sedang mengunggah berkas.
+         */
+        $registrations = $this->dasar($tournament, $cari)
             ->when($status !== 'semua', fn ($query) => $query->where('status', $status))
             ->with(['athletes.documents', 'contingent.invoice', 'weightClass', 'jurusEvent', 'verifier'])
-            ->get()
-            ->sortBy(fn (Registration $r): string => $r->contingent->name.$r->namaNomor())
-            ->values();
+            ->join('contingents', 'contingents.id', '=', 'registrations.contingent_id')
+            ->orderBy('contingents.name')
+            ->orderBy('registrations.id')
+            ->select('registrations.*')
+            ->paginate(25)
+            ->withQueryString();
+
+        /*
+         * Hitungan tidak ikut menyusut oleh penyaring STATUS -- panitia yang
+         * menekan chip "Ditolak" tetap perlu melihat masih ada 28 yang
+         * menunggu, dan itulah angka yang menentukan ia harus kembali ke chip
+         * pertama.
+         *
+         * Tapi ia IKUT menyusut oleh pencarian. Chip menyaring di dalam hasil
+         * pencarian, bukan di luar: kalau ia tetap menyebut "Ditolak 6" saat
+         * yang dicari cuma satu nama, panitia menekannya, mendapat nol hasil,
+         * dan menyimpulkan pencariannya rusak.
+         */
+        $hitungan = $this->dasar($tournament, $cari)
+            ->selectRaw('status, count(*) as jumlah')
+            ->groupBy('status')
+            ->pluck('jumlah', 'status')
+            ->all();
+
+        $hitungan['semua'] = array_sum($hitungan);
+
+        /*
+         * Berkas peserta dibuka DI SAMPING daftarnya, bukan di halaman lain.
+         * Panitia memeriksa akta lalu langsung menekan Sahkan; memaksanya
+         * berpindah halaman berarti kehilangan tempat di daftar tiga ratus
+         * baris dan mengulang pencarian dari awal.
+         */
+        $terpilih = $request->integer('peserta') > 0
+            ? $registrations->firstWhere('id', $request->integer('peserta'))
+            : null;
 
         return view('admin.verifikasi.index', [
             'tournament' => $tournament,
             'registrations' => $registrations,
+            'terpilih' => $terpilih,
+            'berkas' => $terpilih ? $this->berkasPeserta($terpilih, $tournament) : null,
             'status' => $status,
+            'cari' => $cari,
             'statuses' => StatusPendaftaran::options(),
-            'jumlahMenunggu' => Registration::query()
-                ->whereHas('contingent', fn ($query) => $query->where('tournament_id', $tournament->id))
-                ->where('status', StatusPendaftaran::Diajukan)
-                ->count(),
+            'hitungan' => $hitungan,
+            'jumlahMenunggu' => $hitungan[StatusPendaftaran::Diajukan->value] ?? 0,
         ]);
+    }
+
+    /** Kueri dasar pendaftaran milik kejuaraan ini, sudah menerapkan pencarian. */
+    private function dasar(Tournament $tournament, string $cari = '')
+    {
+        return Registration::query()
+            ->whereHas('contingent', fn ($query) => $query->where('tournament_id', $tournament->id))
+            ->when($cari !== '', fn ($query) => $query->where(fn ($q) => $q
+                ->whereHas('athletes', fn ($a) => $a->where('name', 'like', "%{$cari}%"))
+                ->orWhereHas('contingent', fn ($k) => $k->where('name', 'like', "%{$cari}%"))
+                ->orWhereHas('weightClass', fn ($w) => $w->where('name', 'like', "%{$cari}%"))));
+    }
+
+    /**
+     * Berkas tiap atlet dalam satu pendaftaran, lengkap dengan yang kurang.
+     *
+     * Yang KURANG ikut disebut satu per satu, bukan cuma dihitung. Panitia
+     * yang membaca "2 berkas kurang" tetap harus menelepon official untuk
+     * tahu berkas apa; menyebutkan namanya menghapus satu panggilan telepon
+     * dari tiap pendaftaran yang tertahan.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function berkasPeserta(Registration $registration, Tournament $tournament): array
+    {
+        return $registration->athletes->map(function ($athlete) use ($tournament) {
+            $ada = $athlete->documents->keyBy(fn ($d) => $d->jenis->value);
+
+            return [
+                'atlet' => $athlete->name,
+                'berkas' => collect($athlete->berkasWajib($tournament))->map(fn ($jenis) => [
+                    'label' => $jenis->label(),
+                    'ada' => $ada->has($jenis->value),
+                    'diunggah_at' => $ada->get($jenis->value)?->created_at,
+                ])->all(),
+            ];
+        })->all();
     }
 
     public function setujui(Tournament $tournament, Registration $registration): RedirectResponse

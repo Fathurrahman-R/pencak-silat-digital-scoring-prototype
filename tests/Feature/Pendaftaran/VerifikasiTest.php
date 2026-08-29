@@ -223,5 +223,98 @@ it('menampilkan antrean verifikasi kepada sekretaris pertandingan', function () 
         // Sebab belum bisa disahkan ditulis di barisnya. Tombol mati tanpa
         // keterangan membuat panitia menebak, lalu menelepon official yang
         // juga tidak tahu.
-        ->assertSee('Tagihan belum terbit');
+        //
+        // Kalimatnya menyebut KONTINGEN MANA yang tagihannya tertahan:
+        // satu layar memuat banyak kontingen sekaligus, dan "tagihan belum
+        // terbit" tanpa nama tidak memberi tahu ke mana panitia harus pergi.
+        ->assertSee('Belum bisa disahkan')
+        ->assertSee("Tagihan {$this->kontingen->name} belum terbit.");
+});
+
+/*
+ * --------------------------------------------------------------------
+ * Antrean verifikasi: pencarian, hitungan, dan panel berkas
+ * --------------------------------------------------------------------
+ */
+
+it('mencari pendaftaran menurut nama atlet maupun kontingen', function () {
+    /*
+     * Layar ini sebelumnya tidak punya satu pun kotak cari, padahal daftarnya
+     * ratusan baris dan panitia mencari orang yang namanya baru saja disebut
+     * lewat pengeras suara.
+     */
+    $dicari = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
+    $dicari->athletes->first()->update(['name' => 'Zulkifli Akbar']);
+
+    pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
+
+    $hasil = $this->actingAs($this->sekretaris)
+        ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&q=Zulkifli")
+        ->assertOk()
+        ->viewData('registrations');
+
+    expect($hasil->total())->toBe(1)
+        ->and($hasil->first()->id)->toBe($dicari->id);
+});
+
+it('membuat hitungan chip ikut menyusut oleh pencarian, tapi tidak oleh penyaring status', function () {
+    /*
+     * Chip menyaring DI DALAM hasil pencarian. Kalau hitungannya tetap
+     * menyebut seluruh kejuaraan saat yang dicari cuma satu nama, panitia
+     * menekan chip itu, mendapat nol hasil, lalu menyimpulkan pencariannya
+     * rusak.
+     *
+     * Sebaliknya, penyaring status TIDAK boleh menyusutkan hitungan: panitia
+     * yang sedang melihat "Ditolak" tetap perlu tahu masih ada berapa yang
+     * menunggu.
+     */
+    $dicari = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
+    $dicari->athletes->first()->update(['name' => 'Zulkifli Akbar']);
+
+    pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
+    pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
+
+    $tanpaCari = $this->actingAs($this->sekretaris)
+        ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=ditolak")
+        ->assertOk()
+        ->viewData('hitungan');
+
+    // Penyaring status tidak menyusutkan hitungan.
+    expect($tanpaCari['semua'])->toBe(3);
+
+    $denganCari = $this->actingAs($this->sekretaris)
+        ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&q=Zulkifli")
+        ->assertOk()
+        ->viewData('hitungan');
+
+    // Pencarian menyusutkannya.
+    expect($denganCari['semua'])->toBe(1);
+});
+
+it('membawa berkas peserta terpilih beserta yang kurang, disebut satu per satu', function () {
+    /*
+     * Yang KURANG disebut namanya, bukan cuma dihitung. Panitia yang membaca
+     * "2 berkas kurang" tetap harus menelepon official untuk tahu berkas apa.
+     */
+    $athlete = Athlete::factory()->for($this->kontingen)->putra()
+        ->golongan(GolonganUsia::Dewasa, new DateTime('2026-09-01'))
+        ->create(['weight_claim' => 58.0]);
+
+    // Sengaja hanya satu berkas yang diunggah.
+    $wajib = $athlete->berkasWajib($this->tournament);
+    RegistrationDocument::factory()->for($athlete)->create(['jenis' => $wajib[0]]);
+
+    $registration = Registration::factory()->for($this->kontingen)->diajukan()
+        ->create(['weight_class_id' => $this->kelasC->id]);
+    $registration->athletes()->attach($athlete);
+
+    $berkas = $this->actingAs($this->sekretaris)
+        ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&peserta={$registration->id}")
+        ->assertOk()
+        ->viewData('berkas');
+
+    expect($berkas)->toHaveCount(1)
+        ->and($berkas[0]['atlet'])->toBe($athlete->name)
+        ->and(collect($berkas[0]['berkas'])->where('ada', true))->toHaveCount(1)
+        ->and(collect($berkas[0]['berkas'])->where('ada', false)->count())->toBe(count($wajib) - 1);
 });
