@@ -20,17 +20,11 @@
             <x-ui.table.toolbar :table="$table" placeholder="Cari role…">
                 <x-slot:bulk>
                     <x-can :resource="rk('roles', ResourceAction::Delete)">
-                        <form method="POST" action="{{ route('admin.roles.bulk-destroy') }}">
-                            @csrf
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="ids[]" :value="id">
-                            </template>
-
-                            <x-ui.button type="submit" variant="secondary" size="sm" class="border-danger text-danger">
-                                <x-ui.icon name="trash-2" class="size-4" />
-                                Hapus terpilih
-                            </x-ui.button>
-                        </form>
+                        {{-- Sebelumnya tombol ini mengirim langsung, tanpa satu pun
+                             konfirmasi dan tanpa menyebut berapa yang terpilih. --}}
+                        <x-si.hapus-borongan :aksi="route('admin.roles.bulk-destroy')"
+                                             benda="role"
+                                             akibat="Setiap pengguna yang memegang role ini kehilangan izin yang dibawanya. Role terkunci dilewati, tapi sisanya terhapus permanen." />
                     </x-can>
                 </x-slot:bulk>
             </x-ui.table.toolbar>

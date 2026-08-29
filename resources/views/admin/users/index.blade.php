@@ -42,18 +42,11 @@
 
                 <x-slot:bulk>
                     <x-can :resource="rk('users', ResourceAction::Delete)">
-                        <form method="POST" action="{{ route('admin.users.bulk-destroy') }}">
-                            @csrf
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="ids[]" :value="id">
-                            </template>
-
-                            <x-ui.button type="submit" variant="secondary" size="sm"
-                                         class="border-danger text-danger">
-                                <x-ui.icon name="trash-2" class="size-4" />
-                                Hapus terpilih
-                            </x-ui.button>
-                        </form>
+                        {{-- Sebelumnya tombol ini mengirim langsung, tanpa satu pun
+                             konfirmasi dan tanpa menyebut berapa yang terpilih. --}}
+                        <x-si.hapus-borongan :aksi="route('admin.users.bulk-destroy')"
+                                             benda="pengguna"
+                                             akibat="Akun yang terhapus kehilangan seluruh akses seketika, termasuk yang sedang membuka panel gelanggang. Penugasannya sebagai wasit atau juri di partai yang sudah dijadwalkan ikut kosong." />
                     </x-can>
                 </x-slot:bulk>
             </x-ui.table.toolbar>

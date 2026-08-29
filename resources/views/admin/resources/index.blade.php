@@ -28,17 +28,11 @@
 
                 <x-slot:bulk>
                     <x-can :resource="rk('resources', ResourceAction::Delete)">
-                        <form method="POST" action="{{ route('admin.resources.bulk-destroy') }}">
-                            @csrf
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="ids[]" :value="id">
-                            </template>
-
-                            <x-ui.button type="submit" variant="secondary" size="sm" class="border-danger text-danger">
-                                <x-ui.icon name="trash-2" class="size-4" />
-                                Hapus terpilih
-                            </x-ui.button>
-                        </form>
+                        {{-- Sebelumnya tombol ini mengirim langsung, tanpa satu pun
+                             konfirmasi dan tanpa menyebut berapa yang terpilih. --}}
+                        <x-si.hapus-borongan :aksi="route('admin.resources.bulk-destroy')"
+                                             benda="resource"
+                                             akibat="Permission miliknya tidak ikut terhapus, tapi key yang dipakai kode untuk menjaga pintunya hilang — dan pintu tanpa key tertutup untuk semua orang." />
                     </x-can>
                 </x-slot:bulk>
             </x-ui.table.toolbar>
