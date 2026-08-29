@@ -644,14 +644,15 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 2 — publik** | Beranda, kejuaraan, bagan, medali, gelanggang publik, tujuh layar masuk. Nol `x-ui.*` |
 | **Rombongan 3 — overlay siaran** | Scorebug, rincian, papan hasil, lower third, bagan. Nol `x-ui.*` |
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
-| **Rombongan 4 — sebagian** | Timbang badan, verifikasi pendaftaran, bagan bergaris pohon, jadwal, penugasan aparat |
+| **Rombongan 4 — sebagian** | Timbang badan, verifikasi, bagan bergaris pohon, jadwal, aparat, kontingen, atlet, gelanggang, tarif, bendahara |
+| **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pengukuran warna** | `scripts/kontras.mjs`, 62 pasangan, 62 lolos |
 
 ### 12.2 Belum
 
 | Bagian | Kenapa belum |
 |---|---|
-| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk); empat sudah jadi kode: timbang badan, verifikasi pendaftaran, bagan, jadwal, plus penugasan aparat. Sisanya menunggu lapisan tabel bersama — `x-ui.table` dipakai 115 kali dan belum punya padanan `si/*` |
+| **Rombongan 4 — panitia/admin** | **Berjalan.** Enam artboard digambar di kanvas lebih dulu (keputusan pemilik produk). Sudah jadi kode: timbang badan, verifikasi pendaftaran, bagan, jadwal, penugasan aparat, kontingen, atlet, gelanggang, tarif, bendahara, daftar kejuaraan. Lapisan `si/tabel` sudah ada dengan API sepadan. Pemakaian `x-ui.*` di admin turun 906 → 756 |
 | ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
 | **Tahap 4 — pembersihan** | `resources/views/components/ui/`, `design-system/` lama, dan sisa CSS RizzxxUI baru bisa dihapus setelah rombongan 4 selesai |
 
@@ -672,3 +673,6 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Timbang badan menggugurkan pesilat seketika** lewat satu tombol "Catat", tanpa satu kalimat pun sebelum atau sesudah
 - **Urutan jadwal hanya bisa digeser satu langkah,** masing-masing memuat ulang halaman: urutan 14 ke 2 berarti dua belas klik
 - **`confirm()` bawaan peramban** untuk mengacak ulang undian — kotak abu-abu tanpa rupa, tombolnya berbahasa peramban
+- **Tarif dihapus tanpa satu pun konfirmasi,** dan tagihan seluruh kontingen ikut berubah — termasuk yang sudah dikirim
+- **Berkas atlet dihapus tanpa konfirmasi,** padahal yang harus mengunggah ulang adalah official kontingen, bukan panitia
+- **Dialog dirender per baris** di enam layar: satu halaman berisi dua puluh lima baris berarti dua puluh lima dialog tersembunyi
