@@ -7,7 +7,7 @@
     live score publik.
 
     Berdiri sendiri dari layout admin. Yang dimuat hanya bundel silat, jadi
-    token RizzxxUI tidak pernah ikut masuk dan tidak mungkin bertabrakan.
+    token admin tidak pernah ikut masuk dan tidak mungkin bertabrakan.
 
     Tidak ada `data-theme` di sini, dan itu disengaja: papan skor tidak punya
     mode terang. Ia dibaca dari tribun dan difoto kamera siaran, jadi warnanya

@@ -104,7 +104,7 @@
 
     /* -----------------------------------------------------------------------
        Elevasi. Tidak ada kaca, noise, grid latar, maupun bevel — semuanya
-       warisan RizzxxUI. Kedalaman dinyatakan lewat warna permukaan dan satu
+       warisan boilerplate. Kedalaman dinyatakan lewat warna permukaan dan satu
        garis; bayangan hanya untuk lapisan yang benar-benar mengambang.
     ----------------------------------------------------------------------- */
     --bayang-angkat: 0 1px 2px rgb(20 18 14 / 0.08);

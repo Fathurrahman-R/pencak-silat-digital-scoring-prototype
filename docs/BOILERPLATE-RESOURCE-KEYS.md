@@ -1,12 +1,14 @@
-# Boilerplate — Auth + RBAC Resource Key + RizzxxUI
+# Boilerplate — Auth + RBAC Resource Key + lapisan komponen si/*
 
-> Dokumen teknis fondasi kode yang dipakai aplikasi ini (`Fathurrahman-R/boilerplate`), dipindah dari README utama supaya README bisa fokus menjelaskan aplikasi digital scoring pencak silat itu sendiri. Isinya tidak berubah dari boilerplate aslinya -- kode di seluruh domain silat (turnamen, pendaftaran, scoring, VAR, Jurus, rekap) memakai pola resource key ini apa adanya.
+> Dokumen teknis fondasi kode yang dipakai aplikasi ini (`Fathurrahman-R/boilerplate`), dipindah dari README utama supaya README bisa fokus menjelaskan aplikasi digital scoring pencak silat itu sendiri.
+>
+> Lapisan resource key dan RBAC-nya tidak berubah dari boilerplate aslinya — kode di seluruh domain silat (turnamen, pendaftaran, scoring, VAR, Jurus, rekap) memakai polanya apa adanya. **Lapisan komponennya berubah total:** design system boilerplate diganti lapisan `si/*` yang dirancang untuk panitia gelanggang, dan komponen lamanya sudah dihapus dari repo. Bagian "Lapisan komponen" di bawah menjelaskan yang berlaku sekarang; alasan tiap keputusannya ada di [`docs/BRIEF-DESAIN.md`](BRIEF-DESAIN.md).
 
 Titik awal untuk project Laravel baru: autentikasi lengkap, kontrol akses berbasis peran yang bisa diatur dari UI, dan design system sendiri yang dokumentasinya hidup di dalam aplikasi.
 
 Yang membedakannya dari boilerplate RBAC biasa: kode tidak pernah menyebut nama permission. Kode memakai **resource key**, dan permission di baliknya ditentukan lewat tabel pemetaan di database yang bisa diubah dari panel admin.
 
-**Stack:** Laravel 13 · PHP 8.3+ · MySQL 8 · Fortify · spatie/laravel-permission 8 · Tailwind CSS 4 · Alpine 3 · ApexCharts · Lucide · Pest 5
+**Stack:** Laravel 13 · PHP 8.3+ · MySQL 8 · Fortify · spatie/laravel-permission 8 · Tailwind CSS 4 · Alpine 3 · Lucide · Pest 5
 
 ---
 
@@ -42,12 +44,12 @@ Route::post('/laporan', ...)->middleware('resource:laporan.view,laporan.create')
 ```blade
 {{-- 2. Menyembunyikan bagian tampilan --}}
 @resource('laporan.export')
-    <x-ui.button>Ekspor</x-ui.button>
+    <x-si.tombol>Ekspor</x-si.tombol>
 @endresource
 
 {{-- 3. Komponen, untuk potongan UI kecil --}}
 <x-can resource="laporan.export">
-    <x-ui.button>Ekspor</x-ui.button>
+    <x-si.tombol>Ekspor</x-si.tombol>
 </x-can>
 ```
 
@@ -112,7 +114,7 @@ Lalu bagikan permission-nya ke role lewat menu Role.
 
 ## Tabel: pencarian, urutan, filter, ekspor
 
-`TableBuilder` mengurus query-nya, komponen `<x-ui.table>` mengurus tampilannya.
+`TableBuilder` mengurus query-nya, komponen `<x-si.tabel>` mengurus tampilannya.
 
 ```php
 $table = TableBuilder::for(Laporan::query()->with('penulis'))
@@ -125,16 +127,16 @@ return view('admin.laporan.index', ['laporan' => $table->paginate(), 'table' => 
 ```
 
 ```blade
-<x-ui.table.toolbar :table="$table" placeholder="Cari laporan…" />
+<x-si.tabel.toolbar :table="$table" placeholder="Cari laporan…" />
 
-<x-ui.table :table="$table" :headers="['judul' => 'Judul', 'created_at' => 'Dibuat', 0 => '']">
+<x-si.tabel :table="$table" :headers="['judul' => 'Judul', 'created_at' => 'Dibuat', 0 => '']">
     @foreach ($laporan as $item)
-        <x-ui.table.row>
-            <x-ui.table.cell header>{{ $item->judul }}</x-ui.table.cell>
+        <x-si.tabel.baris>
+            <x-si.tabel.sel header>{{ $item->judul }}</x-si.tabel.sel>
             ...
-        </x-ui.table.row>
+        </x-si.tabel.baris>
     @endforeach
-</x-ui.table>
+</x-si.tabel>
 ```
 
 Kolom yang boleh diurutkan wajib didaftarkan di `sortable()`. Nilai `?sort=` di luar daftar itu diabaikan, bukan diteruskan ke query.
@@ -152,103 +154,141 @@ Modul rekap silat (`app/Http/Controllers/Admin/RekapController.php`) memakai pol
 
 ---
 
-## Design system
+## Lapisan komponen
 
-Lapisan visualnya bernama **RizzxxUI**. Dokumentasinya bukan berkas terpisah yang bisa basi — ia halaman di dalam aplikasi ini, dirender dari komponen yang sama dengan yang dipakai panel admin:
+Lapisannya bernama `si/*` dan tinggal di `resources/views/components/si/`.
+Rujukan lengkapnya — token, alasan tiap keputusan, dan angka kontrasnya — ada
+di [`docs/BRIEF-DESAIN.md`](BRIEF-DESAIN.md); yang di bawah ini hanya cukup
+untuk mulai bekerja.
+
+Peraganya bukan berkas terpisah yang bisa basi, melainkan halaman di dalam
+aplikasi ini yang dirender dari komponen yang sama:
 
 | URL | Isi |
 |---|---|
-| `/design-system` | Prinsip, warna, tipografi, spacing, permukaan & kaca, material, motion, ikon |
-| `/design-system/komponen` | Seluruh komponen beserta varian dan potongan kode pemakaiannya |
-| `/design-system/pola` | Pola layout, voice & tone, dan panduan token untuk developer |
-| `/design-system/layar/…` | Lima layar bukti: dashboard, landing, internal tool, settings, auth |
+| `/design-system` | Seluruh komponen `si/*` dalam semua keadaannya |
+| `/design-system/gelanggang` | Papan skor, tombol juri, dan ikon aksi — bundel terpisah |
 
-Aktif di semua environment kecuali produksi. Kalau dimatikan, route-nya tidak didaftarkan sama sekali:
+Aktif di semua environment kecuali produksi. Kalau dimatikan, route-nya tidak
+didaftarkan sama sekali:
 
 ```
 DESIGN_SYSTEM_ENABLED=false
 ```
 
-**Ini design system PANEL ADMIN saja.** Panel gelanggang (operator/wasit/juri/dewan-juri/keberatan), halaman live score publik, dan overlay vMix memakai lapisan visual terpisah total ("papan skor") -- lihat `resources/css/silat.css` dan halaman peraga komponennya sendiri. Keduanya sengaja tidak pernah saling memuat berkas satu sama lain.
+Keduanya sengaja terpisah: yang pertama memakai bundel admin (terang), yang
+kedua memakai bundel silat (gelap) dan tidak memuat `app.css` sama sekali.
+Token yang bocor antar-bundel langsung kelihatan.
 
 ### Token
 
-Semua warna hidup sebagai CSS variable di `resources/css/app.css`, lalu dipetakan ke nama Tailwind di blok `@theme`. Tema berganti lewat atribut `data-theme` di `<html>` — **tidak ada satu pun kelas `dark:`** di seluruh view.
+Semua warna hidup sebagai CSS variable. Nilai mentahnya di
+`resources/css/dasar.css` (bersama + inti gelap) dan `dasar-admin.css` (inti
+terang); `app.css` hanya memetakannya ke nama Tailwind lewat blok `@theme`.
+Tema berganti lewat atribut `data-theme` di `<html>` — **tidak ada satu pun
+kelas `dark:`** di seluruh view.
 
 ```css
-:root            { --surface-raised: #FFFFFF; --accent: #3D5FE0; }
-:root[data-theme='dark'] { --surface-raised: #131923; --accent: #4F7CFF; }
-
 @theme inline {
     --color-surface-raised: var(--surface-raised);
     --color-accent: var(--accent);
 }
 ```
 
-Menyesuaikan tema untuk satu klien biasanya cukup mengganti `--accent`, `--accent-hover`, `--accent-soft`, `--accent-on`, dan `--mat-accent` di kedua blok.
+Menyesuaikan tema untuk satu klien biasanya cukup mengganti `--k-aksi`,
+`--k-aksi-lembut`, dan `--k-aksi-teks` di `dasar-admin.css`.
 
-Utility yang perlu diingat: `glass` · `mat-raised` `mat-base` `mat-panel` `mat-well` `mat-press` · `bg-shell` `bg-grid` `bg-grid-tight` `bg-noise` `bg-glow` · `num` · `eyebrow` · `form-check` `form-select` · `skeleton-line`.
+**Tidak ada kaca, bevel, grid latar, maupun butiran noise.** Semua itu warisan
+boilerplate dan sudah dibuang. Kedalaman dinyatakan lewat **warna permukaan dan
+satu garis**; bayangan hanya untuk lapisan yang benar-benar mengambang —
+dropdown, modal, panel rincian.
 
-**Aturan kaca.** Blur hanya untuk lapisan yang mengambang di atas latar bertekstur — sidebar, topbar, hero, kartu metrik. Tabel, form, dan teks panjang selalu di permukaan solid. Kaca di atas warna rata cuma jadi kotak abu-abu, jadi latar bertekstur di `layouts/base` bukan hiasan melainkan syarat.
+Halaman aplikasi memanggil `<x-layouts.base shell>` untuk mendapat latar shell;
+sisanya duduk langsung di atas permukaan kertas.
 
-Latarnya dipilih lewat prop `backdrop` di `<x-layouts.base>`:
-
-| Nilai | Dipakai | Isi |
-|---|---|---|
-| `page` (bawaan) | landing, auth, dokumentasi | `bg-surface` + grid 32px + noise |
-| `shell` | seluruh halaman aplikasi | `bg-shell` (bidang `mat-base` + semburat aksen) + grid 24px + noise |
-
-**Aturan material.** Yang menonjol bisa ditekan (`mat-raised`, bayangan `bevel` + `lift`), yang cekung bisa diisi (`mat-well`), dan konten selalu datar. Satu sumber cahaya, selalu dari atas. Bidang yang menaungi sekelompok kontrol memakai `mat-panel` — bayangannya `lift-lg`, satu tingkat di atas tombol yang ada di dalamnya. Tidak ada kedalaman di baris tabel dan tidak ada emboss di teks; keduanya menggagalkan kontras AA.
-
-**Sidebar yang diciutkan.** Lebarnya dipegang `--shell-sidebar` di `<html>`, bukan Alpine, supaya sudah benar sebelum halaman digambar. Nilainya adalah ruang yang dipesan di tepi kiri: panel kaca mengambang dengan jarak 12px di kiri dan kanan, jadi rail 68px yang diminta design system tercatat sebagai `calc(var(--rail-w) + 1.5rem)`. Ubah `--rail-w` kalau ikonnya perlu ruang lebih.
+**Tidak ada warna masuk desain sebelum angkanya diukur.** `npm run
+periksa-rupa` menjalankan dua pemeriksa: `scripts/kontras.mjs` (72 pasangan
+warna) dan `scripts/sapu-prop.mjs` (prop berbahasa lama yang tersangkut di tag
+`x-si.*`). Keduanya keluar dengan kode 1 kalau ada yang gagal.
 
 ### Komponen
 
-Semua di `resources/views/components/ui/`, semuanya bekerja di terang maupun gelap tanpa varian tambahan.
+Semua di `resources/views/components/si/`, semuanya bekerja di terang maupun
+gelap tanpa varian tambahan. **Propnya berbahasa Indonesia** — `varian`,
+`ukuran`, `tipe`, `wajib`, `bantuan`, `judul` — sama seperti sisa kode ini.
 
-`button` `input` `textarea` `select` `datepicker` `file-upload` `dropzone` `checkbox` `radio` `toggle` `slider` `label` `field-note` · `card` `badge` `alert` `stat` `skeleton` `empty-state` `spinner` `avatar` `avatar-stack` `presence-dot` `breadcrumb` `icon` `kbd` `code-block` · `table` `table.row` `table.cell` `table.toolbar` · `modal` `drawer` `drawer-remote` `dropdown` `dropdown-item` `tooltip` `tabs` `toast` `command-palette` `notification-menu` · `combobox` `tag-input` `stepper` `segmented` `filter-chips` · `progress` `ratio-bar` `legend` `bar-chart` · `accordion` `accordion-item` `timeline` `wizard`
+Isian: `tombol` `isian` `isian-panjang` `pilihan` `centang` `saklar` `unggah` ·
+Wadah: `kartu` `modal` `panel-rincian` `tabel` (+`tabel.baris` `tabel.sel`
+`tabel.toolbar`) · Penanda: `badge` `ikon` `foto` `titik-hadir` `angka`
+`callout` `kosong` `pesan-kilat` `tuts` `linimasa` `pohon-bagan` · Navigasi:
+`menu` `menu-butir` `jejak` `tab-halaman` `saring` `lonceng` `cari-menu` ·
+Bahaya: `konfirmasi` `hapus-baris` `hapus-borongan`
 
-`bar-chart` dirender [ApexCharts](https://apexcharts.com), diimpor dinamis lewat `Alpine.data('apexBarChart', …)` di `resources/js/app.js` — halaman yang tidak menampilkan grafik tidak ikut menanggung beratnya di bundle.
+Panel gelanggang punya lapisannya sendiri (`x-silat.*`) yang tidak pernah
+dimuat bersama yang ini.
 
-Pencarian, filter, dan pagination tinggal di dalam kartu tabel yang sama lewat slot `toolbar` dan `footer`, bukan sebagai tiga potong yang kebetulan bertumpuk:
+Pencarian, penyaring, dan penomoran halaman tinggal di dalam kartu tabel yang
+sama lewat slot `toolbar` dan `footer`, bukan sebagai tiga potong yang
+kebetulan bertumpuk:
 
 ```blade
-<x-ui.table :table="$table" :headers="['name' => 'Nama']">
+<x-si.tabel :table="$table" :headers="['name' => 'Nama']">
     <x-slot:toolbar>
-        <x-ui.table.toolbar :table="$table" placeholder="Cari nama…" />
+        <x-si.tabel.toolbar :table="$table" placeholder="Cari nama…" />
     </x-slot:toolbar>
 
     {{-- baris --}}
 
     <x-slot:footer>{{ $users->links() }}</x-slot:footer>
-</x-ui.table>
+</x-si.tabel>
 ```
 
-View pagination-nya ada di `resources/views/vendor/pagination/`. Bawaan Laravel sengaja diganti: kelas `gray-*` dan `dark:*` di dalamnya tidak ikut berganti saat `data-theme` berubah.
+View penomoran halamannya ada di `resources/views/vendor/pagination/`. Bawaan
+Laravel sengaja diganti: kelas `gray-*` dan `dark:*` di dalamnya tidak ikut
+berganti saat `data-theme` berubah.
 
-Komponen form membaca `$errors` sendiri — cukup sebut `name`, pesan validasinya muncul otomatis:
+Komponen isian membaca `$errors` sendiri — cukup sebut `name`, pesan
+validasinya muncul otomatis. Tanda wajib berupa **kata**, bukan tanda bintang:
 
 ```blade
-<x-ui.input name="judul" label="Judul" required />
+<x-si.isian name="judul" label="Judul" wajib />
 ```
 
-Layout: `<x-layouts.admin>` (sidebar kaca + topbar + breadcrumb), `<x-layouts.guest>` (kartu terpusat untuk flow auth pendek/sensitif — 2FA, reset kata sandi), `<x-layouts.guest-split>` (form + panel kepercayaan kaca, dipakai Masuk/Daftar), `<x-layouts.docs>` (halaman dokumentasi).
+Layout: `<x-layouts.admin>` (sidebar + topbar + jejak halaman),
+`<x-layouts.guest>` (kartu terpusat untuk alur auth pendek — 2FA, reset kata
+sandi), `<x-layouts.guest-split>` (formulir + panel kepercayaan, dipakai
+Masuk/Daftar), `<x-layouts.docs>` (halaman peraga).
 
-**Perilaku dinamis memakai Alpine, bukan pustaka UI.** Tidak ada langkah re-init setelah DOM berubah. Modal dan drawer dibuka dengan event:
+**Perilaku dinamis memakai Alpine, bukan pustaka UI.** Tidak ada langkah
+re-init setelah DOM berubah. Modal dibuka dengan event:
 
 ```blade
-<x-ui.button type="button" x-on:click="$dispatch('modal-open', 'hapus-user')">Hapus</x-ui.button>
+<x-si.tombol tipe="button" x-on:click="$dispatch('modal-open', 'hapus-user')">Hapus</x-si.tombol>
 
-<x-ui.modal id="hapus-user" title="Hapus pengguna?" size="sm">…</x-ui.modal>
+<x-si.modal id="hapus-user" judul="Hapus pengguna" ukuran="kecil">…</x-si.modal>
 ```
 
-Ikon memakai Lucide lewat `mallardduck/blade-lucide-icons` — SVG inline, tanpa JavaScript. Nama ikonnya apa adanya dari [lucide.dev/icons](https://lucide.dev/icons):
+**Tindakan yang menghapus TIDAK memakai modal biasa.** Ia memakai
+`<x-si.konfirmasi>` (satu objek tertentu) atau `<x-si.hapus-baris>` (satu
+dialog untuk seluruh halaman, barisnya mengirim muatannya lewat `data-*`).
+Keduanya menuntut prop `akibat`: kalimat yang menyebut apa lagi yang ikut
+hilang. "Yakin?" bukan informasi.
+
+Ikon memakai Lucide lewat `mallardduck/blade-lucide-icons` — SVG inline, tanpa
+JavaScript. Nama ikonnya apa adanya dari [lucide.dev/icons](https://lucide.dev/icons):
 
 ```blade
-<x-ui.icon name="trash-2" class="size-4" />
+<x-si.ikon nama="trash-2" class="size-4" />
 ```
 
-Font Sora, Space Grotesk, dan IBM Plex Mono di-bundle Vite lewat paket `@fontsource`, bukan diambil dari CDN — aplikasi tetap tampil benar di jaringan tertutup. Panel silat memakai Space Grotesk dan IBM Plex Mono dari bundel yang sama.
+Ikon tidak pernah berdiri sendiri sebagai tombol. Ia selalu berdampingan
+dengan kata: `title` tidak pernah muncul di layar sentuh, dan orang yang jarang
+memakai aplikasi tidak menebak arti gambar.
+
+Font Sora, Space Grotesk, dan IBM Plex Mono di-bundle Vite lewat paket
+`@fontsource`, bukan diambil dari CDN — aplikasi tetap tampil benar di jaringan
+tertutup. Panel silat memakai Space Grotesk dan IBM Plex Mono dari bundel yang
+sama.
 
 ---
 

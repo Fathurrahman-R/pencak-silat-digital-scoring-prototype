@@ -121,7 +121,7 @@ Nilai juri Jurus (`jurus_scores`) memakai upsert per juri, **bukan** log immutab
 - [`docs/PANDUAN-WORKFLOW.md`](docs/PANDUAN-WORKFLOW.md) — cara memakai aplikasi tahap demi tahap, dari kejuaraan kosong sampai rekap medali
 - [`docs/PANDUAN-OPERASIONAL.md`](docs/PANDUAN-OPERASIONAL.md) — alur hari-H untuk panitia, setup vMix
 - [`docs/PARAMETER-PERATURAN.md`](docs/PARAMETER-PERATURAN.md) — tiap parameter `config/scoring.php` dipetakan ke pasal naskah 2025
-- [`docs/BOILERPLATE-RESOURCE-KEYS.md`](docs/BOILERPLATE-RESOURCE-KEYS.md) — dokumentasi teknis fondasi kode (resource key, RBAC, RizzxxUI)
+- [`docs/BOILERPLATE-RESOURCE-KEYS.md`](docs/BOILERPLATE-RESOURCE-KEYS.md) — dokumentasi teknis fondasi kode (resource key, RBAC, lapisan komponen si/*)
 
 ---
 

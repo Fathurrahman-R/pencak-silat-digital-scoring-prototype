@@ -7,7 +7,7 @@
 {{--
     Layar autentikasi utama (Masuk/Daftar): form solid di kiri, panel
     kepercayaan di kanan — mengikuti seksi 05 "Auth" pada
-    `document/design-system/RizzxxUI Screens.dc.html`. Panel kanan hilang di
+    layar contoh boilerplate asalnya. Panel kanan hilang di
     bawah `lg`, form tetap penuh lebar supaya alur masuk tidak pernah
     terhalang oleh dekorasi.
 
@@ -53,8 +53,8 @@
                 gelap memisahkannya tegas dari formulir di kiri.
 
                 Gradien aksen dan lapisan grid dibuang bersama efek material
-                RizzxxUI di Tahap 0 -- keduanya sudah berhenti menggambar apa pun
-                sejak saat itu, dan menyisakan elemennya hanya membingungkan
+                warisan boilerplate -- keduanya sudah berhenti menggambar apa
+                pun sejak saat itu, dan menyisakan elemennya hanya membingungkan
                 orang berikutnya.
             --}}
             <div class="relative hidden flex-col justify-between gap-10 overflow-hidden bg-[#0b0b0c] p-10 text-white lg:flex">

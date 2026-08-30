@@ -2,15 +2,15 @@
     'title' => null,
 
     /*
-     * `texture` dan `backdrop` dipertahankan sebagai prop supaya 20+ pemanggil
-     * tidak putus, tapi keduanya tidak lagi menggambar apa pun. Grid dan
-     * butiran noise adalah warisan RizzxxUI: keduanya ada untuk membuat panel
-     * kaca terbaca sebagai kaca, dan kacanya sendiri sudah dibuang.
+     * Latar shell dipakai halaman yang punya sidebar dan topbar mengambang;
+     * sisanya duduk langsung di atas permukaan kertas.
      *
-     * Prop-nya ikut hilang di Tahap 4, saat tidak ada lagi yang memanggilnya.
+     * Menggantikan prop `backdrop` bernilai 'page'|'shell' dan prop `texture`
+     * yang sudah lama tidak menggambar apa pun -- grid dan butiran noise ada
+     * untuk membuat panel kaca terbaca sebagai kaca, dan kacanya sendiri sudah
+     * dibuang.
      */
-    'texture' => true,
-    'backdrop' => 'page',
+    'shell' => false,
 ])
 
 <!DOCTYPE html>
@@ -28,8 +28,6 @@
 
     @stack('head')
 </head>
-@php($shell = $backdrop === 'shell')
-
 <body @class([
     'min-h-screen font-sans text-body leading-relaxed text-ink antialiased',
     'bg-shell' => $shell,

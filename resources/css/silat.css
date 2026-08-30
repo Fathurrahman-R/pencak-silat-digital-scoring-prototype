@@ -4,15 +4,15 @@
 /* ---------------------------------------------------------------------------
    Design system gelanggang
    ---------------------------------------------------------------------------
-   Lapisan terpisah dari RizzxxUI, dipakai panel gelanggang, halaman live score
-   publik, dan overlay siaran vMix. Halaman admin tidak pernah memuat berkas
-   ini, sehingga token RizzxxUI tidak mungkin ikut berubah.
+   Bundel yang terpisah dari bundel admin, dipakai panel gelanggang, halaman
+   live score publik, dan overlay siaran vMix. Halaman admin tidak pernah
+   memuat berkas ini, sehingga token admin tidak mungkin ikut berubah.
 
    Bentuknya mengikuti konvensi papan skor pencak silat yang sudah dikenal:
    dua blok warna sudut, angka putih besar, timer di tengah, indikator juri
    berupa titik. Tidak ada ornamen, tidak ada gradien.
 
-   Beda mendasar dari RizzxxUI: papan skor TIDAK punya mode terang. Warnanya
+   Beda mendasar dari bundel admin: papan skor TIDAK punya mode terang. Warnanya
    tetap gelap di segala kondisi, karena dibaca dari jarak jauh di gelanggang
    dan dilapiskan di atas gambar kamera saat siaran. Karena itu tidak ada
    `data-theme` di sini, dan itu disengaja.

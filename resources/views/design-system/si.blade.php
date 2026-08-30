@@ -18,7 +18,7 @@
         <div class="flex flex-col gap-2 border-b border-line pb-6">
             <h1 class="text-[32px] leading-tight font-bold text-ink">Lapisan komponen si/*</h1>
             <p class="max-w-[70ch] text-[16px] leading-relaxed text-ink-secondary">
-                Pengganti RizzxxUI. Tiap komponen tampil dalam seluruh keadaannya — kalau satu keadaan rusak, ia ketahuan di sini alih-alih di gelanggang.
+                Tiap komponen tampil dalam seluruh keadaannya — kalau satu keadaan rusak, ia ketahuan di sini alih-alih di gelanggang.
             </p>
         </div>
 

@@ -12,7 +12,7 @@
     sebagai lapisan, bukan sebagai bagian dari halaman.
 --}}
 
-<x-layouts.base :title="$title ?? $heading" backdrop="shell">
+<x-layouts.base :title="$title ?? $heading" shell>
     <div class="relative flex min-h-screen items-start gap-[var(--shell-gap)] p-[var(--shell-pad)]">
         @include('layouts.partials.sidebar')
 

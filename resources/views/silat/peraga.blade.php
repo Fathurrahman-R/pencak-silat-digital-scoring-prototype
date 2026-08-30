@@ -5,7 +5,7 @@
             <p class="silat-angka text-[12px] tracking-[.12em] text-silat-teks-samar">DESIGN SYSTEM GELANGGANG</p>
             <h1 class="mt-1 text-2xl font-medium text-silat-teks">Papan skor, tombol juri, dan ikon aksi</h1>
             <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-silat-teks-redup">
-                Lapisan terpisah dari RizzxxUI. Dipakai panel gelanggang, live score publik, dan
+                Lapisan yang terpisah dari bundel admin. Dipakai panel gelanggang, live score publik, dan
                 overlay siaran. Nilai, hukuman, jumlah kolom, dan formasi juri di halaman ini
                 dibaca dari <span class="silat-angka text-silat-teks">config/scoring.php</span>,
                 bukan ditulis ulang — jadi kalau setelannya berubah, halaman ini ikut berubah.

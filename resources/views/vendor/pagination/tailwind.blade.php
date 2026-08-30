@@ -1,5 +1,5 @@
 {{--
-    Pagination RizzxxUI.
+    Penomoran halaman.
 
     Bawaan Laravel memakai kelas warna mentah (bg-white, text-gray-700, dan
     varian dark:) yang tidak ikut berganti saat data-theme berubah. Versi ini

@@ -4,18 +4,23 @@
 ])
 
 {{--
-    Layout dokumentasi: topbar kaca + daftar isi yang menempel. Sengaja bukan
-    shell admin, supaya halaman ini bisa dibuka tanpa login dan tidak
-    tercampur dengan menu aplikasi.
+    Layout dokumentasi: topbar + daftar isi yang menempel. Sengaja bukan shell
+    admin, supaya halaman ini bisa dibuka tanpa login dan tidak tercampur
+    dengan menu aplikasi.
 
     $nav berbentuk ['#anchor' => 'Label'] atau ['Kelompok' => ['#a' => 'Label']].
 --}}
 
 @php
-    $pages = [
-        'foundation' => 'Fondasi',
-        'components' => 'Komponen',
-        'patterns' => 'Pola & panduan',
+    /*
+     * Dua halaman peraga yang tersisa setelah lapisan komponen lama dibongkar.
+     * Keduanya sengaja terpisah: `si` memakai bundel admin (terang), `gelanggang`
+     * memakai bundel silat (gelap) dan tidak memuat app.css sama sekali —
+     * sehingga token yang bocor antar-bundel langsung kelihatan.
+     */
+    $halaman = [
+        'si' => 'Komponen si/*',
+        'gelanggang' => 'Gelanggang',
     ];
 @endphp
 
@@ -28,12 +33,12 @@
                 </span>
                 <span class="font-display text-base font-semibold tracking-tight text-ink">{{ config('app.name') }}</span>
                 <span class="hidden rounded-full border border-line px-2 py-px font-mono text-[11px] text-ink-muted sm:inline">
-                    design system
+                    peraga komponen
                 </span>
             </a>
 
             <nav class="ms-4 hidden gap-1 md:flex">
-                @foreach ($pages as $route => $label)
+                @foreach ($halaman as $route => $label)
                     <a href="{{ route('design-system.'.$route) }}"
                        @class([
                            'rounded-sm px-2.5 py-1.5 text-[13.5px] transition',

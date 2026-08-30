@@ -26,7 +26,7 @@
 @source inline("bg-{accent,chart-1,chart-2,chart-3,chart-4,chart-5,chart-6}");
 
 /* ---------------------------------------------------------------------------
-   RizzxxUI — token mentah
+   Lapisan pemetaan token
    ---------------------------------------------------------------------------
    Satu-satunya tempat nilai warna ditulis. Tema berganti dengan mengubah
    atribut `data-theme` di <html>; tidak ada varian `dark:` di komponen mana
@@ -35,9 +35,10 @@
 
 :root {
     /* -----------------------------------------------------------------------
-       Lapisan pemetaan. Nilai sesungguhnya ada di dasar.css; di sini ia hanya
-       diberi nama yang sudah dikenal RizzxxUI, supaya alias Tailwind di bawah
-       dan seluruh view yang memakainya tidak perlu diubah.
+       Nilai sesungguhnya ada di dasar.css; di sini ia hanya diberi nama
+       lama yang dipakai alias Tailwind di bawah dan seluruh view. Nama-nama
+       itu warisan boilerplate; dipertahankan supaya mengganti nilainya tidak
+       menuntut menyentuh ratusan pemanggilan.
     ----------------------------------------------------------------------- */
     --surface: var(--k-kertas);
     --surface-raised: var(--k-kertas-naik);
@@ -83,10 +84,6 @@
     --elev-sm: var(--bayang-angkat);
     --elev-md: var(--bayang-apung);
     --elev-lg: var(--bayang-modal);
-
-    /* Grid dan noise tidak lagi menggambar apa pun. */
-    --grid-line: transparent;
-    --noise-opacity: 0;
 
     --code-bg: var(--k-kertas-turun);
     --code-text: var(--k-tinta-kedua);
@@ -137,7 +134,6 @@
     --control-h: var(--sentuh-admin);
     --rail-w: 72px;
     --glass-blur: 0px;
-    --grid-size: 26px;
 
     --shell-pad: 16px;
     --shell-gap: 16px;
@@ -152,9 +148,6 @@
    seluruh pemetaan di atas ikut berganti tanpa satu pun baris tambahan.
    Yang tersisa di sini hanya yang tidak diturunkan dari --k-*. */
 :root[data-theme='dark'] {
-    --grid-line: transparent;
-    --noise-opacity: 0;
-
     --code-bg: var(--k-kertas-naik);
     --code-text: var(--k-tinta-kedua);
 
@@ -379,7 +372,7 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Utility RizzxxUI
+   Utility bersama
    ---------------------------------------------------------------------------
    Resep yang terlalu panjang untuk ditulis ulang sebagai rentetan kelas di
    setiap komponen. Sisanya tetap memakai utility Tailwind biasa.
@@ -420,32 +413,6 @@
     box-shadow: var(--bevel), var(--lift);
 }
 
-/* Panel kontrol: bidang material yang menampung tombol, tuas, dan slider.
-   Dipakai untuk kelompok kontrol, bukan untuk teks panjang atau tabel. */
-@utility mat-panel {
-    background-image: var(--mat-base);
-    box-shadow: var(--bevel), var(--lift-lg);
-    border: 1px solid var(--border-subtle);
-}
-
-@utility mat-well {
-    background-color: var(--surface-sunken);
-    box-shadow: var(--well);
-}
-
-@utility mat-press {
-    box-shadow: var(--press);
-    transform: translateY(1px);
-}
-
-/* Latar bertekstur — syarat agar kaca terbaca sebagai kaca. */
-@utility bg-grid {
-    background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: var(--grid-size) var(--grid-size);
-}
-
 /* Latar shell aplikasi: semburat aksen di pojok kiri atas di atas permukaan
    datar. Panel kaca butuh sesuatu yang berwarna dan bergradasi di belakangnya —
    di atas warna rata, kaca hanya jadi kotak abu-abu. */
@@ -454,45 +421,12 @@
     background-image: radial-gradient(70% 90% at 12% 0%, var(--accent-soft) 0%, transparent 48%);
 }
 
-@utility bg-noise {
-    opacity: var(--noise-opacity);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-}
-
 @utility bg-glow {
     background-image: radial-gradient(90% 120% at 12% 0%, var(--accent-soft) 0%, transparent 55%);
 }
 
-/* Select yang ditulis langsung di halaman (mis. filter di atas tabel). Panah
-   digambar sendiri supaya bentuknya sama di Chrome, Firefox, dan Safari —
-   sama seperti yang dilakukan komponen x-ui.select. */
-@utility form-select {
-    appearance: none;
-    height: 36px;
-    padding-inline: 12px 34px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--border-subtle);
-    background-color: var(--surface-sunken);
-    box-shadow: var(--well);
-    font-size: 13.5px;
-    color: var(--text-primary);
-    cursor: pointer;
-    outline: none;
-    transition:
-        border-color 0.12s,
-        box-shadow 0.12s;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c717c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-
-    &:focus {
-        border-color: var(--accent);
-        box-shadow: var(--well), 0 0 0 3px var(--accent-soft);
-    }
-}
-
 /* Kotak centang: cekung saat kosong, terisi aksen saat dicentang. Dipakai
-   komponen x-ui.checkbox dan matriks centang yang menulis input-nya sendiri. */
+   matriks centang di layar role dan resource, yang menulis input-nya sendiri. */
 @utility form-check {
     appearance: none;
     flex: none;
@@ -545,43 +479,6 @@
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--text-muted);
-}
-
-/* Versi judul seksi: sedikit lebih besar dan lebih renggang. */
-@utility eyebrow-lg {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-/* Garis rambut: kisi dengan celah 1px yang diisi warna garis, tiap sel
-   menimpanya dengan permukaan. Menghasilkan pembatas 1px yang rata tanpa
-   border ganda di persimpangan. */
-@utility hairline-grid {
-    display: grid;
-    gap: 1px;
-    background-color: var(--border-subtle);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-lg);
-    overflow: hidden;
-
-    & > * {
-        background-color: var(--surface-raised);
-    }
-}
-
-@utility skeleton-line {
-    background: linear-gradient(
-        90deg,
-        var(--surface-inset) 0%,
-        var(--surface-sunken) 40%,
-        var(--surface-inset) 80%
-    );
-    background-size: 600px 100%;
-    animation: var(--animate-shimmer);
 }
 
 /* ---------------------------------------------------------------------------

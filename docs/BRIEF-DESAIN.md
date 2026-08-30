@@ -611,7 +611,7 @@ Bukan bagian menggambar, tapi menentukan apa yang bisa diwujudkan.
 | Bundel | Melayani | Tidak boleh memuat |
 |---|---|---|
 | `app.*` | Admin/panitia | Token khusus gelanggang yang tidak dipakainya |
-| `silat.*` | Panel gelanggang, live publik, overlay | ApexCharts, komponen admin, token khusus admin |
+| `silat.*` | Panel gelanggang, live publik, overlay | Komponen admin dan token khusus admin |
 
 Bundel ketiga `upacara.*` **dibatalkan** bersama lapisan upacara (§4.4). Halaman publik memakai `silat.*` yang sama dengan panel gelanggang, jadi tidak ada huruf tambahan yang terseret ke overlay vMix.
 
@@ -685,13 +685,22 @@ Cabang kerja: `rombak-ui`.
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pemeriksa otomatis** | `npm run periksa-rupa`: `kontras.mjs` (72 pasangan, 72 lolos) dan `sapu-prop.mjs` (nol prop tersangkut) |
+| **Tahap 4 — pembersihan** | **Selesai.** 68 berkas dan 5.009 baris dihapus: 55 komponen `ui/`, 4 komponen `docs/`, 8 halaman peraga RizzxxUI, `DesignSystemController`. `app.css` turun 617 → 513 baris — sembilan utilitas dan tiga token yang tidak dipanggil satu berkas pun. `apexBarChart` ikut, beserta dependency `apexcharts`: satu-satunya pemanggilnya adalah `x-ui.bar-chart`, dan tidak ada satu pun grafik di aplikasi silat — rekap medali memakai tabel dan angka, karena angkanya dibacakan ke berita acara. Prop `texture` dan `backdrop` di layout dasar diganti satu prop `shell` |
 
 ### 12.2 Belum
 
-| Bagian | Kenapa belum |
+Tidak ada lagi yang tersisa dari rencana rombak ini. Empat rombongan layar
+selesai, lapisan lama dibongkar, dan `resources/views/` nol `x-ui.*`.
+
+Yang berikutnya bukan lanjutan rombak, melainkan pekerjaan yang selama ini
+ditunda karenanya:
+
+| Bagian | Catatan |
 |---|---|
-| ~~**Verifikasi juri**~~ | **Selesai.** Dua tabel, resource key `verifikasi-juri`, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di riwayat dan berita acara. 32 uji |
-| **Tahap 4 — pembersihan** | **Siap dikerjakan.** Rombongan 4 selesai, jadi `resources/views/components/ui/`, empat halaman peraga RizzxxUI lama, dan sisa CSS-nya sudah tidak dipanggil satu layar pun. Yang tersisa hanya menghapusnya, dan menurunkan `DesignSystemTest` ke halaman yang benar-benar tinggal |
+| **Kanvas belum menyusul kode** | Enam artboard rombongan 4 digambar sebelum layarnya jadi kode; sembilan layar panitia yang dikerjakan sesudahnya (pengguna, role, permission, resource, pemetaan, bendahara, siaran, tarif, pendaftaran) belum punya artboard. Kanvasnya kini tertinggal dari kode, bukan mendahuluinya |
+| **Kontras hanya menguji yang didaftarkan** | 72 pasangan. Chip penyaring putih-di-atas-putih lolos berbulan-bulan justru karena pasangannya tidak pernah ditulis di sana. Menambahkan pembacaan token dari CSS secara langsung akan menutup celah itu |
+| **Bundel gelanggang belum disapu** | `sapu-prop.mjs` hanya membaca tag `x-si.*`. Komponen `x-silat.*` punya prop berbahasa Indonesia sejak awal, jadi tidak ada sisa terjemahan — tapi juga tidak ada yang menjaganya |
+
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
 

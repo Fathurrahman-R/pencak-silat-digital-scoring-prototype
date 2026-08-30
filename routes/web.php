@@ -28,7 +28,6 @@ use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\BerandaController;
 use Illuminate\Support\Facades\Route;
@@ -37,7 +36,7 @@ Route::get('/', BerandaController::class)->name('home');
 
 /*
 |--------------------------------------------------------------------------
-| Dokumentasi design system
+| Peraga komponen
 |--------------------------------------------------------------------------
 |
 | Sengaja tidak didaftarkan sama sekali kalau dimatikan, supaya di produksi
@@ -45,31 +44,16 @@ Route::get('/', BerandaController::class)->name('home');
 | database dan tidak butuh login, jadi tetap bisa dibuka di project baru yang
 | seedernya belum dijalankan.
 |
+| Dua halaman, dan keduanya sengaja terpisah: yang pertama memakai bundel
+| admin (terang), yang kedua memakai bundel silat (gelap) dan tidak memuat
+| app.css sama sekali. Token yang bocor antar-bundel langsung kelihatan.
+|
+| Empat halaman peraga RizzxxUI beserta lima layar contohnya sudah dihapus:
+| lapisan `ui/` yang mereka peragakan tidak dipanggil satu layar pun lagi.
+|
 */
 if (config('design-system.enabled')) {
-    Route::controller(DesignSystemController::class)
-        ->prefix('design-system')
-        ->name('design-system.')
-        ->group(function () {
-            Route::get('/', 'foundation')->name('foundation');
-            Route::get('/komponen', 'components')->name('components');
-            Route::get('/pola', 'patterns')->name('patterns');
-            Route::get('/layar/{screen}', 'screen')->name('screen');
-
-            /*
-             * Dokumentasi hidup lapisan komponen baru. Ia berdiri di samping
-             * peraga RizzxxUI selama masa peralihan; begitu lapisan lama
-             * dibongkar, halaman inilah yang tersisa.
-             */
-            Route::view('/si', 'design-system.si')->name('si');
-        });
-
-    /*
-     * Peraga design system gelanggang. Sejajar dengan /design-system milik
-     * admin, tapi memakai bundel dan token yang benar-benar terpisah — halaman
-     * ini tidak memuat app.css sama sekali, sehingga kalau ada token silat yang
-     * bocor ke RizzxxUI (atau sebaliknya), akan langsung kelihatan di sini.
-     */
+    Route::view('/design-system', 'design-system.si')->name('design-system.si');
     Route::view('/design-system/gelanggang', 'silat.peraga')->name('design-system.gelanggang');
 }
 

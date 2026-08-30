@@ -8,7 +8,7 @@ import './overlay/connection';
  * publik, dan overlay siaran.
  *
  * Sengaja terpisah dari app.js. Halaman admin tidak memuatnya, dan halaman
- * gelanggang tidak memuat ApexCharts maupun komponen admin yang tidak
+ * gelanggang tidak memuat satu pun komponen admin yang tidak
  * dipakainya — penting untuk overlay vMix, yang berbagi CPU dengan encoder
  * streaming.
  */

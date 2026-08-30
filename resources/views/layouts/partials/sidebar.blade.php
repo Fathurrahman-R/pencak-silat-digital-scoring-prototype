@@ -124,21 +124,21 @@
         </nav>
 
         {{--
-            Dokumentasi design system adalah alat pengembang. Sebelumnya ia
-            tampil untuk siapa pun yang login selama halamannya aktif, termasuk
-            juri yang membuka aplikasi dari HP di pinggir gelanggang — satu
-            tautan yang tidak berarti apa pun baginya, di menu yang seharusnya
-            hanya berisi pekerjaannya. Route-nya sendiri tetap dijaga
+            Peraga komponen adalah alat pengembang. Sebelumnya ia tampil untuk
+            siapa pun yang login selama halamannya aktif, termasuk juri yang
+            membuka aplikasi dari HP di pinggir gelanggang — satu tautan yang
+            tidak berarti apa pun baginya, di menu yang seharusnya hanya berisi
+            pekerjaannya. Route-nya sendiri tetap dijaga
             config('design-system.enabled'); ini soal siapa yang melihat
             pintunya.
         --}}
         @if (config('design-system.enabled') && resource_allows(rk('resources', App\Enums\ResourceAction::View)))
-            <a href="{{ route('design-system.foundation') }}"
-               title="Design system"
+            <a href="{{ route('design-system.si') }}"
+               title="Peraga komponen"
                data-rail="center"
                class="flex items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap text-ink-secondary transition-colors duration-160 hover:bg-surface-inset hover:text-ink">
                 <x-si.ikon nama="swatch-book" class="size-[17px] shrink-0" />
-                <span class="truncate" data-rail="hide">Design system</span>
+                <span class="truncate" data-rail="hide">Peraga komponen</span>
             </a>
         @endif
 
