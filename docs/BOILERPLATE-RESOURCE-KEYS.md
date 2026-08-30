@@ -215,7 +215,7 @@ dengan kode 1 kalau gagal:
 | `kelas-hilang.mjs` | Bundel CSS yang basi, dan kelas token yang dipakai view tapi tidak punya aturan CSS |
 | `kontras.mjs` | 72 pasangan warna yang didaftarkan tangan, termasuk yang latar efektifnya butuh perhitungan alpha |
 | `kontras-kelas.mjs` | Pasangan `bg-*`/`text-*` yang ditulis di kelas, diresolusi dari token — menutup celah pemeriksa di atasnya |
-| `sapu-prop.mjs` | Nama prop berbahasa lama yang tersangkut di tag `x-si.*` maupun `x-silat.*` |
+| `sapu-prop.mjs` | Prop yang menaungi prop sungguhan komponennya — daftarnya diturunkan dari `@props` tiap komponen, bukan dirawat tangan |
 
 Yang pertama dijalankan lebih dulu dan menghentikan sisanya, karena bundel
 basi membuat setiap laporan lain jadi tidak berarti.

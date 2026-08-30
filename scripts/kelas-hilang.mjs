@@ -64,6 +64,12 @@ if (cssTerbangun.length === 0) {
 // Diperiksa lebih dulu, karena kalau basi maka SETIAP kelas baru akan
 // dilaporkan hilang dan laporannya jadi tidak berguna. Yang perlu dibaca
 // pemakainya cuma satu kalimat: bangun ulang.
+//
+// Yang dibandingkan waktu ubah berkas, bukan isinya. Berkas yang disentuh
+// tanpa benar-benar berubah tetap dianggap baru, dan pemeriksa ini menyuruh
+// bangun ulang tanpa perlu. Itu disengaja: salah menyuruh bangun ulang
+// harganya dua detik, sementara salah mengatakan "mutakhir" harganya satu jam
+// mengejar cacat warna yang tidak ada.
 
 const waktuBundel = Math.min(...cssTerbangun.map((f) => statSync(f).mtimeMs));
 

@@ -661,11 +661,15 @@ tidak memerahkan uji Pest, dan di layar terbaca sebagai "propnya salah".
    `bg-*`/`text-*` yang benar-benar **ditulis di kelas**, meresolusi tiap tokennya lewat
    rantai `bg-ink` → `--color-ink` → `--text-primary` → `--k-tinta` → hex, lalu mengukurnya
    di kedua suasana. Menutup celah nomor 2, yang hanya tahu apa yang didaftarkan.
-4. `node scripts/sapu-prop.mjs` — nama prop berbahasa lama yang tersangkut di tag `x-si.*`
-   maupun `x-silat.*`.
-   Blade tidak mengeluh soal prop yang tidak dikenal komponennya: ia lolos jadi atribut HTML
-   dan komponennya diam-diam memakai nilai bawaan. Empat cacat sungguhan lahir dari situ,
-   tercatat di §12.3.
+4. `node scripts/sapu-prop.mjs` — prop yang **menaungi prop sungguhan** komponennya.
+   Blade tidak mengeluh soal prop yang tidak dikenal: ia lolos jadi atribut HTML dan
+   komponennya diam-diam memakai nilai bawaan. Empat cacat sungguhan lahir dari situ,
+   tercatat di §12.3. Pemeriksa ini membaca `@props` tiap komponen dan menurunkan daftarnya
+   sendiri — yang dicari bukan "nama asing" melainkan nama yang menaungi prop yang sudah ada.
+   Bedanya menentukan: `size` pada `<x-si.pilihan>` adalah atribut `<select>` yang sungguhan
+   dan dibiarkan, sementara `size` pada `<x-si.tombol>` menaungi prop `ukuran` dan
+   dilaporkan. Yang ditulis tangan hanya pasangan nama — `type` sepadan `tipe` — dan
+   komponennya sendiri yang menentukan pasangan mana berlaku baginya.
 
 Batas nomor 3, dan ini disengaja: hanya pasangan yang ditulis di **satu untaian kelas yang
 sama** yang terbaca. Latar yang datang dari elemen leluhur tidak terlihat dari sana, dan
@@ -703,7 +707,7 @@ Cabang kerja: `rombak-ui`.
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
 | **Kanvas rombongan 4** | Sembilan artboard di `page-5`. Enam digambar sebelum kodenya; tiga sisanya menyusul sesudah — `ManajemenAkses` (menaungi pengguna, role, permission, resource, pemetaan), `Keuangan` (bendahara dan tarif), `SiaranPendaftaran`. Tinggi tiap artboard diukur di peramban, bukan ditaksir |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
-| **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (prop berbahasa lama). Keempatnya lolos |
+| **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (50 komponen dibaca, prop yang menaungi propnya sendiri). Keempatnya lolos |
 | **Tahap 4 — pembersihan** | **Selesai.** 68 berkas dan 5.009 baris dihapus: 55 komponen `ui/`, 4 komponen `docs/`, 8 halaman peraga RizzxxUI, `DesignSystemController`. `app.css` turun 617 → 513 baris — sembilan utilitas dan tiga token yang tidak dipanggil satu berkas pun. `apexBarChart` ikut, beserta dependency `apexcharts`: satu-satunya pemanggilnya adalah `x-ui.bar-chart`, dan tidak ada satu pun grafik di aplikasi silat — rekap medali memakai tabel dan angka, karena angkanya dibacakan ke berita acara. Prop `texture` dan `backdrop` di layout dasar diganti satu prop `shell` |
 
 ### 12.2 Belum
@@ -711,13 +715,12 @@ Cabang kerja: `rombak-ui`.
 Tidak ada lagi yang tersisa dari rencana rombak ini. Empat rombongan layar
 selesai, lapisan lama dibongkar, dan `resources/views/` nol `x-ui.*`.
 
-Yang berikutnya bukan lanjutan rombak, melainkan pekerjaan yang selama ini
-ditunda karenanya:
-
-| Bagian | Catatan |
-|---|---|
-| **Penyapu prop masih bloklist, bukan skema** | Ia mencari nama-nama yang diketahui berasal dari lapisan lama. Prop asing yang namanya baru sama sekali tetap lolos. Memeriksanya penuh menuntut membaca `@props` tiap komponen dan memisahkan prop dari atribut HTML yang memang diteruskan — dan `type`, `size`, serta `name` sah di kedua sisi |
-
+Pemeriksa rupanya pun sudah tidak menyisakan celah yang diketahui. Tiga di
+antaranya menurunkan daftarnya sendiri dari kode — kelas token dari CSS
+terbangun, pasangan warna dari kelas yang benar-benar ditulis, nama prop dari
+`@props` tiap komponen. Yang keempat, `kontras.mjs`, memang dirawat tangan dan
+akan tetap begitu: itu justru aturannya. Tidak ada warna masuk desain sebelum
+angkanya ditulis di sana.
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
 
