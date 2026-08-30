@@ -230,8 +230,24 @@ for (const jalur of berkasBlade(AKAR_VIEW)) {
     const isi = readFileSync(jalur, 'utf8');
 
     for (const [untaian, posisi] of untaianKelas(isi)) {
-        const latar = [...untaian.matchAll(/(?:^|\s)bg-([a-z][a-z0-9-]*)/g)].map((m) => m[1]);
-        const tinta = [...untaian.matchAll(/(?:^|\s)text-([a-z][a-z0-9-]*)/g)].map((m) => m[1]);
+        /*
+         * Kelas berpengubah opasitas DILEWATI.
+         *
+         * `bg-accent-on/15` bukan `accent-on` -- ia lapisan 15% di atas apa pun
+         * yang ada di belakangnya, dan warna hasilnya tidak bisa dihitung tanpa
+         * tahu latar leluhurnya. Menganggapnya opak melaporkan
+         * `text-accent-on di bg-accent-on` berkontras 1.00 untuk badge yang
+         * sesungguhnya 9.9 di terang dan 11.9 di gelap.
+         *
+         * Ini batas yang sama dengan latar dari leluhur: pemeriksa ini hanya
+         * mengukur yang bisa dipastikan dari untaian kelasnya sendiri.
+         */
+        const opak = (re) => [...untaian.matchAll(re)]
+            .filter((m) => m[2] === undefined)
+            .map((m) => m[1]);
+
+        const latar = opak(/(?:^|\s)bg-([a-z][a-z0-9-]*)(\/[0-9]+)?/g);
+        const tinta = opak(/(?:^|\s)text-([a-z][a-z0-9-]*)(\/[0-9]+)?/g);
 
         for (const b of latar) {
             for (const t of tinta) {

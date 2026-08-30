@@ -25,7 +25,7 @@
 @endphp
 
 <x-layouts.base :title="$title ? $title.' — Design system' : 'Design system'">
-    <header class="glass sticky top-0 z-40 rounded-none border-x-0 border-t-0">
+    <header class="sticky top-0 z-40 border-b border-line bg-surface-raised">
         <div class="mx-auto flex h-[62px] max-w-[1240px] items-center gap-4 px-6">
             <a href="{{ url('/') }}" class="flex shrink-0 items-center gap-2.5">
                 <span class="flex size-[26px] items-center justify-center rounded-sm bg-accent font-display text-sm font-bold text-accent-on">

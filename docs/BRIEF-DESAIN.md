@@ -305,8 +305,8 @@ Tiap komponen digambar dalam keadaan: **normal · tertunjuk · ditekan · fokus 
 | **Dialog konfirmasi** | Lihat §9. Ini komponen paling penting di daftar ini |
 | **Drawer** | Panel samping untuk rincian |
 | **Remah jejak** | Penuh di layar lebar; ringkas (naik satu tingkat + halaman sekarang) di HP |
-| **Navigasi samping** | Penuh · Ciut · Drawer di HP. Dikelompokkan menurut urutan kerja kejuaraan |
-| **Kepala halaman** | Judul, satu kalimat penjelas, tombol aksi |
+| **Navigasi samping** | Penuh · Ciut · Laci di HP. Dikelompokkan menurut urutan kerja kejuaraan. **Menempel ke tepi layar**, dipisahkan satu garis — bukan panel mengambang |
+| **Kepala halaman** | Jejak, judul, satu kalimat penjelas, tombol aksi, dan utilitas aplikasi — **satu bilah**, menempel ke tepi atas. Bukan dua bidang bertumpuk |
 | **Chip saring** | Dengan jumlah per chip dan keadaan terpilih |
 | **Langkah / stepper** | Menyatakan langkah keberapa dari berapa, dan apa yang menghambat langkah berikutnya |
 | **Kotak centang** | Sasaran sentuh setinggi baris penuh (44px), bukan kotak 22px-nya saja. Tanda centang berupa bentuk, bukan glif huruf |
@@ -712,6 +712,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
 | **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
+| **Kerangka panitia** | Dibangun ulang. Dua kolom menempel penuh ke tepi layar, dipisahkan satu garis; judul halaman pindah ke dalam bilah kepala. Kaca, latar bersemburat, dan jarak shell dibuang dari CSS |
 | **Kanvas rombongan 4** | Sembilan artboard di `page-5`. Enam digambar sebelum kodenya; tiga sisanya menyusul sesudah — `ManajemenAkses` (menaungi pengguna, role, permission, resource, pemetaan), `Keuangan` (bendahara dan tarif), `SiaranPendaftaran`. Tinggi tiap artboard diukur di peramban, bukan ditaksir |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (50 komponen dibaca, prop yang menaungi propnya sendiri). Keempatnya lolos |
@@ -761,6 +762,8 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Tombol "Batal" di dialog konfirmasi sebenarnya tombol kirim.** Ditulis `type="button"` padahal propnya `tipe`; atributnya lolos jadi atribut HTML kedua, dan peramban memakai yang pertama
 - **Nomor halaman yang sedang dibuka tak terlihat di SETIAP daftar admin.** `--mat-accent` dinetralkan jadi `none` di Tahap 0 — efek materialnya dibuang, tokennya dipertahankan supaya pemanggilnya tidak putus. Yang terlewat: elemen yang HANYA mengandalkan gradien itu sebagai latarnya kehilangan latar sama sekali. Bukan tampil datar, tampil transparan. Teksnya `text-accent-on`: putih di atas putih (1.0) di terang, `#111114` di atas `#131316` (1.02) di gelap. Huruf awal nama aplikasi di logo sidebar sama persis
 - **Label penomoran halaman melafalkan entitas HTML.** `'&laquo; Sebelumnya'` di berkas bahasa, dipakai di dalam `sr-only`. Pembaca layar melafalkan "ampersand l a q u o titik koma" sebelum kata yang sesungguhnya
+- **Kerangka panitia masih rupa boilerplate.** Komponennya sudah dipindahkan seluruhnya, kerangkanya tidak: dua panel kaca mengambang di atas bidang berpadding 16px, dengan latar bersemburat aksen yang ada semata-mata supaya kacanya terbaca sebagai kaca. Brief §3 menuntut yang sebaliknya untuk panitia — "kertas kerja, kontras tinggi, tanpa kaca dan tanpa noise". Di layar 1366px yang dipakai panitia, 32px yang hilang di kiri-kanan itu satu kolom tabel penuh. Judul halaman pun tinggal di bidang terpisah di bawah topbar, jadi ia tidak pernah sebaris dengan tombol aksinya
+- **Tombol ciut menu hilang saat menunya diciutkan.** Ia lingkaran 26px yang menggantung di tepi panel — dan `data-rail="hide"` menyembunyikannya persis di keadaan yang butuh tombol itu untuk keluar. Dipindah ke kaki sidebar, di mana ia selalu terlihat
 
 Tiga pola menyambungkan sebagian besarnya, dan ketiganya punya sifat yang
 sama: **gagal tanpa bersuara.**

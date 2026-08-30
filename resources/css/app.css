@@ -77,9 +77,6 @@
     --info-soft: var(--k-kertas-turun);
 
     /* Kaca dinetralkan: permukaan rata dengan satu garis. */
-    --glass-bg: var(--k-kertas-naik);
-    --glass-border: var(--k-garis);
-    --glass-shadow: var(--bayang-angkat);
 
     --elev-sm: var(--bayang-angkat);
     --elev-md: var(--bayang-apung);
@@ -127,10 +124,6 @@
 
     --control-h: var(--sentuh-admin);
     --rail-w: 72px;
-    --glass-blur: 0px;
-
-    --shell-pad: 16px;
-    --shell-gap: 16px;
 
     --r-sm: var(--radius-kecil);
     --r-md: var(--radius);
@@ -223,7 +216,6 @@
     --shadow-sm: var(--elev-sm);
     --shadow-md: var(--elev-md);
     --shadow-lg: var(--elev-lg);
-    --shadow-glass: var(--glass-shadow);
     --shadow-lift: var(--bevel), var(--lift);
     --shadow-lift-lg: var(--bevel), var(--lift-lg);
     --shadow-press: var(--press);
@@ -315,10 +307,10 @@
         background-color: var(--surface);
         color-scheme: light;
 
-        /* Lebar panel sidebar dipegang CSS, bukan Alpine, supaya nilainya sudah
-           benar sebelum halaman digambar — tidak ada lompatan tata letak.
-           Jaraknya ke tepi diurus padding shell, jadi ini benar-benar lebar
-           panelnya. */
+        /* Lebar kolom sidebar dipegang CSS, bukan Alpine, supaya nilainya
+           sudah benar sebelum halaman digambar — tidak ada lompatan tata
+           letak saat bundel Alpine baru termuat. Kolomnya menempel ke tepi
+           layar, jadi ini benar-benar lebar yang ditempatinya. */
         --shell-sidebar: 232px;
     }
 
@@ -370,38 +362,10 @@
    ---------------------------------------------------------------------------
    Resep yang terlalu panjang untuk ditulis ulang sebagai rentetan kelas di
    setiap komponen. Sisanya tetap memakai utility Tailwind biasa.
+
+   Tinggal tiga. Kaca, latar bersemburat, dan efek material dibuang bersama
+   kerangka mengambang yang membutuhkannya.
 --------------------------------------------------------------------------- */
-
-/* Kaca: hanya untuk lapisan yang mengambang di atas latar bertekstur —
-   sidebar, topbar, hero, kartu metrik. Tidak pernah untuk tabel atau form. */
-@utility glass {
-    /* Urutannya menentukan, bukan gaya penulisan: versi berawalan HARUS lebih
-       dulu, properti standar terakhir.
-
-       Saat ditulis terbalik, Lightning CSS menciutkan pasangan ini dan hanya
-       menyisakan `-webkit-backdrop-filter` di berkas terbangun. Chrome sudah
-       lama melepas nama berawalan itu, jadi hasilnya `backdrop-filter: none` —
-       kacanya tidak pernah benar-benar mengabur, dan yang tersisa cuma persegi
-       tembus pandang. Cacat ini tidak kelihatan dari kode sumber, hanya dari
-       hasil build. */
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-}
-
-/* Latar shell aplikasi: semburat aksen di pojok kiri atas di atas permukaan
-   datar. Panel kaca butuh sesuatu yang berwarna dan bergradasi di belakangnya —
-   di atas warna rata, kaca hanya jadi kotak abu-abu. */
-@utility bg-shell {
-    background-color: var(--surface);
-    background-image: radial-gradient(70% 90% at 12% 0%, var(--accent-soft) 0%, transparent 48%);
-}
-
-@utility bg-glow {
-    background-image: radial-gradient(90% 120% at 12% 0%, var(--accent-soft) 0%, transparent 55%);
-}
 
 /* Kotak centang: cekung saat kosong, terisi aksen saat dicentang. Dipakai
    matriks centang di layar role dan resource, yang menulis input-nya sendiri. */

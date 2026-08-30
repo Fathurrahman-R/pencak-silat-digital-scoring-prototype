@@ -1,17 +1,4 @@
-@props([
-    'title' => null,
-
-    /*
-     * Latar shell dipakai halaman yang punya sidebar dan topbar mengambang;
-     * sisanya duduk langsung di atas permukaan kertas.
-     *
-     * Menggantikan prop `backdrop` bernilai 'page'|'shell' dan prop `texture`
-     * yang sudah lama tidak menggambar apa pun -- grid dan butiran noise ada
-     * untuk membuat panel kaca terbaca sebagai kaca, dan kacanya sendiri sudah
-     * dibuang.
-     */
-    'shell' => false,
-])
+@props(['title' => null])
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth" data-theme="light">
@@ -28,11 +15,15 @@
 
     @stack('head')
 </head>
-<body @class([
-    'min-h-screen font-sans text-body leading-relaxed text-ink antialiased',
-    'bg-shell' => $shell,
-    'bg-surface' => ! $shell,
-])>
+{{--
+    Satu latar untuk semua halaman: permukaan kertas, rata.
+
+    Sebelumnya halaman beraplikasi memakai `bg-shell` — semburat aksen di pojok
+    kiri atas. Semburat itu ada untuk satu alasan saja: panel kaca butuh
+    sesuatu yang bergradasi di belakangnya, karena di atas warna rata kaca
+    hanya jadi kotak abu-abu. Kacanya sudah dibuang, jadi semburatnya ikut.
+--}}
+<body class="min-h-screen bg-surface font-sans text-body leading-relaxed text-ink antialiased">
     {{--
         x-data kosong di pembungkus ini bukan formalitas: Alpine hanya
         memproses elemen yang punya leluhur ber-x-data. Tanpanya, setiap

@@ -1,127 +1,162 @@
 @php($navigation = app(App\Support\Navigation\NavigationBuilder::class)->build())
 
 {{--
-    Sidebar adalah panel kaca yang berdiri di dalam shell berpadding, setinggi
-    layar dikurangi padding atas dan bawah. Diciutkan jadi rail ikon; label
-    hilang dan atribut title mengambil alih.
+    Navigasi samping — kolom kertas yang MENEMPEL di tepi kiri layar.
+
+    Bukan panel mengambang. Sebelumnya ia panel kaca berpadding 16px di semua
+    sisi, melayang di atas latar bersemburat aksen: rupa warisan boilerplate.
+    Brief §3 menuntut yang sebaliknya untuk panitia — "kertas kerja, kontras
+    tinggi, tanpa kaca dan tanpa noise". Kedalaman dinyatakan warna permukaan
+    dan SATU garis, dan tidak ada satu piksel pun jarak yang tidak membawa
+    arti.
 
     Lebar dan penyembunyian label dikendalikan CSS lewat `data-sidebar` di
     <html> (lihat app.css). Alpine hanya membalik nilainya, jadi tidak ada
-    lompatan saat halaman pertama kali digambar.
+    lompatan tata letak saat halaman pertama kali digambar.
 
-    Di bawah 1024px panel ini berperilaku sebagai drawer yang menutupi konten.
+    Di bawah 1024px ia berperilaku sebagai laci yang menutupi konten.
 --}}
 
 <div x-show="$store.shell.sidebarOpen" x-cloak
      x-on:click="$store.shell.toggleSidebar()"
-     x-transition:enter="transition duration-180 ease-out"
-     x-transition:enter-start="opacity-0"
-     class="fixed inset-0 z-40 bg-[rgb(8_11_16/0.5)] lg:hidden"
+     class="fixed inset-0 z-40 bg-black/50 lg:hidden"
      aria-hidden="true"></div>
 
 <aside x-on:keydown.escape.window="$store.shell.sidebarOpen = false"
        :class="$store.shell.sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-       class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col transition-[transform,width] duration-260 ease-rizz lg:sticky lg:top-[var(--shell-pad)] lg:z-auto lg:h-[calc(100vh-2*var(--shell-pad))] lg:w-[var(--shell-sidebar)] lg:shrink-0 lg:translate-x-0"
+       class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col border-e border-line bg-surface-raised transition-[transform,width] duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--shell-sidebar)] lg:shrink-0 lg:translate-x-0"
        aria-label="Menu utama">
 
-    <div class="glass relative flex h-full flex-col gap-0.5 rounded-none px-2.5 py-3 lg:rounded-xl">
-        {{-- Tombol ciut hanya masuk akal di layar lebar; di layar sempit
-             panelnya memang menutup penuh. --}}
-        <button type="button"
-                x-on:click="$store.shell.toggleCollapsed()"
-                :title="$store.shell.collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
-                class="absolute end-[-13px] top-5 z-10 hidden size-[26px] items-center justify-center rounded-full border border-line-strong bg-surface-raised text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none lg:flex">
-            <span class="sr-only">Ciutkan menu</span>
-            <span class="flex transition-transform duration-220 ease-rizz" data-rail="flip">
-                <x-si.ikon nama="chevron-left" class="size-3.5" />
-            </span>
-        </button>
-
+    {{-- Kepala: identitas aplikasi saja. Tombol ciut tinggal di kaki, karena
+         di lebar rail kepala ini cuma muat satu benda — dan kalau yang muat
+         itu tombolnya, tautan ke beranda hilang. --}}
+    <div class="flex h-14 shrink-0 items-center border-b border-line px-3">
         <a href="{{ route('dashboard') }}" data-rail="center"
-           class="mb-3 flex items-center gap-2.5 overflow-hidden px-1.5 py-1 whitespace-nowrap">
-            <span class="flex size-[26px] shrink-0 items-center justify-center rounded-sm bg-accent font-display text-[13px] font-bold text-accent-on shadow-lift">
+           class="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden whitespace-nowrap">
+            <span class="grid size-7 shrink-0 place-items-center rounded-[var(--radius-kecil)] bg-accent text-[13px] font-bold text-accent-on">
                 {{ mb_substr(config('app.name'), 0, 1) }}
             </span>
             <span class="min-w-0 flex-1" data-rail="hide">
-                <span class="block truncate font-display text-[14.5px] font-semibold tracking-tight text-ink">
-                    {{ config('app.name') }}
-                </span>
+                <span class="block truncate text-[14px] font-semibold text-ink">{{ config('app.name') }}</span>
                 <span class="block truncate text-[11px] text-ink-muted">
                     {{ app()->isProduction() ? 'Server kejuaraan' : 'Lingkungan '.app()->environment() }}
                 </span>
             </span>
         </a>
+    </div>
 
-        <div class="eyebrow h-4 px-2.5 pb-1.5" data-rail="hide">Menu</div>
+    <nav class="flex flex-1 flex-col gap-px overflow-x-hidden overflow-y-auto px-2 py-3">
+        @foreach ($navigation as $item)
+            @if ($item['children'] === [])
+                <a href="{{ $item['url'] ?? '#' }}"
+                   title="{{ $item['label'] }}"
+                   data-rail="center"
+                   @if ($item['active']) aria-current="page" @endif
+                   @class([
+                       'flex min-h-10 items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2.5 text-[14px] whitespace-nowrap',
+                       // Yang sedang dibuka ditandai bidang tinta penuh, bukan
+                       // rona lembut: di layar terang, aksen lembut di atas
+                       // kertas hampir tidak terbaca sebagai "sedang di sini".
+                       'bg-accent font-semibold text-accent-on' => $item['active'],
+                       'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $item['active'],
+                   ])>
+                    @if ($item['icon'])
+                        <x-si.ikon :nama="$item['icon']" class="size-[18px] shrink-0" />
+                    @endif
+                    <span class="flex-1 truncate" data-rail="hide">{{ $item['label'] }}</span>
 
-        <nav class="flex flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto">
-            @foreach ($navigation as $item)
-                @if ($item['children'] === [])
-                    <a href="{{ $item['url'] ?? '#' }}"
-                       title="{{ $item['label'] }}"
-                       data-rail="center"
-                       @class([
-                           'flex items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap transition-colors duration-160',
-                           'bg-accent-soft font-semibold text-accent shadow-[var(--bevel)]' => $item['active'],
-                           'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $item['active'],
-                       ])>
+                    @if ($item['badge'])
+                        <span @class([
+                            'shrink-0 rounded-[var(--radius-kecil)] px-1.5 py-px text-[12px] font-semibold',
+                            'bg-accent-on/15 text-accent-on' => $item['active'],
+                            'bg-warning-soft text-warning' => ! $item['active'],
+                        ]) data-rail="hide">{{ $item['badge'] }}</span>
+                    @endif
+                </a>
+            @else
+                <div x-data="{ expanded: @js($item['active']) }">
+                    {{-- Diklik saat rail: lebarkan dulu, baru buka grupnya.
+                         Membuka grup di lebar rail hanya menampilkan daftar
+                         tanpa label. --}}
+                    <button type="button"
+                            x-on:click="$store.shell.collapsed
+                                ? ($store.shell.toggleCollapsed(), expanded = true)
+                                : (expanded = ! expanded)"
+                            title="{{ $item['label'] }}"
+                            data-rail="center"
+                            @class([
+                                'flex min-h-10 w-full items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2.5 text-[14px] whitespace-nowrap',
+                                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+                                // Grup yang MEMUAT halaman sekarang ditandai lebih
+                                // lembut daripada halamannya sendiri: dua bidang
+                                // gelap bertumpuk membuat keduanya terbaca sebagai
+                                // dua tempat. Di lebar rail, tanda ini satu-satunya
+                                // yang tersisa -- anak menunya tidak digambar sama
+                                // sekali di sana.
+                                'bg-surface-inset font-semibold text-ink' => $item['active'],
+                                'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $item['active'],
+                            ])
+                            :aria-expanded="expanded">
                         @if ($item['icon'])
-                            <x-si.ikon :nama="$item['icon']" class="size-[17px] shrink-0" />
+                            <x-si.ikon :nama="$item['icon']" class="size-[18px] shrink-0" />
                         @endif
-                        <span class="flex-1 truncate" data-rail="hide">{{ $item['label'] }}</span>
+                        <span class="min-w-0 flex-1 text-start" data-rail="hide">
+                            <span class="block truncate">{{ $item['label'] }}</span>
 
-                        @if ($item['badge'])
-                            <span class="shrink-0 rounded-full bg-warning-soft px-[7px] py-px text-[11px] font-semibold text-warning"
-                                  data-rail="hide">{{ $item['badge'] }}</span>
-                        @endif
-                    </a>
-                @else
-                    <div x-data="{ expanded: @js($item['active']) }">
-                        {{-- Diklik saat rail: lebarkan dulu, baru buka grupnya. --}}
-                        <button type="button"
-                                x-on:click="$store.shell.collapsed
-                                    ? ($store.shell.toggleCollapsed(), expanded = true)
-                                    : (expanded = ! expanded)"
-                                title="{{ $item['label'] }}"
-                                data-rail="center"
-                                class="flex w-full items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap text-ink-secondary transition-colors duration-160 hover:bg-surface-inset hover:text-ink"
-                                :aria-expanded="expanded">
-                            @if ($item['icon'])
-                                <x-si.ikon :nama="$item['icon']" class="size-[17px] shrink-0" />
+                            @if ($item['caption'])
+                                <span class="block truncate text-[11px] leading-tight text-ink-muted">{{ $item['caption'] }}</span>
                             @endif
-                            <span class="min-w-0 flex-1 text-start" data-rail="hide">
-                                <span class="block truncate">{{ $item['label'] }}</span>
+                        </span>
+                        <span class="flex shrink-0" data-rail="hide" :class="expanded && 'rotate-180'">
+                            <x-si.ikon nama="chevron-down" class="size-4" />
+                        </span>
+                    </button>
 
-                                @if ($item['caption'])
-                                    <span class="block truncate text-[10.5px] leading-tight text-ink-muted">{{ $item['caption'] }}</span>
+                    {{-- Anak menu ditandai satu garis tegak, bukan indentasi
+                         saja: indentasi sendirian hilang begitu labelnya
+                         panjang dan terpotong. --}}
+                    <div x-show="expanded && ! $store.shell.collapsed" x-cloak
+                         class="my-px ms-[19px] flex flex-col gap-px border-s border-line ps-2">
+                        @foreach ($item['children'] as $child)
+                            <a href="{{ $child['url'] ?? '#' }}"
+                               @if ($child['active']) aria-current="page" @endif
+                               @class([
+                                   'flex min-h-9 items-center gap-2 truncate rounded-[var(--radius-kecil)] px-2.5 text-[14px]',
+                                   'bg-accent font-semibold text-accent-on' => $child['active'],
+                                   'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $child['active'],
+                               ])>
+                                <span class="flex-1 truncate">{{ $child['label'] }}</span>
+
+                                @if ($child['badge'])
+                                    <span @class([
+                                        'shrink-0 rounded-[var(--radius-kecil)] px-1.5 py-px text-[12px] font-semibold',
+                                        'bg-accent-on/15 text-accent-on' => $child['active'],
+                                        'bg-warning-soft text-warning' => ! $child['active'],
+                                    ])>{{ $child['badge'] }}</span>
                                 @endif
-                            </span>
-                            <span class="flex shrink-0 transition-transform duration-200" data-rail="hide"
-                                  :class="expanded && 'rotate-180'">
-                                <x-si.ikon nama="chevron-down" class="size-3.5" />
-                            </span>
-                        </button>
-
-                        <div x-show="expanded && ! $store.shell.collapsed" x-cloak class="flex flex-col gap-0.5 py-0.5">
-                            @foreach ($item['children'] as $child)
-                                <a href="{{ $child['url'] ?? '#' }}"
-                                   @class([
-                                       'flex items-center gap-2 truncate rounded-md py-1.5 ps-10 pe-2.5 text-base2 transition-colors duration-160',
-                                       'bg-accent-soft font-semibold text-accent shadow-[var(--bevel)]' => $child['active'],
-                                       'text-ink-secondary hover:bg-surface-inset hover:text-ink' => ! $child['active'],
-                                   ])>
-                                    <span class="flex-1 truncate">{{ $child['label'] }}</span>
-
-                                    @if ($child['badge'])
-                                        <span class="shrink-0 rounded-full bg-warning-soft px-[7px] py-px text-[11px] font-semibold text-warning">{{ $child['badge'] }}</span>
-                                    @endif
-                                </a>
-                            @endforeach
-                        </div>
+                            </a>
+                        @endforeach
                     </div>
-                @endif
-            @endforeach
-        </nav>
+                </div>
+            @endif
+        @endforeach
+    </nav>
+
+    <div class="shrink-0 border-t border-line p-2">
+        {{-- Tombol ciut tinggal di sini justru supaya ia SELALU terlihat.
+             Di kepala, ia harus menghilang saat rail — dan begitu menghilang,
+             tidak ada lagi cara melebarkan menunya kembali. --}}
+        <button type="button"
+                x-on:click="$store.shell.toggleCollapsed()"
+                :title="$store.shell.collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
+                data-rail="center"
+                class="mb-px hidden min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-kecil)] px-2.5 text-[14px] text-ink-secondary hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none lg:flex">
+            <span class="flex shrink-0">
+                <span x-show="! $store.shell.collapsed"><x-si.ikon nama="panel-left-close" class="size-[18px]" /></span>
+                <span x-show="$store.shell.collapsed" x-cloak><x-si.ikon nama="panel-left-open" class="size-[18px]" /></span>
+            </span>
+            <span class="flex-1 text-start" data-rail="hide">Ciutkan menu</span>
+        </button>
 
         {{--
             Peraga komponen adalah alat pengembang. Sebelumnya ia tampil untuk
@@ -136,23 +171,21 @@
             <a href="{{ route('design-system.si') }}"
                title="Peraga komponen"
                data-rail="center"
-               class="flex items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-[9px] text-sm whitespace-nowrap text-ink-secondary transition-colors duration-160 hover:bg-surface-inset hover:text-ink">
-                <x-si.ikon nama="swatch-book" class="size-[17px] shrink-0" />
+               class="mb-px flex min-h-10 items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2.5 text-[14px] whitespace-nowrap text-ink-secondary hover:bg-surface-inset hover:text-ink">
+                <x-si.ikon nama="swatch-book" class="size-[18px] shrink-0" />
                 <span class="truncate" data-rail="hide">Peraga komponen</span>
             </a>
         @endif
 
-        <div class="mt-1 border-t border-line pt-2">
-            <a href="{{ route('profile.edit') }}"
-               title="{{ auth()->user()->name }}"
-               data-rail="center"
-               class="flex items-center gap-2.5 overflow-hidden rounded-md px-2 py-1.5 whitespace-nowrap transition-colors duration-160 hover:bg-surface-inset">
-                <x-si.foto :user="auth()->user()" ukuran="kecil" class="size-7" />
-                <span class="min-w-0 flex-1" data-rail="hide">
-                    <span class="block truncate text-[13px] font-semibold text-ink">{{ auth()->user()->name }}</span>
-                    <span class="block truncate text-xs2 text-ink-muted">{{ auth()->user()->email }}</span>
-                </span>
-            </a>
-        </div>
+        <a href="{{ route('profile.edit') }}"
+           title="{{ auth()->user()->name }}"
+           data-rail="center"
+           class="flex min-h-11 items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2 whitespace-nowrap hover:bg-surface-inset">
+            <x-si.foto :user="auth()->user()" ukuran="kecil" class="size-7" />
+            <span class="min-w-0 flex-1" data-rail="hide">
+                <span class="block truncate text-[13px] font-semibold text-ink">{{ auth()->user()->name }}</span>
+                <span class="block truncate text-[12px] text-ink-muted">{{ auth()->user()->email }}</span>
+            </span>
+        </a>
     </div>
 </aside>
