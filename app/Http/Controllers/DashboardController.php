@@ -3,20 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ResourceAction;
-use App\Enums\StatusPendaftaran;
-use App\Models\Contingent;
 use App\Models\MatchOfficial;
-use App\Models\Registration;
-use App\Models\ResourcePermission;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Support\Beranda\PekerjaanMenunggu;
 use App\Support\Navigation\NavigationBuilder;
 use App\Support\Scoring\AlasanMenang;
 use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly NavigationBuilder $navigasi) {}
+    public function __construct(
+        private readonly NavigationBuilder $navigasi,
+        private readonly PekerjaanMenunggu $pekerjaan,
+    ) {}
 
     public function __invoke(): View
     {
@@ -29,45 +29,10 @@ class DashboardController extends Controller
             // juri tidak punya urusan dengan jumlah pendaftaran, dan
             // menampilkannya membuat halaman depan mereka terasa salah alamat.
             'tampilkanRingkasan' => resource_allows(rk('turnamen', ResourceAction::View)),
-            'stats' => $turnamen ? $this->ringkasanKejuaraan($turnamen) : [],
+            'pekerjaan' => $this->pekerjaan->untuk($turnamen),
             'partaiHariIni' => $turnamen ? $this->partaiHariIni($turnamen) : [],
             'hasilTerakhir' => $turnamen ? $this->hasilTerakhir($turnamen) : [],
-            // Key tanpa permission berarti ada pintu yang tertutup untuk semua
-            // orang tanpa penjelasan — layak muncul di halaman depan.
-            'unmappedCount' => ResourcePermission::whereNull('permission_id')->count(),
         ]);
-    }
-
-    /**
-     * Angka yang benar-benar ditanyakan panitia saat membuka aplikasi.
-     *
-     * Sebelumnya baris ini menghitung Pengguna, Role, Permission, dan Resource
-     * — warisan boilerplate. Tidak satu pun dari keempatnya menjawab pertanyaan
-     * yang dibawa panitia ke layar depan: berapa partai hari ini, siapa yang
-     * belum lunas, mana yang belum diverifikasi. Manajemen akses tetap ada di
-     * menunya sendiri untuk yang memang mengurusnya.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function ringkasanKejuaraan(Tournament $turnamen): array
-    {
-        $idKelas = $turnamen->weightClasses()->select('id');
-
-        $partaiHariIni = SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $idKelas))
-            ->whereDate('scheduled_at', today())
-            ->count();
-
-        $menungguVerifikasi = Registration::whereIn('weight_class_id', $idKelas)
-            ->where('status', StatusPendaftaran::Diajukan)
-            ->count();
-
-        return [
-            ['label' => 'Kontingen', 'value' => Contingent::where('tournament_id', $turnamen->id)->count(), 'icon' => 'users'],
-            ['label' => 'Pendaftaran terverifikasi', 'value' => Registration::whereIn('weight_class_id', $idKelas)
-                ->where('status', StatusPendaftaran::Terverifikasi)->count(), 'icon' => 'shield-check'],
-            ['label' => 'Partai hari ini', 'value' => $partaiHariIni, 'icon' => 'swords'],
-            ['label' => 'Menunggu verifikasi', 'value' => $menungguVerifikasi, 'icon' => 'file-text'],
-        ];
     }
 
     /**

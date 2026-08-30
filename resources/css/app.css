@@ -444,7 +444,9 @@
    Rail sidebar
    ---------------------------------------------------------------------------
    Saat diciutkan, label menghilang dan tiap baris jadi ikon yang terpusat.
-   Ditangani CSS supaya keadaannya sudah tepat pada gambar pertama.
+   Ditangani CSS supaya keadaannya sudah tepat pada gambar pertama -- bukan
+   setelah bundel Alpine termuat, yang berarti satu lompatan tata letak di tiap
+   halaman.
 --------------------------------------------------------------------------- */
 
 @media (min-width: 64rem) {
@@ -457,8 +459,14 @@
         padding-inline: 0;
     }
 
-    html[data-sidebar='collapsed'] [data-rail='flip'] {
-        transform: rotate(180deg);
+    /* Kebalikannya: hanya muncul SAAT rail. Dipakai garis pemisah antar-seksi,
+       yang menggantikan judul seksi begitu judulnya disembunyikan -- tanpa itu
+       keenam seksi meleleh jadi satu deret ikon panjang tanpa satu pun jeda.
+
+       Elemennya membawa atribut `hidden`, jadi ia tetap tersembunyi di lebar
+       penuh maupun saat CSS ini belum termuat. */
+    html[data-sidebar='collapsed'] [data-rail='show'] {
+        display: block;
     }
 }
 

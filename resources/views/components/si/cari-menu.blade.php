@@ -13,25 +13,19 @@
 --}}
 
 @php
-    $perintah = collect(app(App\Support\Navigation\NavigationBuilder::class)->build())
-        ->flatMap(function (array $butir): array {
-            if ($butir['children'] === []) {
-                return [[
-                    'label' => $butir['label'],
-                    'grup' => 'Menu',
-                    'url' => $butir['url'],
-                ]];
-            }
-
-            return collect($butir['children'])
-                ->map(fn (array $anak): array => [
-                    'label' => $anak['label'],
-                    'grup' => $butir['label'],
-                    'url' => $anak['url'],
-                ])
-                ->all();
-        })
+    /*
+     * `semuaItem()` mengembalikan item yang sudah dilepas dari seksinya, dengan
+     * nama seksinya ikut menempel. Menyusun ulang pohonnya di sini akan jadi
+     * salinan kedua dari aturan yang sama -- dan salinan kedua itulah yang
+     * ketinggalan begitu susunan menunya berubah.
+     */
+    $perintah = collect(app(App\Support\Navigation\NavigationBuilder::class)->semuaItem())
         ->filter(fn (array $satu): bool => filled($satu['url']))
+        ->map(fn (array $satu): array => [
+            'label' => $satu['label'],
+            'grup' => $satu['seksi'] ?? 'Menu',
+            'url' => $satu['url'],
+        ])
         ->values();
 @endphp
 

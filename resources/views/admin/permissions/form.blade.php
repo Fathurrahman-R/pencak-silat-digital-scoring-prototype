@@ -18,7 +18,7 @@
 </x-si.kartu>
 
 @if ($permission && $permission->mappings->isNotEmpty())
-    <x-si.kartu judul="Dipakai resource key" subjudul="Mengganti nama permission tidak memutus pemetaan ini." class="mt-6">
+    <x-si.kartu judul="Dipakai resource key" keterangan="Mengganti nama permission tidak memutus pemetaan ini." class="mt-6">
         <ul class="space-y-2 text-sm">
             @foreach ($permission->mappings as $mapping)
                 <li class="flex items-center gap-2">

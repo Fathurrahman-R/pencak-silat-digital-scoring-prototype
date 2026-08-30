@@ -305,7 +305,7 @@ Tiap komponen digambar dalam keadaan: **normal · tertunjuk · ditekan · fokus 
 | **Dialog konfirmasi** | Lihat §9. Ini komponen paling penting di daftar ini |
 | **Drawer** | Panel samping untuk rincian |
 | **Remah jejak** | Penuh di layar lebar; ringkas (naik satu tingkat + halaman sekarang) di HP |
-| **Navigasi samping** | Penuh · Ciut · Laci di HP. Dikelompokkan menurut urutan kerja kejuaraan. **Menempel ke tepi layar**, dipisahkan satu garis — bukan panel mengambang |
+| **Navigasi samping** | Penuh · Ciut · Laci di HP. **Datar, tanpa grup yang bisa dilipat**: nama grup jadi judul seksi, itemnya berdiri langsung di bawahnya. Menempel ke tepi layar, dipisahkan satu garis — bukan panel mengambang |
 | **Kepala halaman** | Jejak, judul, satu kalimat penjelas, tombol aksi, dan utilitas aplikasi — **satu bilah**, menempel ke tepi atas. Bukan dua bidang bertumpuk |
 | **Chip saring** | Dengan jumlah per chip dan keadaan terpilih |
 | **Langkah / stepper** | Menyatakan langkah keberapa dari berapa, dan apa yang menghambat langkah berikutnya |
@@ -458,7 +458,7 @@ Navigasi disusun ulang mengikuti **urutan kerja kejuaraan**, bukan daftar tabel 
 
 | Layar | Pertanyaan yang dijawab | Wajib ada |
 |---|---|---|
-| **Beranda panitia** | "Apa yang perlu saya kerjakan hari ini?" | Partai hari ini per gelanggang · jumlah menunggu verifikasi · langkah berikutnya · **bukan KPI generik** |
+| **Beranda panitia** | "Apa yang perlu saya kerjakan hari ini?" | Daftar pekerjaan yang menunggu — tiap baris menyebut **berapa, kenapa mendesak, dan ke mana pergi** · partai hari ini per gelanggang · **bukan KPI generik**, dan bukan ubin angka |
 | **Panel kejuaraan** | "Kejuaraan ini sudah sampai mana?" | Stepper tahapan dengan penghambat tiap tahap dinyatakan |
 | **Pola daftar** (kontingen, atlet, gelanggang, pengguna) | "Siapa/apa yang ada, dan mana yang bermasalah?" | Pencarian terlihat · chip saring berjumlah · keadaan kosong menjelaskan · aksi massal aman |
 | **Pola formulir** (tambah/ubah apa pun) | "Apa yang harus saya isi?" | Satu kolom · label di atas isian · keterangan bantu · galat menyebut cara memperbaiki |
@@ -713,6 +713,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
 | **Kerangka panitia** | Dibangun ulang. Dua kolom menempel penuh ke tepi layar, dipisahkan satu garis; judul halaman pindah ke dalam bilah kepala. Kaca, latar bersemburat, jarak shell, dan efek material dibuang dari CSS — **nol gradien di seluruh bundel admin** |
+| **Arsitektur informasi panitia** | Menu datar berjudul seksi, urutannya mengikuti kapan pekerjaannya dilakukan; nama kejuaraan aktif pindah ke kepala sidebar; beranda jadi daftar pekerjaan yang menunggu, disaring resource key |
 | **Kanvas rombongan 4** | Sembilan artboard di `page-5`. Enam digambar sebelum kodenya; tiga sisanya menyusul sesudah — `ManajemenAkses` (menaungi pengguna, role, permission, resource, pemetaan), `Keuangan` (bendahara dan tarif), `SiaranPendaftaran`. Tinggi tiap artboard diukur di peramban, bukan ditaksir |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (50 komponen dibaca, prop yang menaungi propnya sendiri). Keempatnya lolos |
@@ -768,6 +769,9 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Lonceng notifikasi tanpa sumber data.** Dipanggil tanpa prop `daftar`, jadi isinya selamanya "Belum ada notifikasi" — ikon yang menempati ruang di bilah tersempit aplikasi dan tidak pernah bisa membawa kabar apa pun
 - **Identitas pengguna ditampilkan dua kali di satu layar.** Kartu nama dan email di kaki sidebar, dan menu akun berisi nama, email, profil, serta tombol keluar di bilah kepala. Dua tempat untuk satu hal membuat orang mengira keduanya membuka sesuatu yang berbeda
 - **Judul halaman terpotong di layar sempit.** Kelompok kiri dan kanan berbagi satu baris, dan yang menyusut selalu yang kiri — "Pengguna" jadi "Pengg…" sementara tombol di kanan tetap utuh. Judul yang terpotong menghilangkan satu-satunya penanda halaman mana yang sedang dibuka
+- **Sepuluh kalimat penjelas tidak pernah tampil.** `subjudul=` dioper ke `si/kartu`, yang propnya bernama `keterangan` — di beranda, profil, dan empat layar manajemen akses. Termasuk kalimat yang menerangkan cara membaca matriks izin ("Baris adalah resource, kolom adalah aksi"), yaitu satu-satunya petunjuk di layar yang paling butuh petunjuk. Penyapu prop melewatkannya karena `subjudul` sudah berbahasa Indonesia; ia bukan sisa terjemahan melainkan tebakan yang wajar, dan sekarang ikut dijaga
+- **Menu dikelompokkan per area basis data**, bukan per kapan pekerjaannya dilakukan. "Overlay Siaran" dan "Rekap & Laporan" duduk di bawah "Pertandingan" — siaran bukan partai, dan rekap datang sesudah seluruh pertandingan selesai. "Tarif" terpisah dari "Bendahara" padahal tagihannya dihitung dari tarif itu
+- **Grup menu yang bisa dilipat, untuk role yang isinya satu item.** Bendahara memegang satu izin, Petugas Timbang Badan satu, Official Kontingen satu — yang mereka lihat grup terlipat berisi satu item, dan satu klik hanya untuk membukanya. Yang izinnya luas membuka semua grup di kunjungan pertama lalu tidak pernah menutupnya lagi
 
 Tiga pola menyambungkan sebagian besarnya, dan ketiganya punya sifat yang
 sama: **gagal tanpa bersuara.**

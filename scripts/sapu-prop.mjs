@@ -60,6 +60,14 @@ const SEPADAN = {
     title: 'judul',
     subtitle: 'keterangan',
     description: 'keterangan',
+
+    /*
+     * Nama yang sudah berbahasa Indonesia pun bisa menaungi -- `subjudul`
+     * bukan sisa terjemahan, melainkan tebakan yang wajar untuk prop yang
+     * sebenarnya bernama `keterangan`. Sepuluh pemakaiannya bertahan
+     * berbulan-bulan, dan tidak satu pun kalimatnya pernah tampil.
+     */
+    subjudul: 'keterangan',
     variant: 'varian',
     required: 'wajib',
     checked: 'dicentang',

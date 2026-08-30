@@ -20,7 +20,7 @@
     </x-si.kartu>
 
     <x-si.kartu judul="Permission"
-                subjudul="Baris adalah resource, kolom adalah aksi. Centang berarti role ini boleh melakukannya.">
+                keterangan="Baris adalah resource, kolom adalah aksi. Centang berarti role ini boleh melakukannya.">
         <div class="space-y-4">
             @forelse ($resources as $resource)
                 <div>

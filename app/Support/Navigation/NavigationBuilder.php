@@ -13,8 +13,12 @@ use Illuminate\Support\Facades\Route;
  * Menyusun menu sidebar dari config/navigation.php, membuang item yang
  * resource key-nya tidak dimiliki pengguna.
  *
- * Induk yang seluruh anaknya tersembunyi ikut hilang — kalau tidak, pengguna
- * melihat grup menu kosong yang tidak bisa dibuka.
+ * Keluarannya DATAR: satu deret entri, masing-masing berupa item tunggal atau
+ * seksi berisi item. Tidak ada pohon bercabang, karena sidebarnya sendiri
+ * tidak lagi punya grup yang bisa dilipat.
+ *
+ * Seksi yang seluruh itemnya tersembunyi ikut hilang — judul seksi tanpa isi
+ * hanya membuat orang mengira ada yang gagal dimuat.
  */
 class NavigationBuilder
 {
@@ -24,10 +28,69 @@ class NavigationBuilder
 
     public function __construct(private readonly ResourceGate $gate) {}
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return array<int, array<string, mixed>>
+     *
+     * Tiap entri berbentuk salah satu dari:
+     *   ['tipe' => 'item',  'label', 'icon', 'url', 'active', 'badge']
+     *   ['tipe' => 'seksi', 'label', 'items' => array<item>]
+     */
     public function build(): array
     {
-        return $this->filter(config('navigation', []));
+        $hasil = [];
+
+        foreach (config('navigation', []) as $entri) {
+            if (isset($entri['seksi'])) {
+                $items = $this->saring($entri['items'] ?? []);
+
+                if ($items === []) {
+                    continue;
+                }
+
+                $hasil[] = [
+                    'tipe' => 'seksi',
+                    'label' => $entri['seksi'],
+                    'items' => $items,
+                ];
+
+                continue;
+            }
+
+            $item = $this->bentuk($entri);
+
+            if ($item !== null) {
+                $hasil[] = $item;
+            }
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Seluruh item yang bisa dibuka pengguna, tanpa judul seksinya.
+     *
+     * Dipakai layar yang butuh daftar tujuan tanpa peduli pengelompokannya --
+     * pencarian menu (⌘K) salah satunya.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function semuaItem(): array
+    {
+        $hasil = [];
+
+        foreach ($this->build() as $entri) {
+            if ($entri['tipe'] === 'seksi') {
+                foreach ($entri['items'] as $item) {
+                    $hasil[] = $item + ['seksi' => $entri['label']];
+                }
+
+                continue;
+            }
+
+            $hasil[] = $entri + ['seksi' => null];
+        }
+
+        return $hasil;
     }
 
     /**
@@ -67,7 +130,7 @@ class NavigationBuilder
     private function turnamenBawaan(): ?Tournament
     {
         return Tournament::query()
-            ->orderByRaw("CASE status WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END", [
+            ->orderByRaw('CASE status WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END', [
                 StatusTurnamen::Berjalan->value,
                 StatusTurnamen::Draf->value,
             ])
@@ -80,65 +143,48 @@ class NavigationBuilder
      * @param  array<int, array<string, mixed>>  $items
      * @return array<int, array<string, mixed>>
      */
-    private function filter(array $items): array
+    private function saring(array $items): array
     {
-        $result = [];
+        $hasil = [];
 
         foreach ($items as $item) {
-            if (! $this->visible($item)) {
-                continue;
+            $bentuk = $this->bentuk($item);
+
+            if ($bentuk !== null) {
+                $hasil[] = $bentuk;
             }
-
-            /*
-             * Item yang butuh kejuaraan aktif tidak bisa dibentuk alamatnya
-             * sebelum ada kejuaraan yang dibuka, jadi disembunyikan seluruhnya
-             * — bukan ditampilkan sebagai tautan mati.
-             */
-            if (($item['butuh_turnamen'] ?? false) && $this->turnamenAktif() === null) {
-                continue;
-            }
-
-            $children = $this->filter($item['children'] ?? []);
-
-            if (isset($item['children']) && $children === []) {
-                continue;
-            }
-
-            $result[] = [
-                'label' => $this->label($item),
-                'caption' => $item['caption'] ?? null,
-                'icon' => $item['icon'] ?? null,
-                'url' => $this->url($item),
-                'active' => $this->isActive($item, $children),
-                'children' => $children,
-                'badge' => $item['badge'] ?? null,
-            ];
         }
 
-        return $result;
-    }
-
-    /** @param  array<string, mixed>  $item */
-    private function visible(array $item): bool
-    {
-        if (isset($item['resource'])) {
-            return $this->gate->any((array) $item['resource']);
-        }
-
-        // Item tanpa resource key selalu tampil (mis. Dashboard).
-        return true;
+        return $hasil;
     }
 
     /**
-     * Label yang boleh berupa nama kejuaraan yang sedang dibuka.
-     *
      * @param  array<string, mixed>  $item
+     * @return array<string, mixed>|null
      */
-    private function label(array $item): string
+    private function bentuk(array $item): ?array
     {
-        return ($item['label_turnamen'] ?? false)
-            ? ($this->turnamenAktif()?->name ?? $item['label'])
-            : $item['label'];
+        if (isset($item['resource']) && ! $this->gate->any((array) $item['resource'])) {
+            return null;
+        }
+
+        /*
+         * Item yang butuh kejuaraan aktif tidak bisa dibentuk alamatnya sebelum
+         * ada kejuaraan yang dibuka, jadi disembunyikan seluruhnya — bukan
+         * ditampilkan sebagai tautan mati.
+         */
+        if (($item['butuh_turnamen'] ?? false) && $this->turnamenAktif() === null) {
+            return null;
+        }
+
+        return [
+            'tipe' => 'item',
+            'label' => $item['label'],
+            'icon' => $item['icon'] ?? null,
+            'url' => $this->url($item),
+            'active' => $this->sedangDibuka($item),
+            'badge' => $item['badge'] ?? null,
+        ];
     }
 
     /** @param  array<string, mixed>  $item */
@@ -167,18 +213,9 @@ class NavigationBuilder
         return route($item['route'], $params);
     }
 
-    /**
-     * @param  array<string, mixed>  $item
-     * @param  array<int, array<string, mixed>>  $children
-     */
-    private function isActive(array $item, array $children): bool
+    /** @param  array<string, mixed>  $item */
+    private function sedangDibuka(array $item): bool
     {
-        foreach ($children as $child) {
-            if ($child['active']) {
-                return true;
-            }
-        }
-
         if (isset($item['active'])) {
             return Request::is($item['active']);
         }

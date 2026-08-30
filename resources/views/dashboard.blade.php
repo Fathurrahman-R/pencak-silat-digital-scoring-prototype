@@ -32,7 +32,7 @@
     @endif
 
     @if ($penugasan !== [])
-        <x-si.kartu judul="Partai saya" subjudul="Partai tempat Anda ditugaskan" class="mb-4">
+        <x-si.kartu judul="Partai saya" keterangan="Partai tempat Anda ditugaskan" class="mb-4">
             <div class="divide-y divide-line">
                 @foreach ($penugasan as $tugas)
                     <a href="{{ $tugas['url'] }}"
@@ -93,34 +93,72 @@
     @endif
 
     @if ($tampilkanRingkasan)
-        @if ($unmappedCount > 0)
-            <x-si.callout varian="perhatian" judul="Ada resource key yang belum dipetakan" class="mb-6">
-                {{ $unmappedCount }} key belum menunjuk permission mana pun, jadi aksesnya tertutup untuk semua orang
-                kecuali super admin.
-                <a href="{{ route('admin.mappings.index', ['status' => 'unmapped']) }}" class="font-medium text-link underline-offset-2 hover:underline">
-                    Lihat daftarnya
-                </a>
-            </x-si.callout>
-        @endif
-
         @if ($turnamen === null)
             <x-si.kartu>
                 <x-si.kosong judul="Belum ada kejuaraan"
                              syarat="Buat kejuaraan lebih dulu lewat menu Kejuaraan. Angka dan jadwal di halaman ini mengikuti kejuaraan yang sedang dibuka." />
             </x-si.kartu>
         @else
-            {{-- Baris metrik duduk di permukaan solid seperti sisi halaman lainnya —
-                 kaca dipakai hanya sidebar dan topbar. --}}
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach ($stats as $stat)
-                    <x-si.angka :label="$stat['label']"
-                                :nilai="number_format($stat['value'], 0, ',', '.')"
-                                :ikon="$stat['icon']" />
-                @endforeach
-            </div>
+            {{--
+                YANG MENUNGGU DIKERJAKAN.
+
+                Menggantikan empat ubin angka — Kontingen, Pendaftaran
+                terverifikasi, Partai hari ini, Menunggu verifikasi. Ubin angka
+                menjawab "berapa", padahal pertanyaan yang dibawa panitia ke
+                layar depan adalah "apa yang harus saya kerjakan sekarang".
+
+                Angka 4 di ubin "Menunggu verifikasi" tidak memberi tahu bahwa
+                empat pendaftaran itu menahan penyusunan bagan, dan tidak
+                mengantarkan siapa pun ke layarnya. Tiap baris di sini menyebut
+                ketiganya: berapa, kenapa mendesak, dan ke mana pergi.
+
+                Barisnya sendiri yang jadi tautan, bukan tombol kecil di
+                ujungnya — sasaran setinggi baris penuh jauh lebih sulit
+                meleset, terutama di layar sentuh.
+            --}}
+            @if ($pekerjaan !== [])
+                <x-si.kartu judul="Yang menunggu dikerjakan"
+                            keterangan="Hanya yang jumlahnya belum nol. Baris hilang sendiri begitu pekerjaannya selesai."
+                            padat>
+                    <div class="divide-y divide-line">
+                        @foreach ($pekerjaan as $baris)
+                            <a href="{{ $baris['tautan'] }}"
+                               class="-mx-2 flex items-start gap-3 rounded-[var(--radius-kecil)] px-2 py-3 hover:bg-surface-inset focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+                                <span class="mt-0.5 grid size-9 shrink-0 place-items-center rounded-[var(--radius-kecil)] bg-surface-inset text-ink-secondary">
+                                    <x-si.ikon :nama="$baris['ikon']" class="size-[18px]" />
+                                </span>
+
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-[15px] text-ink">
+                                        <span class="font-mono text-[17px] font-semibold tabular-nums">{{ $baris['jumlah'] }}</span>
+                                        {{ $baris['benda'] }}
+                                    </span>
+                                    <span class="mt-0.5 block text-[14px] leading-relaxed text-ink-muted">{{ $baris['sebab'] }}</span>
+                                </span>
+
+                                <x-si.ikon nama="chevron-right" class="mt-2 size-4 shrink-0 text-ink-muted" />
+                            </a>
+                        @endforeach
+                    </div>
+                </x-si.kartu>
+            @else
+                <x-si.kartu padat>
+                    <div class="flex items-center gap-3 py-2">
+                        <span class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-kecil)] bg-success-soft text-success">
+                            <x-si.ikon nama="check" class="size-[18px]" />
+                        </span>
+                        <div>
+                            <p class="text-[15px] font-semibold text-ink">Tidak ada yang menunggu</p>
+                            <p class="text-[14px] leading-relaxed text-ink-muted">
+                                Seluruh pekerjaan yang bisa dilihat akun ini sudah selesai untuk kejuaraan yang sedang dibuka.
+                            </p>
+                        </div>
+                    </div>
+                </x-si.kartu>
+            @endif
 
             <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-                <x-si.kartu judul="Partai hari ini" :subjudul="now()->translatedFormat('l, d F Y')">
+                <x-si.kartu judul="Partai hari ini" :keterangan="now()->translatedFormat('l, d F Y')">
                     @forelse ($partaiHariIni as $gelanggang => $daftar)
                         <div class="mb-4 last:mb-0">
                             <p class="eyebrow mb-2">{{ $gelanggang }}</p>
@@ -154,7 +192,7 @@
                     @endforelse
                 </x-si.kartu>
 
-                <x-si.kartu judul="Hasil terakhir" subjudul="Sudah disahkan Dewan Wasit Juri">
+                <x-si.kartu judul="Hasil terakhir" keterangan="Sudah disahkan Dewan Wasit Juri">
                     @if ($hasilTerakhir === [])
                         <p class="text-sm text-ink-muted">Belum ada hasil yang disahkan.</p>
                     @else

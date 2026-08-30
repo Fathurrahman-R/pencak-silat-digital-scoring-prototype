@@ -35,7 +35,7 @@
             </x-si.kartu>
 
             <x-si.kartu judul="Verifikasi dua langkah"
-                        subjudul="Menambah kode sekali pakai dari aplikasi autentikator saat masuk.">
+                        keterangan="Menambah kode sekali pakai dari aplikasi autentikator saat masuk.">
                 @if ($user->two_factor_secret)
                     <div class="space-y-4">
                         <x-si.badge varian="sukses">Aktif</x-si.badge>
@@ -99,7 +99,7 @@
                 </div>
             </x-si.kartu>
 
-            <x-si.kartu judul="Hapus akun" subjudul="Tindakan ini permanen dan tidak bisa dibatalkan.">
+            <x-si.kartu judul="Hapus akun" keterangan="Tindakan ini permanen dan tidak bisa dibatalkan.">
                 <x-si.tombol tipe="button" varian="bahaya" ukuran="kecil" x-on:click="$dispatch('modal-open', 'hapus-akun')">
                     Hapus akun saya
                 </x-si.tombol>

@@ -31,7 +31,7 @@
         </x-si.kartu>
 
         <x-si.kartu judul="Pratinjau resource key"
-                    subjudul="Inilah string yang nanti dipakai di route, Blade, dan menu.">
+                    keterangan="Inilah string yang nanti dipakai di route, Blade, dan menu.">
             <div class="flex flex-wrap gap-2" id="key-preview">
                 <template x-for="action in $store.selectedActions.list" :key="action">
                     <code class="rounded-sm bg-code px-2 py-1 font-mono text-sm text-code-ink"
@@ -46,7 +46,7 @@
     </div>
 
     <div>
-        <x-si.kartu judul="Aksi" subjudul="Setiap aksi yang dicentang otomatis dibuatkan permission dan langsung dipetakan.">
+        <x-si.kartu judul="Aksi" keterangan="Setiap aksi yang dicentang otomatis dibuatkan permission dan langsung dipetakan.">
             <div class="space-y-2">
                 @foreach ($actions as $action)
                     <label class="flex items-start gap-2 rounded-lg border border-line p-3">

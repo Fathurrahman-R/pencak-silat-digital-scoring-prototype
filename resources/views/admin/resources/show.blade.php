@@ -18,7 +18,7 @@
         </x-can>
     </x-slot:actions>
 
-    <x-si.kartu judul="Resource key" subjudul="Salin key ini ke route, Blade, atau policy.">
+    <x-si.kartu judul="Resource key" keterangan="Salin key ini ke route, Blade, atau policy.">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
                 <thead class="text-xs uppercase text-ink-muted">
