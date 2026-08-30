@@ -951,7 +951,7 @@ Dikerjakan atas permintaan langsung sebelum lanjut ke Task #21 (Fase 3 lanjutan)
 - [x] Fix 6 bug UI: menu fallback, cakupan glassmorphism, spacing, konsolidasi card, layout tabel, search
 - [x] `MenuKejuaraanAktifTest.php` ditambahkan (4 test)
 - [x] Commit & push seluruh perubahan UI refinement di atas (commit `5e13b1b`)
-- [ ] Uji dark mode — disebutkan belum tuntas di catatan sesi, belum diverifikasi ulang
+- [x] Uji dark mode DAN terang — diukur di DOM peramban, bukan hanya dari token: setiap elemen berteks di lima layar dibandingkan terhadap latar EFEKTIFNYA (naik ke leluhur sampai ketemu yang tidak transparan), ambang WCAG AA. Nol gagal di kedua suasana. Dua cacat ditemukan dan diperbaiki — lihat catatan di bawah
 
 ## Task #21 — Drawing, penguncian bagan, dan penjadwalan (selesai)
 

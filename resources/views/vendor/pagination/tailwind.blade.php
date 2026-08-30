@@ -10,9 +10,9 @@
 --}}
 
 @php
-    $tombol = 'inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-sm border border-line-strong bg-[image:var(--mat-raised)] px-2 text-[13px] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press';
+    $tombol = 'inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-sm border border-line-strong bg-surface-raised px-2 text-[13px] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press';
     $mati = 'inline-flex h-[30px] min-w-[30px] cursor-not-allowed items-center justify-center rounded-sm border border-line bg-surface-sunken px-2 text-[13px] text-ink-muted shadow-well';
-    $aktif = 'inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-sm border border-transparent bg-[image:var(--mat-accent)] px-2 text-[13px] font-semibold text-accent-on shadow-lift';
+    $aktif = 'inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-sm border border-transparent bg-accent px-2 text-[13px] font-semibold text-accent-on shadow-lift';
 @endphp
 
 @if ($paginator->hasPages())

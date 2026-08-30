@@ -30,7 +30,7 @@
 
     <button type="button"
             x-on:click="$dispatch('cari-menu-buka')"
-            class="inline-flex size-[34px] items-center justify-center rounded-md border border-line-strong bg-[image:var(--mat-raised)] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:shadow-press active:translate-y-px focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none sm:hidden">
+            class="inline-flex size-[34px] items-center justify-center rounded-md border border-line-strong bg-surface-raised text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:shadow-press active:translate-y-px focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none sm:hidden">
         <span class="sr-only">Cari halaman</span>
         <x-si.ikon nama="search" class="size-[17px]" />
     </button>
@@ -38,7 +38,7 @@
     <x-si.lonceng />
 
     <button type="button" data-theme-toggle
-            class="inline-flex size-[34px] items-center justify-center rounded-md border border-line-strong bg-[image:var(--mat-raised)] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:shadow-press active:translate-y-px focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none"
+            class="inline-flex size-[34px] items-center justify-center rounded-md border border-line-strong bg-surface-raised text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:shadow-press active:translate-y-px focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none"
             title="Ganti tema">
         <span class="sr-only">Ganti tema</span>
         <x-si.ikon nama="sun-moon" class="size-[17px]" />

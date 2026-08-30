@@ -5,7 +5,7 @@
 
         @include('admin.users.form', ['roles' => $roles])
 
-        <div class="mat-base mt-4 flex items-center gap-3 rounded-lg border border-line px-[26px] py-[13px]">
+        <div class="mt-4 flex items-center gap-3 rounded-lg border border-line bg-surface-raised px-[26px] py-[13px]">
             <span class="flex-1 text-base2 text-ink-muted">Isi form lalu simpan untuk membuat akun.</span>
             <x-si.tombol :tautan="route('admin.users.index')" varian="kedua" class="h-[34px]">Batal</x-si.tombol>
             <x-si.tombol tipe="submit" class="h-[34px]">Simpan</x-si.tombol>

@@ -116,15 +116,9 @@
     --c5: #a3221c;
     --c6: #c9a227;
 
-    /* Material: bidang rata, bukan gradien. */
-    --mat-raised: none;
-    --mat-base: none;
-    --mat-accent: none;
-    --mat-danger: none;
-    --mat-success: none;
-    --mat-warning: none;
-
-    /* Bevel dan press dinetralkan; kedalaman kini dari warna permukaan. */
+    /* Bevel dan press dinetralkan; kedalaman kini dari warna permukaan.
+       Gradien materialnya sendiri sudah dihapus -- elemen yang memakainya
+       sebagai satu-satunya latar tampil transparan, bukan datar. */
     --bevel: none;
     --lift: var(--bayang-angkat);
     --lift-lg: var(--bayang-apung);
@@ -395,22 +389,6 @@
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-}
-
-/* Material: yang menonjol bisa ditekan, yang cekung bisa diisi. */
-@utility mat-raised {
-    background-image: var(--mat-raised);
-    box-shadow: var(--bevel), var(--lift);
-}
-
-@utility mat-base {
-    background-image: var(--mat-base);
-    box-shadow: var(--bevel), var(--lift);
-}
-
-@utility mat-accent {
-    background-image: var(--mat-accent);
-    box-shadow: var(--bevel), var(--lift);
 }
 
 /* Latar shell aplikasi: semburat aksen di pojok kiri atas di atas permukaan

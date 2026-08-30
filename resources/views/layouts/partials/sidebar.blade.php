@@ -30,7 +30,7 @@
         <button type="button"
                 x-on:click="$store.shell.toggleCollapsed()"
                 :title="$store.shell.collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
-                class="absolute end-[-13px] top-5 z-10 hidden size-[26px] items-center justify-center rounded-full border border-line-strong bg-[image:var(--mat-raised)] text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none lg:flex">
+                class="absolute end-[-13px] top-5 z-10 hidden size-[26px] items-center justify-center rounded-full border border-line-strong bg-surface-raised text-ink-secondary shadow-[var(--bevel),var(--lift)] transition hover:brightness-95 active:translate-y-px active:shadow-press focus-visible:ring-3 focus-visible:ring-accent-soft focus-visible:outline-none lg:flex">
             <span class="sr-only">Ciutkan menu</span>
             <span class="flex transition-transform duration-220 ease-rizz" data-rail="flip">
                 <x-si.ikon nama="chevron-left" class="size-3.5" />
@@ -39,7 +39,7 @@
 
         <a href="{{ route('dashboard') }}" data-rail="center"
            class="mb-3 flex items-center gap-2.5 overflow-hidden px-1.5 py-1 whitespace-nowrap">
-            <span class="flex size-[26px] shrink-0 items-center justify-center rounded-sm bg-[image:var(--mat-accent)] font-display text-[13px] font-bold text-accent-on shadow-lift">
+            <span class="flex size-[26px] shrink-0 items-center justify-center rounded-sm bg-accent font-display text-[13px] font-bold text-accent-on shadow-lift">
                 {{ mb_substr(config('app.name'), 0, 1) }}
             </span>
             <span class="min-w-0 flex-1" data-rail="hide">

@@ -676,11 +676,18 @@ sama** yang terbaca. Latar yang datang dari elemen leluhur tidak terlihat dari s
 menebaknya akan menghasilkan lebih banyak laporan palsu daripada temuan. Pasangan seperti itu
 tetap didaftarkan tangan di nomor 2. Keduanya saling melengkapi, bukan menggantikan.
 
-Lalu dengan mata:
+Lalu di peramban, karena ketiga pemeriksa di atas membaca kode dan bundel —
+bukan halaman yang sudah digambar:
 
-5. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
-6. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
-7. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
+5. **Ukur kontras di DOM**, di kedua suasana, terhadap latar **efektif**: naik ke leluhur
+   sampai ketemu elemen yang latarnya tidak transparan. Ini satu-satunya yang menangkap token
+   yang dinetralkan tapi masih dipanggil — `--mat-accent: none` membuat elemennya transparan,
+   dan menurut token yang terdaftar warnanya tetap benar. Matikan transisi lebih dulu
+   (`*{transition:none}`); mengukur di tengah transisi memberi warna antara, dan pernah
+   melaporkan 1.22 untuk pasangan yang sesungguhnya 10.6.
+6. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
+7. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
+8. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
    apakah saya tahu apa yang harus saya tekan berikutnya?"
 
 ---
@@ -752,9 +759,11 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Badge ungu tidak pernah ungu.** Tiga layar menandai super admin dan permission inti dengan rona yang tidak ada di palet mana pun
 - **Tombol baris tanpa nama.** Pensil, mata, dan tong sampah berjajar dengan `title` sebagai satu-satunya keterangan — dan `title` tidak pernah muncul di layar sentuh
 - **Tombol "Batal" di dialog konfirmasi sebenarnya tombol kirim.** Ditulis `type="button"` padahal propnya `tipe`; atributnya lolos jadi atribut HTML kedua, dan peramban memakai yang pertama
+- **Nomor halaman yang sedang dibuka tak terlihat di SETIAP daftar admin.** `--mat-accent` dinetralkan jadi `none` di Tahap 0 — efek materialnya dibuang, tokennya dipertahankan supaya pemanggilnya tidak putus. Yang terlewat: elemen yang HANYA mengandalkan gradien itu sebagai latarnya kehilangan latar sama sekali. Bukan tampil datar, tampil transparan. Teksnya `text-accent-on`: putih di atas putih (1.0) di terang, `#111114` di atas `#131316` (1.02) di gelap. Huruf awal nama aplikasi di logo sidebar sama persis
+- **Label penomoran halaman melafalkan entitas HTML.** `'&laquo; Sebelumnya'` di berkas bahasa, dipakai di dalam `sr-only`. Pembaca layar melafalkan "ampersand l a q u o titik koma" sebelum kata yang sesungguhnya
 
-Dua pola menyambungkan sebagian besarnya, dan keduanya punya sifat yang sama:
-**gagal tanpa bersuara.**
+Tiga pola menyambungkan sebagian besarnya, dan ketiganya punya sifat yang
+sama: **gagal tanpa bersuara.**
 
 **Blade tidak mengeluh soal prop yang tidak dikenal komponennya.** Prop asing
 lolos jadi atribut HTML dan menempel diam-diam di elemen, dan komponennya
@@ -771,6 +780,16 @@ jam terbuang mengejar tabrakan warna yang tidak pernah ada — kesimpulan yang
 salah itu bahkan sempat tercatat di sini sebelum angkanya dihitung ulang.
 Dijaga `scripts/kelas-hilang.mjs`.
 
-Keduanya sama-sama tidak bisa ditangkap uji Pest maupun pengukur kontras.
-Yang menangkapnya hanya pemeriksa yang membaca kode sumber dan hasil build
-berdampingan.
+**Token yang dinetralkan tetap dipanggil.** `--mat-accent: none` membuang
+efeknya tanpa membuang pemakaiannya. Elemen yang memakainya sebagai
+satu-satunya latar jadi transparan, dan teks di atasnya menghilang. Ketiga
+pemeriksa otomatis diam: menurut token yang terdaftar warnanya benar, kelasnya
+ada di bundel, propnya sah. Dua cacat lahir dari sini, dan keduanya ada di
+setiap daftar admin.
+
+Ketiganya tidak bisa ditangkap uji Pest. Dua yang pertama ditangkap pemeriksa
+yang membaca kode sumber dan hasil build berdampingan. Yang ketiga hanya oleh
+peramban yang benar-benar menggambar halamannya, diukur terhadap latar
+**efektif** — naik ke leluhur sampai ketemu yang tidak transparan. Itulah
+sebabnya §11.4 menutup dengan pemeriksaan mata, dan kenapa pemeriksaan itu
+bukan formalitas.
