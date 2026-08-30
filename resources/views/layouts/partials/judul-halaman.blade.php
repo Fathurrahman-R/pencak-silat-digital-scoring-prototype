@@ -29,14 +29,18 @@
             <x-si.jejak :daftar="$breadcrumb" :akar="config('app.name')" class="mb-1.5 min-w-0" />
         @endif
 
-        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        {{-- Ditumpuk sampai md, sebaris mulai md.
+             Di bawah itu judul dan tombol tidak pernah berbagi baris: yang
+             menyusut selalu yang kiri, dan judul halaman terpotong jadi
+             "Pengg…" sementara tombol di kanan tetap utuh. Ambangnya md, bukan
+             sm — di 700px pun empat tombol ekspor sudah menyisakan terlalu
+             sedikit untuk judul beserta keterangannya.
 
-            {{-- `basis-full` di bawah sm memaksa tombol turun ke barisnya
-                 sendiri. Tanpa itu keduanya berbagi satu baris di layar
-                 sempit, dan yang menyusut selalu yang kiri — judul halaman
-                 terpotong jadi "Pengg…" sementara tombol di kanan tetap
-                 utuh. --}}
-            <div class="min-w-0 basis-full sm:basis-0 sm:flex-1">
+             Jaraknya 16px saat ditumpuk, bukan 12px seperti jarak antar
+             tombol: tombol yang terlalu rapat di bawah keterangan terbaca
+             sebagai bagian dari kalimatnya. --}}
+        <div class="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between md:gap-x-6 md:gap-y-3">
+            <div class="min-w-0 md:flex-1">
                 @if ($heading)
                     {{-- Tidak dipotong: judul yang terpotong menghilangkan
                          satu-satunya penanda halaman mana yang sedang dibuka.
