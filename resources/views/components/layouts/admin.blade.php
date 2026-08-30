@@ -20,10 +20,11 @@
         16px ruang kosong plus dua tepi panel.
       - Nol sudut membulat di tepi layar, nol bayangan mengambang.
 
-    Judul halaman pindah ke dalam bilah kepala, bukan blok terpisah di
-    bawahnya. Sebelumnya jejak halaman dan tombol utilitas duduk di satu
-    bidang, lalu judul dan tombol aksinya di bidang lain — dua kepala untuk
-    satu halaman, dan judulnya tidak pernah sebaris dengan aksinya.
+    Bilah atas hanya membawa utilitas aplikasi — cari, tema, akun — dan
+    tingginya tetap. Jejak halaman, judul, keterangan, serta tombol aksinya
+    turun ke bidang isi, tempat lebarnya memang selebar halaman: di dalam
+    bilah, jejak empat tingkat dan empat tombol ekspor memecahnya jadi empat
+    baris berdesakan.
 --}}
 
 <x-layouts.base :title="$title ?? $heading">
@@ -31,14 +32,16 @@
         @include('layouts.partials.sidebar')
 
         <div class="flex min-w-0 flex-1 flex-col">
-            @include('layouts.partials.kepala', [
-                'breadcrumb' => $breadcrumb,
-                'heading' => $heading,
-                'description' => $description,
-                'actions' => $actions ?? null,
-            ])
+            @include('layouts.partials.kepala')
 
             <main class="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-6">
+                @include('layouts.partials.judul-halaman', [
+                    'breadcrumb' => $breadcrumb,
+                    'heading' => $heading,
+                    'description' => $description,
+                    'actions' => $actions ?? null,
+                ])
+
                 {{--
                     Ringkasan galat validasi berdiri satu kali di sini, bukan
                     diulang di tiap halaman. Sebagian besar formulir aplikasi
