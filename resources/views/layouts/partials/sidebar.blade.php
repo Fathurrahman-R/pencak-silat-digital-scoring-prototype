@@ -177,15 +177,9 @@
             </a>
         @endif
 
-        <a href="{{ route('profile.edit') }}"
-           title="{{ auth()->user()->name }}"
-           data-rail="center"
-           class="flex min-h-11 items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2 whitespace-nowrap hover:bg-surface-inset">
-            <x-si.foto :user="auth()->user()" ukuran="kecil" class="size-7" />
-            <span class="min-w-0 flex-1" data-rail="hide">
-                <span class="block truncate text-[13px] font-semibold text-ink">{{ auth()->user()->name }}</span>
-                <span class="block truncate text-[12px] text-ink-muted">{{ auth()->user()->email }}</span>
-            </span>
-        </a>
+        {{-- Identitas pengguna TIDAK diulang di sini. Nama, email, tautan
+             profil, dan tombol keluar sudah tinggal di menu akun di bilah
+             kepala; menampilkannya dua kali di satu layar membuat orang
+             mengira keduanya membuka hal yang berbeda. --}}
     </div>
 </aside>

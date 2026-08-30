@@ -367,34 +367,51 @@
    kerangka mengambang yang membutuhkannya.
 --------------------------------------------------------------------------- */
 
-/* Kotak centang: cekung saat kosong, terisi aksen saat dicentang. Dipakai
-   matriks centang di layar role dan resource, yang menulis input-nya sendiri. */
+/* Kotak centang matriks -- dipakai layar role dan resource, yang menulis
+   input-nya sendiri karena kotaknya berjajar puluhan dalam satu tabel izin.
+
+   Bidangnya RATA. Sebelumnya ia gradien vertikal `accent-lit → accent` dengan
+   bevel dan bayangan angkat: efek material warisan boilerplate, dan
+   satu-satunya gradien yang tersisa di seluruh bundel admin.
+
+   Centangnya digambar `mask`, bukan disisipkan sebagai gambar latar.
+   Sebelumnya SVG-nya membawa `stroke='white'` yang ditulis mati di dalam
+   data-URI, dan di suasana gelap bidang aksennya justru TERANG (#e8e8ea) --
+   centang putih di atasnya berkontras 1.06 dan tidak terlihat sama sekali.
+   Data-URI tidak bisa membaca variabel CSS; mask bisa, karena warnanya datang
+   dari `background-color` elemen yang memakainya. */
 @utility form-check {
     appearance: none;
     flex: none;
+    display: grid;
+    place-items: center;
     width: 18px;
     height: 18px;
     cursor: pointer;
     border-radius: 5px;
-    border: 1px solid var(--border-subtle);
-    background-color: var(--surface-sunken);
-    box-shadow: var(--well);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-raised);
     transition:
         background-color 0.14s,
         border-color 0.14s;
 
+    &::before {
+        content: '';
+        width: 13px;
+        height: 13px;
+        transform: scale(0);
+        transition: transform 0.12s;
+        background-color: var(--accent-on);
+        mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / contain no-repeat;
+    }
+
     &:checked {
-        border-color: var(--accent-hover);
+        border-color: var(--accent);
         background-color: var(--accent);
-        background-image:
-            linear-gradient(180deg, var(--accent-lit) 0%, var(--accent) 100%),
-            url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
-        background-size:
-            100% 100%,
-            14px;
-        background-position: center;
-        background-repeat: no-repeat;
-        box-shadow: var(--bevel), var(--lift);
+    }
+
+    &:checked::before {
+        transform: scale(1);
     }
 
     &:focus-visible {
@@ -404,7 +421,7 @@
 
     &:disabled {
         cursor: not-allowed;
-        opacity: 0.6;
+        opacity: 0.45;
     }
 }
 

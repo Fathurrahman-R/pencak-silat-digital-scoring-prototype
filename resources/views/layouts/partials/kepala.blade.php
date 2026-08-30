@@ -12,14 +12,23 @@
     keterangan kecil di atas judul, tombol di kanan, satu garis memisahkannya
     dari isi halaman.
 
-    Utilitas aplikasi — cari, notifikasi, tema, akun — duduk di kanan setelah
-    pemisah. Ia chrome aplikasi, bukan aksi halaman, dan pemisahnya menyatakan
-    itu tanpa perlu kata.
+    Utilitas aplikasi — cari, tema, akun — duduk di kanan setelah pemisah. Ia
+    chrome aplikasi, bukan aksi halaman, dan pemisahnya menyatakan itu tanpa
+    perlu kata.
+
+    Lonceng notifikasi DIBUANG. Ia dipanggil tanpa sumber data, jadi isinya
+    selamanya "Belum ada notifikasi" — ikon yang menempati ruang di bilah
+    tersempit aplikasi dan tidak pernah bisa membawa kabar apa pun. Kalau
+    notifikasi suatu saat dibangun, ia kembali bersama datanya.
 --}}
 
 <header class="sticky top-0 z-30 flex shrink-0 flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line bg-surface-raised px-4 py-3 sm:px-6">
 
-    <div class="flex min-w-0 flex-1 items-start gap-3">
+    {{-- `basis-full` di bawah sm memaksa kelompok kanan turun ke barisnya
+         sendiri. Tanpa itu keduanya berbagi satu baris di layar sempit, dan
+         yang menyusut selalu yang kiri — judul halaman terpotong jadi
+         "Pengg…" sementara tombol di kanan tetap utuh. --}}
+    <div class="flex min-w-0 basis-full items-start gap-3 sm:basis-0 sm:flex-1">
         {{-- Laci menu hanya ada di layar sempit; di layar lebar sidebar-nya
              sudah berdiri sendiri. --}}
         <button type="button"
@@ -35,7 +44,10 @@
             @endif
 
             @if ($heading)
-                <h1 class="mt-0.5 truncate text-[22px] leading-tight font-semibold text-ink">{{ $heading }}</h1>
+                {{-- Tidak dipotong: judul yang terpotong menghilangkan satu-satunya
+                     penanda halaman mana yang sedang dibuka. Membungkus ke baris
+                     kedua lebih baik daripada "Pengg…". --}}
+                <h1 class="mt-0.5 text-[22px] leading-tight font-semibold text-balance text-ink">{{ $heading }}</h1>
             @endif
 
             @if ($description)
@@ -72,8 +84,6 @@
             <span class="sr-only">Cari halaman</span>
             <x-si.ikon nama="search" class="size-5" />
         </button>
-
-        <x-si.lonceng />
 
         <button type="button" data-theme-toggle
                 class="grid size-10 place-items-center rounded-[var(--radius-kecil)] text-ink-secondary hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">

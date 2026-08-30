@@ -227,7 +227,7 @@ Konsekuensi: bundel ketiga `upacara.*` tidak jadi dibuat, dan tidak ada huruf ke
 
 ### 4.7 Elevasi
 
-Tidak ada kaca, tidak ada butiran noise, tidak ada grid latar, tidak ada bevel. Semua itu warisan RizzxxUI dan dibuang. Kedalaman dinyatakan lewat **warna permukaan dan satu garis**; bayangan hanya untuk lapisan yang benar-benar mengambang:
+Tidak ada kaca, tidak ada butiran noise, tidak ada grid latar, tidak ada bevel, **tidak ada satu gradien pun**. Semua itu warisan boilerplate dan sudah dibuang dari CSS, bukan sekadar dinetralkan — token yang dinetralkan tetap dipanggil, dan elemen yang mengandalkannya tampil transparan alih-alih datar (§12.3). Kedalaman dinyatakan lewat **warna permukaan dan satu garis**; bayangan hanya untuk lapisan yang benar-benar mengambang:
 
 | Token | Nilai | Dipakai |
 |---|---|---|
@@ -712,7 +712,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
 | **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
-| **Kerangka panitia** | Dibangun ulang. Dua kolom menempel penuh ke tepi layar, dipisahkan satu garis; judul halaman pindah ke dalam bilah kepala. Kaca, latar bersemburat, dan jarak shell dibuang dari CSS |
+| **Kerangka panitia** | Dibangun ulang. Dua kolom menempel penuh ke tepi layar, dipisahkan satu garis; judul halaman pindah ke dalam bilah kepala. Kaca, latar bersemburat, jarak shell, dan efek material dibuang dari CSS — **nol gradien di seluruh bundel admin** |
 | **Kanvas rombongan 4** | Sembilan artboard di `page-5`. Enam digambar sebelum kodenya; tiga sisanya menyusul sesudah — `ManajemenAkses` (menaungi pengguna, role, permission, resource, pemetaan), `Keuangan` (bendahara dan tarif), `SiaranPendaftaran`. Tinggi tiap artboard diukur di peramban, bukan ditaksir |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (50 komponen dibaca, prop yang menaungi propnya sendiri). Keempatnya lolos |
@@ -764,6 +764,10 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Label penomoran halaman melafalkan entitas HTML.** `'&laquo; Sebelumnya'` di berkas bahasa, dipakai di dalam `sr-only`. Pembaca layar melafalkan "ampersand l a q u o titik koma" sebelum kata yang sesungguhnya
 - **Kerangka panitia masih rupa boilerplate.** Komponennya sudah dipindahkan seluruhnya, kerangkanya tidak: dua panel kaca mengambang di atas bidang berpadding 16px, dengan latar bersemburat aksen yang ada semata-mata supaya kacanya terbaca sebagai kaca. Brief §3 menuntut yang sebaliknya untuk panitia — "kertas kerja, kontras tinggi, tanpa kaca dan tanpa noise". Di layar 1366px yang dipakai panitia, 32px yang hilang di kiri-kanan itu satu kolom tabel penuh. Judul halaman pun tinggal di bidang terpisah di bawah topbar, jadi ia tidak pernah sebaris dengan tombol aksinya
 - **Tombol ciut menu hilang saat menunya diciutkan.** Ia lingkaran 26px yang menggantung di tepi panel — dan `data-rail="hide"` menyembunyikannya persis di keadaan yang butuh tombol itu untuk keluar. Dipindah ke kaki sidebar, di mana ia selalu terlihat
+- **Centang matriks izin tak terlihat di suasana gelap.** SVG-nya membawa `stroke='white'` yang ditulis mati di dalam data-URI, dan di gelap bidang aksennya justru TERANG (`#e8e8ea`) — centang putih di atasnya berkontras 1.06. Dipakai di layar role dan resource, tempat puluhan kotak berjajar dalam satu tabel. Data-URI tidak bisa membaca variabel CSS; digambar `mask` sekarang, warnanya dari `background-color` elemennya. 18.01 di terang, 15.40 di gelap
+- **Lonceng notifikasi tanpa sumber data.** Dipanggil tanpa prop `daftar`, jadi isinya selamanya "Belum ada notifikasi" — ikon yang menempati ruang di bilah tersempit aplikasi dan tidak pernah bisa membawa kabar apa pun
+- **Identitas pengguna ditampilkan dua kali di satu layar.** Kartu nama dan email di kaki sidebar, dan menu akun berisi nama, email, profil, serta tombol keluar di bilah kepala. Dua tempat untuk satu hal membuat orang mengira keduanya membuka sesuatu yang berbeda
+- **Judul halaman terpotong di layar sempit.** Kelompok kiri dan kanan berbagi satu baris, dan yang menyusut selalu yang kiri — "Pengguna" jadi "Pengg…" sementara tombol di kanan tetap utuh. Judul yang terpotong menghilangkan satu-satunya penanda halaman mana yang sedang dibuka
 
 Tiga pola menyambungkan sebagian besarnya, dan ketiganya punya sifat yang
 sama: **gagal tanpa bersuara.**
