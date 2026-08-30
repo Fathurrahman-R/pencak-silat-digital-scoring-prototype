@@ -1,4 +1,4 @@
-// Penyapu prop berbahasa lama yang tersangkut di tag `x-si.*`.
+// Penyapu prop berbahasa lama yang tersangkut di tag komponen sendiri.
 //
 // Jalankan: node scripts/sapu-prop.mjs
 // Keluar dengan kode 1 kalau ada yang tersangkut.
@@ -24,14 +24,26 @@
 //
 // Pemindainya sadar-kutip: regex non-greedy yang berhenti di '>' pertama akan
 // berhenti di '>' milik `$arena->is_active`, dan prop di belakangnya luput.
+//
+// Dua lapisan komponen ikut dibaca: `x-si.*` (admin dan panitia) dan
+// `x-silat.*` (panel gelanggang, live publik, overlay). Yang kedua propnya
+// berbahasa Indonesia sejak awal, jadi tidak ada sisa terjemahan di sana --
+// tapi tanpa dibaca di sini, tidak ada yang menjaganya tetap begitu.
+//
+// Ini BLOKLIST, bukan pemeriksaan skema: yang dicari nama-nama yang diketahui
+// berasal dari lapisan lama. Prop asing yang namanya baru sama sekali tetap
+// lolos. Memeriksanya penuh menuntut membaca `@props` tiap komponen dan
+// memisahkan prop dari atribut HTML yang memang diteruskan -- dan `type`,
+// `size`, serta `name` sah di kedua sisi, jadi pemisahannya tidak sesederhana
+// kelihatannya.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, sep } from 'node:path';
 
 const AKAR = 'resources/views';
 
-// Nama prop berbahasa lama. Kalau muncul di dalam tag si/*, hampir pasti sisa
-// pemindahan yang belum diganti.
+// Nama prop berbahasa lama. Kalau muncul di dalam tag komponen sendiri,
+// hampir pasti sisa pemindahan yang belum diganti.
 const LAMA = /\s:?\b(variant|subtitle|checked|hint|errors-for|delta|current|dot|pill|title|size|href|required|rows|options|icon|status|items|all)=/g;
 
 // Nama yang memang atribut HTML sungguhan pada komponen bersangkutan, bukan
@@ -72,7 +84,7 @@ let temuan = 0;
 for (const jalur of berkas(AKAR)) {
     const isi = readFileSync(jalur, 'utf8');
 
-    for (const m of isi.matchAll(/<x-si\.[a-z.-]+/g)) {
+    for (const m of isi.matchAll(/<x-(?:si|silat)\.[a-z.-]+/g)) {
         const tag = m[0].slice(1);
         const mulai = m.index + m[0].length;
         const atribut = isi.slice(mulai, batasTag(isi, mulai));

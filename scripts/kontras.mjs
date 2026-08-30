@@ -206,14 +206,9 @@ const PASANGAN = [
 
     /*
      * Penyaring chip yang sedang berlaku memakai pasangan yang sama dengan
-     * tombol aksi. Ia sempat memakai `bg-ink text-surface`, dan di suasana
-     * gelap keduanya putih: chipnya tampil sebagai kotak kosong tanpa satu
-     * pun huruf. Kontrasnya 1.0, dan tidak ada satu pun uji di sini yang
-     * gagal -- pasangan itu memang tidak pernah didaftarkan.
-     *
-     * Kedua barisnya sengaja ditulis meski nilainya sama dengan tombol aksi:
-     * kalau chip aktif suatu saat dipisahkan dari tombol, angkanya sudah
-     * dijaga di sini lebih dulu.
+     * tombol aksi. Kedua barisnya sengaja ditulis meski nilainya sama: kalau
+     * chip aktif suatu saat dipisahkan dari tombol, angkanya sudah dijaga di
+     * sini lebih dulu.
      */
     ['GELAP · penyaring aktif: teks di bidangnya', T.gAksiTeks, T.gAksi],
     ['GELAP · emas di latar', T.gEmas, T.gLatar],

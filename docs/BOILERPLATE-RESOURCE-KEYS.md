@@ -207,9 +207,24 @@ Halaman aplikasi memanggil `<x-layouts.base shell>` untuk mendapat latar shell;
 sisanya duduk langsung di atas permukaan kertas.
 
 **Tidak ada warna masuk desain sebelum angkanya diukur.** `npm run
-periksa-rupa` menjalankan dua pemeriksa: `scripts/kontras.mjs` (72 pasangan
-warna) dan `scripts/sapu-prop.mjs` (prop berbahasa lama yang tersangkut di tag
-`x-si.*`). Keduanya keluar dengan kode 1 kalau ada yang gagal.
+periksa-rupa` menjalankan empat pemeriksa berurutan; masing-masing keluar
+dengan kode 1 kalau gagal:
+
+| Pemeriksa | Menangkap |
+|---|---|
+| `kelas-hilang.mjs` | Bundel CSS yang basi, dan kelas token yang dipakai view tapi tidak punya aturan CSS |
+| `kontras.mjs` | 72 pasangan warna yang didaftarkan tangan, termasuk yang latar efektifnya butuh perhitungan alpha |
+| `kontras-kelas.mjs` | Pasangan `bg-*`/`text-*` yang ditulis di kelas, diresolusi dari token — menutup celah pemeriksa di atasnya |
+| `sapu-prop.mjs` | Nama prop berbahasa lama yang tersangkut di tag `x-si.*` maupun `x-silat.*` |
+
+Yang pertama dijalankan lebih dulu dan menghentikan sisanya, karena bundel
+basi membuat setiap laporan lain jadi tidak berarti.
+
+Semuanya menjaga mode kegagalan yang sama: **gagal tanpa bersuara.** Prop yang
+tidak dikenal komponennya lolos jadi atribut HTML; kelas yang belum dibangun
+tidak punya aturan sama sekali. Tidak ada yang menerbitkan galat, tidak ada
+yang memerahkan uji Pest, dan di layar keduanya terbaca sebagai "propnya
+salah" — kesimpulan yang salah, dan yang menyesatkan berjam-jam.
 
 ### Komponen
 

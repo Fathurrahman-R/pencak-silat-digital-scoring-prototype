@@ -47,14 +47,9 @@
 
     $dasarKelas = 'inline-flex h-9 items-center rounded-[var(--radius-kecil)] border px-3 text-[14px] transition-colors';
     /*
-     * Pasangan yang sama dengan tombol utama: bg-accent di atas
-     * text-accent-on, kontras 18.01.
-     *
-     * Sebelumnya `bg-ink text-surface`. Di suasana gelap keduanya putih --
-     * chip yang sedang berlaku tampil sebagai kotak putih kosong tanpa satu
-     * pun huruf, dan penyaring yang aktif jadi tak bernama. Kontrasnya 1.0,
-     * dan pengukur kontras tidak menangkapnya karena pasangan itu tidak ada
-     * di daftarnya.
+     * Pasangan yang sama dengan tombol utama: bg-accent di atas text-accent-on,
+     * 18.01 di terang dan 15.40 di gelap. Chip yang sedang berlaku memang
+     * aksi utama layar itu, jadi ia memakai perlakuan yang sama.
      */
     $nyala = 'border-accent bg-accent font-semibold text-accent-on';
     $padam = 'border-line-strong bg-surface-raised text-ink-secondary hover:text-ink';

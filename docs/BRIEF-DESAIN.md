@@ -643,22 +643,40 @@ Sudah ada dan sudah benar — jadikan titik mulai, bukan lahan kosong:
 
 ### 11.4 Cara memeriksa desain sebelum diserahkan
 
-`npm run periksa-rupa` menjalankan dua pemeriksa sekaligus:
+`npm run periksa-rupa` menjalankan empat pemeriksa berurutan. Semuanya menjaga
+mode kegagalan yang sama: **gagal tanpa bersuara** — tidak menerbitkan galat,
+tidak memerahkan uji Pest, dan di layar terbaca sebagai "propnya salah".
 
-1. `node scripts/kontras.mjs` — setiap pasangan warna baru ditambahkan ke berkas itu lebih dulu.
-   Tidak ada warna masuk desain sebelum angkanya ada. Pemeriksa ini hanya menguji pasangan yang
-   **didaftarkan**: chip penyaring yang tampil putih di atas putih lolos berbulan-bulan justru
-   karena pasangannya tidak pernah ditulis di sana.
-2. `node scripts/sapu-prop.mjs` — mencari nama prop berbahasa lama yang tersangkut di tag
-   `x-si.*`. Blade tidak mengeluh soal prop yang tidak dikenal komponennya: ia lolos jadi
-   atribut HTML dan komponennya diam-diam memakai nilai bawaan. Empat cacat sungguhan lahir
-   dari situ, tercatat di §12.3.
+1. `node scripts/kelas-hilang.mjs` — **dijalankan pertama, dan menghentikan sisanya kalau
+   bundelnya basi.** Tailwind hanya menghasilkan kelas yang ditemukannya saat build; kelas
+   yang ditulis sesudahnya tidak punya aturan CSS sama sekali dan elemennya mewarisi nilai
+   induknya. Ini pernah menghabiskan satu jam: chip penyaring `bg-ink text-surface` tampil
+   putih-di-atas-putih dan terbaca persis seperti cacat kontras, padahal pasangan itu
+   berkontras 16.11 di terang dan 19.67 di gelap. Yang salah bukan warnanya, melainkan
+   aturannya belum diterbitkan.
+2. `node scripts/kontras.mjs` — pasangan warna yang **didaftarkan tangan**, termasuk yang
+   latar efektifnya butuh perhitungan alpha. Setiap pasangan baru ditambahkan ke berkas itu
+   lebih dulu; tidak ada warna masuk desain sebelum angkanya ada.
+3. `node scripts/kontras-kelas.mjs` — bekerja dari arah sebaliknya: membaca pasangan
+   `bg-*`/`text-*` yang benar-benar **ditulis di kelas**, meresolusi tiap tokennya lewat
+   rantai `bg-ink` → `--color-ink` → `--text-primary` → `--k-tinta` → hex, lalu mengukurnya
+   di kedua suasana. Menutup celah nomor 2, yang hanya tahu apa yang didaftarkan.
+4. `node scripts/sapu-prop.mjs` — nama prop berbahasa lama yang tersangkut di tag `x-si.*`
+   maupun `x-silat.*`.
+   Blade tidak mengeluh soal prop yang tidak dikenal komponennya: ia lolos jadi atribut HTML
+   dan komponennya diam-diam memakai nilai bawaan. Empat cacat sungguhan lahir dari situ,
+   tercatat di §12.3.
+
+Batas nomor 3, dan ini disengaja: hanya pasangan yang ditulis di **satu untaian kelas yang
+sama** yang terbaca. Latar yang datang dari elemen leluhur tidak terlihat dari sana, dan
+menebaknya akan menghasilkan lebih banyak laporan palsu daripada temuan. Pasangan seperti itu
+tetap didaftarkan tangan di nomor 2. Keduanya saling melengkapi, bukan menggantikan.
 
 Lalu dengan mata:
 
-3. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
-4. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
-5. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
+5. Panel juri dan wasit diperiksa pada **844×390 landscape** tanpa gulir.
+6. Overlay diperiksa di atas **latar hijau** untuk memastikan yang transparan memang transparan.
+7. Tiap layar dibaca sekali dengan pertanyaan: "kalau saya belum pernah memakai aplikasi web,
    apakah saya tahu apa yang harus saya tekan berikutnya?"
 
 ---
@@ -684,7 +702,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
-| **Pemeriksa otomatis** | `npm run periksa-rupa`: `kontras.mjs` (72 pasangan, 72 lolos) dan `sapu-prop.mjs` (nol prop tersangkut) |
+| **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (prop berbahasa lama). Keempatnya lolos |
 | **Tahap 4 — pembersihan** | **Selesai.** 68 berkas dan 5.009 baris dihapus: 55 komponen `ui/`, 4 komponen `docs/`, 8 halaman peraga RizzxxUI, `DesignSystemController`. `app.css` turun 617 → 513 baris — sembilan utilitas dan tiga token yang tidak dipanggil satu berkas pun. `apexBarChart` ikut, beserta dependency `apexcharts`: satu-satunya pemanggilnya adalah `x-ui.bar-chart`, dan tidak ada satu pun grafik di aplikasi silat — rekap medali memakai tabel dan angka, karena angkanya dibacakan ke berita acara. Prop `texture` dan `backdrop` di layout dasar diganti satu prop `shell` |
 
 ### 12.2 Belum
@@ -698,8 +716,7 @@ ditunda karenanya:
 | Bagian | Catatan |
 |---|---|
 | **Kanvas belum menyusul kode** | Enam artboard rombongan 4 digambar sebelum layarnya jadi kode; sembilan layar panitia yang dikerjakan sesudahnya (pengguna, role, permission, resource, pemetaan, bendahara, siaran, tarif, pendaftaran) belum punya artboard. Kanvasnya kini tertinggal dari kode, bukan mendahuluinya |
-| **Kontras hanya menguji yang didaftarkan** | 72 pasangan. Chip penyaring putih-di-atas-putih lolos berbulan-bulan justru karena pasangannya tidak pernah ditulis di sana. Menambahkan pembacaan token dari CSS secara langsung akan menutup celah itu |
-| **Bundel gelanggang belum disapu** | `sapu-prop.mjs` hanya membaca tag `x-si.*`. Komponen `x-silat.*` punya prop berbahasa Indonesia sejak awal, jadi tidak ada sisa terjemahan — tapi juga tidak ada yang menjaganya |
+| **Penyapu prop masih bloklist, bukan skema** | Ia mencari nama-nama yang diketahui berasal dari lapisan lama. Prop asing yang namanya baru sama sekali tetap lolos. Memeriksanya penuh menuntut membaca `@props` tiap komponen dan memisahkan prop dari atribut HTML yang memang diteruskan — dan `type`, `size`, serta `name` sah di kedua sisi |
 
 
 ### 12.3 Cacat yang ditemukan dan diperbaiki selagi merombak
@@ -725,7 +742,7 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Hapus borongan mengirim langsung di lima layar** — kejuaraan, pengguna, role, permission, resource. Satu tekan menghapus setiap baris yang tercentang, tanpa konfirmasi dan tanpa menyebut berapa banyak yang terpilih
 - **Emoji medali di layar rekap panitia,** layar yang justru dipakai menyusun berita acara
 - **Badge status seluruhnya abu-abu.** `StatusInvoice`, `StatusPendaftaran`, dan `StatusTurnamen` mengembalikan nama varian dalam bahasa Inggris. `si/badge` tidak mengenalinya dan menjatuhkannya ke `netral` tanpa galat — di layar bendahara, lunas dan belum lunas tampil sama
-- **Penyaring yang sedang berlaku tampil sebagai kotak putih kosong.** `bg-ink` di atas `text-surface`; di suasana gelap keduanya putih. Rasio 1.0, dan pengukur kontras diam karena pasangan itu tidak pernah didaftarkan
+- **Penyaring yang sedang berlaku tampil sebagai kotak putih kosong** — dan sebabnya BUKAN warna. `bg-ink` di atas `text-surface` berkontras 16.11 di terang dan 19.67 di gelap. Yang terjadi: `si/saring` baru dibuat, `.text-surface` belum pernah ada di CSS terbangun, dan teksnya mewarisi putih dari induknya. Kelas yang tidak dihasilkan Tailwind tidak berbuat apa-apa, dan gejalanya terbaca persis seperti cacat kontras. Dijaga sekarang oleh `scripts/kelas-hilang.mjs`
 - **Subjudul layar siaran tidak pernah tampil.** Kedua kartunya mengoper prop `subjudul` yang tidak pernah ada di komponennya. Blade membuang prop asing tanpa peringatan
 - **Penyaring status bendahara tidak menandai dirinya,** karena `:variant` dinamisnya pun bukan prop yang dikenal — seluruh tombolnya tampil serupa, dan daftar yang tersaring terbaca sebagai daftar seluruhnya
 - **Rincian tiap baris tabel tidak terjangkau papan ketik.** Baris bisa diklik, tapi `<tr>` tidak bisa difokus dan tidak menanggapi Enter; chevron di ujungnya sengaja disembunyikan dari pembaca layar sebagai "penanda arah"
@@ -733,10 +750,24 @@ Dicatat karena semuanya bukan soal rupa — semuanya salah sebelum dirombak:
 - **Tombol baris tanpa nama.** Pensil, mata, dan tong sampah berjajar dengan `title` sebagai satu-satunya keterangan — dan `title` tidak pernah muncul di layar sentuh
 - **Tombol "Batal" di dialog konfirmasi sebenarnya tombol kirim.** Ditulis `type="button"` padahal propnya `tipe`; atributnya lolos jadi atribut HTML kedua, dan peramban memakai yang pertama
 
-Satu pola menyambungkan enam di antaranya: **Blade tidak mengeluh soal prop yang
-tidak dikenal komponennya.** Prop asing lolos jadi atribut HTML dan menempel
-diam-diam di elemen, dan komponennya memakai nilai bawaan. Tidak ada galat,
-tidak ada peringatan, tidak ada uji yang gagal — yang terlihat hanya badge yang
-warnanya kurang tepat, kalau ada yang memperhatikan. Karena itu pemindahan ini
-disertai penyapu yang membaca tiap tag `x-si.*` dan mencari nama prop
-berbahasa lama di dalamnya.
+Dua pola menyambungkan sebagian besarnya, dan keduanya punya sifat yang sama:
+**gagal tanpa bersuara.**
+
+**Blade tidak mengeluh soal prop yang tidak dikenal komponennya.** Prop asing
+lolos jadi atribut HTML dan menempel diam-diam di elemen, dan komponennya
+memakai nilai bawaan. Tidak ada galat, tidak ada peringatan, tidak ada uji yang
+gagal — yang terlihat hanya badge yang warnanya kurang tepat, kalau ada yang
+memperhatikan. Lima cacat di atas lahir dari sini. Dijaga
+`scripts/sapu-prop.mjs`.
+
+**Tailwind hanya menghasilkan kelas yang ditemukannya saat build.** Kelas yang
+ditulis sesudahnya tidak punya aturan CSS sama sekali; ia menempel di elemen
+tanpa berbuat apa pun, dan elemennya mewarisi nilai induknya. Gejalanya
+menyesatkan: chip penyaring itu terbaca persis seperti cacat kontras, dan satu
+jam terbuang mengejar tabrakan warna yang tidak pernah ada — kesimpulan yang
+salah itu bahkan sempat tercatat di sini sebelum angkanya dihitung ulang.
+Dijaga `scripts/kelas-hilang.mjs`.
+
+Keduanya sama-sama tidak bisa ditangkap uji Pest maupun pengukur kontras.
+Yang menangkapnya hanya pemeriksa yang membaca kode sumber dan hasil build
+berdampingan.
