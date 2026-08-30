@@ -701,6 +701,7 @@ Cabang kerja: `rombak-ui`.
 | **Rombongan 1b — verifikasi juri** | Mesin polling, layar Wasit dan Juri, panel Ketua Pertandingan, jejak di berita acara |
 | **Rombongan 4 — panitia/admin** | **Nol `x-ui.*` di seluruh `resources/views/admin/`.** Termasuk manajemen akses (pengguna, role, permission, resource, pemetaan), yang paling akhir karena polanya paling berulang |
 | **Shell aplikasi** | Topbar, sidebar, jejak halaman, lonceng notifikasi, menu pengguna, cari-menu (⌘K), penomoran halaman, halaman galat, dashboard, profil. Nol `x-ui.*` |
+| **Kanvas rombongan 4** | Sembilan artboard di `page-5`. Enam digambar sebelum kodenya; tiga sisanya menyusul sesudah — `ManajemenAkses` (menaungi pengguna, role, permission, resource, pemetaan), `Keuangan` (bendahara dan tarif), `SiaranPendaftaran`. Tinggi tiap artboard diukur di peramban, bukan ditaksir |
 | **Lapisan tabel** | `si/tabel` + baris, sel, toolbar — API sepadan dengan `x-ui.table` |
 | **Pemeriksa otomatis** | `npm run periksa-rupa`, empat pemeriksa: `kelas-hilang.mjs` (bundel mutakhir + tiap kelas token punya aturannya), `kontras.mjs` (72 pasangan didaftarkan), `kontras-kelas.mjs` (pasangan yang ditulis di kelas, diresolusi dari token), `sapu-prop.mjs` (prop berbahasa lama). Keempatnya lolos |
 | **Tahap 4 — pembersihan** | **Selesai.** 68 berkas dan 5.009 baris dihapus: 55 komponen `ui/`, 4 komponen `docs/`, 8 halaman peraga RizzxxUI, `DesignSystemController`. `app.css` turun 617 → 513 baris — sembilan utilitas dan tiga token yang tidak dipanggil satu berkas pun. `apexBarChart` ikut, beserta dependency `apexcharts`: satu-satunya pemanggilnya adalah `x-ui.bar-chart`, dan tidak ada satu pun grafik di aplikasi silat — rekap medali memakai tabel dan angka, karena angkanya dibacakan ke berita acara. Prop `texture` dan `backdrop` di layout dasar diganti satu prop `shell` |
@@ -715,7 +716,6 @@ ditunda karenanya:
 
 | Bagian | Catatan |
 |---|---|
-| **Kanvas belum menyusul kode** | Enam artboard rombongan 4 digambar sebelum layarnya jadi kode; sembilan layar panitia yang dikerjakan sesudahnya (pengguna, role, permission, resource, pemetaan, bendahara, siaran, tarif, pendaftaran) belum punya artboard. Kanvasnya kini tertinggal dari kode, bukan mendahuluinya |
 | **Penyapu prop masih bloklist, bukan skema** | Ia mencari nama-nama yang diketahui berasal dari lapisan lama. Prop asing yang namanya baru sama sekali tetap lolos. Memeriksanya penuh menuntut membaca `@props` tiap komponen dan memisahkan prop dari atribut HTML yang memang diteruskan — dan `type`, `size`, serta `name` sah di kedua sisi |
 
 

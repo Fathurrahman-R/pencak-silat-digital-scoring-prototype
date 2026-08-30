@@ -1,0 +1,403 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}
+    .items-baseline{align-items:baseline}.items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}.text-right{text-align:right}
+    .border{border-width:1px}.border-2{border-width:2px}
+    .border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l{border-left-width:1px}.border-l-3{border-left-width:3px}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}
+    .pt10{padding-top:10px}.pt12{padding-top:12px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}.h48{height:48px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+    .pegangan{color:#5f5c66;font-size:15px;letter-spacing:2px;line-height:1;cursor:grab}
+    .bg-dalam{background-color:#dcd8d0}
+    .bg-aksi-lembut{background-color:#e6e3dd}
+    .centang{width:18px;height:18px;border:2px solid #7d7668;border-radius:4px;flex:none}
+    .centang.on{background:#17161a;border-color:#17161a}
+    .kolom{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5f5c66}
+    .foto{width:32px;height:32px;border-radius:9999px;background:#dcd8d0;display:flex;
+          align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#45434a;flex:none}
+    .panel{position:absolute;top:0;right:0;bottom:0;width:420px;background:#ffffff;
+           border-left:1px solid #d4cfc6}
+    .dialog{width:460px;background:#ffffff;border:1px solid #a3221c;border-radius:6px}
+    .mt-auto{margin-top:auto}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:980px;position:relative">
+
+  <!-- KEPALA -->
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Manajemen akses</div>
+      <div class="f22 w600 lh12">Pengguna</div>
+    </div>
+    <div class="flex items-center g8">
+      <button class="h36 px14 r6 border b-kendali bg-naik f13 w600">Ekspor CSV</button>
+      <button class="h36 px14 r6 bg-tinta t-putih f13 w600">Tambah pengguna</button>
+    </div>
+  </div>
+
+  <div class="flex flex-1 min-w-0 overflow-hidden p16">
+    <div class="kartu flex flex-col flex-1 overflow-hidden">
+
+      <!-- TOOLBAR -->
+      <div class="px16 py12 border-b b-garis flex flex-wrap items-center g10">
+        <div class="h40 px12 r6 border b-kendali bg-naik flex items-center g8" style="width:260px">
+          <span class="t-redup f14">Cari nama atau email…</span>
+        </div>
+        <div class="h40 px12 r6 border b-kendali bg-naik flex items-center g8" style="width:200px">
+          <span class="f14">Semua role</span><span class="t-redup f12">▾</span>
+        </div>
+        <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Terapkan</button>
+
+        <div class="flex items-center g6">
+          <span class="h36 px12 r6 bg-tinta t-putih f14 w600 inline-flex items-center">Semua status</span>
+          <span class="h36 px12 r6 border b-kendali bg-naik f14 inline-flex items-center">Aktif</span>
+          <span class="h36 px12 r6 border b-kendali bg-naik f14 inline-flex items-center">Nonaktif</span>
+        </div>
+
+        <div class="flex items-baseline g6 f13 t-redup">
+          Menampilkan <span class="font-mono w600 t-tinta">15</span> dari
+          <span class="font-mono w600 t-tinta">36</span>
+        </div>
+
+        <div class="flex items-center g10" style="margin-left:auto">
+          <span class="f13 t-redup">2 dipilih</span>
+          <button class="h36 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus terpilih</button>
+        </div>
+      </div>
+
+      <!-- KEPALA KOLOM -->
+      <div class="flex items-center g10 px16 py8 bg-turun border-b b-garis">
+        <span class="centang"></span>
+        <span class="kolom flex-1">Nama ⌃</span>
+        <span class="kolom" style="width:200px">Email</span>
+        <span class="kolom" style="width:150px">Role</span>
+        <span class="kolom" style="width:96px">Status</span>
+        <span class="kolom" style="width:96px">Dibuat</span>
+        <span class="kolom" style="width:150px"></span>
+        <span style="width:28px"></span>
+      </div>
+
+      <!-- BARIS -->
+      <div class="baris flex items-center g10 px16 py10">
+        <span class="centang"></span>
+        <div class="flex items-center g10 flex-1 min-w-0">
+          <div class="foto">OK</div>
+          <span class="f15 w500">Official Kontingen 4</span>
+        </div>
+        <span class="f14 t-kedua font-mono" style="width:200px">official4@silat.test</span>
+        <span style="width:150px">
+          <span class="inline-flex items-center g4 px8 py4 r6 bg-turun t-kedua f13 w600">Official Kontingen</span>
+        </span>
+        <span style="width:96px">
+          <span class="inline-flex items-center px8 py4 r6 bg-sukses-lembut t-sukses f13 w600">Aktif</span>
+        </span>
+        <span class="f13 t-redup font-mono tabular-nums" style="width:96px">18 Agt 2026</span>
+        <div class="flex g6" style="width:150px">
+          <button class="h32 px12 r6 border b-kendali bg-naik f13 w600">Ubah</button>
+          <button class="h32 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+        </div>
+        <span class="f14 t-redup text-center" style="width:28px">›</span>
+      </div>
+      <div class="baris flex items-center g10 px16 py10">
+        <span class="centang"></span>
+        <div class="flex items-center g10 flex-1 min-w-0">
+          <div class="foto">J6</div>
+          <span class="f15 w500">Juri 6</span>
+        </div>
+        <span class="f14 t-kedua font-mono" style="width:200px">juri6@silat.test</span>
+        <span style="width:150px">
+          <span class="inline-flex items-center g4 px8 py4 r6 bg-turun t-kedua f13 w600">Juri</span>
+        </span>
+        <span style="width:96px">
+          <span class="inline-flex items-center px8 py4 r6 bg-sukses-lembut t-sukses f13 w600">Aktif</span>
+        </span>
+        <span class="f13 t-redup font-mono tabular-nums" style="width:96px">18 Agt 2026</span>
+        <div class="flex g6" style="width:150px">
+          <button class="h32 px12 r6 border b-kendali bg-naik f13 w600">Ubah</button>
+          <button class="h32 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+        </div>
+        <span class="f14 t-redup text-center" style="width:28px">›</span>
+      </div>
+      <div class="baris flex items-center g10 px16 py10" style="background:#f4f2ee">
+        <span class="centang on"></span>
+        <div class="flex items-center g10 flex-1 min-w-0">
+          <div class="foto">RH</div>
+          <span class="f15 w500">Rudi Hermawan</span>
+        </div>
+        <span class="f14 t-kedua font-mono" style="width:200px">wasit2@silat.test</span>
+        <span style="width:150px">
+          <span class="inline-flex items-center g4 px8 py4 r6 bg-turun t-kedua f13 w600">Wasit</span>
+        </span>
+        <span style="width:96px">
+          <span class="inline-flex items-center px8 py4 r6 bg-sukses-lembut t-sukses f13 w600">Aktif</span>
+        </span>
+        <span class="f13 t-redup font-mono tabular-nums" style="width:96px">18 Agt 2026</span>
+        <div class="flex g6" style="width:150px">
+          <button class="h32 px12 r6 border b-kendali bg-naik f13 w600">Ubah</button>
+          <button class="h32 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+        </div>
+        <span class="f14 t-redup text-center" style="width:28px">›</span>
+      </div>
+      <div class="baris flex items-center g10 px16 py10">
+        <span class="centang"></span>
+        <div class="flex items-center g10 flex-1 min-w-0">
+          <div class="foto">SA</div>
+          <span class="f15 w500">Super Admin</span>
+        </div>
+        <span class="f14 t-kedua font-mono" style="width:200px">super@example.com</span>
+        <span style="width:150px">
+          <span class="inline-flex items-center g4 px8 py4 r6 bg-perhatian-lembut t-perhatian f13 w600">Super admin <span class="f11">🛡</span></span>
+        </span>
+        <span style="width:96px">
+          <span class="inline-flex items-center px8 py4 r6 bg-sukses-lembut t-sukses f13 w600">Aktif</span>
+        </span>
+        <span class="f13 t-redup font-mono tabular-nums" style="width:96px">18 Agt 2026</span>
+        <div class="flex g6" style="width:150px">
+          <button class="h32 px12 r6 border b-kendali bg-naik f13 w600">Ubah</button>
+          <button class="h32 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+        </div>
+        <span class="f14 t-redup text-center" style="width:28px">›</span>
+      </div>
+      <div class="baris flex items-center g10 px16 py10">
+        <span class="centang"></span>
+        <div class="flex items-center g10 flex-1 min-w-0">
+          <div class="foto">YH</div>
+          <span class="f15 w500">Yudi Hartono</span>
+        </div>
+        <span class="f14 t-kedua font-mono" style="width:200px">operator2@silat.test</span>
+        <span style="width:150px">
+          <span class="inline-flex items-center g4 px8 py4 r6 bg-turun t-kedua f13 w600">Operator IT</span>
+        </span>
+        <span style="width:96px">
+          <span class="inline-flex items-center px8 py4 r6 bg-bahaya-lembut t-bahaya f13 w600">Nonaktif</span>
+        </span>
+        <span class="f13 t-redup font-mono tabular-nums" style="width:96px">18 Agt 2026</span>
+        <div class="flex g6" style="width:150px">
+          <button class="h32 px12 r6 border b-kendali bg-naik f13 w600">Ubah</button>
+          <button class="h32 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+        </div>
+        <span class="f14 t-redup text-center" style="width:28px">›</span>
+      </div>
+
+      <div class="px16 py10 border-t b-garis f13 t-redup">Halaman 1 dari 3</div>
+    </div>
+  </div>
+
+  <!-- PANEL RINCIAN -->
+  <div class="panel flex flex-col">
+    <div class="flex items-start justify-between g16 px16 py12 border-b b-garis">
+      <div class="f18 w600">Detail pengguna</div>
+      <div class="f13 t-redup">Tutup ✕</div>
+    </div>
+    <div class="p16 flex flex-col g16">
+      <div class="flex items-center g12">
+        <div class="foto" style="width:44px;height:44px">RH</div>
+        <div>
+          <div class="f16 w600">Rudi Hermawan</div>
+          <div class="f13 t-redup">wasit2@silat.test</div>
+        </div>
+      </div>
+      <div class="flex flex-col g8">
+        <div class="flex justify-between border-b b-garis py8"><span class="f13 t-redup">Role</span><span class="f13 w500">Wasit</span></div>
+        <div class="flex justify-between border-b b-garis py8"><span class="f13 t-redup">Status</span><span class="f13 w500 t-sukses">Aktif</span></div>
+        <div class="flex justify-between border-b b-garis py8"><span class="f13 t-redup">Email terverifikasi</span><span class="f13 w500 font-mono">18 Agt 2026</span></div>
+        <div class="flex justify-between py8"><span class="f13 t-redup">Bertugas di</span><span class="f13 w500">3 partai terjadwal</span></div>
+      </div>
+      <button class="h44 r6 border b-kendali bg-naik f14 w600 text-center">Ubah pengguna</button>
+    </div>
+    <div class="p16 mt-auto f12 t-redup lh16 border-t b-garis">
+      Isinya diambil saat panel dibuka, bukan ditanam di tiap baris. Lima puluh baris berarti
+      lima puluh salinan kalau tidak begitu.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- DIALOG HAPUS SATU BARIS                                           -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:80px">
+  <div class="f11 tr28 uppercase t-redup">Dialog hapus — satu untuk seluruh halaman, bukan satu per baris</div>
+
+  <div class="flex g20 items-start">
+    <div class="dialog p20 flex flex-col g10">
+      <div class="f11 tr10 uppercase t-bahaya">Tidak bisa dibatalkan</div>
+      <div class="f20 w600 lh12">Hapus role bendahara?</div>
+      <div class="f14 lh16">3 pengguna memegang role ini.</div>
+      <div class="f14 lh16 t-kedua">
+        Mereka kehilangan seluruh izin yang dibawa role ini seketika — termasuk yang sedang
+        membuka panel gelanggang. Izin dari role lain yang mereka pegang tetap berlaku.
+      </div>
+      <div class="flex items-center g8 mt8">
+        <button class="h44 px16 r6 border b-kendali bg-aksi-lembut f15 w600">Tidak jadi</button>
+        <button class="h44 px16 r6 f15 w600 t-putih" style="background:#a3221c">Hapus role</button>
+      </div>
+    </div>
+
+    <div class="kartu p20 flex flex-col g12 flex-1" style="max-width:620px">
+      <div class="f13 w600">Tiga hal yang membedakannya dari dialog sebelumnya</div>
+      <div class="flex g12 items-start border-t b-garis pt10">
+        <span class="f13 w600 shrink-0" style="width:150px">Objeknya disebut</span>
+        <span class="f14 lh16 t-kedua flex-1">Judulnya menyebut nama role, bukan "Anda yakin?".
+          Di tabel rapat, baris yang tertekan sering bukan baris yang dimaksud.</span>
+      </div>
+      <div class="flex g12 items-start border-t b-garis pt10">
+        <span class="f13 w600 shrink-0" style="width:150px">Angkanya ikut</span>
+        <span class="f14 lh16 t-kedua flex-1">Berapa pengguna kehilangan role ini, berapa key
+          menunjuk permission ini. Barisnya yang tahu, jadi barisnya yang mengirimkannya.</span>
+      </div>
+      <div class="flex g12 items-start border-t b-garis pt10">
+        <span class="f13 w600 shrink-0" style="width:150px">Batal di kiri</span>
+        <span class="f14 lh16 t-kedua flex-1">Urutan tekan yang dihafal dari dialog biasa tidak
+          berubah jadi bencana di sini.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- EMPAT LAYAR LAIN, POLA YANG SAMA                                  -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:60px">
+  <div class="f11 tr28 uppercase t-redup">Empat layar lain memakai kerangka yang sama</div>
+  <div class="f14 lh16 t-kedua" style="max-width:900px">
+    Yang berbeda hanya kolom dan kalimat akibatnya. Itu sebabnya kelimanya digambar sebagai satu
+    artboard: menggambar lima layar yang polanya identik menghasilkan lima gambar yang harus
+    dijaga tetap sama, dan yang pertama kali berbeda tidak akan ada yang menyadarinya.
+  </div>
+  <div class="flex flex-wrap g16">
+    <div class="kartu flex flex-col overflow-hidden" style="width:640px">
+      <div class="px16 py10 border-b b-garis bg-turun f13 w600">Role</div>
+      <div class="flex items-center g10 px16 py8 border-b b-garis">
+        <span class="centang"></span><span class="kolom" style="width:160px">Nama</span><span class="kolom" style="width:140px">Label</span><span class="kolom" style="width:90px">Permission</span><span class="kolom" style="width:80px">Pengguna</span>
+      </div>
+      <div class="p16 f13 lh16 t-kedua">Super admin dan role terkunci tidak bisa dicentang: kolomnya tetap digambar kosong supaya jumlah kolom tidak bergeser dibanding baris lain.</div>
+    </div>
+    <div class="kartu flex flex-col overflow-hidden" style="width:640px">
+      <div class="px16 py10 border-b b-garis bg-turun f13 w600">Permission</div>
+      <div class="flex items-center g10 px16 py8 border-b b-garis">
+        <span class="centang"></span><span class="kolom" style="width:160px">Nama</span><span class="kolom" style="width:100px">Grup</span><span class="kolom" style="width:150px">Dipetakan dari key</span><span class="kolom" style="width:60px">Role</span>
+      </div>
+      <div class="p16 f13 lh16 t-kedua">Permission yang tidak dipakai key mana pun ditandai badge berkata, bukan dibiarkan kosong — kosong terbaca sebagai "belum sempat diisi".</div>
+    </div>
+    <div class="kartu flex flex-col overflow-hidden" style="width:640px">
+      <div class="px16 py10 border-b b-garis bg-turun f13 w600">Resource</div>
+      <div class="flex items-center g10 px16 py8 border-b b-garis">
+        <span class="centang"></span><span class="kolom" style="width:150px">Key</span><span class="kolom" style="width:130px">Label</span><span class="kolom" style="width:110px">Grup</span><span class="kolom" style="width:80px">Aksi</span>
+      </div>
+      <div class="p16 f13 lh16 t-kedua">Aksi yang belum dipetakan ditandai badge merah berangka. Pintu tanpa key tertutup untuk semua orang kecuali super admin.</div>
+    </div>
+    <div class="kartu flex flex-col overflow-hidden" style="width:640px">
+      <div class="px16 py10 border-b b-garis bg-turun f13 w600">Pemetaan key</div>
+      <div class="flex items-center g10 px16 py8 border-b b-garis">
+        <span class="centang"></span><span class="kolom" style="width:160px">Resource key</span><span class="kolom" style="width:90px">Aksi</span><span class="kolom" style="width:220px">Permission</span>
+      </div>
+      <div class="p16 f13 lh16 t-kedua">Satu-satunya yang barisnya berisi kendali: select permission per baris, berlebar minimum supaya nama panjang tetap terbaca di antara dua tombol.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- CATATAN: YANG DIBUANG                                             -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:60px">
+  <div class="f11 tr28 uppercase t-redup">Yang dibuang dari kelima layar akses</div>
+
+  <div class="kartu p20 flex flex-col g12" style="max-width:1000px">
+    <div class="flex g16 items-start">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Hapus borongan tanpa tanya</div>
+      <div class="f14 lh16 t-kedua flex-1">Satu tekan menghapus setiap baris yang tercentang, tanpa konfirmasi dan tanpa menyebut berapa yang terpilih. Centang di tabel panjang mudah tertinggal dari halaman sebelumnya, dan yang terhapus bisa jauh lebih banyak daripada yang diingat.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Dialog per baris</div>
+      <div class="f14 lh16 t-kedua flex-1">Tiap baris menanam modalnya sendiri. Lima puluh baris berarti lima puluh dialog di DOM, masing-masing dengan salinan nama dan formulir hapusnya sendiri, dan hanya satu yang akan dipakai. Kalimatnya pun cuma "Yakin menghapus? Tindakan ini tidak bisa dibatalkan" — tidak satu kata pun tentang apa yang ikut hilang.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Tombol baris tanpa nama</div>
+      <div class="f14 lh16 t-kedua flex-1">Pensil, mata, dan tong sampah berjajar dengan <span class="font-mono f13">title</span> sebagai satu-satunya keterangan. Tooltip hanya muncul saat kursor berdiam di atasnya, dan di layar sentuh tidak pernah muncul sama sekali — yang tersisa tiga gambar kecil yang harus ditebak, dan yang paling kanan menghapus akun.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Rincian hanya lewat tetikus</div>
+      <div class="f14 lh16 t-kedua flex-1">Seluruh baris bisa diklik untuk membuka panelnya, tapi baris tabel tidak bisa difokus dan tidak menanggapi Enter. Chevron di ujungnya sengaja disembunyikan dari pembaca layar sebagai "penanda arah". Hasilnya: tidak ada satu pun jalan ke rincian bagi yang tidak memakai tetikus. Chevron itu kini tombol sungguhan.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Badge ungu yang tak pernah ungu</div>
+      <div class="f14 lh16 t-kedua flex-1">Super admin dan permission inti ditandai rona yang tidak ada di palet mana pun, jadi badge-nya jatuh ke abu-abu — sama persis dengan role biasa. Diganti kata dan ikon.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Select penyaring tanpa nama</div>
+      <div class="f14 lh16 t-kedua flex-1">Kotak pilihan telanjang tanpa label maupun nama untuk pembaca layar. Yang terdengar cuma "kotak pilihan", dan tidak ada cara tahu ia menyaring apa.</div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

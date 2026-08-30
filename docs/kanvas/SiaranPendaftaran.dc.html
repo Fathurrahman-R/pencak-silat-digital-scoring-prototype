@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}
+    .items-baseline{align-items:baseline}.items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .justify-end{justify-content:flex-end}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}.text-right{text-align:right}
+    .border{border-width:1px}.border-2{border-width:2px}
+    .border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l{border-left-width:1px}.border-l-3{border-left-width:3px}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}
+    .pt10{padding-top:10px}.pt12{padding-top:12px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}.h48{height:48px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+    .pegangan{color:#5f5c66;font-size:15px;letter-spacing:2px;line-height:1;cursor:grab}
+    .bg-aksi-lembut{background-color:#e6e3dd}
+    .alamat{background:#e9e6e0;border:1px solid #d4cfc6;border-radius:6px;padding:8px 12px;
+            font-family:'IBM Plex Mono',monospace;font-size:13px;color:#45434a}
+    .modal{width:560px;background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .mt-auto{margin-top:auto}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:760px">
+
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Kejuaraan Terbuka Kalimantan Barat 2026</div>
+      <div class="f22 w600 lh12">Overlay siaran</div>
+    </div>
+  </div>
+
+  <div class="p16 flex flex-col g16 flex-1 overflow-hidden">
+
+    <div class="kartu p16 flex flex-col g8 shrink-0" style="border-left:3px solid #45434a">
+      <div class="f15 w600">Cara memasangnya di vMix</div>
+      <div class="f14 lh16 t-kedua">
+        Add Input → Web Browser, tempelkan alamat di bawah, centang Transparent Background, dan
+        set resolusi 1920×1080. Pasang tiap halaman sebagai input terpisah supaya bisa
+        ditayangkan dan disembunyikan sendiri-sendiri dari vMix.
+      </div>
+      <div class="f14 lh16 t-kedua">
+        Halaman overlay hanya bisa dibuka dari jaringan lokal dan tidak pernah diteruskan lewat
+        tunnel publik. Kalau vMix berjalan di mesin lain, ganti bagian host dengan alamat LAN
+        server ini.
+      </div>
+    </div>
+
+    <div class="kartu flex flex-col flex-1 overflow-hidden">
+      <div class="px16 py12 border-b b-garis">
+        <div class="f18 w600">Gelanggang A</div>
+        <div class="f13 t-redup mt2">Gelanggang #1 · kode GA-1</div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:260px">
+          <div class="flex items-center g8">
+            <span class="f15 w500">Scorebug</span>
+            <span class="inline-flex items-center px8 py4 r6 bg-turun t-kedua f12 w600">Overlay 1</span>
+          </div>
+          <div class="f12 t-redup mt2">Skor merah dan biru, timer, babak, nama atlet</div>
+          <div class="alamat mt6">http://192.168.1.76:8000/overlay/scorebug/1</div>
+        </div>
+        <div class="flex g6 shrink-0">
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Salin alamat</button>
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Pratinjau</button>
+        </div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:260px">
+          <div class="flex items-center g8">
+            <span class="f15 w500">Lower third — sudut merah</span>
+            <span class="inline-flex items-center px8 py4 r6 bg-turun t-kedua f12 w600">Overlay 2</span>
+          </div>
+          <div class="f12 t-redup mt2">Nama, kontingen, dan foto pesilat sudut merah</div>
+          <div class="alamat mt6">http://192.168.1.76:8000/overlay/athlete/1/red</div>
+        </div>
+        <div class="flex g6 shrink-0">
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Salin alamat</button>
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Pratinjau</button>
+        </div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:260px">
+          <div class="flex items-center g8">
+            <span class="f15 w500">Rincian nilai &amp; hukuman</span>
+            <span class="inline-flex items-center px8 py4 r6 bg-turun t-kedua f12 w600">Overlay 3</span>
+          </div>
+          <div class="f12 t-redup mt2">Rincian per babak, kilatan singkat saat nilai baru terbit</div>
+          <div class="alamat mt6">http://192.168.1.76:8000/overlay/rincian/1</div>
+        </div>
+        <div class="flex g6 shrink-0">
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Salin alamat</button>
+          <button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Pratinjau</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- PENDAFTARAN NOMOR                                                 -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:80px">
+  <div class="f11 tr28 uppercase t-redup">Pendaftaran nomor — dua formulir yang saling meniadakan</div>
+
+  <div class="flex g16 items-start">
+    <div class="modal flex flex-col">
+      <div class="flex items-start justify-between g16 px16 py12 border-b b-garis">
+        <div class="f18 w600">Daftarkan nomor Tanding</div>
+        <span class="f13 t-redup">Tutup ✕</span>
+      </div>
+      <div class="p16 flex flex-col g16">
+        <div class="flex flex-col g6">
+          <span class="f14 w600">Atlet <span class="w400 t-redup">— wajib diisi</span></span>
+          <div class="h44 px12 r6 border b-kendali bg-naik flex items-center justify-between">
+            <span class="f15 t-redup">Pilih atlet…</span><span class="t-redup f12">▾</span>
+          </div>
+        </div>
+        <div class="flex flex-col g6">
+          <span class="f14 w600">Kelas <span class="w400 t-redup">— wajib diisi</span></span>
+          <div class="h44 px12 r6 border b-kendali bg-naik flex items-center justify-between">
+            <span class="f15 t-redup">Pilih kelas…</span><span class="t-redup f12">▾</span>
+          </div>
+          <span class="f13 t-redup lh16">
+            Hanya kelas yang cocok dengan gender, golongan usia, dan berat klaim atlet terpilih.
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end g8 px16 py12 border-t b-garis">
+        <button class="h44 px16 r6 border b-kendali bg-aksi-lembut f15 w600">Batal</button>
+        <button class="h44 px16 r6 bg-tinta t-putih f15 w600">Simpan</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col g12" style="flex:1;max-width:720px">
+      <div class="kartu p16 flex flex-col g8">
+        <div class="f15 w600">Kelas disaring, bukan didaftar semuanya</div>
+        <div class="f14 lh16 t-kedua">
+          Begitu atlet dipilih, daftar kelas menyusut ke yang benar-benar mungkin untuknya.
+          Tanpa itu, official memilih dari 174 kelas dan menemukan kesalahannya di meja
+          verifikasi — atau di timbangan, di hari-H.
+        </div>
+      </div>
+
+      <div class="kartu p16 flex flex-col g8" style="border-left:3px solid #7a4a00">
+        <div class="f15 w600">Kalau tidak ada yang cocok, katakan kenapa</div>
+        <div class="f14 lh16 t-kedua">
+          "Tidak ada kelas yang cocok" saja membuat official mengira aplikasinya rusak.
+          Kalimatnya menyebut sebab yang mungkin: golongan usianya tidak memakai kelas berat,
+          atau berat klaimnya di luar seluruh tangga kelas.
+        </div>
+      </div>
+
+      <div class="kartu p16 flex flex-col g8">
+        <div class="f15 w600">Nomor Jurus memakai formulir terpisah</div>
+        <div class="f14 lh16 t-kedua">
+          Jurus tunggal, ganda, dan regu menuntut satu sampai tiga pesilat sekaligus, dan
+          kelasnya tidak ditentukan berat badan. Menyatukannya dengan formulir Tanding berarti
+          separuh isiannya selalu kosong dan tidak jelas kenapa.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- CATATAN: YANG DIBUANG                                             -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:60px">
+  <div class="f11 tr28 uppercase t-redup">Yang dibuang</div>
+
+  <div class="kartu p20 flex flex-col g12" style="max-width:1000px">
+    <div class="flex g16 items-start">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Subjudul yang tidak pernah tampil</div>
+      <div class="f14 lh16 t-kedua flex-1">Kedua kartu di layar siaran mengoper prop subjudul yang tidak pernah ada di komponennya. Kalimat yang menerangkan kode gelanggang dan cara memasang bagan di vMix dibuang Blade tanpa satu pun peringatan.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Alamat tanpa keterangan</div>
+      <div class="f14 lh16 t-kedua flex-1">Lima alamat berjajar tanpa menyebut apa yang muncul di masing-masing. Operator siaran memasang kelimanya dan menebak yang mana lewat coba-coba, di depan penonton.</div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

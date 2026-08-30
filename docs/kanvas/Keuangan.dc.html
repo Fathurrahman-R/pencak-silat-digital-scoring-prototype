@@ -1,0 +1,261 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+    body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+
+    .font-mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+
+    .flex{display:flex}.inline-flex{display:inline-flex}
+    .flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.items-start{align-items:flex-start}
+    .items-baseline{align-items:baseline}.items-end{align-items:flex-end}
+    .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .flex-1{flex:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
+    .overflow-hidden{overflow:hidden}
+    .uppercase{text-transform:uppercase}
+    .text-center{text-align:center}.text-right{text-align:right}
+    .border{border-width:1px}.border-2{border-width:2px}
+    .border-t{border-top-width:1px}.border-b{border-bottom-width:1px}
+    .border-l{border-left-width:1px}.border-l-3{border-left-width:3px}
+
+    .bg-kertas{background-color:#f4f2ee}
+    .bg-naik{background-color:#ffffff}
+    .bg-turun{background-color:#e9e6e0}
+    .bg-tinta{background-color:#17161a}
+    .bg-sukses-lembut{background-color:#dcefe4}
+    .bg-perhatian-lembut{background-color:#f7ecd6}
+    .bg-bahaya-lembut{background-color:#f8e3e1}
+
+    .b-garis{border-color:#d4cfc6}
+    .b-kendali{border-color:#7d7668}
+    .b-tinta{border-color:#17161a}
+    .b-sukses{border-color:#14663f}
+    .b-perhatian{border-color:#7a4a00}
+    .b-bahaya{border-color:#a3221c}
+
+    .t-tinta{color:#17161a}.t-kedua{color:#45434a}.t-redup{color:#5f5c66}
+    .t-putih{color:#ffffff}.t-sukses{color:#14663f}.t-perhatian{color:#7a4a00}.t-bahaya{color:#a3221c}
+
+    .r6{border-radius:6px}.r-full{border-radius:9999px}
+
+    .f11{font-size:11px}.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}
+    .f15{font-size:15px}.f16{font-size:16px}.f18{font-size:18px}.f20{font-size:20px}
+    .f22{font-size:22px}
+    .w400{font-weight:400}.w500{font-weight:500}.w600{font-weight:600}.w700{font-weight:700}
+    .lh12{line-height:1.2}.lh14{line-height:1.4}.lh16{line-height:1.6}
+    .tr10{letter-spacing:.1em}.tr28{letter-spacing:.28em}
+
+    .g2{gap:2px}.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}
+    .g16{gap:16px}.g20{gap:20px}
+    .p10{padding:10px}.p12{padding:12px}.p14{padding:14px}.p16{padding:16px}.p20{padding:20px}
+    .px8{padding-left:8px;padding-right:8px}.px10{padding-left:10px;padding-right:10px}
+    .px12{padding-left:12px;padding-right:12px}.px14{padding-left:14px;padding-right:14px}
+    .px16{padding-left:16px;padding-right:16px}
+    .py4{padding-top:4px;padding-bottom:4px}.py6{padding-top:6px;padding-bottom:6px}
+    .py8{padding-top:8px;padding-bottom:8px}.py10{padding-top:10px;padding-bottom:10px}
+    .py12{padding-top:12px;padding-bottom:12px}
+    .pt10{padding-top:10px}.pt12{padding-top:12px}
+    .mt2{margin-top:2px}.mt4{margin-top:4px}.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+    .h32{height:32px}.h36{height:36px}.h40{height:40px}.h44{height:44px}.h48{height:48px}
+    .maxw60{max-width:60ch}
+
+    .kartu{background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .baris{border-bottom:1px solid #d4cfc6}
+    .pegangan{color:#5f5c66;font-size:15px;letter-spacing:2px;line-height:1;cursor:grab}
+    .bg-aksi-lembut{background-color:#e6e3dd}
+    .kolom{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5f5c66}
+    .dialog{width:520px;background:#ffffff;border:1px solid #d4cfc6;border-radius:6px}
+    .mt-auto{margin-top:auto}
+  </style>
+</helmet>
+
+<div class="bg-kertas t-tinta flex flex-col overflow-hidden" style="width:1440px;height:820px">
+
+  <!-- KEPALA -->
+  <div class="flex items-end justify-between g16 px16 py12 border-b b-garis bg-naik shrink-0">
+    <div class="flex flex-col g2">
+      <div class="f12 t-redup">Kejuaraan Terbuka Kalimantan Barat 2026</div>
+      <div class="f22 w600 lh12">Bendahara</div>
+    </div>
+    <button class="h36 px14 r6 border b-kendali bg-naik f13 w600">Ekspor rekap</button>
+  </div>
+
+  <div class="p16 flex flex-col g16 flex-1 overflow-hidden">
+
+    <!-- ANGKA -->
+    <div class="flex g12 shrink-0">
+    <div class="kartu p16 flex flex-col g4" style="flex:1">
+      <div class="f13 w600 t-redup">Total masuk</div>
+      <div class="f22 w600 font-mono tabular-nums ">Rp 48.400.000</div>
+    </div>
+    <div class="kartu p16 flex flex-col g4" style="flex:1">
+      <div class="f13 w600 t-redup">Tunggakan</div>
+      <div class="f22 w600 font-mono tabular-nums t-perhatian">Rp 3.200.000</div>
+    </div>
+    <div class="kartu p16 flex flex-col g4" style="flex:1">
+      <div class="f13 w600 t-redup">Kontingen lunas</div>
+      <div class="f22 w600 font-mono tabular-nums ">18</div>
+      <div class="f13 t-redup lh16">dari 22 kontingen</div>
+    </div>
+    <div class="kartu p16 flex flex-col g4" style="flex:1">
+      <div class="f13 w600 t-redup">Belum lunas</div>
+      <div class="f22 w600 font-mono tabular-nums ">4</div>
+    </div>
+    </div>
+
+    <!-- TAGIHAN -->
+    <div class="kartu flex flex-col flex-1 overflow-hidden">
+      <div class="flex items-center justify-between g16 px16 py12 border-b b-garis">
+        <div class="f18 w600">Tagihan kontingen</div>
+        <div class="flex items-center g6">
+          <span class="h36 px12 r6 bg-tinta t-putih f14 w600 inline-flex items-center">Semua tagihan</span>
+          <span class="h36 px12 r6 border b-kendali bg-naik f14 inline-flex items-center">Draf</span>
+          <span class="h36 px12 r6 border b-kendali bg-naik f14 inline-flex items-center">Menunggu pembayaran</span>
+          <span class="h36 px12 r6 border b-kendali bg-naik f14 inline-flex items-center">Lunas</span>
+        </div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:220px">
+          <div class="f15 w600">Padepokan Harimau Putih</div>
+          <div class="f12 t-redup font-mono mt2">INV-202608-00001</div>
+        </div>
+        <span class="inline-flex items-center px10 py4 r6 bg-sukses-lembut t-sukses f13 w600 shrink-0">Lunas</span>
+        <span class="f15 w600 font-mono tabular-nums text-right shrink-0" style="width:130px">Rp 4.200.000</span>
+        <div class="flex g6 shrink-0"><button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Rincian tagihan</button></div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:220px">
+          <div class="f15 w600">PSHT Cabang Pontianak</div>
+          <div class="f12 t-redup font-mono mt2">INV-202608-00002</div>
+        </div>
+        <span class="inline-flex items-center px10 py4 r6 bg-perhatian-lembut t-perhatian f13 w600 shrink-0">Menunggu pembayaran</span>
+        <span class="f15 w600 font-mono tabular-nums text-right shrink-0" style="width:130px">Rp 3.800.000</span>
+        <div class="flex g6 shrink-0"><button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Rincian tagihan</button><button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Tandai lunas</button></div>
+      </div>
+      <div class="baris flex flex-wrap items-center g12 px16 py12">
+        <div class="min-w-0" style="flex:1;min-width:220px">
+          <div class="f15 w600">Merpati Putih Singkawang</div>
+          <div class="f12 t-redup font-mono mt2">INV-202608-00003</div>
+        </div>
+        <span class="inline-flex items-center px10 py4 r6 bg-turun t-kedua f13 w600 shrink-0">Draf</span>
+        <span class="f15 w600 font-mono tabular-nums text-right shrink-0" style="width:130px">Rp 2.600.000</span>
+        <div class="flex g6 shrink-0"><button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Rincian tagihan</button><button class="h36 px12 r6 border b-kendali bg-naik f13 w600">Terbitkan</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- TARIF — LAYAR YANG MENENTUKAN ANGKA DI ATAS                       -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:80px">
+  <div class="f11 tr28 uppercase t-redup">Tarif — layar yang menentukan seluruh angka di atas</div>
+
+  <div class="flex g16 items-start">
+    <div class="kartu flex flex-col overflow-hidden" style="width:700px">
+      <div class="px16 py10 border-b b-garis bg-turun f13 w600">Biaya per nomor</div>
+
+      <div class="baris flex items-center g12 px16 py12">
+        <div class="flex-1">
+          <div class="f15 w500">Tanding — Dewasa</div>
+          <div class="f12 t-redup mt2">Mengalahkan tarif umum untuk golongan ini</div>
+        </div>
+        <span class="f15 w600 font-mono tabular-nums">Rp 200.000</span>
+        <button class="h36 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+      </div>
+
+      <div class="baris flex items-center g12 px16 py12">
+        <div class="flex-1"><div class="f15 w500">Tarif umum</div>
+          <div class="f12 t-redup mt2">Berlaku untuk nomor yang tidak disebut baris lain</div></div>
+        <span class="f15 w600 font-mono tabular-nums">Rp 150.000</span>
+        <button class="h36 px12 r6 border b-bahaya t-bahaya f13 w600">Hapus</button>
+      </div>
+
+      <div class="p16 flex items-end g12 border-t b-garis">
+        <div class="flex flex-col g6" style="flex:1">
+          <span class="f13 w600">Kategori</span>
+          <div class="h44 px12 r6 border b-kendali bg-naik flex items-center justify-between">
+            <span class="f15">Semua kategori</span><span class="t-redup f12">▾</span>
+          </div>
+        </div>
+        <div class="flex flex-col g6" style="flex:1">
+          <span class="f13 w600">Golongan usia</span>
+          <div class="h44 px12 r6 border b-kendali bg-naik flex items-center justify-between">
+            <span class="f15">Semua golongan</span><span class="t-redup f12">▾</span>
+          </div>
+        </div>
+        <div class="flex flex-col g6" style="width:160px">
+          <span class="f13 w600">Nominal (Rp) <span class="w400 t-redup">— wajib diisi</span></span>
+          <div class="h44 px12 r6 border b-kendali bg-naik flex items-center"></div>
+        </div>
+        <button class="h44 px16 r6 bg-tinta t-putih f15 w600">Simpan</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col g12" style="flex:1">
+      <div class="kartu p16 flex flex-col g8" style="border-left:3px solid #7a4a00">
+        <div class="f15 w600">Tarif terkunci setelah kejuaraan berjalan</div>
+        <div class="f14 lh16 t-kedua">
+          Mengubah tarif setelah tagihan terbit berarti dua kontingen membayar harga berbeda
+          untuk nomor yang sama, dan yang membayar lebih dulu tidak punya cara mengetahuinya.
+        </div>
+      </div>
+
+      <div class="dialog p20 flex flex-col g10" style="border-color:#a3221c;width:auto">
+        <div class="f11 tr10 uppercase t-bahaya">Tidak bisa dibatalkan</div>
+        <div class="f20 w600 lh12">Hapus tarif Tanding — Dewasa?</div>
+        <div class="f14 lh16 t-kedua">
+          Tagihan seluruh kontingen dihitung ulang memakai tarif umum, termasuk tagihan yang
+          sudah dikirim. Nominalnya berubah tanpa pemberitahuan ke official.
+        </div>
+        <div class="flex items-center g8 mt8">
+          <button class="h44 px16 r6 border b-kendali bg-aksi-lembut f15 w600">Tidak jadi</button>
+          <button class="h44 px16 r6 f15 w600 t-putih" style="background:#a3221c">Hapus tarif</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- CATATAN: YANG DIBUANG                                             -->
+<!-- ================================================================= -->
+<div class="bg-kertas t-tinta p20 flex flex-col g16" style="width:1440px;margin-top:60px">
+  <div class="f11 tr28 uppercase t-redup">Yang dibuang dari layar bendahara dan tarif</div>
+
+  <div class="kartu p20 flex flex-col g12" style="max-width:1000px">
+    <div class="flex g16 items-start">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Tarif dihapus tanpa tanya</div>
+      <div class="f14 lh16 t-kedua flex-1">Satu tekan menghapus tarif, dan tagihan seluruh kontingen ikut berubah — termasuk yang sudah dikirim. Tidak ada konfirmasi, dan tidak ada satu kalimat pun tentang akibatnya.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Penyaring yang tidak menandai dirinya</div>
+      <div class="f14 lh16 t-kedua flex-1">Deretan tombol status memakai prop varian dinamis yang tidak dikenal komponennya, jadi seluruhnya tampil serupa. Panitia tidak bisa tahu penyaring mana yang sedang berlaku, dan daftar yang tersaring terbaca sebagai daftar seluruhnya.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Badge status seluruhnya abu-abu</div>
+      <div class="f14 lh16 t-kedua flex-1">Enum status mengembalikan nama varian dalam bahasa Inggris, yang tidak dikenal komponen badge dan dijatuhkan ke netral tanpa galat. Lunas dan belum lunas tampil sama, dan satu-satunya petunjuk mana yang harus ditagih hilang dari layar.</div>
+    </div>
+    <div class="flex g16 items-start border-t b-garis pt12">
+      <div class="shrink-0 f13 w600 t-bahaya" style="width:190px">Angka tanpa digit tabular</div>
+      <div class="f14 lh16 t-kedua flex-1">Kolom rupiah bergoyang antar-baris karena angka 1 lebih sempit daripada 8 di huruf biasa. Membandingkan dua nominal jadi menuntut membaca, bukan melihat.</div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>
