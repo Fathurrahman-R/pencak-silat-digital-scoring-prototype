@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WeightClass extends Model
@@ -51,6 +52,37 @@ class WeightClass extends Model
     public function bracket(): HasOne
     {
         return $this->hasOne(Bracket::class);
+    }
+
+    /**
+     * Nama kelas yang berdiri sendiri tanpa konteks di sekitarnya.
+     *
+     * "Kelas A" saja ambigu: ada Kelas A putra dan Kelas A putri di tiap
+     * golongan usia. Di layar, kolom sebelahnya sering sudah menyebutkan
+     * golongan dan jenis kelaminnya — tapi di cetakan jadwal dan ekspor CSV
+     * tidak, sehingga dua baris berbeda tampak identik.
+     */
+    public function namaLengkap(): string
+    {
+        // Kelas yang belum lengkap atributnya tetap punya nama; yang hilang
+        // hanya keterangan tambahannya, bukan seluruh barisnya.
+        return collect([
+            $this->jenis_kelamin?->label(),
+            $this->golongan_usia?->label(),
+            $this->name,
+        ])->filter()->implode(' ');
+    }
+
+    /**
+     * Pendaftaran yang masuk ke kelas ini.
+     *
+     * Dipakai membedakan kelas yang benar-benar dipertandingkan dari kelas
+     * yang cuma ada di katalog: naskah aturan 2025 memuat 174 kelas, dan satu
+     * kejuaraan hanya menjalankan sebagian kecilnya.
+     */
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(Registration::class);
     }
 
     /**
