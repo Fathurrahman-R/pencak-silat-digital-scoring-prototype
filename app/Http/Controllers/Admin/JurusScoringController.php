@@ -154,10 +154,29 @@ class JurusScoringController extends Controller
     {
         $this->pastikanMilikPerforma($tournament, $performance);
 
+        /*
+         * Langkah skalanya ikut ditegakkan, bukan cuma didefinisikan.
+         * Tanpa ini nilai 9.876543210987 dijawab "Nilai tersimpan." lalu
+         * diam-diam dibulatkan jadi 9.88 oleh kolomnya -- juri membaca
+         * konfirmasi berhasil untuk angka yang bukan angka yang tersimpan.
+         */
         $skala = config('scoring.jurus.skala');
+        $langkah = (float) $skala['langkah'];
+
         $data = $request->validate([
-            'value' => ['required', 'numeric', "min:{$skala['min']}", "max:{$skala['max']}"],
-        ]);
+            'value' => [
+                'required', 'numeric', "min:{$skala['min']}", "max:{$skala['max']}",
+                function (string $atribut, mixed $nilai, Closure $gagal) use ($langkah) {
+                    // Dikalikan dulu supaya perbandingannya bulat: fmod pada
+                    // pecahan biner menyisakan galat yang menolak nilai sah.
+                    $kelipatan = round((float) $nilai / $langkah);
+
+                    if (abs($kelipatan * $langkah - (float) $nilai) > 1e-9) {
+                        $gagal('Nilai Jurus memakai kelipatan 0,01 — paling banyak dua angka di belakang koma.');
+                    }
+                },
+            ],
+        ], attributes: ['value' => 'Nilai']);
 
         JurusScore::updateOrCreate(
             ['performance_id' => $performance->id, 'judge_user_id' => $request->user()->id],
