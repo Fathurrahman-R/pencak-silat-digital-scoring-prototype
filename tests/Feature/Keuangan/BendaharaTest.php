@@ -231,3 +231,93 @@ it('menutup panel bendahara dari official kontingen', function () {
         ])
         ->assertForbidden();
 });
+
+/*
+ * Official kontingen memakai halaman ini untuk melihat tagihannya sendiri.
+ * Yang tidak boleh terlihat adalah tagihan kontingen pesaing: nomor
+ * invoice, nominal, dan bukti pembayarannya. Aturan pembatasannya sama
+ * dengan yang sudah dipakai modul kontingen -- official hanya melihat
+ * kontingen yang dipegangnya.
+ */
+it('menyembunyikan tagihan kontingen lain dari official kontingen', function () {
+    $milikSendiri = kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Sendiri');
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Pesaing');
+
+    $official = User::factory()->create();
+    $official->syncRoles(['official-kontingen']);
+    $milikSendiri->update(['user_id' => $official->id]);
+
+    $this->actingAs($official)
+        ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
+        ->assertOk()
+        ->assertSee('Kontingen Sendiri')
+        ->assertDontSee('Kontingen Pesaing');
+});
+
+it('menolak official kontingen mengunduh bukti bayar kontingen lain', function () {
+    Storage::fake('local');
+
+    $milikSendiri = kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Sendiri');
+    $pesaing = kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Pesaing');
+
+    $official = User::factory()->create();
+    $official->syncRoles(['official-kontingen']);
+    $milikSendiri->update(['user_id' => $official->id]);
+
+    $builder = new InvoiceBuilder;
+    $kelola = new KelolaInvoice($builder);
+    $tagihanPesaing = $kelola->kunci($builder->untuk($pesaing));
+
+    $this->actingAs($this->bendahara)->post(
+        "/admin/turnamen/{$this->tournament->id}/bendahara/{$tagihanPesaing->id}/lunas",
+        [
+            'note' => 'transfer BCA 12345',
+            'paid_at' => now()->subDay()->toDateString(),
+            'proof' => UploadedFile::fake()->image('struk.jpg'),
+        ],
+    );
+
+    $pembayaran = $tagihanPesaing->refresh()->manualPayments()->firstOrFail();
+
+    $this->actingAs($official)
+        ->get("/admin/turnamen/{$this->tournament->id}/bendahara/{$tagihanPesaing->id}/bukti/{$pembayaran->id}")
+        ->assertNotFound();
+});
+
+/*
+ * Pembatasan di atas tidak boleh mengenai panitia. Bendahara justru pemilik
+ * halaman ini, dan sekretaris memakainya untuk mencocokkan pendaftaran
+ * dengan pembayaran -- keduanya harus tetap melihat seluruh kontingen.
+ *
+ * Keduanya diuji terpisah karena izinnya berbeda: bendahara memegang
+ * invoice.update tapi tidak kontingen.update, sekretaris justru sebaliknya.
+ * Aturan yang hanya memeriksa salah satunya akan mengosongkan halaman bagi
+ * yang lain.
+ */
+it('tetap menampilkan seluruh tagihan kepada bendahara', function () {
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Satu');
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
+
+    $bendahara = User::factory()->create();
+    $bendahara->syncRoles(['bendahara']);
+
+    $this->actingAs($bendahara)
+        ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
+        ->assertOk()
+        ->assertSee('Kontingen Satu')
+        ->assertSee('Kontingen Dua');
+});
+
+it('tetap menampilkan seluruh tagihan kepada sekretaris pertandingan', function () {
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Satu');
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
+
+    $sekretaris = User::factory()->create();
+    $sekretaris->syncRoles(['sekretaris-pertandingan']);
+
+    $this->actingAs($sekretaris)
+        ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
+        ->assertOk()
+        ->assertSee('Kontingen Satu')
+        ->assertSee('Kontingen Dua');
+});

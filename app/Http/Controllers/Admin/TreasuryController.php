@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Keuangan\KelolaInvoice;
+use App\Enums\ResourceAction;
 use App\Enums\StatusInvoice;
+use App\Http\Controllers\Concerns\ScopesContingents;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Invoice;
 use App\Models\Tournament;
+use App\Support\Ekspor\TulisCsv;
 use App\Support\Keuangan\InvoiceBuilder;
+use App\Support\Unggah\BatasUnggah;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,8 +28,34 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class TreasuryController extends Controller
 {
+    use ScopesContingents;
+
     /** Bukti pembayaran memuat data rekening; tidak boleh ada di disk publik. */
     private const DISK = 'local';
+
+    /**
+     * Siapa yang melihat tagihan seluruh kontingen, bukan hanya miliknya.
+     *
+     * Aturan bawaan trait memakai hak ubah kontingen sebagai penanda panitia.
+     * Itu tepat untuk modul kontingen, tapi meleset di sini: bendahara --
+     * justru pemilik halaman ini -- tidak memegang hak ubah kontingen, dan
+     * memakai aturan bawaan akan mengosongkan halaman kerjanya sendiri.
+     *
+     * Jadi keduanya diterima. Sekretaris masuk lewat hak ubah kontingen,
+     * bendahara lewat hak ubah tagihan. Yang tersisa di luar keduanya adalah
+     * official kontingen, yang memang hanya boleh melihat tagihannya sendiri.
+     */
+    protected function bolehLihatSemuaKontingen(): bool
+    {
+        $pengguna = auth()->user();
+
+        if ($pengguna === null) {
+            return false;
+        }
+
+        return $pengguna->can(rk('kontingen', ResourceAction::Update))
+            || $pengguna->can(rk('invoice', ResourceAction::Update));
+    }
 
     public function __construct(
         private readonly InvoiceBuilder $builder,
@@ -36,8 +66,17 @@ class TreasuryController extends Controller
     {
         $status = $request->string('status')->toString();
 
+        /*
+         * Official kontingen ikut memakai halaman ini untuk melihat tagihannya
+         * sendiri, jadi daftarnya dibatasi memakai aturan yang sama dengan
+         * modul kontingen. Tanpa pembatasan ini, nomor invoice dan nominal
+         * seluruh kontingen pesaing terbaca oleh siapa pun yang bisa membuka
+         * halaman keuangan.
+         */
         $semua = Invoice::query()
-            ->whereHas('contingent', fn ($query) => $query->where('tournament_id', $tournament->id))
+            ->whereHas('contingent', fn ($query) => $this->scopeKontingen(
+                $query->where('tournament_id', $tournament->id),
+            ))
             ->with(['contingent', 'items'])
             ->get();
 
@@ -76,14 +115,27 @@ class TreasuryController extends Controller
     {
         $this->pastikanMilik($tournament, $invoice);
 
+        /*
+         * Batasnya dihitung, bukan ditulis mati. Menulis `max:4096` saat PHP
+         * hanya menerima 2M membuat berkas 3 MB dibuang sebelum Laravel
+         * sempat memeriksanya, dan yang sampai ke bendahara cuma "gagal
+         * diunggah" tanpa sebab — padahal foto struk dari kamera HP memang
+         * biasanya sebesar itu.
+         */
+        $batas = BatasUnggah::kilobyte(4096);
+
         $data = $request->validate([
             'note' => ['required', 'string', 'max:255'],
             'paid_at' => ['required', 'date', 'before_or_equal:now'],
-            'proof' => ['required', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf'],
+            'proof' => ['required', 'file', 'max:'.$batas, 'mimes:jpg,jpeg,png,pdf'],
         ], [
             'note.required' => 'Keterangan wajib diisi — nomor referensi transfer, nama penyetor, '
                 .'atau sebab lain yang membuat pembayaran ini bisa ditelusuri kembali.',
             'proof.required' => 'Bukti pembayaran wajib diunggah.',
+            'proof.max' => 'Bukti pembayaran maksimal '.BatasUnggah::label($batas)
+                .'. Perkecil dulu fotonya, atau potret ulang dengan resolusi lebih rendah.',
+            'proof.uploaded' => 'Bukti pembayaran gagal diunggah — ukurannya melebihi '
+                .BatasUnggah::label($batas).'.',
             'paid_at.before_or_equal' => 'Tanggal pembayaran tidak boleh di masa depan.',
         ], [
             'note' => 'Keterangan',
@@ -142,6 +194,15 @@ class TreasuryController extends Controller
     {
         $this->pastikanMilik($tournament, $invoice);
 
+        /*
+         * Bukti pembayaran umumnya foto struk transfer -- memuat nomor
+         * rekening dan nama penyetor. Berkasnya sendiri sudah disimpan di
+         * disk non-publik, tapi itu tidak berarti apa-apa kalau route-nya
+         * menyajikan bukti milik kontingen mana pun kepada siapa pun yang
+         * bisa membuka halaman keuangan.
+         */
+        $this->pastikanBolehAkses($invoice->contingent);
+
         $manual = $invoice->manualPayments()->findOrFail($pembayaran);
 
         abort_unless($manual->proof_path && Storage::disk(self::DISK)->exists($manual->proof_path), 404);
@@ -155,7 +216,9 @@ class TreasuryController extends Controller
     public function export(Tournament $tournament): StreamedResponse
     {
         $invoices = Invoice::query()
-            ->whereHas('contingent', fn ($query) => $query->where('tournament_id', $tournament->id))
+            ->whereHas('contingent', fn ($query) => $this->scopeKontingen(
+                $query->where('tournament_id', $tournament->id),
+            ))
             ->with('contingent')
             ->get()
             ->sortBy(fn (Invoice $i): string => $i->contingent->name);
@@ -165,10 +228,10 @@ class TreasuryController extends Controller
         return response()->streamDownload(function () use ($invoices) {
             $keluar = fopen('php://output', 'wb');
 
-            fputcsv($keluar, ['Nomor', 'Kontingen', 'Status', 'Total', 'Dibayar', 'Cara bayar']);
+            TulisCsv::tulis($keluar, ['Nomor', 'Kontingen', 'Status', 'Total', 'Dibayar', 'Cara bayar']);
 
             foreach ($invoices as $invoice) {
-                fputcsv($keluar, [
+                TulisCsv::tulis($keluar, [
                     $invoice->number,
                     $invoice->contingent->name,
                     $invoice->status->label(),
