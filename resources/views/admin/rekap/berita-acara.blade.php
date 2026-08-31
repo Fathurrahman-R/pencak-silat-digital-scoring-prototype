@@ -22,7 +22,7 @@
         {{ $match->bracket->weightClass->tournament->name }} —
         {{ $match->bracket->weightClass->jenis_kelamin->label() }}
         {{ $match->bracket->weightClass->golongan_usia->label() }}
-        {{ $match->bracket->weightClass->name }} — {{ $match->bracket->namaBabak($match->round) }}
+        {{ $match->bracket->weightClass->namaLengkap() }} — {{ $match->bracket->namaBabak($match->round) }}
     </p>
 
     <table>

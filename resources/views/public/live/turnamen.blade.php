@@ -37,7 +37,7 @@
                         <span class="text-[16px] font-medium text-silat-teks">{{ $papan['arena']->name }}</span>
                         <span class="silat-angka text-[12px] text-silat-teks-redup">
                             @if ($partai)
-                                PARTAI {{ $partai->id }} · {{ strtoupper($partai->bracket->weightClass->name) }}
+                                PARTAI {{ $partai->id }} · {{ strtoupper($partai->bracket->weightClass->namaLengkap()) }}
                             @else
                                 TIDAK ADA PARTAI BERJALAN
                             @endif

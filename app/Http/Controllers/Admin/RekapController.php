@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tournament;
+use App\Support\Ekspor\TulisCsv;
 use App\Support\Rekap\RekapMedali;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -45,10 +45,10 @@ class RekapController extends Controller
 
         return response()->streamDownload(function () use ($peringkat) {
             $keluar = fopen('php://output', 'wb');
-            fputcsv($keluar, ['Peringkat', 'Kontingen', 'Emas', 'Perak', 'Perunggu']);
+            TulisCsv::tulis($keluar, ['Peringkat', 'Kontingen', 'Emas', 'Perak', 'Perunggu']);
 
             foreach ($peringkat as $i => $baris) {
-                fputcsv($keluar, [$i + 1, $baris['kontingen'], $baris['emas'], $baris['perak'], $baris['perunggu']]);
+                TulisCsv::tulis($keluar, [$i + 1, $baris['kontingen'], $baris['emas'], $baris['perak'], $baris['perunggu']]);
             }
 
             fclose($keluar);
@@ -66,10 +66,10 @@ class RekapController extends Controller
 
         return response()->streamDownload(function () use ($registrasi) {
             $keluar = fopen('php://output', 'wb');
-            fputcsv($keluar, ['Kontingen', 'Atlet', 'Nomor', 'Status']);
+            TulisCsv::tulis($keluar, ['Kontingen', 'Atlet', 'Nomor', 'Status']);
 
             foreach ($registrasi as $r) {
-                fputcsv($keluar, [
+                TulisCsv::tulis($keluar, [
                     $r->contingent->name,
                     $r->athletes->pluck('name')->implode(', '),
                     $r->namaNomor(),
@@ -94,14 +94,17 @@ class RekapController extends Controller
 
         return response()->streamDownload(function () use ($matches) {
             $keluar = fopen('php://output', 'wb');
-            fputcsv($keluar, ['Gelanggang', 'Urutan', 'Waktu', 'Kelas', 'Merah', 'Biru', 'Status']);
+            TulisCsv::tulis($keluar, ['Gelanggang', 'Urutan', 'Waktu', 'Kelas', 'Merah', 'Biru', 'Status']);
 
             foreach ($matches as [$namaArena, $partai]) {
-                fputcsv($keluar, [
+                TulisCsv::tulis($keluar, [
                     $namaArena,
                     $partai->order_in_arena,
                     optional($partai->scheduled_at)->format('Y-m-d H:i'),
-                    $partai->bracket->weightClass->name,
+                    // Nama lengkap, bukan "Kelas A" saja: cetakan ini dibaca
+                    // tanpa konteks kolom lain, dan Kelas A putra dan putri
+                    // akan tampak sebagai dua baris yang identik.
+                    $partai->bracket->weightClass->namaLengkap(),
                     $partai->red?->athletes->pluck('name')->implode(', '),
                     $partai->blue?->athletes->pluck('name')->implode(', '),
                     $partai->status,

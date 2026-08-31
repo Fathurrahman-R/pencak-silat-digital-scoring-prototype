@@ -19,9 +19,21 @@
 --}}
 
 @php
+    /*
+        Yang dihitung hanya kelas yang benar-benar punya peserta.
+
+        Katalog kelas dari naskah aturan 2025 berisi 174 baris, dan satu
+        kejuaraan hanya menjalankan sebagian kecilnya. Menghitung seluruh
+        katalog membuat halaman ini mengumumkan "174 kelas dipertandingkan"
+        untuk kejuaraan yang sebenarnya menjalankan dua kelas.
+    */
     $kejuaraan = App\Models\Tournament::query()
         ->where('status', App\Enums\StatusTurnamen::Berjalan)
-        ->withCount(['contingents', 'weightClasses', 'arenas'])
+        ->withCount([
+            'contingents',
+            'arenas',
+            'weightClasses as weight_classes_count' => fn ($query) => $query->has('registrations'),
+        ])
         ->orderBy('starts_on')
         ->first();
 @endphp

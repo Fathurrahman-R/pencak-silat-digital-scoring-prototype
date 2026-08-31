@@ -93,7 +93,20 @@ class LiveScoreController extends Controller
          * orang menggulir mencari golongan anaknya sendiri. Golongan usia
          * adalah cara orang tua dan official menyebut kelas di lapangan.
          */
+        /*
+         * Yang ditampilkan hanya kelas yang benar-benar dipertandingkan.
+         *
+         * Katalog naskah 2025 berisi 174 kelas dan satu kejuaraan menjalankan
+         * sebagian kecilnya, jadi tanpa saringan ini halaman penonton berisi
+         * ratusan baris "Bagan belum tersusun" yang mengubur kelas yang
+         * sungguh berjalan -- di jaringan gelanggang, lewat ponsel.
+         *
+         * Kelas yang sudah punya bagan tetap ikut walau pendaftarannya
+         * kemudian dicabut: bagannya sudah terlanjur tersusun dan hasilnya
+         * bagian dari kejuaraan ini.
+         */
         $kelas = $tournament->weightClasses()
+            ->where(fn ($q) => $q->has('registrations')->orHas('bracket'))
             ->with(['bracket' => fn ($q) => $q->with('matches.winner.athletes')])
             ->urutGolonganUsia()->orderBy('jenis_kelamin')->orderBy('code')
             ->get()

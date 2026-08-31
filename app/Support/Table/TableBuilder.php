@@ -2,6 +2,7 @@
 
 namespace App\Support\Table;
 
+use App\Support\Ekspor\TulisCsv;
 use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -142,11 +143,11 @@ class TableBuilder
                     $line = $row($record);
 
                     if (! $headerWritten) {
-                        fputcsv($handle, array_keys($line));
+                        TulisCsv::tulis($handle, array_keys($line));
                         $headerWritten = true;
                     }
 
-                    fputcsv($handle, array_values($line));
+                    TulisCsv::tulis($handle, array_values($line));
                 }
             });
 
