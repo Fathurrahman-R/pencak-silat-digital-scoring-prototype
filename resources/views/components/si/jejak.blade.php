@@ -1,7 +1,7 @@
 @props([
     // ['Label' => url, 'Label terakhir' => null]
     'daftar' => [],
-    'akar' => 'Dashboard',
+    'akar' => 'Beranda',
 ])
 
 {{--

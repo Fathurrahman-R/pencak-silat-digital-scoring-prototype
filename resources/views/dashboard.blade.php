@@ -1,11 +1,15 @@
 @php
     /*
-     * Judul menyesuaikan siapa yang membuka. Seorang juri yang login dari HP di
-     * pinggir gelanggang tidak sedang mencari "ringkasan singkat isi aplikasi";
-     * ia mencari partainya. Kalimat boilerplate itu membuat halaman depannya
-     * terbaca seperti aplikasi milik orang lain.
+     * Judulnya sama untuk semua orang, mengikuti kata yang dipakai menu
+     * samping. Panitia yang menekan "Beranda" lalu mendarat di halaman
+     * berjudul "Dashboard" akan mengira ia salah klik -- dan "Dashboard"
+     * juga satu-satunya kata Inggris yang tersisa di navigasi.
+     *
+     * Yang membedakan siapa yang membuka tetap ada, tapi di keterangannya.
+     * Seorang juri yang login dari HP di pinggir gelanggang tidak sedang
+     * mencari ringkasan isi aplikasi; ia mencari partainya.
      */
-    $judul = $tampilkanRingkasan ? 'Dashboard' : 'Beranda';
+    $judul = 'Beranda';
     $keterangan = $tampilkanRingkasan
         ? ($turnamen?->name ?? 'Belum ada kejuaraan yang dibuka.')
         : 'Partai tempat Anda ditugaskan hari ini.';

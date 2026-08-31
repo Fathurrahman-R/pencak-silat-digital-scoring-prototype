@@ -3,6 +3,7 @@
 use App\Http\Middleware\AllowLocalNetworkOnly;
 use App\Http\Middleware\EnsureResourceAccess;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\HeaderKeamanan;
 use App\Http\Middleware\IngatTurnamenAktif;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -48,6 +49,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'resource' => EnsureResourceAccess::class,
             'active' => EnsureUserIsActive::class,
         ]);
+
+        /*
+         * Global, bukan hanya grup web: halaman galat, overlay vMix, dan
+         * live score publik sama-sama perlu dijaga dari pembingkaian.
+         */
+        $middleware->append(HeaderKeamanan::class);
 
         $middleware->web(append: [
             EnsureUserIsActive::class,
