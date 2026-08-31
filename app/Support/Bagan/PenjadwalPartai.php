@@ -30,6 +30,8 @@ class PenjadwalPartai
             throw new RuntimeException('Partai yang sudah selesai tidak bisa dijadwalkan ulang.');
         }
 
+        $this->pastikanBelumDimulai($match, 'dijadwalkan ulang');
+
         $bentrok = $this->cariBentrok($match, $arena, $waktu);
 
         if ($bentrok !== null) {
@@ -54,9 +56,39 @@ class PenjadwalPartai
 
     public function lepas(SilatMatch $match): SilatMatch
     {
+        /*
+         * Melepas partai yang sudah dimulai mendamparkannya. Kewenangan
+         * operator diikat ke gelanggang partai, jadi partai tanpa gelanggang
+         * tidak bisa dijeda, diselesaikan babaknya, maupun diakhiri oleh
+         * siapa pun -- sementara papan skor publik gelanggang itu mendadak
+         * kosong di tengah pertandingan.
+         *
+         * Partai yang sudah selesai juga ditahan: gelanggang dan urutan
+         * tayangnya bagian dari catatan hasil yang masuk berita acara.
+         */
+        $this->pastikanBelumDimulai($match, 'dilepas dari gelanggangnya');
+
         $match->update(['arena_id' => null, 'scheduled_at' => null, 'order_in_arena' => null]);
 
         return $match->refresh();
+    }
+
+    /**
+     * Jadwal hanya boleh disentuh selama partainya belum dimulai.
+     *
+     * Pesannya menyebut aksinya, bukan kalimat umum — panitia yang menyusun
+     * jadwal pagi hari perlu tahu partai mana yang sudah tidak bisa digeser
+     * dan kenapa.
+     */
+    private function pastikanBelumDimulai(SilatMatch $match, string $aksi): void
+    {
+        if ($match->status === SilatMatch::STATUS_BERLANGSUNG) {
+            throw new RuntimeException("Partai ini sedang berlangsung — tidak bisa {$aksi}. Akhiri dulu partainya.");
+        }
+
+        if ($match->selesai()) {
+            throw new RuntimeException("Partai ini sudah selesai — tidak bisa {$aksi}.");
+        }
     }
 
     /** Menukar urutan tayang partai dengan tetangganya dalam gelanggang yang sama. */
@@ -75,6 +107,8 @@ class PenjadwalPartai
         if ($match->arena_id === null) {
             throw new RuntimeException('Partai ini belum dijadwalkan ke gelanggang mana pun.');
         }
+
+        $this->pastikanBelumDimulai($match, 'digeser urutannya');
 
         return DB::transaction(function () use ($match, $tujuan) {
             $urut = SilatMatch::where('arena_id', $match->arena_id)
@@ -111,6 +145,8 @@ class PenjadwalPartai
         if ($match->arena_id === null) {
             throw new RuntimeException('Partai ini belum dijadwalkan ke gelanggang mana pun.');
         }
+
+        $this->pastikanBelumDimulai($match, 'digeser urutannya');
 
         $tetangga = SilatMatch::where('arena_id', $match->arena_id)
             ->where('order_in_arena', $match->order_in_arena + $langkah)

@@ -123,7 +123,11 @@ class JadwalController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
 
-        $this->penjadwal->lepas($match);
+        try {
+            $this->penjadwal->lepas($match);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Jadwal dilepas — partai kembali ke antrean.');
     }
