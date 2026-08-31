@@ -3,6 +3,7 @@
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Models\Arena;
 use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
@@ -153,7 +154,7 @@ function partaiLain(Tournament $tournament, Contingent $kontingen, ?string $jadw
 
     return SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
-        'arena_id' => App\Models\Arena::factory()->for($tournament)->create(['name' => 'Gelanggang 2'])->id,
+        'arena_id' => Arena::factory()->for($tournament)->create(['name' => 'Gelanggang 2'])->id,
         'red_registration_id' => $merah->id, 'blue_registration_id' => $biru->id,
         'status' => $status,
         'scheduled_at' => $jadwal,
@@ -175,12 +176,18 @@ it('menolak aparat yang sedang bertugas di gelanggang lain pada jam berdekatan',
         'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
     ]);
 
+    /*
+     * Yang bentrok adalah juri pertama, jadi galatnya harus melekat di kolom
+     * juri itu — bukan di kolom wasit. Panitia membaca pesan di bawah kolom
+     * yang salah akan mengganti orang yang salah.
+     */
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
             'wasit_id' => $this->wasit->id,
             'juri_id' => [$this->juri[0]->id, $this->juri[1]->id, $this->juri[2]->id],
         ])
-        ->assertSessionHasErrors('wasit_id');
+        ->assertSessionHasErrors('juri_id.0')
+        ->assertSessionDoesntHaveErrors('wasit_id');
 
     expect($this->match->officials()->count())->toBe(0);
 });
@@ -272,4 +279,53 @@ it('tidak menyatakan bentrok saat salah satu partai belum terjadwal', function (
             'juri_id' => [$this->juri[0]->id, $this->juri[1]->id, $this->juri[2]->id],
         ])
         ->assertSessionHasNoErrors();
+});
+
+/*
+ * Yang diperiksa bukan cuma "penggunanya ada", tapi "penggunanya memang
+ * wasit/juri". Tanpa itu, bendahara bisa terdaftar sebagai juri dan official
+ * kontingen -- yang jelas berkepentingan atas hasil -- bisa jadi wasit.
+ * Keduanya tidak akan bisa membuka panelnya, jadi kesalahan itu baru
+ * ketahuan saat partai hendak dimulai, dengan aparat sahnya sudah tergusur.
+ */
+it('menolak pengguna tanpa peran wasit sebagai wasit', function () {
+    $bendahara = User::factory()->create();
+    $bendahara->syncRoles(['bendahara']);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
+            'wasit_id' => $bendahara->id,
+            'juri_id' => $this->juri->take(3)->pluck('id')->all(),
+        ])
+        ->assertSessionHasErrors('wasit_id');
+
+    expect($this->match->officials()->count())->toBe(0);
+});
+
+it('menolak pengguna tanpa peran juri sebagai juri', function () {
+    $bendahara = User::factory()->create();
+    $bendahara->syncRoles(['bendahara']);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
+            'wasit_id' => $this->wasit->id,
+            'juri_id' => [$bendahara->id, ...$this->juri->take(2)->pluck('id')->all()],
+        ])
+        ->assertSessionHasErrors('juri_id.0');
+
+    expect($this->match->officials()->count())->toBe(0);
+});
+
+it('menolak official kontingen sebagai wasit', function () {
+    $official = User::factory()->create();
+    $official->syncRoles(['official-kontingen']);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
+            'wasit_id' => $official->id,
+            'juri_id' => $this->juri->take(3)->pluck('id')->all(),
+        ])
+        ->assertSessionHasErrors('wasit_id');
+
+    expect($this->match->officials()->count())->toBe(0);
 });
