@@ -28,6 +28,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -280,6 +281,7 @@ class PartaiScoringController extends Controller
     public function mulaiBabak(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
         $data = $request->validate(['babak' => ['required', 'integer', 'min:1']]);
 
         $round = $this->jalankan(fn () => $this->timer->mulaiBabak($match, (int) $data['babak']));
@@ -292,6 +294,7 @@ class PartaiScoringController extends Controller
     public function jeda(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
         $round = $this->jalankan(fn () => $this->timer->jeda($this->babakAktifAtauGagal($match)));
         $this->siarkan(fn () => TimerTicked::dispatch($round));
 
@@ -301,6 +304,7 @@ class PartaiScoringController extends Controller
     public function lanjutkan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
         $round = $this->jalankan(fn () => $this->timer->lanjutkan($this->babakAktifAtauGagal($match)));
         $this->siarkan(fn () => TimerTicked::dispatch($round));
 
@@ -310,6 +314,7 @@ class PartaiScoringController extends Controller
     public function reset(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
         $round = $this->jalankan(fn () => $this->timer->reset($this->babakAktifAtauGagal($match)));
         $this->siarkan(fn () => TimerTicked::dispatch($round));
 
@@ -319,6 +324,7 @@ class PartaiScoringController extends Controller
     public function selesaikanBabak(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
         $round = $this->jalankan(fn () => $this->timer->selesaikanBabak($this->babakAktifAtauGagal($match)));
         $this->siarkan(fn () => TimerTicked::dispatch($round));
 
@@ -329,6 +335,7 @@ class PartaiScoringController extends Controller
     public function akhiri(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
 
         $data = $request->validate([
             'corner' => ['required', Rule::enum(Sudut::class)],
@@ -372,11 +379,26 @@ class PartaiScoringController extends Controller
     public function nilai(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
+
+        /*
+         * Babak di luar jangkauan ditolak di validasi, bukan diterima lalu
+         * dibalas peringatan. Babak 0 dan -1 sudah dijawab 422; babak 99
+         * sama mustahilnya, jadi jawabannya harus sama — klien yang membaca
+         * kode status tidak boleh menyimpulkan nilainya tercatat.
+         */
+        $jumlahBabak = $this->jumlahBabak($match);
 
         $data = $request->validate([
-            'babak' => ['required', 'integer', 'min:1'],
+            'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
             'corner' => ['required', Rule::enum(Sudut::class)],
             'jenis' => ['required', Rule::enum(JenisSerangan::class)],
+        ], [
+            'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
+        ], [
+            'babak' => 'Babak',
+            'corner' => 'Sudut',
+            'jenis' => 'Jenis serangan',
         ]);
 
         $input = ($this->catatInput)(
@@ -398,12 +420,18 @@ class PartaiScoringController extends Controller
     public function hukuman(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
 
         $data = $request->validate([
-            'babak' => ['required', 'integer', 'min:1'],
+            'babak' => ['required', 'integer', 'min:1', 'max:'.$this->jumlahBabak($match)],
             'corner' => ['required', Rule::enum(Sudut::class)],
             'tingkat' => ['required', Rule::enum(TingkatPelanggaran::class)],
             'catatan' => ['nullable', 'string', 'max:255'],
+        ], [], [
+            'babak' => 'Babak',
+            'corner' => 'Sudut',
+            'tingkat' => 'Tingkat pelanggaran',
+            'catatan' => 'Catatan',
         ]);
 
         $penalty = $this->jalankan(fn () => $this->tangga->catat(
@@ -428,11 +456,18 @@ class PartaiScoringController extends Controller
     public function hitungan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
 
         $data = $request->validate([
-            'babak' => ['required', 'integer', 'min:1'],
+            'babak' => ['required', 'integer', 'min:1', 'max:'.$this->jumlahBabak($match)],
             'corner' => ['required', Rule::enum(Sudut::class)],
             'hitungan' => ['required', 'integer', 'min:1', 'max:10'],
+        ], [
+            'hitungan.max' => 'Hitungan wasit berhenti di 10.',
+        ], [
+            'babak' => 'Babak',
+            'corner' => 'Sudut',
+            'hitungan' => 'Hitungan',
         ]);
 
         $this->jalankan(fn () => $this->hitungan->catat(
@@ -837,5 +872,80 @@ class PartaiScoringController extends Controller
     private function pastikanMilik(Tournament $tournament, SilatMatch $match): void
     {
         abort_unless($match->bracket->weightClass->tournament_id === $tournament->id, 404);
+    }
+
+    /** Jumlah babak yang berlaku untuk golongan usia partai ini. */
+    private function jumlahBabak(SilatMatch $match): int
+    {
+        $kelas = $match->bracket->weightClass;
+
+        return (int) $kelas->tournament->peraturan()
+            ->babakUntuk($kelas->golongan_usia)['jumlah'];
+    }
+
+    /**
+     * Wasit dan juri hanya berwenang atas partai yang ditugaskan kepada
+     * mereka. Izin peran saja tidak cukup: dua gelanggang berjalan
+     * bersamaan dengan aparat yang sama-sama punya izin menilai, dan
+     * aparat gelanggang sebelah tidak boleh ikut menilai atau menghukum
+     * di sini.
+     *
+     * Peran tingkat kejuaraan -- Dewan Wasit Juri, Ketua Pertandingan --
+     * sengaja tidak ikut aturan ini. Kewenangan mereka memang lintas
+     * gelanggang, jadi mereka tidak pernah muncul di match_officials.
+     * Yang diperiksa hanya peran yang memang ditugaskan per partai.
+     */
+    private function pastikanAparatPartai(SilatMatch $match, ?User $user): void
+    {
+        if ($user === null) {
+            abort(403);
+        }
+
+        $peranPerPartai = [
+            'juri' => MatchOfficial::ROLE_JURI,
+            'wasit' => MatchOfficial::ROLE_WASIT,
+        ];
+
+        /*
+         * Cukup ditugaskan dalam SALAH SATU kapasitas, bukan setiap kapasitas
+         * yang perannya izinkan. Satu akun boleh memegang wasit sekaligus
+         * juri; menuntut keduanya akan menolak wasit yang kebetulan juga
+         * berperan juri di partai yang justru ditugaskan kepadanya.
+         */
+        $kapasitas = array_values(array_intersect_key(
+            $peranPerPartai,
+            array_flip($user->getRoleNames()->all()),
+        ));
+
+        if ($kapasitas !== []) {
+            abort_unless(
+                MatchOfficial::query()
+                    ->where('match_id', $match->id)
+                    ->where('user_id', $user->id)
+                    ->whereIn('role', $kapasitas)
+                    ->exists(),
+                403,
+                'Anda tidak ditugaskan sebagai aparat pada partai ini.',
+            );
+        }
+
+        /*
+         * Operator terikat gelanggang, bukan partai: ia memegang satu
+         * gelanggang sepanjang hari, jadi penugasannya ikut berlaku untuk
+         * partai yang baru dijadwalkan ke sana kemudian.
+         *
+         * Partai yang belum punya gelanggang belum bisa dioperasikan
+         * siapa pun -- jadwalkan dulu, baru ada operatornya.
+         */
+        if ($user->hasRole('operator-it')) {
+            abort_unless(
+                $match->arena_id !== null && DB::table('arena_operators')
+                    ->where('arena_id', $match->arena_id)
+                    ->where('user_id', $user->id)
+                    ->exists(),
+                403,
+                'Anda bukan operator gelanggang tempat partai ini dimainkan.',
+            );
+        }
     }
 }

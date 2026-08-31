@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\JurusScoringController;
+use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RegistrationController;
@@ -22,10 +23,9 @@ use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\VarController;
-use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\VerificationController;
+use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -146,6 +146,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/', 'store')->name('store')->middleware('resource:'.rk('turnamen', ResourceAction::Create));
             Route::get('/export', 'export')->name('export')->middleware('resource:'.rk('turnamen', ResourceAction::Export));
             Route::get('/{tournament}/panel', 'panel')->name('panel')->middleware('resource:'.rk('turnamen', ResourceAction::View));
+            Route::post('/{tournament}/buka', 'buka')->name('buka')->middleware('resource:'.rk('turnamen', ResourceAction::View));
             Route::get('/{tournament}/edit', 'edit')->name('edit')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
             Route::put('/{tournament}', 'update')->name('update')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
             Route::patch('/{tournament}/status', 'updateStatus')->name('status')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
@@ -266,6 +267,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('gelanggang', ResourceAction::View));
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('gelanggang', ResourceAction::Create));
                     Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
+                    Route::post('/{arena}/operator', 'simpanOperator')->name('operator')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
                 });
 

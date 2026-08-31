@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Arena extends Model
@@ -40,6 +41,18 @@ class Arena extends Model
     public function jurusPerformances(): HasMany
     {
         return $this->hasMany(JurusPerformance::class);
+    }
+
+    /**
+     * Operator yang memegang gelanggang ini.
+     *
+     * Ditugaskan per gelanggang, bukan per partai: satu operator duduk di
+     * satu gelanggang sepanjang hari, dan penugasannya ikut berlaku untuk
+     * partai yang baru dijadwalkan ke sini kemudian.
+     */
+    public function operators(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'arena_operators')->withTimestamps();
     }
 
     public function scopeAktif(Builder $query): Builder

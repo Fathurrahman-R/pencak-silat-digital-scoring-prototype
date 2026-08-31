@@ -30,7 +30,18 @@
 
                     <div class="min-w-0 flex-1">
                         <p class="truncate font-medium text-ink">{{ $arena->name }}</p>
-                        <p class="text-xs text-ink-muted">Urutan {{ $arena->sort_order }}</p>
+                        {{-- Operator ditampilkan di sini, bukan disembunyikan di
+                             dalam modal: gelanggang tanpa operator tidak bisa
+                             dijalankan sama sekali, jadi kekosongannya harus
+                             terlihat sebelum hari-H. --}}
+                        <p class="truncate text-xs text-ink-muted">
+                            Urutan {{ $arena->sort_order }} ·
+                            @if ($arena->operators->isEmpty())
+                                <span class="text-danger">belum ada operator</span>
+                            @else
+                                Operator: {{ $arena->operators->pluck('name')->implode(', ') }}
+                            @endif
+                        </p>
                     </div>
 
                     <x-si.badge :varian="$arena->is_active ? 'sukses' : 'netral'">
@@ -66,6 +77,40 @@
                                     <x-si.tombol varian="kedua" tipe="button"
                                                  x-on:click="$dispatch('modal-close', 'gelanggang-ubah-{{ $arena->id }}')">Batal</x-si.tombol>
                                     <x-si.tombol tipe="submit" form="ubah-gelanggang-{{ $arena->id }}">Simpan</x-si.tombol>
+                                </x-slot:footer>
+                            </x-si.modal>
+
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
+                                         x-on:click="$dispatch('modal-open', 'gelanggang-operator-{{ $arena->id }}')">
+                                Operator
+                            </x-si.tombol>
+
+                            <x-si.modal :id="'gelanggang-operator-'.$arena->id"
+                                        :judul="'Operator '.$arena->name" ukuran="kecil">
+                                <form method="POST" action="{{ route('admin.turnamen.gelanggang.operator', [$tournament, $arena]) }}"
+                                      id="operator-gelanggang-{{ $arena->id }}" class="space-y-1">
+                                    @csrf
+
+                                    <p class="pb-2 text-sm text-ink-muted">
+                                        Operator hanya bisa menjalankan timer dan mengakhiri partai di gelanggang
+                                        yang ditugaskan kepadanya. Penugasan ini berlaku sepanjang kejuaraan,
+                                        termasuk untuk partai yang dijadwalkan kemudian.
+                                    </p>
+
+                                    @forelse ($calonOperator as $calon)
+                                        <x-si.centang name="operator_id[]" :value="$calon->id" :label="$calon->name"
+                                                      :dicentang="$arena->operators->contains($calon->id)"
+                                                      :id="'operator-'.$arena->id.'-'.$calon->id" />
+                                    @empty
+                                        <x-si.kosong judul="Belum ada akun Operator IT"
+                                                     syarat="Buat penggunanya lebih dulu di menu Sistem, lalu beri peran Operator IT." />
+                                    @endforelse
+                                </form>
+
+                                <x-slot:footer>
+                                    <x-si.tombol varian="kedua" tipe="button"
+                                                 x-on:click="$dispatch('modal-close', 'gelanggang-operator-{{ $arena->id }}')">Batal</x-si.tombol>
+                                    <x-si.tombol tipe="submit" form="operator-gelanggang-{{ $arena->id }}">Simpan</x-si.tombol>
                                 </x-slot:footer>
                             </x-si.modal>
                         @endresource

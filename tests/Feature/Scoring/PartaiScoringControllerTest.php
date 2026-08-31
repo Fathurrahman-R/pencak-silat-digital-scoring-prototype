@@ -3,8 +3,10 @@
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Models\Arena;
 use App\Models\Bracket;
 use App\Models\Contingent;
+use App\Models\MatchOfficial;
 use App\Models\Penalty;
 use App\Models\Registration;
 use App\Models\ScoreEvent;
@@ -47,6 +49,34 @@ beforeEach(function () {
     $this->juri2 = ($this->buatUser)('juri');
     $this->pengawas = ($this->buatUser)('pengawas-wasit-juri');
     $this->ketua = ($this->buatUser)('ketua-pertandingan');
+
+    /*
+     * Wasit dan juri baru boleh bertindak di partai yang ditugaskan kepada
+     * mereka, jadi penugasannya harus ada sebelum aksinya diuji. Pengawas
+     * dan ketua sengaja tidak ditugaskan: kewenangan mereka lintas
+     * gelanggang, dan itu ikut teruji di sini.
+     *
+     * Operator terikat gelanggang, bukan partai, jadi partainya perlu
+     * dijadwalkan ke sebuah gelanggang lebih dulu.
+     */
+    $gelanggang = Arena::factory()->for($this->tournament)->create();
+    $gelanggang->operators()->attach($this->operator);
+    $this->match->update(['arena_id' => $gelanggang->id, 'order_in_arena' => 1]);
+
+    MatchOfficial::create([
+        'match_id' => $this->match->id,
+        'user_id' => $this->wasit->id,
+        'role' => MatchOfficial::ROLE_WASIT,
+    ]);
+
+    foreach ([$this->juri1, $this->juri2] as $nomor => $juri) {
+        MatchOfficial::create([
+            'match_id' => $this->match->id,
+            'user_id' => $juri->id,
+            'role' => MatchOfficial::ROLE_JURI,
+            'number' => $nomor + 1,
+        ]);
+    }
 });
 
 it('menampilkan state partai lewat resync', function () {

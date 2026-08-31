@@ -197,16 +197,27 @@ class SimulasiTurnamenSeeder extends Seeder
         $this->command?->info("Kejuaraan #{$this->tournament->id} dibuat beserta kelas tanding dan nomor Jurus dari naskah 2025.");
     }
 
+    /**
+     * Dua gelanggang, masing-masing dengan operatornya sendiri.
+     *
+     * Operator terikat gelanggang: tanpa penugasan ini panel gelanggang
+     * menolak seluruh aksinya, jadi kejuaraan simulasi tidak akan bisa
+     * dijalankan sama sekali.
+     */
     private function buatGelanggang(): void
     {
+        $operator = ['A' => $this->akun['operator'], 'B' => $this->akun['operator2']];
+
         foreach ([['Gelanggang A', 'A'], ['Gelanggang B', 'B']] as $urutan => [$nama, $kode]) {
-            Arena::create([
+            $arena = Arena::create([
                 'tournament_id' => $this->tournament->id,
                 'name' => $nama,
                 'code' => $kode,
                 'sort_order' => $urutan,
                 'is_active' => true,
             ]);
+
+            $arena->operators()->attach($operator[$kode]);
         }
     }
 
