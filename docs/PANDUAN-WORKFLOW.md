@@ -98,6 +98,8 @@ Tiap kolom punya teks bantuan yang menyebut pasalnya. Yang tidak punya rujukan p
 
 Tambahkan satu gelanggang per matras yang benar-benar dipakai. **Catat `id` tiap gelanggang** dari URL-nya — angka itu dipakai untuk URL overlay vMix dan live score publik.
 
+**Tetapkan operatornya lewat tombol Operator di tiap baris gelanggang.** Operator hanya bisa menjalankan timer dan mengakhiri partai di gelanggang yang ditugaskan kepadanya, jadi gelanggang tanpa operator tidak bisa dijalankan sama sekali — daftarnya menandai keadaan itu dengan "belum ada operator" berwarna merah. Penugasannya berlaku sepanjang kejuaraan, termasuk untuk partai yang dijadwalkan kemudian, jadi cukup sekali di awal.
+
 ## Tahap 2 — Susun tarif
 
 **Siapa:** Bendahara Panitia · **Menu:** Kejuaraan aktif → Tarif

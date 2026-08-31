@@ -62,6 +62,30 @@ VITE_REVERB_SCHEME=http
 
 **Kenapa `REVERB_HOST` bukan `localhost`.** HP juri menyambung ke server dari perangkat lain di jaringan yang sama. `localhost` di HP menunjuk ke HP itu sendiri, bukan ke server. Isi dengan alamat IP LAN mesin server (`ipconfig` di PowerShell untuk melihatnya), dan pastikan alamat itu **statis** (set IP statis di adapter jaringan Windows, atau reservasi DHCP di router) -- kalau berubah di tengah turnamen, seluruh HP juri kehilangan koneksi.
 
+**Mengubah `REVERB_HOST` sesudahnya wajib diikuti `npm run build`.** `VITE_REVERB_HOST` dibaca saat aset dikompilasi, bukan saat aplikasi berjalan, jadi alamatnya ikut tertanam di dalam `public/build/assets/echo-*.js`. Menyunting `.env` lalu me-restart server **tidak** mengubah apa pun: panel tetap mencoba menyambung ke alamat lama sampai asetnya dibangun ulang. Panel memang menampilkan penanda "Terputus" yang menonjol saat ini terjadi, tapi baru sesudah percobaan sambungnya kedaluwarsa.
+
+## 4b. Setelan `php.ini`
+
+Dua setelan berikut tidak punya nilai bawaan yang cocok untuk kejuaraan, dan keduanya baru terasa akibatnya di hari-H.
+
+```ini
+; Foto struk transfer dan foto akta dari kamera HP rutin berukuran 2-5 MB.
+; Aplikasi memvalidasi sampai 4 MB, tapi yang benar-benar berlaku adalah
+; yang terkecil di antara setelan ini dan aturan aplikasi -- kalau ini
+; dibiarkan 2M, bendahara akan ditolak terus untuk berkas yang menurut
+; aplikasi masih boleh.
+upload_max_filesize = 8M
+post_max_size = 16M
+
+; Wajib Off di mesin yang dipakai kejuaraan. Kalau On, unggahan yang
+; melebihi post_max_size membalas peringatan PHP mentah beserta angka
+; konfigurasi servernya, bukan halaman galat aplikasi.
+display_errors = Off
+log_errors = On
+```
+
+Setelah menyunting `php.ini`, restart PHP (tutup dan jalankan ulang `php artisan serve`, atau restart layanan web-nya).
+
 ## 5. Migrasi, seed, build aset
 
 ```powershell
