@@ -13,6 +13,7 @@ use App\Models\Tournament;
 use App\Support\Pendaftaran\DaftarkanPeserta;
 use App\Support\Pendaftaran\PendaftaranDitolak;
 use App\Support\Pendaftaran\PeriksaKelayakan;
+use App\Support\Unggah\BatasUnggah;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -128,11 +129,20 @@ class AthleteController extends Controller
         $this->pastikanBolehAkses($contingent);
         $this->pastikanMilik($contingent, $athlete);
 
+        /*
+         * Angka batasnya dihitung dari yang benar-benar diterima PHP.
+         * Menjanjikan 4 MB sementara PHP memotong di 2 MB membuat berkas di
+         * antaranya gagal tanpa pesan yang bisa ditindaklanjuti.
+         */
+        $batas = BatasUnggah::kilobyte(4096);
+
         $data = $request->validate([
             'jenis' => ['required', 'string', 'in:'.implode(',', array_column(JenisBerkas::cases(), 'value'))],
-            'berkas' => ['required', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf'],
+            'berkas' => ['required', 'file', 'max:'.$batas, 'mimes:jpg,jpeg,png,pdf'],
         ], [
-            'berkas.max' => 'Ukuran berkas paling besar 4 MB. Foto dari kamera ponsel biasanya perlu dikecilkan lebih dulu.',
+            'berkas.max' => 'Ukuran berkas paling besar '.BatasUnggah::label($batas)
+                .'. Foto dari kamera ponsel biasanya perlu dikecilkan lebih dulu.',
+            'berkas.uploaded' => 'Berkas gagal diunggah — ukurannya melebihi '.BatasUnggah::label($batas).'.',
             'berkas.mimes' => 'Berkas harus berupa JPG, PNG, atau PDF.',
         ], [
             'jenis' => 'Jenis berkas',
