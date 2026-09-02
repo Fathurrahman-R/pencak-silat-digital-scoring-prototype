@@ -16,15 +16,32 @@
         <section class="mb-12">
             <h2 class="mb-1 text-[15px] font-medium text-silat-teks">Ikon aksi dan sanksi</h2>
             <p class="mb-5 text-[13px] text-silat-teks-redup">
-                Enam piktogram siluet padat. Tidak ada ikon kuncian dan tidak ada ikon gabungan:
-                naskah 2025 hanya mengenal nilai 1, 2, dan 3.
+                Tiga piktogram siluet padat untuk teknik. Sanksi TIDAK memakai piktogram bikinan
+                sendiri: yang dipajang adalah isyarat tangan wasit yang sesungguhnya, satu gambar
+                per tingkat — sama persis dengan yang dilihat pesilat di gelanggang.
             </p>
 
-            <div class="grid grid-cols-3 gap-3 sm:grid-cols-6">
-                @foreach (['pukulan', 'tendangan', 'jatuhan', 'pembinaan', 'teguran', 'peringatan'] as $ikon)
+            <div class="grid grid-cols-3 gap-3">
+                @foreach (['pukulan', 'tendangan', 'jatuhan'] as $ikon)
                     <div class="flex flex-col items-center gap-2 rounded-silat bg-silat-panel p-4">
                         <x-silat.ikon :nama="$ikon" :ukuran="36" class="text-silat-teks" />
                         <span class="text-[12px] text-silat-teks-redup">{{ ucfirst($ikon) }}</span>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-3 grid grid-cols-3 gap-3">
+                @foreach (['pembinaan' => 2, 'teguran' => 2, 'peringatan' => 2] as $sanksi => $tingkatMaks)
+                    <div class="flex flex-col items-center gap-2 rounded-silat bg-silat-panel p-4">
+                        <div class="flex items-end gap-3">
+                            @for ($t = 1; $t <= $tingkatMaks; $t++)
+                                <div class="flex flex-col items-center gap-1">
+                                    <x-silat.ikon-hukuman :jenis="$sanksi" :tingkat="$t" :ukuran="36" />
+                                    <span class="silat-angka text-[10px] text-silat-teks-samar">{{ $t }}</span>
+                                </div>
+                            @endfor
+                        </div>
+                        <span class="text-[12px] text-silat-teks-redup">{{ ucfirst($sanksi) }}</span>
                     </div>
                 @endforeach
             </div>

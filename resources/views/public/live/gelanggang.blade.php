@@ -1,22 +1,22 @@
 <x-layouts.silat :title="'Live — '.$arena->name" permukaan="publik">
     @php
-        /*
-         * Jumlah petak per tingkat mengikuti tangga Pasal 11.6.d.4 di
-         * config/scoring.php -- sama sumbernya dengan mesin scoring, jadi layar
-         * penonton tidak pernah menjanjikan jatah yang berbeda dari yang
-         * dihitung server.
-         */
-        $petakHukuman = [
-            'pembinaan' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2),
-            'teguran' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2),
-            'peringatan' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3),
-        ];
+    /*
+    * Jumlah petak per tingkat mengikuti tangga Pasal 11.6.d.4 di
+    * config/scoring.php -- sama sumbernya dengan mesin scoring, jadi layar
+    * penonton tidak pernah menjanjikan jatah yang berbeda dari yang
+    * dihitung server.
+    */
+    $petakHukuman = [
+    'pembinaan' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2),
+    'teguran' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2),
+    'peringatan' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3),
+    ];
     @endphp
 
     <x-silat.kepala-publik :judul="$arena->tournament->name"
-                           :keterangan="$arena->name"
-                           :tautan="['Kejuaraan' => route('live.turnamen', $arena->tournament), 'Medali' => route('live.turnamen.medali', $arena->tournament)]"
-                           aktif="Kejuaraan" />
+        :keterangan="$arena->name"
+        :tautan="['Kejuaraan' => route('live.turnamen', $arena->tournament), 'Medali' => route('live.turnamen.medali', $arena->tournament)]"
+        aktif="Kejuaraan" />
 
     {{--
         Live score publik — mengikuti `publik-beranda-live.dc.html`.
@@ -29,12 +29,12 @@
     <div x-data="overlayLive(@js($config))" class="mx-auto w-full max-w-[1180px] px-5 pt-7 pb-14 sm:px-10">
         <div class="mb-5 flex flex-wrap items-center gap-3">
             <span class="silat-angka inline-flex h-6 items-center rounded-silat-kecil bg-silat-aksi px-2.5 text-[10.5px] font-semibold tracking-[.1em] text-silat-aksi-teks uppercase"
-                  x-show="adaPartai">Sedang berlangsung</span>
+                x-show="adaPartai">Sedang berlangsung</span>
             <span class="silat-angka text-[12.5px] text-silat-teks-redup">
                 {{ $arena->name }}<span x-show="match?.id"> · Partai <span x-text="match?.id"></span></span>
             </span>
             <span class="ml-auto text-[13.5px] text-silat-teks-redup"
-                  x-text="kelas ? (kelas.jenis_kelamin + ' ' + kelas.golongan + ' — ' + kelas.nama) : ''"></span>
+                x-text="kelas ? (kelas.jenis_kelamin + ' ' + kelas.golongan + ' — ' + kelas.nama) : ''"></span>
         </div>
 
         <template x-if="memuat">
@@ -69,22 +69,27 @@
                          Teguran 0" menuntut penonton membaca tiga kali untuk tahu
                          satu hal — seberapa dekat pesilat ini ke sanksi berikutnya.
                          Istilah naskah ditulis penuh, tidak disingkat. --}}
-                    <div class="mt-5.5">
+                    <div class="flex flex-row gap-2 mt-5.5">
                         @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)
-                            <div class="mt-1.5 flex items-center gap-2.5">
-                                <span class="w-[86px] shrink-0 text-[13px] text-silat-teks-merah-redup">{{ ucfirst($jenis) }}</span>
-                                <div class="flex gap-1.5" aria-hidden="true">
-                                    <template x-for="i in petakHukuman['{{ $jenis }}']" :key="'m-{{ $jenis }}-'+i">
-                                        <span class="grid h-6 w-[30px] place-items-center rounded-silat-kecil border-[1.5px] border-silat-teks-merah-samar text-silat-teks-merah-samar"
-                                              x-bind:class="[
-                                                  (hukuman.merah['{{ $jenis }}'] ?? 0) >= i ? 'bg-white border-white text-silat-panel' : '',
-                                                  ('{{ $jenis }}' === 'peringatan' && i === petakHukuman['{{ $jenis }}']) ? 'border-dashed' : '',
-                                              ]">
-                                            <x-silat.ikon :nama="$jenis" :ukuran="12" :label="null" />
-                                        </span>
-                                    </template>
-                                </div>
+                        <div class="mt-1.5 flex items-center gap-2.5">
+                            <!-- <span class="w-[86px] shrink-0 text-[13px] text-silat-teks-merah-redup">{{ ucfirst($jenis) }}</span> -->
+                            {{-- Petaknya digambar dari PHP, bukan `x-for`:
+                                     jumlahnya sudah pasti sejak halaman
+                                     dirender, dan tiap petak memakai isyarat
+                                     tangan tingkatnya sendiri — nomor tingkat
+                                     itu harus diketahui saat memilih berkas
+                                     gambarnya. --}}
+                            <div class="flex border-[1.5px] border-silat-teks-merah-samar" aria-hidden="true">
+                                @for ($i = 1; $i <= $petakHukuman[$jenis]; $i++)
+                                    <span class="grid h-9 w-[42px] place-items-center border-e-[1.5px] border-silat-teks-merah-samar text-silat-teks-merah-samar last:border-e-0"
+                                    @class(['border-s-[1.5px] border-dashed'=> $jenis === 'peringatan' && $i === $petakHukuman[$jenis]])
+                                    x-bind:class="(hukuman.merah['{{ $jenis }}'] ?? 0) >= {{ $i }} ? 'bg-white text-silat-panel' : ''">
+                                    <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="true" :ukuran="24"
+                                        x-bind:class="(hukuman.merah['{{ $jenis }}'] ?? 0) >= {{ $i }} ? '' : 'invert opacity-70'" />
+                                    </span>
+                                    @endfor
                             </div>
+                        </div>
                         @endforeach
                     </div>
                 </div>
@@ -98,10 +103,10 @@
                     <p class="silat-angka text-[11px] tracking-[.12em] text-silat-teks-redup uppercase" x-text="babakLabel"></p>
                     <p class="silat-angka mt-3 text-[44px] leading-none font-medium text-silat-teks" x-text="tampilWaktu"></p>
                     <p class="silat-angka mt-2 text-[11px] tracking-[.12em] text-silat-teks-samar uppercase"
-                       x-show="match?.current_round"
-                       x-text="'Babak ' + match?.current_round + (jumlahBabak ? '/' + jumlahBabak : '')"></p>
+                        x-show="match?.current_round"
+                        x-text="'Babak ' + match?.current_round + (jumlahBabak ? '/' + jumlahBabak : '')"></p>
                     <p class="silat-angka mt-3 text-[11px] tracking-[.12em] text-silat-teks-redup uppercase"
-                       x-text="match?.status === 'selesai' ? 'Selesai' : 'Berjalan'"></p>
+                        x-text="match?.status === 'selesai' ? 'Selesai' : 'Berjalan'"></p>
                 </div>
 
                 <div class="bg-silat-biru-dalam p-8 text-right text-white" x-bind:class="kilat === 'blue' ? 'silat-kilat' : ''">
@@ -110,22 +115,21 @@
                     <p class="mt-1 truncate text-[16px] text-silat-teks-biru" x-text="blue?.kontingen"></p>
                     <p class="silat-angka mt-4.5 text-[110px] leading-[0.85] font-medium" x-text="skorTotal.biru"></p>
 
-                    <div class="mt-5.5">
+                    <div class="flex flex-row-reverse gap-2 mt-5.5">
                         @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)
-                            <div class="mt-1.5 flex items-center justify-end gap-2.5">
-                                <div class="flex flex-row-reverse gap-1.5" aria-hidden="true">
-                                    <template x-for="i in petakHukuman['{{ $jenis }}']" :key="'b-{{ $jenis }}-'+i">
-                                        <span class="grid h-6 w-[30px] place-items-center rounded-silat-kecil border-[1.5px] border-silat-teks-biru-samar text-silat-teks-biru-samar"
-                                              x-bind:class="[
-                                                  (hukuman.biru['{{ $jenis }}'] ?? 0) >= i ? 'bg-white border-white text-silat-panel' : '',
-                                                  ('{{ $jenis }}' === 'peringatan' && i === petakHukuman['{{ $jenis }}']) ? 'border-dashed' : '',
-                                              ]">
-                                            <x-silat.ikon :nama="$jenis" :ukuran="12" :label="null" />
-                                        </span>
-                                    </template>
-                                </div>
-                                <span class="w-[86px] shrink-0 text-[13px] text-silat-teks-biru">{{ ucfirst($jenis) }}</span>
+                        <div class="mt-1.5 flex items-center justify-end gap-2.5">
+                            <div class="flex flex-row-reverse border-[1.5px] border-silat-teks-biru-samar" aria-hidden="true">
+                                @for ($i = 1; $i <= $petakHukuman[$jenis]; $i++)
+                                    <span class="grid h-9 w-[42px] place-items-center border-s-[1.5px] border-silat-teks-biru-samar text-silat-teks-biru-samar last:border-s-0"
+                                    @class(['border-e-[1.5px] border-dashed'=> $jenis === 'peringatan' && $i === $petakHukuman[$jenis]])
+                                    x-bind:class="(hukuman.biru['{{ $jenis }}'] ?? 0) >= {{ $i }} ? 'bg-white text-silat-panel' : ''">
+                                    <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="true" :ukuran="24"
+                                        x-bind:class="(hukuman.biru['{{ $jenis }}'] ?? 0) >= {{ $i }} ? '' : 'invert opacity-70'" />
+                                    </span>
+                                    @endfor
                             </div>
+                            <!-- <span class="w-[86px] shrink-0 text-[13px] text-silat-teks-biru">{{ ucfirst($jenis) }}</span> -->
+                        </div>
                         @endforeach
                     </div>
                 </div>
@@ -150,7 +154,7 @@
             --}}
             <template x-if="match?.status === 'selesai'">
                 <div class="mt-6 rounded-silat-besar border border-silat-garis px-5 py-4.5 text-center"
-                     x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">
+                    x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">
                     <p class="silat-angka text-[10.5px] tracking-[.12em] text-silat-teks-redup uppercase">Hasil</p>
                     <p class="mt-1.5 text-[18px] font-semibold text-silat-teks">
                         <span x-text="match?.winner_corner === 'red' ? red?.nama : blue?.nama"></span>

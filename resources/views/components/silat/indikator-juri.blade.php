@@ -36,15 +36,24 @@
     role="group"
     aria-label="Juri yang menekan: {{ count($menekan) }} dari {{ $jumlah }}, ambang sepakat {{ $ambang }}"
 >
-    <div class="flex justify-center gap-3.5">
+    {{--
+        Kotak bernomor juri, bukan bulatan bernomor di bawahnya.
+
+        Nomornya dulu duduk sebagai keterangan di bawah titik, dan mata harus
+        melompat naik-turun untuk memasangkan "yang menyala" dengan "juri
+        keberapa". Di dalam kotak, keduanya satu benda: yang menyala sudah
+        menyebutkan namanya sendiri.
+    --}}
+    {{-- Deret bersambung bertepi lurus, bukan kotak-kotak terpisah bersudut
+         membulat: dibaca dari tepi matras, ia harus terbaca sebagai satu alat
+         ukur, bukan tiga benda yang kebetulan berjajar. --}}
+    <div class="flex justify-center border-[1.5px] border-silat-tepi-petak" aria-hidden="true">
         @for ($i = 1; $i <= $jumlah; $i++)
-            <div class="text-center">
-                <span
-                    class="block size-[22px] rounded-full {{ in_array($i, $menekan, true) ? $warnaNyala : 'bg-silat-mati' }}"
-                    aria-hidden="true"
-                ></span>
-                <span class="silat-angka mt-1 block text-[11px] text-silat-teks-samar">J{{ $i }}</span>
-            </div>
+            <span @class([
+                    'silat-angka grid h-11 w-[54px] shrink-0 place-items-center border-e-[1.5px] border-silat-tepi-petak text-[20px] font-semibold last:border-e-0',
+                    $warnaNyala.' text-silat-teks' => in_array($i, $menekan, true),
+                    'text-silat-teks-samar' => ! in_array($i, $menekan, true),
+                ])>J{{ $i }}</span>
         @endfor
     </div>
 

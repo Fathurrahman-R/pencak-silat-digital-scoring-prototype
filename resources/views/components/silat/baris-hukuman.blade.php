@@ -72,22 +72,23 @@
     role="group"
     aria-label="{{ $label }}: {{ $terisi }} dari {{ $jumlahPetak }}"
 >
-    <div class="flex gap-1.5" aria-hidden="true">
+    {{-- Satu deret bersambung bertepi lurus. Kotak terpisah bersudut membulat
+         terbaca sebagai benda-benda yang tak berhubungan; yang ini satu tangga,
+         dan yang dicari mata dari tepi matras cuma sampai mana ia terisi. --}}
+    <div class="flex border-[1.5px] border-silat-tepi-petak" aria-hidden="true">
         @for ($i = 1; $i <= $jumlahPetak; $i++)
             @php
                 $nyala = $i <= $terisi;
                 // Petak terakhir peringatan berarti diskualifikasi, bukan
-                // pengurangan nilai -- dibedakan garis putus.
+                // pengurangan nilai -- dibedakan garis pemisah yang putus.
                 $diskualifikasi = $jenis === 'peringatan' && $i === $jumlahPetak;
             @endphp
             <span @class([
-                'flex shrink-0 items-center justify-center rounded-silat-kecil',
+                'flex shrink-0 items-center justify-center border-e-[1.5px] border-silat-tepi-petak last:border-e-0',
                 $bidang => $nyala,
-                'border border-silat-tepi-petak' => ! $nyala && ! $diskualifikasi,
-                'border border-dashed border-silat-tepi-petak' => ! $nyala && $diskualifikasi,
+                'border-s-[1.5px] border-dashed' => $diskualifikasi,
             ]) style="width: {{ $ukuran }}px; height: {{ $ukuran }}px;">
-                <x-silat.ikon :nama="$jenis" :ukuran="$ikonPx" :label="null"
-                              class="{{ $nyala ? $tintaIkon : 'text-silat-tepi-petak' }}" />
+                <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="$nyala" :ukuran="$ikonPx" />
             </span>
         @endfor
     </div>

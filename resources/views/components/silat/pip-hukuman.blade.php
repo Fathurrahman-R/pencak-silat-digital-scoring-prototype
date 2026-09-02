@@ -46,18 +46,31 @@
 <div {{ $attributes->merge(['class' => 'flex items-center gap-2 '.($kananDulu ? 'flex-row-reverse' : '')]) }}
      aria-hidden="true">
     @foreach ($kolom as $jenis => $gaya)
-        <div class="flex gap-1 {{ $kananDulu ? 'flex-row-reverse' : '' }}">
+        {{-- Deret bersambung bertepi lurus — lihat catatan yang sama di
+             silat/baris-hukuman. --}}
+        <div class="flex border border-white/70 {{ $kananDulu ? 'flex-row-reverse' : '' }}">
             @for ($i = 1; $i <= $gaya['jumlah']; $i++)
                 @php($diskualifikasi = $jenis === 'peringatan' && $i === $gaya['jumlah'])
-                <span class="flex shrink-0 items-center justify-center rounded-silat-kecil border border-white/70 {{ $diskualifikasi ? 'border-dashed' : '' }}"
+                <span @class([
+                          'flex shrink-0 items-center justify-center border-white/70',
+                          'border-s last:border-s-0' => $kananDulu,
+                          'border-e last:border-e-0' => ! $kananDulu,
+                          'border-dashed' => $diskualifikasi,
+                          'border-e' => $diskualifikasi && $kananDulu,
+                          'border-s' => $diskualifikasi && ! $kananDulu,
+                      ])
                       style="width: {{ $ukuran }}px; height: {{ $ukuran }}px;"
                       x-bind:class="(hukuman?.{{ $sisi }}?.{{ $jenis }} ?? 0) >= {{ $i }}
-                          ? '{{ $nyalaBidang[$jenis] ?? 'bg-white' }} border-transparent'
+                          ? '{{ $nyalaBidang[$jenis] ?? 'bg-white' }}'
                           : ''">
-                    <x-silat.ikon :nama="$jenis" :ukuran="$ikonPx" :label="null"
-                                  x-bind:class="(hukuman?.{{ $sisi }}?.{{ $jenis }} ?? 0) >= {{ $i }}
-                                      ? 'text-black/85'
-                                      : 'text-white/70'" />
+                    {{-- `nyala` dibiarkan true supaya komponennya tidak memasang
+                         kelas `invert` statis: di sini yang menentukan menyala
+                         atau belum adalah keadaan Alpine, yang berubah tanpa
+                         halaman digambar ulang. --}}
+                    <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="true" :ukuran="$ikonPx"
+                                          x-bind:class="(hukuman?.{{ $sisi }}?.{{ $jenis }} ?? 0) >= {{ $i }}
+                                              ? ''
+                                              : 'invert opacity-70'" />
                 </span>
             @endfor
         </div>
