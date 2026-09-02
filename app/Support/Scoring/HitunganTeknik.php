@@ -6,6 +6,7 @@ use App\Enums\Sudut;
 use App\Models\SilatMatch;
 use App\Models\TechnicalCount;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use RuntimeException;
 
 /**
@@ -71,9 +72,48 @@ class HitunganTeknik
      */
     public function beruntun(SilatMatch $match, Sudut $sudut, int $babak): int
     {
+        return $this->hitungBeruntun($this->hitunganBabak($match, $babak), $sudut);
+    }
+
+    /**
+     * Ketiga angka hitungan teknik satu sudut, dari baris yang SUDAH dimuat
+     * pemanggilnya.
+     *
+     * Sama alasannya dengan TanggaHukuman::ringkasan(): endpoint state butuh
+     * ketiganya untuk kedua sudut, dan enam perjalanan ke basis data untuk
+     * angka sekecil ini mengantre tepat di depan tekanan tombol berikutnya.
+     *
+     * @param  Collection<int, TechnicalCount>  $hitungan  hitungan babak ini, terbaru dulu
+     * @return array{jumlah: int, beruntun: int, terakhir: int|null}
+     */
+    public function ringkasan(Collection $hitungan, Sudut $sudut): array
+    {
+        $sudutIni = $hitungan->where('corner', $sudut);
+
+        return [
+            'jumlah' => $sudutIni->count(),
+            'beruntun' => $this->hitungBeruntun($hitungan, $sudut),
+            'terakhir' => $sudutIni->first()?->count_reached,
+        ];
+    }
+
+    /**
+     * Hitungan satu babak, terbaru dulu -- urutan yang dipakai ringkasan()
+     * maupun jalur tulis.
+     *
+     * @return Collection<int, TechnicalCount>
+     */
+    public function hitunganBabak(SilatMatch $match, int $babak): Collection
+    {
+        return $match->technicalCounts()->where('round', $babak)->orderByDesc('id')->get();
+    }
+
+    /** @param  Collection<int, TechnicalCount>  $hitungan  terbaru dulu */
+    private function hitungBeruntun(Collection $hitungan, Sudut $sudut): int
+    {
         $beruntun = 0;
 
-        foreach ($match->technicalCounts()->where('round', $babak)->orderByDesc('id')->get() as $h) {
+        foreach ($hitungan as $h) {
             if ($h->corner !== $sudut) {
                 break;
             }

@@ -2,7 +2,6 @@
 
 namespace App\Events\Scoring;
 
-use App\Enums\Sudut;
 use App\Models\ScoreEvent;
 use App\Support\Scoring\TandingScoreCalculator;
 use Illuminate\Broadcasting\Channel;
@@ -46,8 +45,10 @@ class ScoreAwarded implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        $kalkulator = app(TandingScoreCalculator::class);
-        $match = $this->scoreEvent->match;
+        // Kedua skor sekaligus dalam dua query, bukan empat: siaran ini
+        // disusun di dalam permintaan yang sedang melayani tekanan tombol
+        // juri, dan permintaan berikutnya menunggu di belakangnya.
+        $rekap = app(TandingScoreCalculator::class)->rekapSkor($this->scoreEvent->match);
 
         return [
             'match_id' => $this->scoreEvent->match_id,
@@ -55,8 +56,8 @@ class ScoreAwarded implements ShouldBroadcastNow
             'corner' => $this->scoreEvent->corner->value,
             'point_type' => $this->scoreEvent->point_type->value,
             'value' => $this->scoreEvent->value,
-            'skor_merah' => $kalkulator->skor($match, Sudut::Merah),
-            'skor_biru' => $kalkulator->skor($match, Sudut::Biru),
+            'skor_merah' => $rekap['total']['merah'],
+            'skor_biru' => $rekap['total']['biru'],
         ];
     }
 }

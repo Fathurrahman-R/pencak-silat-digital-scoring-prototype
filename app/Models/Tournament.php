@@ -75,9 +75,20 @@ class Tournament extends Model
      * ketiadaannya diperlakukan sebagai keadaan yang harus diperbaiki saat itu
      * juga — bukan dibiarkan mengalir sampai gelanggang dan gagal di sana.
      */
+    /**
+     * Setelan peraturan kejuaraan ini.
+     *
+     * Memakai relasi yang sudah dimuat kalau ada. Satu tarikan state panel
+     * gelanggang menanyakan peraturan beberapa kali -- jumlah babak, ambang
+     * sepakat, jendela konsensus -- dan tanpa ini tiap pertanyaan jadi
+     * perjalanan sendiri ke basis data untuk baris yang sama persis.
+     *
+     * Yang menyunting setelan bekerja pada model yang baru dimuat, jadi tidak
+     * pernah membaca dari relasi yang basi.
+     */
     public function peraturan(): TournamentRuleSetting
     {
-        return $this->ruleSetting()->first()
+        return ($this->relationLoaded('ruleSetting') ? $this->ruleSetting : $this->ruleSetting()->first())
             ?? throw new \RuntimeException("Turnamen [{$this->id}] belum punya setelan peraturan.");
     }
 

@@ -48,6 +48,17 @@ class CatatInputJuri
             'rejected_reason' => $ditolak ? $this->alasanTolak($babakSaatIni, $berjalan) : null,
         ]);
 
+        /*
+         * Partainya dipasang ke input, tidak dibiarkan ditarik ulang.
+         *
+         * Tanpa ini, tiap persinggahan berikutnya -- siaran yang mencari nomor
+         * juri, evaluator yang membaca jendela konsensus -- menanyakan partai
+         * yang sama beserta seluruh rantai kelas dan peraturannya sekali lagi.
+         * Lima perjalanan ke basis data untuk baris yang sudah ada di tangan
+         * pemanggil, di jalur yang dilewati tiap tekanan tombol juri.
+         */
+        $input->setRelation('match', $match);
+
         JudgeInputReceived::dispatch($input);
 
         if (! $ditolak) {

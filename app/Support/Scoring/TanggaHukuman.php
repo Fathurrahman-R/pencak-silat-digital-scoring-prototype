@@ -8,6 +8,7 @@ use App\Enums\TingkatPelanggaran;
 use App\Models\Penalty;
 use App\Models\SilatMatch;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -166,46 +167,102 @@ class TanggaHukuman
     }
 
     /**
+     * Keempat angka tangga hukuman satu sudut, dihitung dari baris yang SUDAH
+     * dimuat pemanggilnya.
+     *
+     * Endpoint state butuh keempatnya untuk kedua sudut sekaligus. Ditanyakan
+     * satu per satu, itu sepuluh perjalanan ke basis data untuk satu tarikan
+     * layar yang terjadi tiap kali ada nilai terbit -- dan tarikan itulah yang
+     * mengantre di belakang tekanan tombol juri berikutnya. Satu partai tidak
+     * pernah punya lebih dari belasan baris hukuman, jadi memuat semuanya
+     * sekali selalu lebih murah daripada menghitungnya berkali-kali.
+     *
+     * @param  Collection<int, Penalty>  $hukuman  seluruh hukuman BERLAKU partai ini
+     * @return array{pembinaan: int, teguran: int, peringatan: int, diskualifikasi: bool}
+     */
+    public function ringkasan(Collection $hukuman, Sudut $sudut, int $babak): array
+    {
+        $peringatan = $this->hitungPeringatan($hukuman, $sudut);
+
+        return [
+            'pembinaan' => $this->hitungPembinaan($hukuman, $sudut),
+            'teguran' => $this->hitungTeguran($hukuman, $sudut, $babak),
+            'peringatan' => $peringatan,
+            'diskualifikasi' => $peringatan >= config('scoring.tanding.hukuman.peringatan.tingkat_diskualifikasi'),
+        ];
+    }
+
+    /**
      * Pembinaan yang masih berlaku sejak eskalasi terakhir -- direset begitu
      * sebuah Teguran atau Peringatan tercatat untuk sudut ini.
      */
     public function jumlahPembinaan(SilatMatch $match, Sudut $sudut): int
     {
-        $eskalasiTerakhir = $match->penalties()->berlaku()
-            ->where('corner', $sudut)
-            ->whereIn('tier', [TingkatHukuman::Teguran, TingkatHukuman::Peringatan])
-            ->latest('id')
-            ->first();
-
-        return $match->penalties()->berlaku()
-            ->where('corner', $sudut)
-            ->where('tier', TingkatHukuman::Pembinaan)
-            ->when($eskalasiTerakhir, fn ($q) => $q->where('id', '>', $eskalasiTerakhir->id))
-            ->count();
+        return $this->hitungPembinaan($this->hukumanBerlaku($match), $sudut);
     }
 
     /** Teguran yang tercatat pada babak ini -- tidak pernah lebih dari dua, sisanya jadi Peringatan. */
     public function jumlahTeguran(SilatMatch $match, Sudut $sudut, int $babak): int
     {
-        return $match->penalties()->berlaku()
-            ->where('corner', $sudut)
-            ->where('round', $babak)
-            ->where('tier', TingkatHukuman::Teguran)
-            ->count();
+        return $this->hitungTeguran($this->hukumanBerlaku($match), $sudut, $babak);
     }
 
     /** Peringatan sepanjang partai -- tidak pernah mereset antar babak. */
     public function jumlahPeringatan(SilatMatch $match, Sudut $sudut): int
     {
-        return $match->penalties()->berlaku()
-            ->where('corner', $sudut)
-            ->where('tier', TingkatHukuman::Peringatan)
-            ->count();
+        return $this->hitungPeringatan($this->hukumanBerlaku($match), $sudut);
     }
 
     public function sudahDiskualifikasi(SilatMatch $match, Sudut $sudut): bool
     {
         return $this->jumlahPeringatan($match, $sudut)
             >= config('scoring.tanding.hukuman.peringatan.tingkat_diskualifikasi');
+    }
+
+    /**
+     * Selalu ditanyakan ulang, tidak pernah dari relasi yang sudah dimuat:
+     * pemanggilnya jalur TULIS -- ia baru saja mencatat sebuah hukuman dan
+     * sedang menentukan tahap berikutnya. Relasi yang dimuat sebelum
+     * pencatatan itu akan menjawab dengan keadaan sebelum tekanan wasit.
+     *
+     * @return Collection<int, Penalty>
+     */
+    private function hukumanBerlaku(SilatMatch $match): Collection
+    {
+        return $match->penalties()->berlaku()->get(['id', 'round', 'corner', 'tier']);
+    }
+
+    /** @param  Collection<int, Penalty>  $hukuman */
+    private function hitungPembinaan(Collection $hukuman, Sudut $sudut): int
+    {
+        $sudutIni = $hukuman->where('corner', $sudut);
+
+        $eskalasiTerakhir = $sudutIni
+            ->whereIn('tier', [TingkatHukuman::Teguran, TingkatHukuman::Peringatan])
+            ->max('id');
+
+        return $sudutIni
+            ->where('tier', TingkatHukuman::Pembinaan)
+            ->when($eskalasiTerakhir, fn (Collection $c) => $c->where('id', '>', $eskalasiTerakhir))
+            ->count();
+    }
+
+    /** @param  Collection<int, Penalty>  $hukuman */
+    private function hitungTeguran(Collection $hukuman, Sudut $sudut, int $babak): int
+    {
+        return $hukuman
+            ->where('corner', $sudut)
+            ->where('round', $babak)
+            ->where('tier', TingkatHukuman::Teguran)
+            ->count();
+    }
+
+    /** @param  Collection<int, Penalty>  $hukuman */
+    private function hitungPeringatan(Collection $hukuman, Sudut $sudut): int
+    {
+        return $hukuman
+            ->where('corner', $sudut)
+            ->where('tier', TingkatHukuman::Peringatan)
+            ->count();
     }
 }

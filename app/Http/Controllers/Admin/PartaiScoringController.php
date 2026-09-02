@@ -396,6 +396,15 @@ class PartaiScoringController extends Controller
         $this->pastikanAparatPartai($match, $request->user());
 
         /*
+         * Jalur terpanas di seluruh sistem: tiga juri menekan beruntun, dan
+         * tiap tekanan berjalan sendirian di server yang melayani satu
+         * permintaan pada satu waktu. Rantai kelas-peraturan dan daftar aparat
+         * dimuat sekali di sini lalu ikut sampai ke ConsensusEvaluator dan
+         * siarannya, alih-alih ditelusuri ulang di tiap persinggahan.
+         */
+        $match->loadMissing(['bracket.weightClass.tournament.ruleSetting', 'officials']);
+
+        /*
          * Babak di luar jangkauan ditolak di validasi, bukan diterima lalu
          * dibalas peringatan. Babak 0 dan -1 sudah dijawab 422; babak 99
          * sama mustahilnya, jadi jawabannya harus sama — klien yang membaca
@@ -654,27 +663,40 @@ class PartaiScoringController extends Controller
     {
         $match->load([
             'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
-            'bracket.weightClass.tournament', 'rounds', 'officials.user',
+            'bracket.weightClass.tournament.ruleSetting', 'rounds', 'officials.user',
         ]);
 
         $peraturan = $match->bracket->weightClass->tournament->peraturan();
         $babakSekarang = $match->current_round ?? 1;
+
+        /*
+         * Angka-angka partai dikumpulkan dalam empat query, bukan lebih dari
+         * tiga puluh.
+         *
+         * Endpoint ini ditarik tiap kali ada nilai terbit, oleh setiap panel
+         * yang sedang terbuka. Ditanyakan per angka -- skor tiap babak, tiap
+         * tahap hukuman, tiap hitungan teknik, dua sudut masing-masing -- satu
+         * tarikan layar jadi puluhan perjalanan ke basis data, dan di server
+         * yang melayani satu permintaan pada satu waktu, semuanya mengantre
+         * tepat di depan tekanan tombol juri berikutnya.
+         *
+         * Aturannya tetap tinggal di TanggaHukuman dan HitunganTeknik; yang
+         * pindah ke sini cuma keputusan MEMUAT barisnya sekali.
+         */
+        $rekap = $this->kalkulator->rekapSkor($match);
+        $hukumanBerlaku = $match->penalties()->berlaku()->get(['id', 'round', 'corner', 'tier']);
+        $hitunganBabakIni = $this->hitungan->hitunganBabak($match, $babakSekarang);
 
         $rounds = $match->rounds->sortBy('round')->values()->map(fn ($r) => [
             'round' => $r->round,
             'status' => $r->status->value,
             'duration_ms' => $r->duration_ms,
             'sisa_ms' => $r->sisaMs(),
-            'skor_merah' => $this->kalkulator->skorBabak($match, Sudut::Merah, $r->round),
-            'skor_biru' => $this->kalkulator->skorBabak($match, Sudut::Biru, $r->round),
+            'skor_merah' => $rekap['babak'][$r->round]['merah'] ?? 0,
+            'skor_biru' => $rekap['babak'][$r->round]['biru'] ?? 0,
         ]);
 
-        $penalti = fn (Sudut $sudut) => [
-            'pembinaan' => $this->tangga->jumlahPembinaan($match, $sudut),
-            'teguran' => $this->tangga->jumlahTeguran($match, $sudut, $babakSekarang),
-            'peringatan' => $this->tangga->jumlahPeringatan($match, $sudut),
-            'diskualifikasi' => $this->tangga->sudahDiskualifikasi($match, $sudut),
-        ];
+        $penalti = fn (Sudut $sudut) => $this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang);
 
         /*
          * Hitungan teknik babak ini, per sudut.
@@ -687,11 +709,7 @@ class PartaiScoringController extends Controller
          * tekanannya menghabisi partai -- dan setelah partai berhenti, tidak
          * ada tempat untuk memeriksa hitungan yang sebenarnya sudah berapa.
          */
-        $hitunganTeknik = fn (Sudut $sudut) => [
-            'jumlah' => $this->hitungan->jumlah($match, $sudut, $babakSekarang),
-            'beruntun' => $this->hitungan->beruntun($match, $sudut, $babakSekarang),
-            'terakhir' => $this->hitungan->terakhir($match, $sudut, $babakSekarang),
-        ];
+        $hitunganTeknik = fn (Sudut $sudut) => $this->hitungan->ringkasan($hitunganBabakIni, $sudut);
 
         return [
             'match' => [
@@ -713,10 +731,7 @@ class PartaiScoringController extends Controller
                 'ratified' => $match->disahkan(),
             ],
             'rounds' => $rounds,
-            'skor_total' => [
-                'merah' => $this->kalkulator->skor($match, Sudut::Merah),
-                'biru' => $this->kalkulator->skor($match, Sudut::Biru),
-            ],
+            'skor_total' => $rekap['total'],
             'hukuman' => [
                 'merah' => $penalti(Sudut::Merah),
                 'biru' => $penalti(Sudut::Biru),
@@ -731,7 +746,7 @@ class PartaiScoringController extends Controller
                 'ambang_teguran' => (int) config('scoring.tanding.hitungan_teknik.teguran_pada_hitungan'),
                 'ambang_mutlak' => (int) config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan'),
             ],
-            'tawaran_wmp' => $this->kalkulator->cekTawaranWmp($match)?->value,
+            'tawaran_wmp' => $this->kalkulator->cekTawaranWmp($match, $rekap['total'])?->value,
             'peraturan' => [
                 'jumlah_juri' => $peraturan->jumlah_juri_tanding,
                 'ambang_sepakat' => $peraturan->ambang_sepakat,
@@ -900,7 +915,9 @@ class PartaiScoringController extends Controller
          * nama tiap penekan satu per satu akan jadi puluhan query untuk satu
          * halaman yang dibuka justru saat pertandingan sedang disengketakan.
          */
-        $sebutan = $match->officials()->with('user:id,name')->get()
+        $sebutan = ($match->relationLoaded('officials')
+            ? $match->officials
+            : $match->officials()->with('user:id,name')->get())
             ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
 
         /*

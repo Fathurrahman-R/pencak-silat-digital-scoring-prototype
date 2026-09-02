@@ -56,6 +56,18 @@ class TimerTicked implements ShouldBroadcastNow
             'duration_ms' => $this->round->duration_ms,
             'accumulated_ms' => $this->round->accumulated_ms,
             'started_at' => optional($this->round->started_at)->toIso8601String(),
+            /*
+             * Sisa waktu dihitung SERVER, bukan diserahkan ke klien yang
+             * mengurangi `started_at` dari jamnya sendiri: jam HP juri dan jam
+             * mesin operator tidak pernah sama persis, dan selisih beberapa
+             * detik di layar hitung mundur adalah selisih yang dilihat semua
+             * orang di gelanggang.
+             *
+             * Dengan angka ini, penerima siaran bisa langsung memasang jamnya
+             * tanpa menarik state -- satu perjalanan HTTP lebih sedikit tiap
+             * kali timer dimulai, dijeda, dilanjutkan, atau diselesaikan.
+             */
+            'sisa_ms' => $this->round->sisaMs(),
         ];
     }
 }

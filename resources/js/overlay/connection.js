@@ -152,11 +152,22 @@ Alpine.data('overlayLive', (cfg) => ({
             return;
         }
 
-        let sisaMs = timer.duration_ms - timer.accumulated_ms;
+        /*
+         * Sisa waktu dipakai apa adanya dari server. Hitungan lokal di
+         * bawahnya cuma jaring pengaman untuk muatan lama yang belum
+         * membawanya -- ia mengurangi `started_at` dari jam MESIN INI, dan
+         * mesin vMix yang jamnya meleset lima detik menayangkan hitung mundur
+         * yang meleset lima detik ke seluruh penonton.
+         */
+        let sisaMs = timer.sisa_ms;
 
-        if (timer.status === 'berjalan' && timer.started_at) {
-            const lewatMs = Date.now() - new Date(timer.started_at).getTime();
-            sisaMs = Math.max(0, sisaMs - lewatMs);
+        if (typeof sisaMs !== 'number') {
+            sisaMs = timer.duration_ms - timer.accumulated_ms;
+
+            if (timer.status === 'berjalan' && timer.started_at) {
+                const lewatMs = Date.now() - new Date(timer.started_at).getTime();
+                sisaMs = Math.max(0, sisaMs - lewatMs);
+            }
         }
 
         this._tickAnchorMs = sisaMs;
@@ -278,7 +289,13 @@ Alpine.data('overlayLive', (cfg) => ({
         const channel = window.Echo.channel(`public-live.${this.cfg.arenaId}`);
 
         channel
-            .listen('.timer.berubah', segarkan)
+            /*
+             * Jam dipasang dari muatan siarannya sendiri -- ia sudah membawa
+             * babak, statusnya, dan sisa waktu versi server. Menariknya lewat
+             * state hanya menunda hitung mundur mulai bergerak, dan menambah
+             * permintaan ke server yang sedang melayani gelanggang.
+             */
+            .listen('.timer.berubah', (e) => this._segarkanTimer(e))
             .listen('.hukuman.terbit', segarkan)
             .listen('.partai.berubah', segarkan)
             .listen('.skor.terbit', (e) => {

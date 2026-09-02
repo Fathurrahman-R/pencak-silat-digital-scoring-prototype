@@ -34,11 +34,59 @@ class TandingScoreCalculator
     }
 
     /**
+     * Skor tiap babak DAN skor totalnya, kedua sudut sekaligus, dalam dua
+     * query.
+     *
+     * Ditanyakan satu per satu, partai tiga babak menghabiskan enam belas
+     * perjalanan ke basis data hanya untuk angka di kepala layar. Tarikan itu
+     * terjadi tiap kali sebuah nilai terbit, dan di server yang melayani satu
+     * permintaan pada satu waktu ia mengantre tepat di depan tekanan tombol
+     * juri berikutnya.
+     *
+     * Yang dijumlahkan sama persis dengan skor() dan skorBabak(): nilai
+     * berlaku dikurangi hukuman berlaku, per sudut.
+     *
+     * @return array{
+     *     total: array{merah: int, biru: int},
+     *     babak: array<int, array{merah: int, biru: int}>,
+     * }
+     */
+    public function rekapSkor(SilatMatch $match): array
+    {
+        $baris = collect()
+            ->concat($match->scoreEvents()->berlaku()
+                ->selectRaw('round, corner, sum(value) as jumlah')
+                ->groupBy('round', 'corner')->get())
+            ->concat($match->penalties()->berlaku()
+                ->selectRaw('round, corner, sum(points) as jumlah')
+                ->groupBy('round', 'corner')->get());
+
+        $total = ['merah' => 0, 'biru' => 0];
+        $babak = [];
+
+        foreach ($baris as $b) {
+            $sisi = $b->corner === Sudut::Merah ? 'merah' : 'biru';
+            $jumlah = (int) $b->jumlah;
+
+            $babak[$b->round] ??= ['merah' => 0, 'biru' => 0];
+            $babak[$b->round][$sisi] += $jumlah;
+            $total[$sisi] += $jumlah;
+        }
+
+        return ['total' => $total, 'babak' => $babak];
+    }
+
+    /**
      * Sudut yang berhak ditawari menang WMP -- Pasal 11.6.g.4.b. Ini sinyal
      * untuk ditawarkan ke operator, bukan keputusan yang otomatis mengakhiri
      * partai; operator yang menekan tombol akhiri.
      */
-    public function cekTawaranWmp(SilatMatch $match): ?Sudut
+    /**
+     * @param  array{merah: int, biru: int}|null  $skorTotal  skor yang sudah
+     *                                                        dihitung pemanggil -- endpoint state sudah memegangnya, dan
+     *                                                        menanyakannya lagi berarti empat query untuk angka yang sama
+     */
+    public function cekTawaranWmp(SilatMatch $match, ?array $skorTotal = null): ?Sudut
     {
         $golongan = $match->bracket->weightClass->golongan_usia;
         $setelan = $match->bracket->weightClass->tournament->peraturan()->wmpUntuk($golongan);
@@ -49,8 +97,8 @@ class TandingScoreCalculator
             return null;
         }
 
-        $merah = $this->skor($match, Sudut::Merah);
-        $biru = $this->skor($match, Sudut::Biru);
+        $merah = $skorTotal['merah'] ?? $this->skor($match, Sudut::Merah);
+        $biru = $skorTotal['biru'] ?? $this->skor($match, Sudut::Biru);
 
         if (abs($merah - $biru) < $setelan['selisih']) {
             return null;

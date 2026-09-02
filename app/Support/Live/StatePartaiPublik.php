@@ -38,11 +38,19 @@ class StatePartaiPublik
 
         $babakSekarang = $match->current_round ?? $match->rounds->max('round') ?? 1;
 
-        $penalti = fn (Sudut $sudut) => [
-            'pembinaan' => $this->tangga->jumlahPembinaan($match, $sudut),
-            'teguran' => $this->tangga->jumlahTeguran($match, $sudut, $babakSekarang),
-            'peringatan' => $this->tangga->jumlahPeringatan($match, $sudut),
-        ];
+        /*
+         * Hukuman dimuat sekali lalu dihitung di memori, bukan ditanyakan
+         * enam kali. Layar publik dan overlay siaran memang boleh tertinggal
+         * dari matras, tapi permintaannya tetap mengantre di server yang sama
+         * dengan panel gelanggang -- dan yang menunggu di belakangnya adalah
+         * tekanan tombol juri.
+         */
+        $hukumanBerlaku = $match->penalties()->berlaku()->get(['id', 'round', 'corner', 'tier']);
+        $rekap = $this->kalkulator->rekapSkor($match);
+
+        $penalti = fn (Sudut $sudut) => collect($this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang))
+            ->only(['pembinaan', 'teguran', 'peringatan'])
+            ->all();
 
         /*
          * Berapa KALI tiap teknik terbit sepanjang partai, per sudut.
@@ -108,11 +116,13 @@ class StatePartaiPublik
                 'duration_ms' => $round->duration_ms,
                 'accumulated_ms' => $round->accumulated_ms,
                 'started_at' => optional($round->started_at)->toIso8601String(),
+                // Dihitung server, sama seperti di siaran timer.berubah: mesin
+                // vMix dan HP penonton tidak pernah sejam dengan server, dan
+                // hitung mundur yang meleset beberapa detik terlihat semua
+                // orang di layar besar.
+                'sisa_ms' => $round->sisaMs(),
             ] : null,
-            'skor_total' => [
-                'merah' => $this->kalkulator->skor($match, Sudut::Merah),
-                'biru' => $this->kalkulator->skor($match, Sudut::Biru),
-            ],
+            'skor_total' => $rekap['total'],
             'hukuman' => [
                 'merah' => $penalti(Sudut::Merah),
                 'biru' => $penalti(Sudut::Biru),
@@ -140,7 +150,10 @@ class StatePartaiPublik
     {
         $muatan = [
             'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
-            'bracket.weightClass', 'rounds',
+            // Setelan peraturan ikut dimuat, bukan ditanyakan belakangan: ia
+            // dibaca beberapa kali per tarikan (jumlah babak, formasi juri),
+            // dan tiap pembacaan tanpa ini jadi perjalanan sendiri.
+            'bracket.weightClass.tournament.ruleSetting', 'rounds',
         ];
 
         return SilatMatch::where('arena_id', $arena->id)

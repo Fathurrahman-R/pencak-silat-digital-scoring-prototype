@@ -641,7 +641,7 @@ Alpine.data('partaiPanel', (cfg) => ({
         const segarkan = () => this.muatUlang();
 
         window.Echo.join(`arena.${this.cfg.arenaId}`)
-            .listen('.timer.berubah', segarkan)
+            .listen('.timer.berubah', (e) => this._padaTimer(e))
             .listen('.skor.terbit', (e) => {
                 this._tandaiIndikatorSelesai(e.corner, e.point_type);
 
@@ -675,6 +675,40 @@ Alpine.data('partaiPanel', (cfg) => ({
              * menurut peran yang memintanya.
              */
             .listen('.verifikasi.berubah', segarkan);
+    },
+
+    /**
+     * Timer berubah: jamnya dipasang dari muatan siaran, tanpa menarik state.
+     *
+     * Siaran ini membawa seluruh yang dibutuhkan jam -- babak, statusnya, dan
+     * sisa waktu yang dihitung SERVER. Tidak ada yang lain di layar yang
+     * berubah karena timer, jadi tarikan state penuh di sini cuma menunda
+     * hitung mundur mulai bergerak, dan menambah satu permintaan ke server
+     * yang sedang melayani tekanan tombol juri.
+     *
+     * Babak yang belum dikenal panel (mis. babak baru dimulai) tetap ditarik:
+     * di situ barisnya memang belum ada untuk diperbarui.
+     */
+    _padaTimer(e) {
+        if (e.match_id !== this.match.id) {
+            return;
+        }
+
+        const babak = this.rounds.find((r) => r.round === e.round);
+
+        if (!babak) {
+            this.muatUlang();
+
+            return;
+        }
+
+        Object.assign(babak, {
+            status: e.status,
+            duration_ms: e.duration_ms,
+            sisa_ms: e.sisa_ms,
+        });
+
+        this._segarkanTimer();
     },
 
     /** Titik indikator "juri menekan" -- murni tampilan sementara, dibersihkan sendiri setelah window konsensus lewat atau nilainya terbit. */
