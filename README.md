@@ -21,18 +21,54 @@ Rincian tiap keputusan arsitektur ada di [`docs/RENCANA.md`](docs/RENCANA.md) (r
 
 ## Menjalankan pertama kali
 
+Prasyarat: **PHP 8.3+** (ekstensi `pdo_mysql`, `mbstring`, `intl`, `gd`, `fileinfo`), **Composer 2**, **Node.js 20+**, **MySQL 8**.
+
+**1. Dependensi**
+
 ```bash
 composer install
 npm install
+```
 
-cp .env.example .env
+**2. Database.** Buat dua database — satu aplikasi, satu test:
+
+```sql
+CREATE DATABASE digiscoring      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digiscoring_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Nama `digiscoring_test` dipakai langsung oleh `phpunit.xml`; kalau diganti, ganti juga di sana.
+
+**3. Berkas `.env`**
+
+```bash
+cp .env.example .env        # PowerShell: copy .env.example .env
 php artisan key:generate
+```
 
+Sesuaikan `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` kalau berbeda dari bawaan, lalu isi tiga kunci Reverb yang sengaja dibiarkan kosong — tanpa itu WebSocket tidak hidup dan seluruh panel gelanggang berhenti di "Terputus". Cetak nilainya, tempel ke `.env`:
+
+```bash
+php -r "printf('REVERB_APP_ID=%d%sREVERB_APP_KEY=%s%sREVERB_APP_SECRET=%s%s', random_int(100000,999999), PHP_EOL, bin2hex(random_bytes(10)), PHP_EOL, bin2hex(random_bytes(10)), PHP_EOL);"
+```
+
+Jangan memakai `php artisan reverb:install` untuk ini: perintah itu menambahkan blok baru di akhir `.env` tanpa membuang baris lama, dan karena nilai terakhirlah yang menang, `REVERB_HOST` hasil suntingan sendiri ikut tertimpa `localhost`.
+
+**4. Migrasi, data awal, aset**
+
+```bash
 php artisan migrate --seed
 php artisan storage:link
+npm run build
+```
 
+**5. Jalankan**
+
+```bash
 composer run dev      # server + queue + Vite + Reverb sekaligus
 ```
+
+Jalan pintas: `composer run setup` mengerjakan langkah 1, 3 (salin `.env` + `key:generate`), dan 4 sekaligus. Dua hal tetap manual karena tidak bisa ditebak mesin: membuat database dan mengisi tiga kunci Reverb.
 
 Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`):
 
@@ -40,8 +76,11 @@ Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`
 |---|---|---|
 | `super@example.com` | super-admin | Semuanya, melewati seluruh pengecekan |
 | `admin@example.com` | admin | Kelola pengguna |
+| `user@example.com` | user | Akun tanpa hak kelola, untuk menguji batas akses |
 
-Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat.
+Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat. Tapi untuk uji coba, seluruh akun itu sudah disiapkan seeder simulasi di bawah.
+
+Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — IP statis, `php.ini`, firewall, empat proses hari-H — ikuti [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
 
 ### Kejuaraan siap-uji untuk simulasi manual
 
@@ -49,32 +88,38 @@ Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat
 php artisan silat:simulasi
 ```
 
-Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, empat kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Operator IT dan menekan Mulai babak.
+Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, sepuluh kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Operator IT dan menekan Mulai babak.
 
-Yang sengaja **tidak** dikerjakan: menjalankan partai, memasukkan nilai juri, membuat penampilan Jurus, dan mengesahkan hasil — justru itu yang mau diuji manual.
+Yang sengaja **tidak** dikerjakan: menjalankan partai, memasukkan nilai juri, dan mengesahkan hasil — justru itu yang mau diuji manual.
+
+Isi datanya — **100 pesilat, seluruhnya kategori Tanding**:
+
+| Nomor | Peserta | Yang diuji |
+|---|---|---|
+| Tanding Dewasa kelas A–E putra | 10 atlet per kelas | Bagan 16 tanpa bye di babak pertama, jadwal panjang lintas gelanggang |
+| Tanding Dewasa kelas A–E putri | 10 atlet per kelas | Idem, plus berkas surat tidak hamil |
+
+Sepuluh kontingen masing-masing mengirim satu putra dan satu putri per kelas, jadi tidak ada kontingen yang bertemu dirinya sendiri di babak pertama. Bagannya diundi acak. Sepuluh bagan menghasilkan 50 partai perdelapan yang seluruhnya sudah punya dua peserta; semuanya terjadwal mulai pukul 08.00 hari pertama, berselang-seling di dua gelanggang dengan jarak 20 menit.
+
+Sepuluh peserta jatuh ke bagan 16, dan bagan di aplikasi ini mengisi tempat rapat dari nomor satu — jadi **babak pertama tidak punya bye sama sekali**: kesepuluhnya bertanding. Kekurangan empat tempat itu muncul di belakang: pemenang partai perdelapan terakhir tidak punya lawan di perempat maupun semifinal, sehingga ia sampai final dengan satu kali bertanding sementara lawannya sudah tiga kali. Itu konsekuensi yang melekat pada aturan ini, bukan cacat — bye di babak belakang hanya mungkin bila satu cabang bagan kosong seluruhnya, dan cabang kosong selalu menguntungkan orang yang sama. Bye hilang sepenuhnya hanya bila jumlah peserta tiap kelas berupa pangkat dua; ubah `JUMLAH_KONTINGEN` di `database/seeders/SimulasiTurnamenSeeder.php` menjadi `8` untuk kejuaraan 80 pesilat berbagan penuh.
+
+Nomor Jurus tidak diikutkan supaya jumlah pesilatnya bulat 100 dan tiap kelas benar-benar berisi sepuluh — mesin penilaian Jurus dijaga test suite, bukan data simulasi ini.
+
+Dua gelanggang (A dan B) masing-masing punya operatornya sendiri, sehingga dua partai bisa dijalankan bersamaan. Window konsensus juri dilebarkan jadi 5 detik (bawaan 2 detik) supaya satu penguji bisa berpindah antar tab atau antar HP tanpa kehabisan waktu.
 
 | Akun | Peran |
 |---|---|
-| `operator@silat.test` | Operator IT (panel gelanggang, timer) |
+| `operator@silat.test`, `operator2@silat.test` | Operator IT (Gelanggang A dan B: panel gelanggang, timer) |
 | `wasit1@silat.test`, `wasit2@silat.test` | Wasit |
-| `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B; keenamnya untuk Jurus) |
-| `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR) |
-| `pengawas@silat.test`, `komisi@silat.test`, `delegasi@silat.test` | Pengawas, Wasit Komisi Protes, Delegasi Teknik |
-| `sekretaris@silat.test`, `bendahara@silat.test`, `timbang@silat.test` | Petugas pra-acara |
-| `official1@silat.test` … `official4@silat.test` | Official kontingen |
+| `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B) |
+| `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR, putusan protes) |
+| `pengawas@silat.test`, `komisi@silat.test` | Pengawas / Dewan Wasit Juri, Wasit Komisi Protes |
+| `sekretariat@silat.test` | Sekretariat Pertandingan (berkas, tagihan, timbang badan) |
+| `official1@silat.test` … `official10@silat.test` | Official kontingen |
 
-Kata sandi seluruhnya `password`. Ulangi dari bersih dengan `php artisan silat:simulasi --reset`.
+Kata sandi seluruhnya `password`. Ulangi dari bersih dengan `php artisan silat:simulasi --reset` — kejuaraan simulasi lama beserta seluruh peserta, tagihan, bagan, dan hasilnya dihapus permanen lebih dulu.
 
 Langkah ujinya per tahap ada di [`docs/PANDUAN-WORKFLOW.md`](docs/PANDUAN-WORKFLOW.md).
-
-**Database.** MySQL 8. Buat dua database sebelum migrasi — satu aplikasi, satu test:
-
-```sql
-CREATE DATABASE boilerplate      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE boilerplate_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08), ikuti [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
 
 ---
 

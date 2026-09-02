@@ -48,17 +48,16 @@ Menu di sidebar muncul-hilang mengikuti peran akun yang sedang login. Kalau satu
 
 | Peran | Menu utama yang terbuka |
 |---|---|
-| Sekretaris Pertandingan | Kontingen, Verifikasi, Bagan, Jadwal, Rekap & Laporan |
-| Bendahara Panitia | Tarif, Bendahara |
+| Sekretariat Pertandingan | Kontingen, Verifikasi, Tarif, Bendahara, Timbang badan, Bagan, Jadwal, Rekap & Laporan |
 | Official Kontingen | Kontingen (miliknya sendiri), atlet, pendaftaran, tagihan |
-| Petugas Timbang Badan | Timbang badan |
-| Ketua Pertandingan | Jadwal, penugasan aparat, panel partai, keberatan, Kategori Jurus, pengesahan hasil |
+| Ketua Pertandingan | Jadwal, penugasan aparat, panel partai, keberatan, Kategori Jurus, pengesahan hasil, banding Protes Manajer |
 | Operator IT | Jadwal, panel Operator partai, panel Operator Jurus, pengajuan VAR, Overlay Siaran |
 | Wasit | Panel Wasit (hukuman, hitungan teknik) |
 | Juri | PWA Juri, panel Juri Jurus |
 | Pengawas / Dewan Wasit Juri | Penugasan aparat, panel Dewan Juri, pengurangan 0.50 Jurus, keputusan VAR |
 | Wasit Komisi Protes | Panel Keberatan (keputusan VAR) |
-| Delegasi Teknik | Banding Protes Manajer (final), Rekap |
+
+Delapan peran, bukan sebelas. Tiga jabatan meja pra-acara — Sekretaris, Bendahara, dan Petugas Timbang Badan — dilebur jadi **Sekretariat Pertandingan**, karena di lapangan ketiganya dipegang orang yang sama dan pekerjaannya berurutan: berkas, tagihan, lalu timbangan. **Delegasi Teknik** dihapus; seluruh wewenangnya (pengesahan hasil dan putusan banding) sudah dipegang Ketua Pertandingan, jadi perannya sendiri tidak pernah menambah apa pun.
 
 Satu akun boleh memegang lebih dari satu peran — lazim di turnamen kecil, dan tidak perlu akun terpisah untuk tiap topi.
 
@@ -68,7 +67,7 @@ Satu akun boleh memegang lebih dari satu peran — lazim di turnamen kecil, dan 
 
 ## Tahap 1 — Buat kejuaraan
 
-**Siapa:** Admin / Sekretaris Pertandingan · **Menu:** Kejuaraan → Tambah
+**Siapa:** Admin / Sekretariat Pertandingan · **Menu:** Kejuaraan → Tambah
 
 1. Isi nama, penyelenggara, tanggal mulai–selesai, tempat. Status awal **Draf**.
 2. Simpan, lalu buka kejuaraan itu — ia menjadi **kejuaraan aktif** di sidebar, dan seluruh menu di bawahnya (Peserta, Pertandingan, Keuangan) mengikutinya. Kejuaraan aktif diingat per sesi; bila belum pernah membuka satu pun, sistem memakai kejuaraan berstatus Berjalan atau Draf yang terbaru.
@@ -102,7 +101,7 @@ Tambahkan satu gelanggang per matras yang benar-benar dipakai. **Catat `id` tiap
 
 ## Tahap 2 — Susun tarif
 
-**Siapa:** Bendahara Panitia · **Menu:** Kejuaraan aktif → Tarif
+**Siapa:** Sekretariat Pertandingan · **Menu:** Kejuaraan aktif → Tarif
 
 1. Isi matriks **kategori × golongan usia** — misal Tanding Dewasa Rp150.000, Jurus Tunggal Remaja Rp125.000.
 2. Isi **biaya tetap kontingen** bila ada (dikenakan sekali per kontingen, bukan per atlet).
@@ -114,9 +113,9 @@ Tambahkan satu gelanggang per matras yang benar-benar dipakai. **Catat `id` tiap
 
 ## Tahap 3 — Kontingen dan atlet
 
-**Siapa:** Sekretaris Pertandingan (mendaftarkan kontingen) → Official Kontingen (mengisi atlet)
+**Siapa:** Sekretariat Pertandingan (mendaftarkan kontingen) → Official Kontingen (mengisi atlet)
 
-1. **Sekretaris** membuka Peserta → Kontingen → Tambah: nama kontingen, daerah, kontak, dan **akun official** yang berhak mengelolanya.
+1. **Sekretariat** membuka Peserta → Kontingen → Tambah: nama kontingen, daerah, kontak, dan **akun official** yang berhak mengelolanya.
 2. **Official** login, membuka kontingennya, lalu menambahkan atlet: nama, jenis kelamin, tanggal lahir, berat klaim, foto.
 3. Tiap atlet mengunggah **berkas wajib** — Bukti umur dan Surat keterangan sehat. Format: jpg, jpeg, png, atau pdf.
 
@@ -151,7 +150,7 @@ Kalau ternyata masih ada atlet yang harus ditambahkan, tekan **Batalkan sesi pem
 
 **b. Pembayaran manual** — transfer bank, tunai di sekretariat, atau apa pun di luar sistem.
 
-**Siapa:** Bendahara · **Menu:** Keuangan → Bendahara → pilih tagihan → **Tandai lunas**
+**Siapa:** Sekretariat Pertandingan · **Menu:** Keuangan → Bendahara → pilih tagihan → **Tandai lunas**
 
 Wajib diisi: nominal, keterangan, dan **unggah bukti** (jpg/jpeg/png/pdf). Tercatat di jejak audit dan dibedakan tegas dari pembayaran gateway.
 
@@ -159,7 +158,7 @@ Wajib diisi: nominal, keterangan, dan **unggah bukti** (jpg/jpeg/png/pdf). Terca
 
 ## Tahap 7 — Verifikasi pendaftaran
 
-**Siapa:** Sekretaris Pertandingan · **Menu:** Peserta → Verifikasi
+**Siapa:** Sekretariat Pertandingan · **Menu:** Peserta → Verifikasi
 
 Tiap pendaftaran berstatus *Diajukan* ditinjau satu per satu:
 
@@ -171,7 +170,7 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 ## Tahap 8 — Timbang badan
 
-**Siapa:** Petugas Timbang Badan · **Menu:** Peserta → Timbang badan
+**Siapa:** Sekretariat Pertandingan · **Menu:** Peserta → Timbang badan
 
 1. Cari atlet, masukkan berat aktual. Waktu penimbangan distempel server.
 2. Sistem otomatis membandingkan dengan rentang kelas yang didaftarkan: **lolos** atau **gugur**.
@@ -180,7 +179,7 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 ## Tahap 9 — Susun dan kunci bagan
 
-**Siapa:** Sekretaris Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Bagan
+**Siapa:** Sekretariat Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Bagan
 
 1. Pilih kelas tanding. Sistem menampilkan berapa peserta sah yang tersedia.
 2. **Susun** — acak atau berurutan. Bye disebar merata di babak pertama untuk jumlah peserta bukan pangkat dua, dan peserta yang lawannya bye langsung diluluskan ke babak berikutnya.
@@ -265,7 +264,7 @@ Skor akhir = **median seluruh nilai juri** (untuk jumlah genap, rata-rata dua ni
 4. Hasil "Tidak Sah" **membatalkan nilai atau hukuman yang disengketakan lewat baris pembatal** — skor terkoreksi sendiri, riwayat input juri tetap utuh.
 5. Lewat tenggat 5 menit, sistem hanya menampilkan peringatan; prosesnya dilanjutkan manual lewat verifikasi juri yang dipimpin Ketua Pertandingan.
 
-**Protes Manajer** (setelah hasil diumumkan) diajukan dari panel yang sama: tingkat pertama diputus **Ketua Pertandingan**, banding diputus **Delegasi Teknik** dan bersifat final.
+**Protes Manajer** (setelah hasil diumumkan) diajukan dari panel yang sama: tingkat pertama diputus **Ketua Pertandingan**, banding diputus **Ketua Pertandingan** dan bersifat final.
 
 > Aplikasi tidak memutar video. Ia menandai momen, mencatat keputusan, dan menegakkan tenggat — pemutaran tetap di perangkat VAR terpisah.
 
@@ -275,7 +274,7 @@ Skor akhir = **median seluruh nilai juri** (untuk jumlah genap, rata-rata dua ni
 
 ## Tahap 13 — Rekap dan arsip
 
-**Siapa:** Sekretaris Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Rekap & Laporan
+**Siapa:** Sekretariat Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Rekap & Laporan
 
 Halaman ini menyusun sendiri dari hasil yang sudah disahkan:
 - **Peringkat umum kontingen** — urut emas, perak, perunggu
@@ -319,17 +318,17 @@ Menyusun kejuaraan **Kejuaraan Simulasi Digital Scoring** yang seluruh Tahap 1�
 
 | Sudah disiapkan | Isinya |
 |---|---|
-| Akun | 21 pengguna, satu per peran, kata sandi `password` |
+| Akun | 24 pengguna, satu per peran ditambah 6 juri dan 10 official, kata sandi `password` |
 | Gelanggang | Gelanggang A dan B |
 | Tarif | Tanding Rp150.000, Jurus Rp125.000, biaya tetap kontingen Rp250.000 |
-| Peserta | 4 kontingen, 16 atlet, 14 pendaftaran, berkas wajib lengkap |
-| Kelas | Tanding putra 4 peserta (bagan penuh), tanding putri 5 peserta (bagan dengan bye), Jurus Tunggal 3 peserta, Jurus Ganda 2 tim |
-| Keuangan | Empat tagihan terkunci dan **lunas** lewat pembayaran manual berikut buktinya |
-| Pertandingan | Pendaftaran terverifikasi, timbang badan lolos, bagan terkunci, 4 partai terjadwal, aparat ditugaskan |
+| Peserta | 10 kontingen, 100 atlet, 100 pendaftaran, berkas wajib lengkap |
+| Kelas | Tanding Dewasa kelas A–E, tiap kelas 10 putra dan 10 putri — sepuluh bagan berukuran 16, diundi acak, masing-masing 5 partai perdelapan tanpa bye |
+| Keuangan | Sepuluh tagihan terkunci dan **lunas** lewat pembayaran manual berikut buktinya |
+| Pertandingan | Pendaftaran terverifikasi, timbang badan lolos, bagan terkunci, 50 partai terjadwal mulai 08.00, aparat ditugaskan |
 
-Akun yang paling sering dipakai: `operator@silat.test` (panel gelanggang), `wasit1@silat.test`, `juri1@silat.test`–`juri6@silat.test`, `ketua@silat.test` (pengesahan hasil dan VAR). Daftar lengkapnya tercetak di akhir keluaran perintah.
+Akun yang paling sering dipakai: `operator@silat.test` (panel Gelanggang A) dan `operator2@silat.test` (Gelanggang B), `wasit1@silat.test`, `juri1@silat.test`–`juri6@silat.test`, `ketua@silat.test` (pengesahan hasil dan VAR). Daftar lengkapnya tercetak di akhir keluaran perintah.
 
-Juri 1–3 ditugaskan ke Gelanggang A dan juri 4–6 ke Gelanggang B, jadi dua gelanggang bisa dijalankan bersamaan tanpa satu orang pun merangkap. Keenamnya dipakai bersama untuk kategori Jurus.
+Juri 1–3 ditugaskan ke Gelanggang A dan juri 4–6 ke Gelanggang B, jadi dua gelanggang bisa dijalankan bersamaan tanpa satu orang pun merangkap.
 
 **Window konsensus dinaikkan ke 5 detik** (bawaan 2 detik). Uji manual dijalankan satu orang yang berpindah antar tab, dan tiga tekanan tombol tidak mungkin masuk dalam dua detik seperti tiga juri sungguhan yang duduk bersamaan. Kembalikan ke 2000 ms lewat Setelan peraturan bila ingin menguji ketatnya window yang sebenarnya.
 

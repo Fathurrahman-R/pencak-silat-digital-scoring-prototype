@@ -29,8 +29,8 @@ npm install
 Buat dua database (aplikasi + test):
 
 ```sql
-CREATE DATABASE boilerplate      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE boilerplate_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digiscoring      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digiscoring_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ## 4. Konfigurasi `.env`
@@ -43,9 +43,15 @@ php artisan key:generate
 Sunting `.env`:
 
 ```env
-DB_DATABASE=boilerplate
+DB_DATABASE=digiscoring
 DB_USERNAME=root
 DB_PASSWORD=
+
+# Kunci Reverb -- wajib diisi, bawaan .env.example sengaja kosong. Cetak nilai
+# acaknya dengan perintah di bawah blok ini, lalu tempel ke sini.
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
 
 # Reverb -- alamat yang dijangkau HP juri/wasit di LAN, BUKAN localhost
 # kalau HP menyambung lewat WiFi venue. Isi dengan IP mesin server di
@@ -59,6 +65,14 @@ VITE_REVERB_SCHEME=http
 # Overlay vMix -- default sudah mencakup RFC 1918, biasanya tidak perlu diisi
 # OVERLAY_ALLOWED_CIDRS=127.0.0.1/32,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 ```
+
+Mencetak tiga kunci Reverb:
+
+```powershell
+php -r "printf('REVERB_APP_ID=%d%sREVERB_APP_KEY=%s%sREVERB_APP_SECRET=%s%s', random_int(100000,999999), PHP_EOL, bin2hex(random_bytes(10)), PHP_EOL, bin2hex(random_bytes(10)), PHP_EOL);"
+```
+
+**Jangan memakai `php artisan reverb:install`.** Perintah itu menempelkan blok Reverb baru di akhir `.env` tanpa membuang baris yang sudah ada, dan nilai terakhirlah yang dipakai Laravel -- artinya `REVERB_HOST` berisi IP LAN yang baru saja disunting akan tertimpa `localhost` di baris bawahnya, dan seluruh HP juri kehilangan WebSocket tanpa pesan galat yang jelas.
 
 **Kenapa `REVERB_HOST` bukan `localhost`.** HP juri menyambung ke server dari perangkat lain di jaringan yang sama. `localhost` di HP menunjuk ke HP itu sendiri, bukan ke server. Isi dengan alamat IP LAN mesin server (`ipconfig` di PowerShell untuk melihatnya), dan pastikan alamat itu **statis** (set IP statis di adapter jaringan Windows, atau reservasi DHCP di router) -- kalau berubah di tengah turnamen, seluruh HP juri kehilangan koneksi.
 
@@ -123,9 +137,17 @@ New-NetFirewallRule -DisplayName "Digiscoring Reverb" -Direction Inbound -LocalP
 
 ## 8. Uji sebelum hari-H
 
+Sediakan dulu data ujinya -- kejuaraan simulasi lengkap dengan akun tiap peran, bagan, dan jadwal:
+
+```powershell
+php artisan silat:simulasi
+```
+
+Rincian isinya ada di [README](../README.md#kejuaraan-siap-uji-untuk-simulasi-manual). **Buang kejuaraan simulasi ini sebelum hari-H** lewat menu Kejuaraan (hapus permanen), supaya tidak ikut terbaca di live score publik dan rekap medali bersama kejuaraan sungguhan.
+
 - [ ] Buka `http://<IP-server>:8000` dari HP yang tersambung ke WiFi venue (bukan dari mesin server sendiri)
 - [ ] Login sebagai juri, buka panel juri, pastikan indikator koneksi hijau ("Tersambung")
-- [ ] Kirim satu nilai percobaan dari 2 HP berbeda dalam window 2 detik, pastikan nilai terbit di panel operator
+- [ ] Kirim satu nilai percobaan dari 2 HP berbeda dalam window konsensus (bawaan 2 detik; kejuaraan simulasi memakai 5 detik), pastikan nilai terbit di panel operator
 - [ ] Cabut WiFi satu HP juri di tengah percobaan, sambungkan lagi, pastikan panel resync sendiri tanpa reload manual
 - [ ] Matikan dan nyalakan ulang `reverb:start`, pastikan seluruh panel pulih ke state benar
 
