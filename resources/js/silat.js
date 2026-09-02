@@ -448,16 +448,16 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     /**
-     * Dewan Wasit Juri menerbitkan nilai mutlak jatuhan.
+     * Wasit menerbitkan nilai mutlak jatuhan.
      *
      * Tanpa dialog konfirmasi: jatuhan diputuskan sementara pertandingan
      * berjalan, dan satu dialog di antara keputusan dan angkanya membuat papan
      * skor tertinggal dari apa yang sudah dilihat penonton. Salah tekan
-     * diperbaiki lewat pembatalan nilai.
+     * diperbaiki lewat pembatalan nilai oleh Dewan Wasit Juri.
      *
-     * Kalau ada jawaban juri atas pertanyaan jatuhan yang sedang dibaca, id
-     * verifikasinya ikut dikirim supaya berita acara bisa menunjukkan bahwa
-     * nilai ini terbit setelah menimbang jawaban itu.
+     * Kalau wasit sempat ragu dan bertanya ke juri, id verifikasinya ikut
+     * dikirim supaya berita acara bisa menunjukkan bahwa nilai ini diputuskan
+     * setelah menimbang jawaban itu.
      */
     terbitkanJatuhan(corner) {
         return this.kirim(this.cfg.jatuhan, {
@@ -467,9 +467,16 @@ Alpine.data('partaiPanel', (cfg) => ({
         });
     },
 
-    /** Verifikasi jatuhan yang hasilnya sudah keluar -- masukan, bukan keputusan. */
+    /**
+     * Jawaban juri atas keraguan wasit soal jatuhan, selama belum dipakai.
+     *
+     * Hilang begitu nilainya terbit: saran yang menggantung setelah jatuhannya
+     * dicatat mengundang penekanan kedua untuk jatuhan yang sama.
+     */
     get saranJatuhan() {
-        return this.verifikasi?.jenis === 'jatuhan' && this.verifikasi?.hasil ? this.verifikasi : null;
+        const v = this.verifikasi;
+
+        return v?.jenis === 'jatuhan' && v?.hasil && !v?.score_event_id ? v : null;
     },
 
     batalkanNilai(id, alasan) {

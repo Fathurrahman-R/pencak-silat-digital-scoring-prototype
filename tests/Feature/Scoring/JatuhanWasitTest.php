@@ -21,11 +21,12 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 /**
- * Nilai mutlak jatuhan diterbitkan Dewan Wasit Juri, bukan juri.
+ * Nilai mutlak jatuhan diterbitkan wasit, bukan juri.
  *
- * Jatuhan bukan penilaian yang dikonsensuskan tiga juri: nilainya mutlak dan
- * keputusannya milik dewan. Karena itu tombolnya lepas dari panel juri, dan
- * penolakannya berdiri di server -- panel juri berjalan di ponsel yang tetap
+ * Jatuhan sederajat dengan hukuman: nilainya mutlak, dan yang memutuskan
+ * adalah orang yang berdiri di gelanggang dan melihat jatuhnya -- bukan tiga
+ * juri yang dikonsensuskan. Karena itu tombolnya lepas dari panel juri, dan
+ * penolakannya berdiri di server: panel juri berjalan di ponsel yang tetap
  * memegang halaman lamanya setelah aplikasi diperbarui.
  */
 beforeEach(function () {
@@ -79,10 +80,10 @@ beforeEach(function () {
     };
 });
 
-it('menerbitkan nilai mutlak jatuhan dari panel Dewan Wasit Juri', function () {
+it('menerbitkan nilai mutlak jatuhan dari panel wasit', function () {
     ($this->mulaiBabak)();
 
-    $this->actingAs($this->dewan)
+    $this->actingAs($this->wasit)
         ->postJson(route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]), [
             'babak' => 1,
             'corner' => 'red',
@@ -96,7 +97,7 @@ it('menerbitkan nilai mutlak jatuhan dari panel Dewan Wasit Juri', function () {
         ->and($nilai->value)->toBe(3)
         // Penerbitnya tercatat: tanpa itu, riwayat menampilkan +3 yang seolah
         // muncul tanpa satu pun penekan.
-        ->and($nilai->issued_by)->toBe($this->dewan->id)
+        ->and($nilai->issued_by)->toBe($this->wasit->id)
         ->and($nilai->mutlak())->toBeTrue()
         // Tidak ada tekanan juri yang menyusunnya.
         ->and($nilai->judgeInputs()->count())->toBe(0);
@@ -144,10 +145,10 @@ it('menolak penerbitan jatuhan oleh juri', function () {
 
 /*
  * Verifikasi jatuhan berhenti sebagai masukan. Menautkannya ke nilai yang
- * terbit membuat berita acara bisa menunjukkan bahwa dewan memutuskan setelah
+ * terbit membuat berita acara bisa menunjukkan bahwa wasit memutuskan setelah
  * menimbang jawaban juri, bukan sendirian.
  */
-it('menautkan verifikasi jatuhan ke nilai yang diterbitkan dewan', function () {
+it('menautkan verifikasi jatuhan ke nilai yang diterbitkan wasit', function () {
     ($this->mulaiBabak)();
 
     $verifikasi = JudgeVerification::create([
@@ -160,7 +161,7 @@ it('menautkan verifikasi jatuhan ke nilai yang diterbitkan dewan', function () {
         'hasil' => 'red',
     ]);
 
-    $this->actingAs($this->dewan)
+    $this->actingAs($this->wasit)
         ->postJson(route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]), [
             'babak' => 1,
             'corner' => 'red',
@@ -173,10 +174,10 @@ it('menautkan verifikasi jatuhan ke nilai yang diterbitkan dewan', function () {
     expect($verifikasi->fresh()->score_event_id)->toBe($nilai->id);
 });
 
-it('menyebut Dewan Wasit Juri sebagai penerbit di riwayat panel', function () {
+it('menyebut Wasit sebagai penerbit di riwayat panel', function () {
     ($this->mulaiBabak)();
 
-    $this->actingAs($this->dewan)->postJson(
+    $this->actingAs($this->wasit)->postJson(
         route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]),
         ['babak' => 1, 'corner' => 'blue'],
     );
@@ -186,5 +187,26 @@ it('menyebut Dewan Wasit Juri sebagai penerbit di riwayat panel', function () {
         ->assertOk()
         ->json('riwayat');
 
-    expect(collect($riwayat)->firstWhere('tipe', 'nilai')['oleh'])->toBe('Dewan Wasit Juri');
+    expect(collect($riwayat)->firstWhere('tipe', 'nilai')['oleh'])->toBe('Wasit');
+});
+
+/*
+ * Wewenangnya melekat pada penugasan, bukan pada peran. Dua gelanggang
+ * berjalan bersamaan, dan wasit gelanggang sebelah tidak menerbitkan nilai di
+ * partai ini.
+ */
+it('menolak jatuhan dari wasit yang tidak ditugaskan di partai ini', function () {
+    ($this->mulaiBabak)();
+
+    $wasitLain = User::factory()->create();
+    $wasitLain->syncRoles(['wasit']);
+
+    $this->actingAs($wasitLain)
+        ->postJson(route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]), [
+            'babak' => 1,
+            'corner' => 'red',
+        ])
+        ->assertForbidden();
+
+    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(0);
 });

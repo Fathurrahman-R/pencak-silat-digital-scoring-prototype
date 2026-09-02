@@ -141,6 +141,54 @@
                         </button>
                     @endforeach
 
+                    {{--
+                        Nilai mutlak jatuhan.
+
+                        Berdiri di panel wasit, bukan panel juri: nilainya
+                        mutlak dan sederajat dengan hukuman -- yang memutuskan
+                        orang yang berdiri di gelanggang dan melihat jatuhnya,
+                        bukan tiga juri yang dikonsensuskan.
+
+                        Tidak melewati verifikasi. Wasit yang melihat jelas
+                        menekan langsung; yang ragu bertanya ke juri lewat
+                        tombol Verifikasi di kepala panel, lalu jawabannya
+                        muncul di sini sebagai saran.
+
+                        Arah nilainya disebut eksplisit -- "+3 UNTUK sudut
+                        merah" -- karena sudut yang sama di kolom sebelah
+                        berarti sebaliknya: yang DIHUKUM. Satu pemilih sudut
+                        melayani dua aksi berlawanan arah, dan itu tempat salah
+                        tekan lahir.
+                    --}}
+                    {{-- Blok php, bukan bentuk sebaris: @php() sebaris tidak mengenal
+                         tanda kurung bersarang, dan pemanggilan berantai di dalamnya
+                         dikompilasi jadi PHP yang menelan blok di bawahnya. --}}
+                    @php
+                        $nilaiJatuhan = $tournament->peraturan()->nilaiUntuk('jatuhan');
+                    @endphp
+
+                    <template x-if="saranJatuhan">
+                        <p class="shrink-0 rounded-silat bg-silat-panel px-3 py-2 text-[12px] leading-snug text-silat-teks-kedua">
+                            Jawaban juri:
+                            <span class="font-semibold text-silat-teks" x-text="saranJatuhan.hasil_label"></span>.
+                            Nilainya tetap kamu yang terbitkan.
+                        </p>
+                    </template>
+
+                    <button type="button" x-on:click="terbitkanJatuhan(sudut)"
+                            x-bind:disabled="! match.current_round"
+                            x-bind:aria-label="'Jatuhan, tambah {{ $nilaiJatuhan }} nilai untuk ' + sudutLabel"
+                            class="flex min-h-[var(--silat-sentuh-min)] shrink-0 items-center justify-between gap-3 rounded-silat bg-silat-aksi px-4 text-silat-aksi-teks disabled:opacity-40">
+                        <span class="flex items-center gap-3">
+                            <x-silat.ikon nama="jatuhan" :ukuran="26" :label="null" class="shrink-0" />
+                            <span class="flex flex-col items-start">
+                                <span class="text-[16px] leading-tight font-semibold">Jatuhan</span>
+                                <span class="text-[11px] leading-tight opacity-80" x-text="'untuk ' + sudutLabel"></span>
+                            </span>
+                        </span>
+                        <span class="silat-angka text-[18px] font-semibold">+{{ $nilaiJatuhan }}</span>
+                    </button>
+
                     {{-- Hitungan teknik: juga ditekan sambil berdiri, jadi tingginya
                          mengikuti batas sentuh yang sama. --}}
                     <div class="mt-auto flex shrink-0 flex-col gap-1.5 rounded-silat bg-silat-panel p-2">

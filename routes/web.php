@@ -348,11 +348,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
                     Route::post('/nilai', 'nilai')->name('nilai')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     /*
-                     * Nilai mutlak jatuhan. Dijaga resource hasil-partai
-                     * Update -- wewenang Dewan Wasit Juri, sama dengan
-                     * pembatalan nilai -- bukan `penilaian` yang dipegang juri.
+                     * Nilai mutlak jatuhan. Dijaga resource `hukuman` Create,
+                     * bukan `penilaian` yang dipegang juri: jatuhan sederajat
+                     * dengan sanksi -- nilainya mutlak dan diputuskan wasit
+                     * yang berdiri di gelanggang, bukan dikonsensuskan juri.
                      */
-                    Route::post('/jatuhan', 'jatuhan')->name('jatuhan')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
+                    Route::post('/jatuhan', 'jatuhan')->name('jatuhan')->middleware('resource:'.rk('hukuman', ResourceAction::Create));
                     Route::post('/nilai/{scoreEvent}/batal', 'batalkanNilai')->name('nilai.batal')->middleware('resource:'.rk('hasil-partai', ResourceAction::Update));
 
                     Route::post('/hukuman', 'hukuman')->name('hukuman')->middleware('resource:'.rk('hukuman', ResourceAction::Create));

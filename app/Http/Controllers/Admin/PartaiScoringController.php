@@ -159,7 +159,7 @@ class PartaiScoringController extends Controller
         $penekan = $nilai->mapWithKeys(fn ($n) => [$n->id => $n->mutlak()
             // Nilai mutlak jatuhan tidak ditekan juri mana pun; yang tercatat
             // penerbitnya, supaya kolomnya tidak kosong di dokumen resmi.
-            ? 'Dewan Wasit Juri'.($n->penerbit ? ' ('.$n->penerbit->name.')' : '')
+            ? ($sebutan[$n->issued_by] ?? 'Wasit').($n->penerbit ? ' — '.$n->penerbit->name : '')
             : ($n->judgeInputs
                 ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
                 ->filter()->unique()->sort()->values()->implode(', ') ?: null)]);
@@ -443,21 +443,34 @@ class PartaiScoringController extends Controller
     }
 
     /**
-     * Dewan Wasit Juri menerbitkan nilai mutlak jatuhan.
+     * Wasit menerbitkan nilai mutlak jatuhan.
+     *
+     * Sederajat dengan hukuman, bukan dengan penilaian juri: nilainya mutlak,
+     * dan yang memutuskan adalah orang yang berdiri di gelanggang dan melihat
+     * jatuhnya. Karena itu ia dijaga wewenang yang sama dengan sanksi
+     * (`hukuman` Create) dan mensyaratkan penekannya memang aparat partai ini
+     * -- wasit gelanggang sebelah tidak menerbitkan nilai di sini.
+     *
+     * Tidak melewati verifikasi juri. Verifikasi baru dipakai kalau wasit
+     * sendiri ragu sudut mana yang menjatuhkan; kalau ia melihatnya dengan
+     * jelas, menahannya di belakang polling tiga juri hanya memperlambat
+     * pertandingan atas sesuatu yang tidak dipersoalkan.
      *
      * Langsung terbit begitu sudutnya ditekan, tanpa dialog konfirmasi:
      * jatuhan diputuskan sementara pertandingan berjalan, dan satu dialog di
      * antara keputusan dan angkanya membuat papan skor tertinggal dari apa
      * yang sudah dilihat penonton. Salah tekan diperbaiki lewat pembatalan
-     * nilai, jalur yang memang sudah dipegang dewan.
+     * nilai oleh Dewan Wasit Juri, jalur yang sama dengan pembatalan nilai
+     * juri yang keliru.
      *
-     * Bila ada verifikasi jatuhan yang jawabannya sedang dibaca dewan,
-     * `verifikasi_id` menautkan keduanya: berita acara lalu bisa menunjukkan
-     * bahwa nilai ini terbit setelah menimbang jawaban juri, bukan sendirian.
+     * Bila wasit sempat ragu dan bertanya ke juri, `verifikasi_id` menautkan
+     * jawaban itu ke nilai yang akhirnya terbit: berita acara lalu bisa
+     * menunjukkan bahwa nilai ini diputuskan setelah menimbang jawaban juri.
      */
     public function jatuhan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, $request->user());
 
         $jumlahBabak = $this->jumlahBabak($match);
 
@@ -762,6 +775,13 @@ class PartaiScoringController extends Controller
             'hasil' => $verifikasi->hasil?->value,
             'hasil_label' => $verifikasi->hasil?->label(),
             'sudah_diterapkan' => $verifikasi->sudahDiterapkan(),
+            /*
+             * Terisi berarti jawaban ini sudah dipakai wasit untuk menerbitkan
+             * jatuhan. Tanpa penanda itu, saran di panel wasit menggantung
+             * setelah nilainya terbit dan mengundang penekanan kedua untuk
+             * jatuhan yang sama.
+             */
+            'score_event_id' => $verifikasi->score_event_id,
             'akibat' => $verifikasi->hasil ? $this->polling->akibat($verifikasi) : null,
             'ambang' => $match->bracket->weightClass->tournament->peraturan()->ambang_sepakat,
             'jumlah_juri' => $this->polling->jumlahJuri($verifikasi),
@@ -892,7 +912,7 @@ class PartaiScoringController extends Controller
                  * justru baris yang paling dipersoalkan saat hasilnya digugat.
                  */
                 'oleh' => match (true) {
-                    $s->mutlak() => 'Dewan Wasit Juri',
+                    $s->mutlak() => $sebutan[$s->issued_by] ?? 'Wasit',
                     isset($verifikasiNilai[$s->id]) => 'Verifikasi juri',
                     default => $s->judgeInputs
                         ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
