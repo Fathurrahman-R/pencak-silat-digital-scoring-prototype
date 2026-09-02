@@ -184,6 +184,73 @@ it('menyusun kolom pohon sebanyak babak, tidak lebih', function () {
         ->and($pohon['kolom'][2]['slot'])->toHaveCount(2);
 });
 
+/*
+ * Bye tidak digambar sama sekali.
+ *
+ * Lima peserta jatuh ke bagan 8: susunan unggulan baku menyisakan tiga
+ * pasangan yang cuma berpenghuni satu orang. Ketiganya bukan pertandingan —
+ * tidak ada yang naik gelanggang, tidak ada yang menang atau kalah — jadi
+ * memajangnya di kolom pertama membuat pembaca bagan mengira ada partai yang
+ * ia lewatkan. Yang tergambar tinggal satu pasangan yang benar-benar
+ * bertanding; ketiga pesilat yang mendapat bye baru muncul satu kolom di
+ * sebelah kanan.
+ */
+it('tidak menggambar pasangan bye di kolom babak pertama', function () {
+    ($this->buatPeserta)(5);
+    (new BracketGenerator)->untukKelas($this->kelas, acak: false);
+
+    $pohon = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->viewData('pohon');
+
+    $babak1 = collect($pohon['kolom'][0]['slot']);
+
+    expect($babak1)->toHaveCount(2)
+        // Tempat kosong pasangan bye ikut hilang: yang tersisa dua-duanya berpenghuni.
+        ->and($babak1->every(fn (array $slot) => $slot['kosong'] === false))->toBeTrue()
+        ->and($babak1->pluck('nomor')->all())->toBe([3, 4]);
+
+    // Ketiga pemenang bye sudah berdiri di semifinal sejak bagan disusun.
+    $semifinal = collect($pohon['kolom'][1]['slot']);
+
+    expect($semifinal)->toHaveCount(4)
+        ->and($semifinal->where('menunggu', false))->toHaveCount(3);
+});
+
+/*
+ * Garis penghubung pasangan bye ikut hilang. Kalau tertinggal, ia terbit dari
+ * ruang kosong dan terbaca sebagai slot yang gagal dirender.
+ */
+it('tidak menggambar garis penghubung untuk pasangan bye', function () {
+    ($this->buatPeserta)(5);
+    (new BracketGenerator)->untukKelas($this->kelas, acak: false);
+
+    $pohon = $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->viewData('pohon');
+
+    $tinggi = $pohon['slot_tinggi'];
+    $tengah = fn (array $slot) => $slot['y'] + intdiv($tinggi, 2);
+    $garis = collect($pohon['garis']);
+
+    // Satu-satunya pasangan yang bertanding tetap punya garisnya.
+    foreach ($pohon['kolom'][0]['slot'] as $slot) {
+        expect($garis->contains(fn (array $g) => $g['jenis'] === 'h' && $g['y'] === $tengah($slot)))->toBeTrue();
+    }
+
+    /*
+     * Penghubung babak pertama tinggal satu pasangan: dua garis mendatar
+     * pangkal, satu garis tegak penyatu, satu garis mendatar masuk ke
+     * semifinal.
+     */
+    $pangkalKolomPertama = $garis->filter(fn (array $g) => $g['x'] < $pohon['kolom'][1]['x']);
+
+    expect($pangkalKolomPertama)->toHaveCount(4)
+        ->and($pangkalKolomPertama->where('jenis', 'v'))->toHaveCount(1);
+});
+
 it('menempatkan garis penghubung tepat di tengah slot pasangannya', function () {
     /*
      * Ini alasan tata letaknya dihitung sebagai koordinat mutlak, bukan flex.
