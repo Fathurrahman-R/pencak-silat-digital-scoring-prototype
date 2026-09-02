@@ -224,13 +224,15 @@ class SimulasiTurnamenSeeder extends Seeder
         (new SusunMasterDataTurnamen)($this->tournament);
 
         /*
-         * Window konsensus dilebarkan dari bawaan 2 detik menjadi 5 detik.
-         * Uji manual dijalankan satu orang yang berpindah antar tab atau antar
-         * HP, dan tiga tekanan tombol tidak mungkin masuk dalam dua detik
-         * seperti tiga juri sungguhan yang duduk bersamaan. Ini setelan
-         * kejuaraan yang memang boleh diubah -- naskah tidak mengaturnya.
+         * Jendela konsensus dibiarkan pada bawaannya, 2 detik
+         * (config/scoring.php). Sebelumnya seeder ini melebarkannya jadi 5
+         * detik supaya satu orang bisa menguji sendirian sambil berpindah
+         * antar tab -- kelonggaran yang membuat layar simulasi berperilaku
+         * berbeda dari kejuaraan sungguhan, termasuk berapa lama indikator
+         * juri menyala. Setelannya tetap bisa diubah per kejuaraan lewat
+         * Setelan peraturan; yang tidak lagi dilakukan adalah mengubahnya
+         * diam-diam di data simulasi.
          */
-        $this->tournament->peraturan()->update(['window_konsensus_ms' => 5000]);
 
         $this->command?->info("Kejuaraan #{$this->tournament->id} dibuat beserta kelas tanding dan nomor Jurus dari naskah 2025.");
     }

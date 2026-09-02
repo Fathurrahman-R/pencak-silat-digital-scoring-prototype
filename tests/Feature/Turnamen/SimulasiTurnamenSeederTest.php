@@ -58,8 +58,15 @@ it('menyusun kejuaraan simulasi lengkap dengan dua gelanggang beroperator', func
         expect($arena->operators()->count())->toBe(1);
     });
 
-    // Window konsensus dilebarkan supaya satu penguji sempat berpindah tab.
-    expect($this->tournament->peraturan()->window_konsensus_ms)->toBe(5000);
+    /*
+     * Jendela konsensus mengikuti bawaan, tidak dilebarkan seeder. Data
+     * simulasi yang diam-diam bermain dengan setelan waktu membuat layar
+     * gelanggang berperilaku berbeda dari kejuaraan sungguhan -- termasuk
+     * berapa lama indikator juri menyala.
+     */
+    expect($this->tournament->peraturan()->window_konsensus_ms)
+        ->toBe(config('scoring.juri.tanding.window_ms'))
+        ->toBe(2000);
 });
 
 it('membuat akun untuk tiap peran gelanggang dengan kata sandi bawaan', function () {
