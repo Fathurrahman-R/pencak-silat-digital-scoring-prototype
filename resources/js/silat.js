@@ -158,7 +158,6 @@ Alpine.data('partaiPanel', (cfg) => ({
     verifikasi: null,
     pesan: null,
     galat: null,
-    indikator: { red: [], blue: [] },
 
     /*
      * Indikator per TEKNIK, dipakai panel operator: yang menentukan sebuah
@@ -172,8 +171,11 @@ Alpine.data('partaiPanel', (cfg) => ({
         blue: { pukulan: [], tendangan: [] },
     },
     sisaMsTampil: 0,
-    _petaJuri: {},
-    _waktuIndikator: { red: null, blue: null },
+    // Berkunci `${sisi}-${teknik}`: tiap teknik punya jendela konsensusnya
+    // sendiri, jadi tenggat padamnya pun sendiri-sendiri.
+    _waktuIndikator: {},
+    _sedangMenarik: false,
+    _perluTarikLagi: false,
     _tickAnchorMs: 0,
     _tickAt: 0,
     _rafId: null,
@@ -279,15 +281,50 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     async muatUlang() {
-        const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+        /*
+         * Satu tarikan pada satu waktu, dan letupan siaran digabung jadi satu.
+         *
+         * Tiap siaran dulu memicu tarikan state penuh sendiri-sendiri. Saat
+         * juri menekan tombol beruntun, satu tekanan bisa melahirkan beberapa
+         * siaran, dan tiap panel yang terbuka menarik state untuk masing-
+         * masing siaran itu. Tarikannya ~200ms dan server melayaninya satu per
+         * satu, jadi antreannya tumbuh lebih cepat daripada terurai: indikator
+         * dan angka di layar tertinggal makin jauh dari gelanggang.
+         *
+         * Yang dijamin di sini: selama satu tarikan berjalan, permintaan
+         * berikutnya tidak menambah antrean -- ia hanya menandai bahwa masih
+         * ada yang perlu ditarik, dan satu tarikan susulan dijalankan sesudah
+         * yang sekarang selesai. Berapa pun siaran yang datang di antaranya,
+         * hasil akhirnya tetap keadaan TERBARU, karena yang ditarik selalu
+         * keadaan saat itu juga, bukan antrean keadaan lama.
+         */
+        if (this._sedangMenarik) {
+            this._perluTarikLagi = true;
 
-        if (!res.ok) {
-            this.galat = 'Gagal memuat state partai.';
             return;
         }
 
-        this._terapkan(await res.json());
-        this.memuat = false;
+        this._sedangMenarik = true;
+
+        try {
+            const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+
+            if (!res.ok) {
+                this.galat = 'Gagal memuat state partai.';
+
+                return;
+            }
+
+            this._terapkan(await res.json());
+            this.memuat = false;
+        } finally {
+            this._sedangMenarik = false;
+
+            if (this._perluTarikLagi) {
+                this._perluTarikLagi = false;
+                this.muatUlang();
+            }
+        }
     },
 
     /**
@@ -541,9 +578,6 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.riwayat = data.riwayat;
         this.keberatan = data.keberatan;
         this.verifikasi = data.verifikasi;
-        this._petaJuri = Object.fromEntries(
-            data.officials.filter((o) => o.role === 'juri').map((o) => [o.user_id, o.number]),
-        );
 
         this._segarkanTimer();
     },
@@ -609,7 +643,21 @@ Alpine.data('partaiPanel', (cfg) => ({
         window.Echo.join(`arena.${this.cfg.arenaId}`)
             .listen('.timer.berubah', segarkan)
             .listen('.skor.terbit', (e) => {
-                this._tandaiIndikatorSelesai(e.corner);
+                this._tandaiIndikatorSelesai(e.corner, e.point_type);
+
+                /*
+                 * Angka dipasang dari muatan siarannya sendiri, tidak menunggu
+                 * tarikan state selesai. Siaran ini SUDAH membawa skor kedua
+                 * sudut sesudah nilai itu terbit -- menunggu tarikan berarti
+                 * papan diam sekitar dua ratus milidetik sesudah nilai
+                 * terdengar diumumkan, dan lebih lama lagi saat tekanan
+                 * beruntun. Tarikan tetap dijalankan sesudahnya untuk hal-hal
+                 * yang tidak dibawa siaran (riwayat, tawaran WMP, verifikasi).
+                 */
+                if (typeof e.skor_merah === 'number' && typeof e.skor_biru === 'number') {
+                    this.skorTotal = { merah: e.skor_merah, biru: e.skor_biru };
+                }
+
                 segarkan();
             })
             .listen('.hukuman.terbit', segarkan)
@@ -635,39 +683,76 @@ Alpine.data('partaiPanel', (cfg) => ({
             return;
         }
 
-        const nomor = this._petaJuri[e.judge_id];
+        /*
+         * Nomor juri datang dari siaran, tidak lagi dipetakan sendiri dari id
+         * pengguna: siarannya juga didengar overlay siaran, yang tidak pernah
+         * boleh menerima identitas juri sama sekali. Yang dikirim server kini
+         * hanya nomor tugasnya.
+         */
+        const nomor = e.judge_number;
 
         if (!nomor) {
             return;
         }
 
         const sisi = e.corner === 'red' ? 'red' : 'blue';
-
-        if (!this.indikator[sisi].includes(nomor)) {
-            this.indikator[sisi] = [...this.indikator[sisi], nomor];
-        }
-
         const teknik = e.point_type;
 
-        if (teknik && this.indikatorTeknik[sisi][teknik] && !this.indikatorTeknik[sisi][teknik].includes(nomor)) {
-            this.indikatorTeknik[sisi] = {
-                ...this.indikatorTeknik[sisi],
-                [teknik]: [...this.indikatorTeknik[sisi][teknik], nomor],
-            };
+        if (!teknik || !this.indikatorTeknik[sisi][teknik] || this.indikatorTeknik[sisi][teknik].includes(nomor)) {
+            return;
         }
 
-        clearTimeout(this._waktuIndikator[sisi]);
-        this._waktuIndikator[sisi] = setTimeout(() => {
-            this.indikator[sisi] = [];
-            this.indikatorTeknik[sisi] = { pukulan: [], tendangan: [], jatuhan: [] };
-        }, this.peraturan.window_konsensus_ms + 500);
+        this.indikatorTeknik[sisi] = {
+            ...this.indikatorTeknik[sisi],
+            [teknik]: [...this.indikatorTeknik[sisi][teknik], nomor],
+        };
+
+        /*
+         * Satu penghitung waktu per SUDUT DAN TEKNIK, bukan satu per sudut.
+         *
+         * Jendela konsensus berjalan sendiri-sendiri untuk tiap teknik:
+         * Juri 1 menekan pukulan lalu tendangan, dan keduanya punya tenggat
+         * sendiri. Dengan satu penghitung per sudut, tekanan tendangan
+         * mengulang tenggat pukulan, lalu satu penghitung yang jatuh tempo
+         * memadamkan KEDUANYA -- termasuk yang jendelanya masih terbuka.
+         */
+        this._batalkanPadam(sisi, teknik);
+        this._waktuIndikator[`${sisi}-${teknik}`] = setTimeout(
+            () => this._padamkanIndikator(sisi, teknik),
+            this.peraturan.window_konsensus_ms + 500,
+        );
     },
 
-    _tandaiIndikatorSelesai(corner) {
+    /**
+     * Nilai terbit: indikator TEKNIK ITU saja yang padam.
+     *
+     * Sebelumnya seluruh sudut dibersihkan sekaligus. Akibatnya, saat Juri 2
+     * menekan pukulan dan nilai pukulan terbit, tekanan tendangan Juri 1 yang
+     * masih menunggu juri kedua ikut lenyap dari layar -- operator melihat
+     * papan bersih dan mengira tidak ada yang sedang ditunggu, padahal
+     * jendelanya masih terbuka.
+     */
+    _tandaiIndikatorSelesai(corner, teknik) {
         const sisi = corner === 'red' ? 'red' : 'blue';
-        this.indikator[sisi] = [];
-        this.indikatorTeknik[sisi] = { pukulan: [], tendangan: [], jatuhan: [] };
-        clearTimeout(this._waktuIndikator[sisi]);
+
+        if (teknik) {
+            this._padamkanIndikator(sisi, teknik);
+
+            return;
+        }
+
+        // Tanpa teknik yang disebut (mis. nilai mutlak dari wasit), tidak ada
+        // yang bisa dipastikan masih ditunggu -- seluruh sudut dipadamkan.
+        Object.keys(this.indikatorTeknik[sisi]).forEach((t) => this._padamkanIndikator(sisi, t));
+    },
+
+    _padamkanIndikator(sisi, teknik) {
+        this._batalkanPadam(sisi, teknik);
+        this.indikatorTeknik[sisi] = { ...this.indikatorTeknik[sisi], [teknik]: [] };
+    },
+
+    _batalkanPadam(sisi, teknik) {
+        clearTimeout(this._waktuIndikator[`${sisi}-${teknik}`]);
     },
 }));
 
