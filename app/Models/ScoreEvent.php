@@ -11,7 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Satu nilai yang sah karena mencapai ambang konsensus juri.
+ * Satu nilai yang sah.
+ *
+ * Dua jalan lahirnya. Yang lazim: beberapa juri menekan hal yang sama di dalam
+ * jendela konsensus, dan penekannya terbaca dari `judgeInputs`. Yang kedua:
+ * nilai mutlak jatuhan yang diterbitkan Dewan Wasit Juri, tanpa satu pun
+ * tekanan juri, dan penerbitnya tercatat di `issued_by`.
  *
  * Koreksi dewan juri tidak menyunting baris ini -- ia dibatalkan lewat
  * `voided_at` beserta alasannya, supaya jejak penilaian tetap utuh.
@@ -30,6 +35,7 @@ class ScoreEvent extends Model
         'point_type',
         'value',
         'server_ts',
+        'issued_by',
         'voided_at',
         'voided_by',
         'void_reason',
@@ -55,6 +61,18 @@ class ScoreEvent extends Model
     public function voider(): BelongsTo
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /** Penerbit nilai yang tidak lahir dari tombol juri. Kosong berarti lahir dari juri. */
+    public function penerbit(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /** Nilai mutlak: diterbitkan Dewan Wasit Juri, bukan hasil konsensus juri. */
+    public function mutlak(): bool
+    {
+        return $this->issued_by !== null;
     }
 
     /**

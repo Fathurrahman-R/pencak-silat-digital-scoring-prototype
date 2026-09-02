@@ -4,7 +4,6 @@ use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JawabanVerifikasi;
 use App\Enums\JenisKelamin;
-use App\Enums\JenisSerangan;
 use App\Enums\JenisVerifikasi;
 use App\Enums\Sudut;
 use App\Enums\TingkatPelanggaran;
@@ -12,6 +11,7 @@ use App\Models\Bracket;
 use App\Models\Contingent;
 use App\Models\JudgeVerification;
 use App\Models\MatchOfficial;
+use App\Models\Penalty;
 use App\Models\Registration;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
@@ -187,20 +187,26 @@ it('mewajibkan tingkat pelanggaran saat yang ditanyakan adalah pelanggaran', fun
  * --------------------------------------------------------------------
  */
 
-it('menerbitkan nilai jatuhan untuk sudut yang menang polling', function () {
+/*
+ * Verifikasi jatuhan TIDAK menerbitkan nilai.
+ *
+ * Nilai mutlak jatuhan bukan penilaian yang dikonsensuskan tiga juri,
+ * melainkan keputusan Dewan Wasit Juri. Yang dihasilkan polling ini adalah
+ * jawaban juri atas pertanyaan wasit -- masukan yang dibaca dewan sebelum
+ * menekan sudutnya, dan yang tetap tercatat supaya pelatih bisa memprotes
+ * jawabannya sesuai Pasal 15.
+ */
+it('tidak menerbitkan nilai dari polling jatuhan', function () {
     $verifikasi = ($this->minta)();
     $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
     $verifikasi = $this->polling->jawab($verifikasi, $this->juri[1], JawabanVerifikasi::Merah);
 
     $verifikasi = $this->polling->terapkan($verifikasi, $this->wasit);
 
-    $nilai = ScoreEvent::where('match_id', $this->match->id)->first();
-
-    expect($nilai)->not->toBeNull()
-        ->and($nilai->corner)->toBe(Sudut::Merah)
-        ->and($nilai->point_type)->toBe(JenisSerangan::Jatuhan)
-        ->and($nilai->value)->toBe(3)
-        ->and($verifikasi->score_event_id)->toBe($nilai->id)
+    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(0)
+        ->and($verifikasi->score_event_id)->toBeNull()
+        // Hasilnya tetap tercatat: yang hilang cuma penerbitan nilainya.
+        ->and($verifikasi->hasil)->toBe(JawabanVerifikasi::Merah)
         ->and($verifikasi->status)->toBe(JudgeVerification::SELESAI);
 });
 
@@ -237,8 +243,13 @@ it('menolak penerapan sebelum ambang tercapai', function () {
         ->toThrow(ValidationException::class);
 });
 
+/*
+ * Diuji dengan pertanyaan PELANGGARAN, bukan jatuhan: hanya pelanggaran yang
+ * menerbitkan akibatnya sendiri saat diterapkan, jadi hanya di sanalah
+ * penerapan kedua kali bisa melahirkan sanksi ganda.
+ */
 it('menolak penerapan kedua kali', function () {
-    $verifikasi = ($this->minta)();
+    $verifikasi = ($this->minta)(JenisVerifikasi::Pelanggaran, TingkatPelanggaran::Sedang);
     $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
     $verifikasi = $this->polling->jawab($verifikasi, $this->juri[1], JawabanVerifikasi::Merah);
 
@@ -247,7 +258,7 @@ it('menolak penerapan kedua kali', function () {
     expect(fn () => $this->polling->terapkan($verifikasi->fresh(), $this->wasit))
         ->toThrow(ValidationException::class);
 
-    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(1);
+    expect(Penalty::where('match_id', $this->match->id)->count())->toBe(1);
 });
 
 it('menyimpan verifikasi yang dibatalkan beserta jawaban yang sudah masuk', function () {
@@ -380,11 +391,11 @@ it('menolak verifikasi milik partai lain', function () {
  * --------------------------------------------------------------------
  */
 
-it('menandai nilai yang lahir dari verifikasi di riwayat panel', function () {
+it('tidak memunculkan baris nilai dari polling jatuhan di riwayat panel', function () {
     /*
-     * Nilai dari verifikasi tidak punya judge_inputs -- tidak ada juri yang
-     * menekan tombolnya. Tanpa penandaan, riwayat menampilkan jatuhan +3 yang
-     * seolah muncul sendiri tanpa satu pun penekan.
+     * Jawaban juri atas pertanyaan jatuhan berhenti sebagai masukan. Kalau ia
+     * tetap menerbitkan nilai sendiri, dewan yang kemudian menekan sudutnya
+     * akan melahirkan +3 kedua untuk satu jatuhan yang sama.
      */
     $verifikasi = ($this->minta)();
     $this->polling->jawab($verifikasi, $this->juri[0], JawabanVerifikasi::Merah);
@@ -396,10 +407,8 @@ it('menandai nilai yang lahir dari verifikasi di riwayat panel', function () {
         ->assertOk()
         ->json('riwayat');
 
-    $baris = collect($riwayat)->firstWhere('tipe', 'nilai');
-
-    expect($baris['oleh'])->toBe('Verifikasi juri')
-        ->and($baris['verifikasi_id'])->toBe($verifikasi->id);
+    expect(collect($riwayat)->firstWhere('tipe', 'nilai'))->toBeNull()
+        ->and(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(0);
 });
 
 it('mencatat verifikasi beserta jawaban tiap juri di berita acara', function () {
@@ -434,7 +443,7 @@ it('mencatat verifikasi beserta jawaban tiap juri di berita acara', function () 
         ->toContain('Juri 1: Sudut merah')
         ->toContain('Juri 2: Sudut biru')
         ->toContain('Juri 3: Sudut merah')
-        ->toContain('Nilai jatuhan diterbitkan');
+        ->toContain('Jawaban juri dicatat sebagai masukan Dewan Wasit Juri');
 });
 
 it('mencatat verifikasi yang dibatalkan di berita acara', function () {

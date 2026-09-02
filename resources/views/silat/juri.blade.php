@@ -99,14 +99,16 @@
             berbeda dibuat sama-sama mudah dilakukan.
         --}}
         <div class="grid min-h-0 flex-1 grid-cols-2 gap-x-[var(--silat-lorong-sudut)] gap-y-2 px-3 pt-2 pb-3">
-            <div class="grid grid-rows-3 gap-2">
-                @foreach (['pukulan', 'tendangan', 'jatuhan'] as $jenis)
+            {{-- Dua jenis saja. Jatuhan tidak dinilai juri: nilainya mutlak,
+                 keputusan Dewan Wasit Juri, dan panelnya yang menerbitkan. --}}
+            <div class="grid grid-rows-2 gap-2">
+                @foreach (['pukulan', 'tendangan'] as $jenis)
                     <x-silat.tombol-nilai :jenis="$jenis" sudut="merah" x-on:click="kirimNilai('red', '{{ $jenis }}')" class="h-full" />
                 @endforeach
             </div>
 
-            <div class="grid grid-rows-3 gap-2">
-                @foreach (['pukulan', 'tendangan', 'jatuhan'] as $jenis)
+            <div class="grid grid-rows-2 gap-2">
+                @foreach (['pukulan', 'tendangan'] as $jenis)
                     <x-silat.tombol-nilai :jenis="$jenis" sudut="biru" x-on:click="kirimNilai('blue', '{{ $jenis }}')" class="h-full" />
                 @endforeach
             </div>

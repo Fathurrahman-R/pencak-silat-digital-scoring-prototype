@@ -3,7 +3,6 @@
 namespace App\Support\Scoring;
 
 use App\Enums\JawabanVerifikasi;
-use App\Enums\JenisSerangan;
 use App\Enums\JenisVerifikasi;
 use App\Enums\Sudut;
 use App\Enums\TingkatPelanggaran;
@@ -35,6 +34,12 @@ use Illuminate\Validation\ValidationException;
  * - Hasilnya tidak langsung jadi nilai. Ia dinyatakan lebih dulu, lalu
  *   diterapkan sebagai langkah terpisah oleh yang meminta -- supaya akibatnya
  *   terbaca sebelum terjadi, bukan sesudah.
+ *
+ * Dua jenis pertanyaan berakhir berbeda. Pelanggaran menerbitkan sanksinya
+ * sendiri saat diterapkan. Jatuhan TIDAK: nilainya mutlak, keputusan Dewan
+ * Wasit Juri, jadi jawaban juri di sini berhenti sebagai masukan yang dibaca
+ * dewan -- dan tetap tercatat, karena Pasal 15 membolehkan pelatih memprotes
+ * jawaban itu.
  *
  * Ambangnya sama, dibaca dari setelan peraturan turnamen.
  */
@@ -295,9 +300,8 @@ class PollingVerifikasi
         $sudut = $hasil->sudut();
 
         if ($verifikasi->jenis === JenisVerifikasi::Jatuhan) {
-            $nilai = config('scoring.tanding.nilai.jatuhan', 3);
-
-            return "Jatuhan dicatat untuk {$hasil->label()} — +{$nilai} pada ".$this->namaPesilat($verifikasi, $sudut).'.';
+            return "Jawaban juri dicatat: {$hasil->label()} — ".$this->namaPesilat($verifikasi, $sudut).
+                '. Tidak ada nilai yang terbit dari sini; nilai mutlak jatuhan diterbitkan Dewan Wasit Juri.';
         }
 
         $tingkat = $verifikasi->tingkat_pelanggaran?->label() ?? 'Pelanggaran';
@@ -333,19 +337,17 @@ class PollingVerifikasi
 
             $sudut = $terkunci->hasil->sudut();
 
-            if ($sudut !== null && $terkunci->jenis === JenisVerifikasi::Jatuhan) {
-                $scoreEvent = ScoreEvent::create([
-                    'match_id' => $terkunci->match_id,
-                    'round' => $terkunci->round,
-                    'corner' => $sudut,
-                    'point_type' => JenisSerangan::Jatuhan,
-                    'value' => JenisSerangan::Jatuhan->nilai(),
-                    'server_ts' => now(),
-                ]);
-
-                $terkunci->score_event_id = $scoreEvent->id;
-            }
-
+            /*
+             * Verifikasi jatuhan TIDAK menerbitkan nilai.
+             *
+             * Nilai mutlak jatuhan bukan penilaian yang dikonsensuskan juri,
+             * melainkan keputusan Dewan Wasit Juri. Yang dihasilkan polling ini
+             * adalah jawaban juri atas pertanyaan wasit -- masukan yang dibaca
+             * dewan sebelum menekan sudutnya, dan yang tetap tercatat di berita
+             * acara supaya pelatih bisa memprotes jawabannya sesuai Pasal 15.
+             * Nilainya sendiri terbit lewat PartaiScoringController::jatuhan(),
+             * yang menautkan dirinya kembali ke baris verifikasi ini.
+             */
             if ($sudut !== null && $terkunci->jenis === JenisVerifikasi::Pelanggaran) {
                 $penalty = $this->tangga->catat(
                     $terkunci->match,

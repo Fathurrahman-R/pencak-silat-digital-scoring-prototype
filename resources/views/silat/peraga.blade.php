@@ -49,6 +49,11 @@
                 dirinya sendiri begitu WebSocket terputus.
             </p>
 
+            <p class="mb-5 text-[13px] text-silat-teks-redup">
+                Panel juri hanya memakai pukulan dan tendangan. Tombol jatuhan berdiri di panel
+                Dewan Wasit Juri: nilainya mutlak, bukan penilaian yang dikonsensuskan juri.
+            </p>
+
             <div class="grid gap-4 sm:grid-cols-2">
                 @foreach (['merah', 'biru'] as $sudut)
                     <div class="rounded-silat bg-silat-panel p-4">

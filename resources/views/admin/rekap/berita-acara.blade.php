@@ -130,9 +130,15 @@
                         @if ($v->status === \App\Models\JudgeVerification::DIBATALKAN)
                             Dibatalkan{{ $v->catatan ? ' — '.$v->catatan : '' }}
                         @elseif ($v->score_event_id)
-                            Nilai jatuhan diterbitkan
+                            {{-- Jawaban juri atas pertanyaan jatuhan tidak menerbitkan
+                                 nilai sendiri; yang menerbitkan Dewan Wasit Juri, dan
+                                 tautan ini menunjukkan nilai mana yang lahir setelah
+                                 jawaban ini ditimbang. --}}
+                            Jadi pertimbangan nilai mutlak jatuhan yang diterbitkan Dewan Wasit Juri
                         @elseif ($v->penalty_id)
                             Sanksi {{ $v->tingkat_pelanggaran?->label() }} dijatuhkan
+                        @elseif ($v->jenis === \App\Enums\JenisVerifikasi::Jatuhan && $v->hasil)
+                            Jawaban juri dicatat sebagai masukan Dewan Wasit Juri
                         @else
                             Tidak ada nilai maupun hukuman
                         @endif

@@ -176,6 +176,63 @@
                     <x-silat.papan-skor sudut="blue" kunci-skor="biru" />
                 </div>
 
+                {{--
+                    Nilai mutlak jatuhan.
+
+                    Berdiri di panel ini, bukan di panel juri: jatuhan bukan
+                    penilaian yang dikonsensuskan tiga juri, melainkan keputusan
+                    Dewan Wasit Juri. Ditekan langsung tanpa dialog -- jatuhan
+                    diputuskan sementara pertandingan berjalan, dan dialog di
+                    antara keputusan dan angkanya membuat papan skor tertinggal
+                    dari apa yang sudah dilihat penonton. Salah tekan diperbaiki
+                    lewat pembatalan nilai di riwayat sebelah.
+                --}}
+                @resource(rk('hasil-partai', ResourceAction::Update))
+                    <div class="rounded-silat-besar border border-silat-garis p-4.5">
+                        <p class="silat-angka text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">
+                            Nilai mutlak jatuhan
+                        </p>
+
+                        {{-- Jawaban juri ditampilkan sebagai masukan, bukan keputusan:
+                             yang memutuskan tetap dewan. --}}
+                        <template x-if="saranJatuhan">
+                            <p class="mt-2.5 text-[13.5px] leading-[1.65] text-silat-teks-kedua">
+                                Jawaban juri: <span class="font-semibold text-silat-teks" x-text="saranJatuhan.hasil_label"></span>
+                                (<span x-text="saranJatuhan.jawaban.length"></span> dari
+                                <span x-text="saranJatuhan.jumlah_juri"></span> menjawab).
+                                Nilainya tetap diterbitkan dari sini.
+                            </p>
+                        </template>
+
+                        <template x-if="! saranJatuhan">
+                            <p class="mt-2.5 text-[13.5px] leading-[1.65] text-silat-teks-redup">
+                                Terbit seketika, tanpa konfirmasi. Yang keliru dibatalkan lewat riwayat.
+                            </p>
+                        </template>
+
+                        <div class="mt-3.5 grid grid-cols-2 gap-2.5">
+                            <button type="button"
+                                    x-bind:disabled="! match.current_round || match.ratified"
+                                    x-on:click="terbitkanJatuhan('red')"
+                                    class="h-14 rounded-silat bg-silat-merah-dalam text-[15px] font-semibold text-white disabled:opacity-40">
+                                Jatuhan Merah
+                            </button>
+
+                            <button type="button"
+                                    x-bind:disabled="! match.current_round || match.ratified"
+                                    x-on:click="terbitkanJatuhan('blue')"
+                                    class="h-14 rounded-silat bg-silat-biru-dalam text-[15px] font-semibold text-white disabled:opacity-40">
+                                Jatuhan Biru
+                            </button>
+                        </div>
+
+                        <p x-show="! match.current_round" x-cloak
+                           class="mt-2.5 text-[13px] text-silat-teks-redup">
+                            Babak belum berjalan — tidak ada babak yang bisa dicatati nilai.
+                        </p>
+                    </div>
+                @endresource
+
                 {{-- Pengesahan hasil --}}
                 <div class="rounded-silat-besar border border-silat-garis p-4.5"
                      x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">

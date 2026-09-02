@@ -142,7 +142,8 @@ class PartaiScoringController extends Controller
             'skor_biru' => $this->kalkulator->skorBabak($match, Sudut::Biru, $r->round),
         ]);
 
-        $nilai = $match->scoreEvents()->berlaku()->with('judgeInputs:id,score_event_id,judge_user_id')
+        $nilai = $match->scoreEvents()->berlaku()
+            ->with(['judgeInputs:id,score_event_id,judge_user_id', 'penerbit:id,name'])
             ->orderBy('server_ts')->get();
         $hukuman = $match->penalties()->berlaku()->orderBy('created_at')->get();
 
@@ -155,9 +156,13 @@ class PartaiScoringController extends Controller
          */
         $sebutan = $match->officials->mapWithKeys(fn ($o) => [$o->user_id => $o->sebutan()]);
 
-        $penekan = $nilai->mapWithKeys(fn ($n) => [$n->id => $n->judgeInputs
-            ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
-            ->filter()->unique()->sort()->values()->implode(', ') ?: null]);
+        $penekan = $nilai->mapWithKeys(fn ($n) => [$n->id => $n->mutlak()
+            // Nilai mutlak jatuhan tidak ditekan juri mana pun; yang tercatat
+            // penerbitnya, supaya kolomnya tidak kosong di dokumen resmi.
+            ? 'Dewan Wasit Juri'.($n->penerbit ? ' ('.$n->penerbit->name.')' : '')
+            : ($n->judgeInputs
+                ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
+                ->filter()->unique()->sort()->values()->implode(', ') ?: null)]);
 
         $pencatat = $hukuman->mapWithKeys(fn ($h) => [$h->id => $sebutan[$h->created_by] ?? null]);
 
@@ -262,6 +267,7 @@ class PartaiScoringController extends Controller
             'akhiri' => route('admin.turnamen.partai.akhiri', [$tournament, $match]),
             'sahkan' => route('admin.turnamen.partai.sahkan', [$tournament, $match]),
             'nilai' => route('admin.turnamen.partai.nilai', [$tournament, $match]),
+            'jatuhan' => route('admin.turnamen.partai.jatuhan', [$tournament, $match]),
             'hukuman' => route('admin.turnamen.partai.hukuman', [$tournament, $match]),
             'hitungan' => route('admin.turnamen.partai.hitungan', [$tournament, $match]),
             'nilaiBatal' => route('admin.turnamen.partai.nilai.batal', [$tournament, $match, '__ID__']),
@@ -375,7 +381,15 @@ class PartaiScoringController extends Controller
         return $this->respond($request, $match, 'success', 'Hasil partai disahkan.');
     }
 
-    /** Juri mengirim satu nilai. */
+    /**
+     * Juri mengirim satu nilai -- pukulan atau tendangan.
+     *
+     * Jatuhan TIDAK diterima di sini. Nilainya mutlak: bukan penilaian yang
+     * dikonsensuskan tiga juri, melainkan keputusan Dewan Wasit Juri, dan
+     * jalannya lewat jatuhan() di bawah. Penolakannya berdiri di server, bukan
+     * cuma berupa tombol yang tidak digambar -- panel juri berjalan di ponsel
+     * yang tetap memegang halaman lamanya setelah aplikasi diperbarui.
+     */
     public function nilai(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
@@ -392,9 +406,21 @@ class PartaiScoringController extends Controller
         $data = $request->validate([
             'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
             'corner' => ['required', Rule::enum(Sudut::class)],
-            'jenis' => ['required', Rule::enum(JenisSerangan::class)],
+            /*
+             * Dua aturan, bukan satu enum yang dipersempit: jenis yang tidak
+             * dikenal dan jatuhan adalah dua kekeliruan berbeda dan berhak
+             * atas pesan yang berbeda. Enum yang dipersempit menjawab keduanya
+             * dengan kalimat yang sama, dan juri yang membacanya tidak tahu
+             * apakah tombolnya rusak atau memang bukan haknya.
+             */
+            'jenis' => [
+                'required',
+                Rule::enum(JenisSerangan::class),
+                Rule::notIn([JenisSerangan::Jatuhan->value]),
+            ],
         ], [
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
+            'jenis.not_in' => 'Jatuhan tidak dinilai juri — nilainya diterbitkan Dewan Wasit Juri.',
         ], [
             'babak' => 'Babak',
             'corner' => 'Sudut',
@@ -414,6 +440,63 @@ class PartaiScoringController extends Controller
         }
 
         return $this->respond($request, $match, 'success', 'Nilai terkirim.');
+    }
+
+    /**
+     * Dewan Wasit Juri menerbitkan nilai mutlak jatuhan.
+     *
+     * Langsung terbit begitu sudutnya ditekan, tanpa dialog konfirmasi:
+     * jatuhan diputuskan sementara pertandingan berjalan, dan satu dialog di
+     * antara keputusan dan angkanya membuat papan skor tertinggal dari apa
+     * yang sudah dilihat penonton. Salah tekan diperbaiki lewat pembatalan
+     * nilai, jalur yang memang sudah dipegang dewan.
+     *
+     * Bila ada verifikasi jatuhan yang jawabannya sedang dibaca dewan,
+     * `verifikasi_id` menautkan keduanya: berita acara lalu bisa menunjukkan
+     * bahwa nilai ini terbit setelah menimbang jawaban juri, bukan sendirian.
+     */
+    public function jatuhan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
+    {
+        $this->pastikanMilik($tournament, $match);
+
+        $jumlahBabak = $this->jumlahBabak($match);
+
+        $data = $request->validate([
+            'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
+            'corner' => ['required', Rule::enum(Sudut::class)],
+            'verifikasi_id' => [
+                'nullable', 'integer',
+                Rule::exists('judge_verifications', 'id')->where('match_id', $match->id),
+            ],
+        ], [
+            'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
+        ], [
+            'babak' => 'Babak',
+            'corner' => 'Sudut',
+        ]);
+
+        $nilai = $match->bracket->weightClass->tournament->peraturan()
+            ->nilaiUntuk(JenisSerangan::Jatuhan->value);
+
+        $scoreEvent = ScoreEvent::create([
+            'match_id' => $match->id,
+            'round' => (int) $data['babak'],
+            'corner' => Sudut::from($data['corner']),
+            'point_type' => JenisSerangan::Jatuhan,
+            'value' => $nilai,
+            'server_ts' => now(),
+            'issued_by' => $request->user()->id,
+        ]);
+
+        if (! empty($data['verifikasi_id'])) {
+            JudgeVerification::whereKey($data['verifikasi_id'])
+                ->whereNull('score_event_id')
+                ->update(['score_event_id' => $scoreEvent->id]);
+        }
+
+        $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
+
+        return $this->respond($request, $match, 'success', "Jatuhan +{$nilai} diterbitkan.");
     }
 
     /** Wasit menjatuhkan sanksi -- pembinaan, teguran, atau peringatan sesuai tingkat pelanggarannya. */
@@ -802,11 +885,19 @@ class PartaiScoringController extends Controller
                 'waktu' => $s->server_ts->toIso8601String(),
                 'verifikasi_id' => $verifikasiNilai[$s->id] ?? null,
                 // Urut supaya "Juri 1, Juri 3" tidak berganti-ganti urutan tiap resync.
-                'oleh' => isset($verifikasiNilai[$s->id])
-                    ? 'Verifikasi juri'
-                    : ($s->judgeInputs
+                /*
+                 * Nilai mutlak jatuhan tidak punya judge_inputs sama sekali --
+                 * tidak ada juri yang menekan tombolnya. Tanpa penandaan ini,
+                 * riwayat menampilkan +3 yang seolah muncul sendiri, dan itu
+                 * justru baris yang paling dipersoalkan saat hasilnya digugat.
+                 */
+                'oleh' => match (true) {
+                    $s->mutlak() => 'Dewan Wasit Juri',
+                    isset($verifikasiNilai[$s->id]) => 'Verifikasi juri',
+                    default => $s->judgeInputs
                         ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
-                        ->filter()->unique()->sort()->values()->implode(', ') ?: null),
+                        ->filter()->unique()->sort()->values()->implode(', ') ?: null,
+                },
             ]);
 
         $hukuman = $match->penalties()->berlaku()->with('pencatat:id,name')

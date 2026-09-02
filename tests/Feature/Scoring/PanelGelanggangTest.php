@@ -87,7 +87,27 @@ it('menampilkan panel dewan juri', function () {
         ->assertOk()
         // Sebutan badan ini disatukan jadi 'Dewan Wasit Juri', mengikuti label
         // role di SilatRoleSeeder dan blok tanda tangan berita acara.
-        ->assertSee('DEWAN WASIT JURI');
+        ->assertSee('DEWAN WASIT JURI')
+        // Kendali nilai mutlak jatuhan berdiri di panel ini, bukan di panel juri.
+        ->assertSee('Jatuhan Merah')
+        ->assertSee('Jatuhan Biru');
+});
+
+it('tidak lagi memasang tombol jatuhan di panel juri', function () {
+    /*
+     * Jatuhan bukan penilaian yang dikonsensuskan tiga juri: nilainya mutlak,
+     * keputusan Dewan Wasit Juri. Tombol yang tetap terpasang mengundang juri
+     * menekannya dan mendapat penolakan yang tidak ia mengerti.
+     */
+    $juri = ($this->buatUser)('juri');
+
+    $halaman = $this->actingAs($juri)
+        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->assertOk();
+
+    $halaman->assertSee('Pukulan')
+        ->assertSee('Tendangan')
+        ->assertDontSee('Jatuhan');
 });
 
 it('mengizinkan juri melihat panel operator sebagai pemantau, meski tombolnya tersembunyi lewat @resource', function () {
