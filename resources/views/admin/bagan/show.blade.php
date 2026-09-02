@@ -21,6 +21,21 @@
                 </x-si.tombol>
             @endresource
         @else
+            {{--
+                Susun ulang berdiri DI SINI, bukan di daftar kelas.
+
+                Mengacak ulang undian adalah keputusan yang diambil setelah
+                melihat susunannya -- panitia menekan tombol ini karena ada
+                yang salah pada bagan yang sedang dilihatnya. Di daftar kelas,
+                tombol yang sama ditekan tanpa satu pun pasangan terlihat.
+            --}}
+            @resource(rk('bagan', ResourceAction::Create))
+                <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
+                             x-on:click="$dispatch('modal-open', 'susun-ulang')">
+                    Susun ulang
+                </x-si.tombol>
+            @endresource
+
             @resource(rk('bagan', ResourceAction::Update))
                 <x-si.tombol tipe="button" ukuran="kecil" x-on:click="$dispatch('modal-open', 'kunci-bagan')" ikon="lock">
                     Kunci bagan
@@ -98,6 +113,43 @@
     </div>
 
     @unless ($bracket->terkunci())
+        @resource(rk('bagan', ResourceAction::Create))
+            <x-si.modal id="susun-ulang" judul="Susun ulang bagan {{ $weightClass->name }}?">
+                <div class="space-y-3">
+                    <p class="text-[11px] tracking-[.1em] text-warning uppercase">Undian akan berubah seluruhnya</p>
+
+                    <p class="text-[14px] leading-relaxed text-ink-secondary">
+                        Undian diacak ulang dari <strong class="text-ink">{{ $pesertaSah }}</strong> peserta sah
+                        yang ada sekarang. Seluruh pasangan berubah, termasuk yang sudah diumumkan ke kontingen.
+                    </p>
+
+                    <div class="rounded-[var(--radius)] border-l-[3px] border-line bg-surface-inset px-3.5 py-2.5">
+                        <p class="text-[13px] font-semibold text-ink">Yang tidak berubah</p>
+                        <p class="mt-0.5 text-[13px] leading-relaxed text-ink-secondary">
+                            Peserta yang masuk bagan tetap orang yang sama. Bagan kelas lain tidak tersentuh.
+                        </p>
+                    </div>
+
+                    {{-- Jalan yang lebih kecil disebut lebih dulu: panitia yang menekan
+                         "Susun ulang" sering sebenarnya hanya ingin memindahkan satu orang. --}}
+                    <p class="text-[13px] leading-relaxed text-ink-secondary">
+                        Hanya ingin memindahkan satu pesilat? Pakai <strong class="text-ink">Tukar tempat</strong>
+                        di halaman ini — ia tidak mengubah pasangan yang lain.
+                    </p>
+                </div>
+
+                <x-slot:footer>
+                    <x-si.tombol varian="kedua" tipe="button"
+                                 x-on:click="$dispatch('modal-close', 'susun-ulang')">Tidak jadi</x-si.tombol>
+
+                    <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $weightClass]) }}">
+                        @csrf
+                        <x-si.tombol tipe="submit">Acak ulang undian</x-si.tombol>
+                    </form>
+                </x-slot:footer>
+            </x-si.modal>
+        @endresource
+
         @resource(rk('bagan', ResourceAction::Update))
             <x-si.modal id="kunci-bagan" judul="Kunci bagan" ukuran="kecil">
                 Setelah dikunci, susunan <strong>{{ $weightClass->name }}</strong> tidak bisa disusun ulang

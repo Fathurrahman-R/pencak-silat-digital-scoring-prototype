@@ -114,6 +114,13 @@ class BracketController extends Controller
             'weightClass' => $weightClass,
             'bracket' => $bracket,
             'pohon' => ($this->pohon)($bracket),
+            /*
+             * Peserta sah SEKARANG, bukan jumlah tempat yang terisi di bagan.
+             * Keduanya bisa berbeda: seorang pesilat bisa gugur di timbang
+             * badan setelah bagan disusun, dan dialog susun ulang menjanjikan
+             * undian dari peserta yang ada saat tombolnya ditekan.
+             */
+            'pesertaSah' => $this->generator->pesertaSah($weightClass)->count(),
         ]);
     }
 

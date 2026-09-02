@@ -52,6 +52,58 @@ it('menampilkan daftar kelas tanding dengan jumlah peserta sah', function () {
         ->assertSee('3 peserta sah');
 });
 
+/*
+ * Susun ulang hanya ada di halaman bagan.
+ *
+ * Mengacak ulang undian membatalkan seluruh pasangan, termasuk yang sudah
+ * diumumkan ke kontingen. Keputusan sebesar itu diambil setelah melihat
+ * susunannya; di daftar kelas, tombolnya ditekan tanpa satu pun pasangan
+ * terlihat. Daftar menyisakan penyusunan PERTAMA, yang memang belum punya
+ * susunan untuk dilihat.
+ */
+it('tidak menawarkan susun ulang di daftar kelas', function () {
+    ($this->buatPeserta)(4);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.turnamen.bagan.index', $this->tournament))
+        ->assertOk()
+        ->assertSee('Lihat')
+        ->assertDontSee('Susun ulang');
+});
+
+it('menawarkan susun bagan di daftar kelas yang belum punya bagan', function () {
+    ($this->buatPeserta)(4);
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.turnamen.bagan.index', $this->tournament))
+        ->assertOk()
+        ->assertSee('Susun bagan');
+});
+
+it('menawarkan susun ulang di halaman bagan yang belum dikunci', function () {
+    ($this->buatPeserta)(5);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->assertSee('Susun ulang')
+        // Jumlah peserta sah SEKARANG, bukan tempat yang terisi di bagan.
+        ->assertSee('5');
+});
+
+it('tidak menawarkan susun ulang pada bagan yang sudah dikunci', function () {
+    ($this->buatPeserta)(4);
+    $bracket = (new BracketGenerator)->untukKelas($this->kelas);
+    (new BracketGenerator)->kunci($bracket, $this->admin);
+
+    $this->actingAs($this->admin)
+        ->get("/admin/turnamen/{$this->tournament->id}/bagan/{$this->kelas->id}")
+        ->assertOk()
+        ->assertDontSee('Susun ulang');
+});
+
 it('menyusun bagan dari peserta yang sudah disahkan', function () {
     ($this->buatPeserta)(4);
 
