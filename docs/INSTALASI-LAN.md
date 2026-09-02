@@ -58,6 +58,12 @@ REVERB_APP_SECRET=
 # jaringan itu, misalnya 192.168.1.10.
 REVERB_HOST="192.168.1.10"
 REVERB_PORT=8080
+
+# Alamat yang dipakai APLIKASI untuk mendorong siaran ke Reverb. Selalu
+# loopback selama Reverb berjalan di mesin yang sama -- lewat IP LAN mesin
+# sendiri satu siaran diukur 15,7 ms, lewat loopback 1,8 ms.
+REVERB_PUBLISH_HOST=127.0.0.1
+
 VITE_REVERB_HOST="${REVERB_HOST}"
 VITE_REVERB_PORT="${REVERB_PORT}"
 VITE_REVERB_SCHEME=http
@@ -75,6 +81,8 @@ php -r "printf('REVERB_APP_ID=%d%sREVERB_APP_KEY=%s%sREVERB_APP_SECRET=%s%s', ra
 **Jangan memakai `php artisan reverb:install`.** Perintah itu menempelkan blok Reverb baru di akhir `.env` tanpa membuang baris yang sudah ada, dan nilai terakhirlah yang dipakai Laravel -- artinya `REVERB_HOST` berisi IP LAN yang baru saja disunting akan tertimpa `localhost` di baris bawahnya, dan seluruh HP juri kehilangan WebSocket tanpa pesan galat yang jelas.
 
 **Kenapa `REVERB_HOST` bukan `localhost`.** HP juri menyambung ke server dari perangkat lain di jaringan yang sama. `localhost` di HP menunjuk ke HP itu sendiri, bukan ke server. Isi dengan alamat IP LAN mesin server (`ipconfig` di PowerShell untuk melihatnya), dan pastikan alamat itu **statis** (set IP statis di adapter jaringan Windows, atau reservasi DHCP di router) -- kalau berubah di tengah turnamen, seluruh HP juri kehilangan koneksi.
+
+**`REVERB_HOST` dan `REVERB_PUBLISH_HOST` adalah dua arah yang berbeda.** Yang pertama dipakai peramban (HP juri, panel operator, vMix) untuk menyambung ke WebSocket; yang kedua dipakai aplikasi di server untuk mendorong siarannya ke Reverb. Aplikasi tidak perlu keluar ke jaringan untuk bicara dengan proses di mesinnya sendiri: diukur di satu mesin, satu dorongan siaran memakan 15,7 ms lewat IP LAN dan 1,8 ms lewat loopback. Selisihnya menempel di tiap penekanan tombol juri sepanjang pertandingan. Isi `REVERB_PUBLISH_HOST` dengan alamat lain hanya kalau Reverb sengaja dijalankan di mesin terpisah.
 
 **Mengubah `REVERB_HOST` sesudahnya wajib diikuti `npm run build`.** `VITE_REVERB_HOST` dibaca saat aset dikompilasi, bukan saat aplikasi berjalan, jadi alamatnya ikut tertanam di dalam `public/build/assets/echo-*.js`. Menyunting `.env` lalu me-restart server **tidak** mengubah apa pun: panel tetap mencoba menyambung ke alamat lama sampai asetnya dibangun ulang. Panel memang menampilkan penanda "Terputus" yang menonjol saat ini terjadi, tapi baru sesudah percobaan sambungnya kedaluwarsa.
 
@@ -96,6 +104,19 @@ post_max_size = 16M
 ; konfigurasi servernya, bukan halaman galat aplikasi.
 display_errors = Off
 log_errors = On
+
+; OPcache menyimpan hasil kompilasi PHP di memori. Tanpa ini, tiap
+; permintaan mengompilasi ulang seluruh berkas yang dipakainya -- puluhan
+; milidetik yang menempel di setiap tekanan tombol dan setiap tarikan layar.
+; Herd sudah menyalakannya; PHP yang dipasang sendiri belum tentu.
+opcache.enable = 1
+opcache.memory_consumption = 256
+opcache.max_accelerated_files = 20000
+
+; Di hari-H berkasnya tidak berubah, jadi PHP tidak perlu memeriksa cap
+; waktu tiap berkas tiap permintaan. Kembalikan ke 1 kalau kodenya sedang
+; disunting -- dengan 0, perubahan kode tidak berlaku sampai PHP di-restart.
+opcache.validate_timestamps = 0
 ```
 
 Setelah menyunting `php.ini`, restart PHP (tutup dan jalankan ulang `php artisan serve`, atau restart layanan web-nya).
@@ -107,6 +128,34 @@ php artisan migrate --seed
 php artisan storage:link
 npm run build
 ```
+
+### Sebelum hari-H: `php artisan optimize`
+
+```powershell
+php artisan optimize
+```
+
+Satu perintah yang menyatukan cache konfigurasi, rute, tampilan, dan event. Tanpa itu, tiap permintaan membaca ulang `.env`, menyusun ulang seluruh daftar rute, dan memeriksa apakah tiap berkas Blade sudah dikompilasi.
+
+Pasangannya di `.env`:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+```
+
+`APP_DEBUG=true` membuat Laravel mengumpulkan jejak tiap query dan tiap pengecualian sepanjang permintaan -- berguna saat mengembangkan, pemborosan saat gelanggang berjalan, dan ia menayangkan isi `.env` ke siapa pun yang memicu galat.
+
+Sesi dan cache boleh pindah dari basis data ke berkas kalau seluruh kejuaraan berjalan di satu mesin:
+
+```env
+SESSION_DRIVER=file
+CACHE_STORE=file
+```
+
+Dengan bawaan `database`, tiap permintaan dari tiap panel membaca dan menulis satu baris sesi -- dua perjalanan ke MySQL sebelum permintaannya sendiri mulai dikerjakan. Tetap di `database` kalau suatu saat aplikasinya dijalankan di lebih dari satu mesin sekaligus.
+
+**Sesudah menyunting `.env` atau kode apa pun, jalankan ulang `php artisan optimize`** (atau `php artisan optimize:clear` untuk kembali ke mode pengembangan). Konfigurasi yang sudah di-cache tidak lagi membaca `.env`, jadi suntingan yang tidak diikuti perintah ini tidak berlaku sama sekali -- termasuk `REVERB_HOST` yang baru.
 
 ## 6. Jalankan server (produksi/hari-H, bukan `composer run dev`)
 
