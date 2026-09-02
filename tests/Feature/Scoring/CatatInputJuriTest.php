@@ -8,8 +8,10 @@ use App\Enums\StatusBabak;
 use App\Enums\Sudut;
 use App\Events\Scoring\JudgeInputReceived;
 use App\Events\Scoring\ScoreAwarded;
+use App\Models\Arena;
 use App\Models\Bracket;
 use App\Models\Contingent;
+use App\Models\MatchOfficial;
 use App\Models\MatchRound;
 use App\Models\Registration;
 use App\Models\SilatMatch;
@@ -105,4 +107,55 @@ it('menyiarkan ScoreAwarded begitu ambang konsensus tercapai', function () {
     ($this->catat)($this->match, $juriKedua, 1, Sudut::Merah, JenisSerangan::Pukulan);
 
     Event::assertDispatched(ScoreAwarded::class);
+});
+
+/*
+ * Siaran input juri sampai ke DUA channel: privat gelanggang dan publik
+ * (overlay siaran memakainya untuk indikator J1..Jn). Karena Laravel mengirim
+ * muatan yang sama ke setiap channel sebuah event, muatan itu tidak boleh
+ * memuat apa pun yang tidak boleh dilihat penonton -- FR-H-04.
+ */
+it('menyiarkan input juri tanpa identitas juri sama sekali', function () {
+    $this->match->update(['arena_id' => Arena::factory()->for($this->tournament)->create()->id]);
+
+    MatchRound::create([
+        'match_id' => $this->match->id, 'round' => 1, 'duration_ms' => 120_000,
+        'status' => StatusBabak::Berjalan, 'started_at' => now(),
+    ]);
+
+    MatchOfficial::create([
+        'match_id' => $this->match->id,
+        'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI,
+        'number' => 2,
+    ]);
+
+    $input = ($this->catat)($this->match, $this->juri, 1, Sudut::Merah, JenisSerangan::Pukulan);
+
+    $muatan = (new JudgeInputReceived($input->fresh()))->broadcastWith();
+
+    expect($muatan)->toHaveKey('judge_number')
+        ->and($muatan['judge_number'])->toBe(2)
+        ->and($muatan)->not->toHaveKey('judge_id')
+        ->and($muatan)->not->toHaveKey('judge_name')
+        ->and($muatan)->not->toHaveKey('rejected_reason');
+});
+
+it('menyiarkan input juri ke channel publik dan privat sekaligus', function () {
+    $arena = Arena::factory()->for($this->tournament)->create();
+    $this->match->update(['arena_id' => $arena->id]);
+
+    MatchRound::create([
+        'match_id' => $this->match->id, 'round' => 1, 'duration_ms' => 120_000,
+        'status' => StatusBabak::Berjalan, 'started_at' => now(),
+    ]);
+
+    $input = ($this->catat)($this->match, $this->juri, 1, Sudut::Merah, JenisSerangan::Pukulan);
+
+    $nama = collect((new JudgeInputReceived($input->fresh()))->broadcastOn())
+        ->map(fn ($channel) => $channel->name)
+        ->all();
+
+    expect($nama)->toContain('presence-arena.'.$arena->id)
+        ->and($nama)->toContain('public-live.'.$arena->id);
 });
