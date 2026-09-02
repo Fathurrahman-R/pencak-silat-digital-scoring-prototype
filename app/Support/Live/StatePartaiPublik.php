@@ -2,6 +2,7 @@
 
 namespace App\Support\Live;
 
+use App\Enums\JenisSerangan;
 use App\Enums\Sudut;
 use App\Models\Arena;
 use App\Models\SilatMatch;
@@ -43,7 +44,31 @@ class StatePartaiPublik
             'peringatan' => $this->tangga->jumlahPeringatan($match, $sudut),
         ];
 
+        /*
+         * Berapa KALI tiap teknik terbit sepanjang partai, per sudut.
+         *
+         * Dipakai papan hasil siaran, yang merinci dari mana angka akhirnya
+         * datang: "menang angka 21-14" tidak menjelaskan apa pun sampai
+         * penonton tahu 21 itu tersusun dari berapa pukulan, tendangan, dan
+         * jatuhan. Yang dihitung hanya nilai yang BERLAKU -- yang dibatalkan
+         * tidak ikut menyusun skornya, jadi ia juga tidak boleh muncul di
+         * rinciannya.
+         */
+        $terbit = $match->scoreEvents()->berlaku()
+            ->selectRaw('corner, point_type, count(*) as jumlah')
+            ->groupBy('corner', 'point_type')
+            ->get();
+
+        $teknik = fn (Sudut $sudut) => collect(JenisSerangan::cases())
+            ->mapWithKeys(fn (JenisSerangan $jenis) => [
+                $jenis->value => (int) $terbit
+                    ->firstWhere(fn ($baris) => $baris->corner === $sudut && $baris->point_type === $jenis)
+                    ?->jumlah,
+            ])
+            ->all();
+
         $round = $match->rounds->firstWhere('round', $babakSekarang);
+        $peraturan = $match->bracket->weightClass->tournament->peraturan();
 
         return [
             'ada_partai' => true,
@@ -68,8 +93,7 @@ class StatePartaiPublik
              * pertandingan — dua hal berbeda yang sebelumnya membuat scorebug
              * siaran tidak pernah menyebut babak keberapa yang sedang berjalan.
              */
-            'jumlah_babak' => $match->bracket->weightClass->tournament->peraturan()
-                ->babakUntuk($match->bracket->weightClass->golongan_usia)['jumlah'],
+            'jumlah_babak' => $peraturan->babakUntuk($match->bracket->weightClass->golongan_usia)['jumlah'],
             'red' => $match->red ? [
                 'nama' => $match->red->athletes->pluck('name')->implode(', '),
                 'kontingen' => $match->red->contingent->name,
@@ -93,6 +117,21 @@ class StatePartaiPublik
                 'merah' => $penalti(Sudut::Merah),
                 'biru' => $penalti(Sudut::Biru),
             ],
+            'teknik' => [
+                'merah' => $teknik(Sudut::Merah),
+                'biru' => $teknik(Sudut::Biru),
+            ],
+            /*
+             * Formasi juri, bukan identitasnya: berapa juri yang bertugas,
+             * berapa yang harus sepakat, dan berapa lama jendela konsensusnya.
+             * Overlay memakainya untuk menggambar indikator J1..Jn dan untuk
+             * tahu kapan indikator yang tidak mencapai ambang harus padam.
+             */
+            'peraturan' => [
+                'jumlah_juri' => $peraturan->jumlah_juri_tanding,
+                'ambang_sepakat' => $peraturan->ambang_sepakat,
+                'window_konsensus_ms' => $peraturan->window_konsensus_ms,
+            ],
         ];
     }
 
@@ -105,9 +144,9 @@ class StatePartaiPublik
         ];
 
         return SilatMatch::where('arena_id', $arena->id)
-                ->where('status', SilatMatch::STATUS_BERLANGSUNG)
-                ->with($muatan)
-                ->first()
+            ->where('status', SilatMatch::STATUS_BERLANGSUNG)
+            ->with($muatan)
+            ->first()
             ?? SilatMatch::where('arena_id', $arena->id)
                 ->where('status', SilatMatch::STATUS_SELESAI)
                 ->with($muatan)
