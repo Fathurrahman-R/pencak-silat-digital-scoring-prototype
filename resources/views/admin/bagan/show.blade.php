@@ -9,6 +9,15 @@
                      $weightClass->name => null,
                  ]">
     <x-slot:actions>
+        @resource(rk('bagan', ResourceAction::Print))
+            {{-- target=_blank: PDF dibuka di tab lain supaya halaman bagannya
+                 tidak hilang dari layar panitia yang sedang memeriksanya. --}}
+            <a href="{{ route('admin.turnamen.bagan.cetak', [$tournament, $weightClass]) }}" target="_blank"
+               class="inline-flex h-9 items-center rounded-[var(--radius)] border border-line-strong px-3 text-[13px] font-semibold text-ink">
+                Cetak PDF
+            </a>
+        @endresource
+
         @if ($bracket->terkunci())
             <x-si.badge varian="sukses">
                 Terkunci oleh {{ $bracket->locker?->name ?? '—' }} · {{ $bracket->locked_at->translatedFormat('d M Y, H:i') }}

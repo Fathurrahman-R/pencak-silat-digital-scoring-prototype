@@ -8,9 +8,12 @@ use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Support\Bagan\PenjadwalPartai;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 
@@ -98,6 +101,42 @@ class JadwalController extends Controller
         }
 
         return back()->with('success', "Partai {$match->id} dipindahkan ke urutan {$data['urutan']}.");
+    }
+
+    /**
+     * Jadwal siap cetak: satu tabel per gelanggang, urut tayang.
+     *
+     * Dibawa ke gelanggang sebagai kertas karena panitia meja gelanggang tidak
+     * selalu punya layar, dan karena daftar yang dipegang di tangan tidak ikut
+     * berubah saat seseorang menggeser urutan di panel. Tanpa kolom jam --
+     * jadwal memang tidak menyimpannya.
+     */
+    public function cetak(Tournament $tournament): HttpResponse
+    {
+        $pdf = Pdf::loadView('admin.jadwal.cetak-pdf', [
+            'tournament' => $tournament,
+            'arenas' => $this->antreanPerGelanggang($tournament),
+        ])->setPaper('a4');
+
+        return $pdf->stream('jadwal-'.str($tournament->name)->slug().'-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    /**
+     * Isi tiap gelanggang, urut tayang.
+     *
+     * @return Collection<int, Arena>
+     */
+    private function antreanPerGelanggang(Tournament $tournament)
+    {
+        return $tournament->arenas()->aktif()->orderBy('sort_order')->get()
+            ->each(fn (Arena $arena) => $arena->setRelation(
+                'matches',
+                $arena->matches()
+                    ->whereNotNull('order_in_arena')
+                    ->with(['red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent', 'bracket.weightClass'])
+                    ->orderBy('order_in_arena')
+                    ->get(),
+            ));
     }
 
     public function tetapkan(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse

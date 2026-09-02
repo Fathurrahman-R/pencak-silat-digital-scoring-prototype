@@ -144,7 +144,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Bagan',
                 'group' => 'Pertandingan',
                 'description' => 'Bagan gugur, undian, dan penguncian hasil drawing.',
-                'actions' => [...$crud, ResourceAction::Assign],
+                'actions' => [...$crud, ResourceAction::Assign, ResourceAction::Print],
                 'locked' => true,
             ],
             [
@@ -152,7 +152,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Jadwal Partai',
                 'group' => 'Pertandingan',
                 'description' => 'Penempatan partai ke gelanggang dan urutan tayangnya.',
-                'actions' => [...$crud, ResourceAction::Assign],
+                'actions' => [...$crud, ResourceAction::Assign, ResourceAction::Print],
             ],
             [
                 'key' => 'penugasan-aparat',

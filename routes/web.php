@@ -283,6 +283,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('bagan', ResourceAction::View));
                     Route::post('/{weightClass}/susun', 'susun')->name('susun')->middleware('resource:'.rk('bagan', ResourceAction::Create));
+                    Route::get('/{weightClass}/cetak', 'cetak')->name('cetak')->middleware('resource:'.rk('bagan', ResourceAction::Print));
                     Route::get('/{weightClass}', 'show')->name('show')->middleware('resource:'.rk('bagan', ResourceAction::View));
                     Route::post('/{weightClass}/tukar', 'tukar')->name('tukar')->middleware('resource:'.rk('bagan', ResourceAction::Update));
                     Route::post('/{weightClass}/kunci', 'kunci')->name('kunci')->middleware('resource:'.rk('bagan', ResourceAction::Update));
@@ -294,6 +295,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('jadwal.')
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('jadwal', ResourceAction::View));
+                    Route::get('/cetak', 'cetak')->name('cetak')->middleware('resource:'.rk('jadwal', ResourceAction::Print));
                     Route::post('/{match}/tetapkan', 'tetapkan')->name('tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
                     Route::post('/{match}/lepas', 'lepas')->name('lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
                     Route::post('/{match}/urutkan', 'urutkan')->name('urutkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));

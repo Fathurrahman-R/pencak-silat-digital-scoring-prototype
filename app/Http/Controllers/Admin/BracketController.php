@@ -8,9 +8,11 @@ use App\Models\Tournament;
 use App\Models\WeightClass;
 use App\Support\Bagan\BracketGenerator;
 use App\Support\Bagan\PohonBagan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use RuntimeException;
 
 /**
@@ -123,6 +125,58 @@ class BracketController extends Controller
             'pesertaSah' => $this->generator->pesertaSah($weightClass)->count(),
         ]);
     }
+
+    /**
+     * Bagan siap cetak.
+     *
+     * Ukuran kertas dihitung dari pohonnya, bukan dipatok A4. Bagan 16 tempat
+     * selebar 1160 piksel; dipaksa masuk A4 lanskap, nama pesilat mengecil
+     * sampai delapan piksel dan bagan yang dipaku di papan pengumuman tidak
+     * terbaca dari jarak berdiri. Kertas yang mengikuti pohonnya membuat nama
+     * tetap seukuran layar, dan peramban maupun mesin cetak sudah punya
+     * "sesuaikan halaman" untuk mengecilkannya kalau kertasnya memang cuma A4.
+     */
+    public function cetak(Tournament $tournament, WeightClass $weightClass): HttpResponse
+    {
+        $this->pastikanMilik($tournament, $weightClass);
+
+        $bracket = $weightClass->bracket()->with([
+            'slots.registration.athletes',
+            'slots.registration.contingent',
+            'matches.red.athletes',
+            'matches.red.contingent',
+            'matches.blue.athletes',
+            'matches.blue.contingent',
+            'locker',
+        ])->first();
+
+        abort_unless($bracket, 404);
+
+        $pohon = ($this->pohon)($bracket);
+
+        // Piksel ke titik: 96 dpi layar, 72 titik per inci kertas.
+        $keTitik = fn (float $px): float => round($px * 0.75, 1);
+
+        $lebar = $keTitik($pohon['lebar'] + self::MARGIN_CETAK * 2);
+        $tinggi = $keTitik($pohon['tinggi'] + self::KEPALA_CETAK + self::MARGIN_CETAK * 2);
+
+        $pdf = Pdf::loadView('admin.bagan.cetak-pdf', [
+            'tournament' => $tournament,
+            'weightClass' => $weightClass,
+            'bracket' => $bracket,
+            'pohon' => $pohon,
+            'margin' => self::MARGIN_CETAK,
+            'kepala' => self::KEPALA_CETAK,
+        ])->setPaper([0, 0, $lebar, $tinggi]);
+
+        return $pdf->stream('bagan-'.str($weightClass->namaLengkap())->slug().'.pdf');
+    }
+
+    /** Tepi kertas di sekeliling pohon, dalam piksel pohon. */
+    private const MARGIN_CETAK = 32;
+
+    /** Ruang kepala halaman di atas pohon, dalam piksel pohon. */
+    private const KEPALA_CETAK = 72;
 
     public function tukar(Request $request, Tournament $tournament, WeightClass $weightClass): RedirectResponse
     {

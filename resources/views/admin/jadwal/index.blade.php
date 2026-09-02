@@ -7,6 +7,17 @@
                      $tournament->name => route('admin.turnamen.edit', $tournament),
                      'Jadwal' => null,
                  ]">
+    <x-slot:actions>
+        @resource(rk('jadwal', ResourceAction::Print))
+            {{-- target=_blank: panitia meja gelanggang mencetak sambil tetap
+                 memegang halaman jadwalnya. --}}
+            <a href="{{ route('admin.turnamen.jadwal.cetak', $tournament) }}" target="_blank"
+               class="inline-flex h-9 items-center rounded-[var(--radius)] border border-line-strong px-3 text-[13px] font-semibold text-ink">
+                Cetak PDF
+            </a>
+        @endresource
+    </x-slot:actions>
+
     <div class="space-y-4">
         <x-si.callout varian="keterangan" judul="Hanya partai yang kedua sudutnya sudah pasti yang muncul di sini">
             Partai yang masih menunggu pemenang babak sebelumnya belum bisa dijadwalkan. Jadwal di

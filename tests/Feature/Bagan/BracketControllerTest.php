@@ -195,6 +195,33 @@ it('mewajibkan alasan saat membuka kunci bagan dan mencatatnya ke jejak audit', 
         ->toMatchArray(['alasan' => 'Dua kontingen tertukar saat undian manual.']);
 });
 
+/*
+ * Bagan dicetak sebagai PDF, bukan disuruh screenshot.
+ *
+ * Kertasnya menyesuaikan pohonnya, bukan dipatok A4: bagan 16 tempat yang
+ * dipaksa masuk A4 lanskap mengecilkan nama pesilat sampai tidak terbaca dari
+ * jarak berdiri di depan papan pengumuman.
+ */
+it('mencetak bagan sebagai PDF', function () {
+    ($this->buatPeserta)(5);
+    (new BracketGenerator)->untukKelas($this->kelas);
+
+    $respons = $this->actingAs($this->admin)
+        ->get(route('admin.turnamen.bagan.cetak', [$this->tournament, $this->kelas]))
+        ->assertOk();
+
+    expect($respons->headers->get('content-type'))->toContain('application/pdf')
+        ->and($respons->getContent())->toStartWith('%PDF');
+});
+
+it('menolak mencetak bagan kelas yang belum tersusun', function () {
+    ($this->buatPeserta)(4);
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.turnamen.bagan.cetak', [$this->tournament, $this->kelas]))
+        ->assertNotFound();
+});
+
 it('menolak kelas tanding yang bukan milik kejuaraan di alamat', function () {
     $turnamenLain = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($turnamenLain);

@@ -58,6 +58,27 @@ it('menampilkan gelanggang beserta partai yang belum dijadwalkan', function () {
         ->assertSee('Belum dijadwalkan');
 });
 
+/*
+ * Jadwal dibawa ke gelanggang sebagai kertas: panitia meja gelanggang tidak
+ * selalu punya layar, dan daftar di tangan tidak ikut berubah saat seseorang
+ * menggeser urutan di panel.
+ */
+it('mencetak jadwal sebagai PDF', function () {
+    $partai = ($this->buatPartai)();
+
+    $this->actingAs($this->admin)->post(
+        route('admin.turnamen.jadwal.tetapkan', [$this->tournament, $partai]),
+        ['arena_id' => $this->arena->id],
+    );
+
+    $respons = $this->actingAs($this->admin)
+        ->get(route('admin.turnamen.jadwal.cetak', $this->tournament))
+        ->assertOk();
+
+    expect($respons->headers->get('content-type'))->toContain('application/pdf')
+        ->and($respons->getContent())->toStartWith('%PDF');
+});
+
 it('menjadwalkan partai lewat form', function () {
     $partai = ($this->buatPartai)();
 
