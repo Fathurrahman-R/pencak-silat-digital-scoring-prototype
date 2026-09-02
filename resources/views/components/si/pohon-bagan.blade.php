@@ -41,7 +41,7 @@
                 @endphp
 
                 <div @class([
-                        'absolute flex items-center gap-2 overflow-hidden rounded-[var(--radius)] px-2.5',
+                        'absolute flex items-center gap-2.5 overflow-hidden rounded-[var(--radius)] px-2.5',
                         $warna => ! $kosong,
                         'border border-dashed border-line bg-surface-inset text-ink-secondary' => ($slot['kosong'] ?? false),
                         'border border-line bg-surface-inset text-ink-secondary' => ($slot['menunggu'] ?? false),
@@ -56,15 +56,22 @@
 
                     @if ($kosong)
                         <span class="min-w-0 flex-1 truncate text-[13px]">
-                            {{ ($slot['kosong'] ?? false) ? 'Kosong — bye' : 'Menunggu babak sebelumnya' }}
+                            {{-- Tempat undian yang tidak kebagian peserta. Bukan bye: pasangannya
+                                 pun kosong, jadi tidak ada partai yang lahir dari sini sama sekali. --}}
+                            {{ ($slot['kosong'] ?? false) ? 'Tempat kosong' : 'Menunggu babak sebelumnya' }}
                         </span>
                     @else
-                        <span class="min-w-0 flex-1 truncate text-[14px] font-semibold">{{ $slot['nama'] }}</span>
+                        {{-- Nama di atas, kontingen di bawahnya. Sebaris, keduanya
+                             berebut lebar kolom yang sama dan sama-sama terpotong. --}}
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-[14px] leading-tight font-semibold">{{ $slot['nama'] }}</p>
 
-                        @if (! empty($slot['kontingen']))
-                            <span class="shrink-0 truncate text-[12px] {{ $slot['sudut'] === 'merah' ? 'text-corner-red-on' : 'text-corner-blue-on' }}"
-                                  style="max-width: 40%">{{ $slot['kontingen'] }}</span>
-                        @endif
+                            @if (! empty($slot['kontingen']))
+                                <p class="mt-0.5 truncate text-[12px] leading-tight {{ $slot['sudut'] === 'merah' ? 'text-corner-red-on' : 'text-corner-blue-on' }}">
+                                    {{ $slot['kontingen'] }}
+                                </p>
+                            @endif
+                        </div>
 
                         @if ($slot['bye'] ?? false)
                             <span class="shrink-0 text-[11px] font-semibold uppercase opacity-85">bye</span>

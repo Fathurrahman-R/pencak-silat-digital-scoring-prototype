@@ -10,6 +10,7 @@ use App\Models\JurusEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\WeightClass;
+use App\Support\Bagan\PohonBagan;
 use App\Support\Jurus\JurusScoreCalculator;
 use App\Support\Live\StatePartaiPublik;
 use App\Support\Rekap\RekapMedali;
@@ -36,6 +37,7 @@ class LiveScoreController extends Controller
         private readonly JurusScoreCalculator $jurusKalkulator,
         private readonly TandingScoreCalculator $tandingKalkulator,
         private readonly RekapMedali $rekap,
+        private readonly PohonBagan $pohon,
     ) {}
 
     public function gelanggang(Arena $arena): View
@@ -161,6 +163,7 @@ class LiveScoreController extends Controller
         abort_unless($weightClass->tournament_id === $tournament->id, 404);
 
         $bracket = Bracket::where('weight_class_id', $weightClass->id)->with([
+            'slots.registration.athletes', 'slots.registration.contingent',
             'matches.red.athletes', 'matches.red.contingent',
             'matches.blue.athletes', 'matches.blue.contingent',
         ])->first();
@@ -169,7 +172,9 @@ class LiveScoreController extends Controller
             'tournament' => $tournament,
             'weightClass' => $weightClass,
             'bracket' => $bracket,
-            'babak' => $bracket?->matches->groupBy('round'),
+            // Pohon yang sama persis dengan halaman bagan panitia -- satu
+            // penghitung, satu komponen, tiga permukaan.
+            'pohon' => $bracket ? ($this->pohon)($bracket) : null,
         ]);
     }
 }

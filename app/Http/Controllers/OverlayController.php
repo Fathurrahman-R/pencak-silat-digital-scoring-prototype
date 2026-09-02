@@ -6,6 +6,7 @@ use App\Models\Arena;
 use App\Models\Bracket;
 use App\Models\Tournament;
 use App\Models\WeightClass;
+use App\Support\Bagan\PohonBagan;
 use App\Support\Live\StatePartaiPublik;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,10 @@ use Illuminate\Http\Request;
  */
 class OverlayController extends Controller
 {
-    public function __construct(private readonly StatePartaiPublik $state) {}
+    public function __construct(
+        private readonly StatePartaiPublik $state,
+        private readonly PohonBagan $pohon,
+    ) {}
 
     public function state(Arena $arena): JsonResponse
     {
@@ -74,6 +78,7 @@ class OverlayController extends Controller
         $bracket = $weightClass
             ? Bracket::where('weight_class_id', $weightClass->id)->with([
                 'weightClass',
+                'slots.registration.athletes', 'slots.registration.contingent',
                 'matches.red.athletes', 'matches.red.contingent',
                 'matches.blue.athletes', 'matches.blue.contingent',
             ])->first()
@@ -83,7 +88,9 @@ class OverlayController extends Controller
             'tournament' => $tournament,
             'weightClass' => $weightClass,
             'bracket' => $bracket,
-            'babak' => $bracket?->matches->groupBy('round'),
+            // Pohon yang sama persis dengan halaman bagan panitia -- satu
+            // penghitung, satu komponen, tiga permukaan.
+            'pohon' => $bracket ? ($this->pohon)($bracket) : null,
         ]);
     }
 

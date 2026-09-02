@@ -102,8 +102,20 @@
     <div class="font-mono text-[12px] text-[#8a8a90] mt-1">8 PESILAT &middot; DIKUNCI</div>
   </div>
 
-  <!-- Pohon bagan tidak muat melebar di 390px. Diputar jadi daftar per tahap,
-       tahap berjalan di atas: yang dicari adalah "lawan berikutnya siapa". -->
+  <!-- USANG — rancangan ini TIDAK lagi dipakai.
+
+       Alasan aslinya: pohon bagan tidak muat melebar di 390px, jadi diputar
+       jadi daftar per tahap dengan tahap berjalan di atas.
+
+       Keputusan berikutnya membatalkannya: bagan publik, bagan panitia, dan
+       overlay siaran kini memakai SATU pohon yang sama persis
+       (<x-si.pohon-bagan>, koordinat dari App\Support\Bagan\PohonBagan) --
+       tiga gambar berbeda untuk satu undian membuat penonton, panitia, dan
+       pemirsa siaran berdebat tentang bagan yang sebenarnya identik. Di HP,
+       pohonnya digulir mendatar di dalam pembungkusnya sendiri.
+
+       Berkas ini disimpan sebagai catatan rancangan yang pernah dipilih,
+       bukan sebagai acuan yang berlaku. -->
   <div class="flex-1 overflow-hidden flex flex-col">
 
     <div class="flex items-baseline justify-between px-4 py-2 border-b-2 border-white shrink-0">

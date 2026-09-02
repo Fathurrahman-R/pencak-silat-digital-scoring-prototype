@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
-use App\Models\Bracket;
 use App\Models\Tournament;
 use App\Models\WeightClass;
 use App\Support\Bagan\BracketGenerator;
-use Illuminate\Support\Collection;
+use App\Support\Bagan\PohonBagan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +22,10 @@ use RuntimeException;
  */
 class BracketController extends Controller
 {
-    public function __construct(private readonly BracketGenerator $generator) {}
+    public function __construct(
+        private readonly BracketGenerator $generator,
+        private readonly PohonBagan $pohon,
+    ) {}
 
     public function index(Request $request, Tournament $tournament): View
     {
@@ -111,179 +113,8 @@ class BracketController extends Controller
             'tournament' => $tournament,
             'weightClass' => $weightClass,
             'bracket' => $bracket,
-            'babak' => $bracket->matches->groupBy('round'),
-            'pohon' => $this->pohon($bracket),
+            'pohon' => ($this->pohon)($bracket),
         ]);
-    }
-
-    /*
-     * Ukuran yang mengikat tata letak pohon. Dihitung di sini, bukan di Blade,
-     * karena garis penghubung harus bertemu TEPAT di tengah slot pasangannya:
-     * satu-dua piksel meleset terbaca sebagai bagan yang salah sambung, dan
-     * itu kesalahan paling mahal di layar ini.
-     */
-    private const SLOT_TINGGI = 40;
-
-    private const SLOT_JARAK = 6;    // antar dua slot dalam satu partai
-
-    private const LANGKAH = 116;     // dari tengah partai ke tengah partai berikutnya
-
-    private const KOLOM_AWAL = 300;  // babak pertama memuat nama + kontingen
-
-    private const KOLOM_LANJUT = 260;
-
-    private const PENGHUBUNG = 40;   // lebar kolom garis antar babak
-
-    /**
-     * Susunan pohon siap gambar: posisi tiap slot dan tiap garis penghubung.
-     *
-     * Slot diletakkan dengan koordinat mutlak, bukan flex. `space-around`
-     * mendekati posisi yang benar tapi meleset begitu tinggi slot atau jumlah
-     * peserta berubah, dan pohon yang garisnya meleset menyesatkan pembacanya
-     * tentang siapa bertemu siapa.
-     *
-     * Sudut ditentukan posisi slot, bukan hasil partai: slot bernomor ganjil
-     * adalah sudut merah. Itu berlaku bahkan sebelum partainya dijadwalkan,
-     * dan kontingen memakai nomor itu untuk menyiapkan sudutnya.
-     *
-     * @return array<string, mixed>
-     */
-    private function pohon(Bracket $bracket): array
-    {
-        $slots = $bracket->slots->sortBy('position')->values();
-        $ukuran = max(2, $slots->count() ?: $bracket->size);
-        $jumlahBabak = (int) ceil(log($ukuran, 2));
-
-        // Tengah tiap slot babak pertama, lalu rata-rata berpasangan ke atas.
-        $tengah = [];
-        for ($i = 0; $i < $ukuran; $i++) {
-            $tengah[0][$i] = intdiv($i, 2) * self::LANGKAH
-                + ($i % 2) * (self::SLOT_TINGGI + self::SLOT_JARAK)
-                + intdiv(self::SLOT_TINGGI, 2);
-        }
-
-        /*
-         * jumlahBabak = log2(ukuran): bagan 4 peserta punya DUA babak, yaitu
-         * penyisihan dan final. Kolom terakhir bernomor jumlahBabak-1, dan
-         * tengah dihitung sampai situ saja -- satu babak kelebihan akan
-         * menggambar kolom kosong berlabel "Final" di sebelah final yang
-         * sebenarnya.
-         */
-        for ($r = 1; $r < $jumlahBabak; $r++) {
-            foreach (array_chunk($tengah[$r - 1], 2) as $j => [$atas, $bawah]) {
-                $tengah[$r][$j] = intdiv($atas + $bawah, 2);
-            }
-        }
-
-        $partaiPerBabak = $bracket->matches->groupBy('round');
-
-        $kolom = [];
-        $x = 0;
-
-        for ($r = 0; $r < $jumlahBabak; $r++) {
-            $lebar = $r === 0 ? self::KOLOM_AWAL : self::KOLOM_LANJUT;
-
-            $kolom[] = [
-                'judul' => $bracket->namaBabak($r + 1),
-                'x' => $x,
-                'lebar' => $lebar,
-                'slot' => $r === 0
-                    ? $this->slotBabakPertama($slots, $tengah[0], $ukuran)
-                    : $this->slotBabakLanjut($partaiPerBabak->get($r + 1), $tengah[$r]),
-            ];
-
-            $x += $lebar + self::PENGHUBUNG;
-        }
-
-        return [
-            'tinggi' => intdiv($ukuran, 2) * self::LANGKAH - (self::LANGKAH - self::SLOT_TINGGI * 2 - self::SLOT_JARAK),
-            'lebar' => $x - self::PENGHUBUNG,
-            'slot_tinggi' => self::SLOT_TINGGI,
-            'kolom' => $kolom,
-            'garis' => $this->garis($tengah, $jumlahBabak),
-        ];
-    }
-
-    /** @return array<int, array<string, mixed>> */
-    private function slotBabakPertama($slots, array $tengah, int $ukuran): array
-    {
-        $hasil = [];
-
-        for ($i = 0; $i < $ukuran; $i++) {
-            $slot = $slots->get($i);
-            $peserta = $slot?->registration;
-
-            $hasil[] = [
-                'y' => $tengah[$i] - intdiv(self::SLOT_TINGGI, 2),
-                'nomor' => $slot?->position ?? $i + 1,
-                // Slot ganjil adalah sudut merah -- berlaku sebelum partainya
-                // dijadwalkan, dan kontingen memakainya untuk menyiapkan sudut.
-                'sudut' => $i % 2 === 0 ? 'merah' : 'biru',
-                'nama' => $peserta?->athletes->pluck('name')->implode(', '),
-                'kontingen' => $peserta?->contingent->name,
-                'kosong' => $peserta === null,
-            ];
-        }
-
-        return $hasil;
-    }
-
-    /** @return array<int, array<string, mixed>> */
-    private function slotBabakLanjut(?Collection $partai, array $tengah): array
-    {
-        $urut = ($partai ?? collect())->sortBy('position')->values();
-        $hasil = [];
-
-        foreach ($tengah as $j => $y) {
-            /*
-             * Satu slot babak lanjut = satu SISI dari satu partai. Partai ke-n
-             * di babak itu memuat slot 2n dan 2n+1.
-             */
-            $p = $urut->get(intdiv($j, 2));
-            $peserta = $j % 2 === 0 ? $p?->red : $p?->blue;
-
-            $hasil[] = [
-                'y' => $y - intdiv(self::SLOT_TINGGI, 2),
-                'nama' => $peserta?->athletes->pluck('name')->implode(', '),
-                'kontingen' => $peserta?->contingent->name,
-                'sudut' => $j % 2 === 0 ? 'merah' : 'biru',
-                // Sudut baru diwarnai setelah penghuninya pasti. Mewarnai slot
-                // yang masih menunggu berarti menjanjikan sesuatu yang belum
-                // diputuskan.
-                'menunggu' => $peserta === null,
-                'bye' => $peserta !== null && $p?->bye(),
-            ];
-        }
-
-        return $hasil;
-    }
-
-    /**
-     * Garis penghubung antar babak: keluar dari tiap slot, menyatu, lalu masuk.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function garis(array $tengah, int $jumlahBabak): array
-    {
-        $garis = [];
-        $x = self::KOLOM_AWAL;
-
-        // Penghubung ada di ANTARA kolom, jadi jumlahnya satu kurang dari
-        // jumlah babak.
-        for ($r = 0; $r < $jumlahBabak - 1; $r++) {
-            $separuh = intdiv(self::PENGHUBUNG, 2);
-
-            foreach (array_chunk($tengah[$r], 2) as $j => [$atas, $bawah]) {
-                $garis[] = ['jenis' => 'h', 'x' => $x, 'y' => $atas, 'panjang' => $separuh];
-                $garis[] = ['jenis' => 'h', 'x' => $x, 'y' => $bawah, 'panjang' => $separuh];
-                $garis[] = ['jenis' => 'v', 'x' => $x + $separuh, 'y' => $atas, 'panjang' => $bawah - $atas];
-                $garis[] = ['jenis' => 'h', 'x' => $x + $separuh, 'y' => $tengah[$r + 1][$j], 'panjang' => $separuh];
-            }
-
-            $x += self::PENGHUBUNG + self::KOLOM_LANJUT;
-        }
-
-        return $garis;
     }
 
     public function tukar(Request $request, Tournament $tournament, WeightClass $weightClass): RedirectResponse
