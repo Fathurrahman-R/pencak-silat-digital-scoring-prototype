@@ -11,7 +11,7 @@
     grup yang bisa dilipat.
 
     Grup lipat dibuang karena harganya tidak sepadan. Sebagian besar role hanya
-    memegang satu atau dua izin — Bendahara satu, Petugas Timbang Badan satu —
+    memegang satu atau dua izin — Wasit satu, Juri satu —
     jadi yang mereka lihat adalah grup terlipat berisi satu item, dan satu klik
     hanya untuk membukanya. Sisanya, yang izinnya luas, membuka semua grup di
     kunjungan pertama lalu tidak pernah menutupnya lagi. Yang tersisa dari
@@ -26,13 +26,13 @@
 --}}
 
 <div x-show="$store.shell.sidebarOpen" x-cloak
-     x-on:click="$store.shell.toggleSidebar()"
+     x-on:click="$store.shell.tutupSidebar()"
      class="fixed inset-0 z-40 bg-black/50 lg:hidden"
      aria-hidden="true"></div>
 
-<aside x-on:keydown.escape.window="$store.shell.sidebarOpen = false"
+<aside x-on:keydown.escape.window="$store.shell.tutupSidebar()"
        :class="$store.shell.sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-       class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col border-e border-line bg-surface-raised transition-[transform,width] duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--shell-sidebar)] lg:shrink-0 lg:translate-x-0"
+       class="fixed inset-y-0 start-0 z-50 flex w-[264px] -translate-x-full flex-col border-e border-line bg-surface-sunken transition-[transform,width] duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--shell-sidebar)] lg:shrink-0 lg:translate-x-0"
        aria-label="Menu utama">
 
     {{--
@@ -47,7 +47,7 @@
         bawah menunjuk ke dalam kejuaraan ini, dan salah kejuaraan berarti
         diam-diam menyunting data yang keliru.
     --}}
-    <div class="flex h-14 shrink-0 items-center border-b border-line px-3">
+    <div data-rail="brand" class="flex h-15 shrink-0 items-center gap-2 border-b border-line px-3">
         <a href="{{ route('dashboard') }}" data-rail="center"
            class="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden whitespace-nowrap">
             <span class="grid size-7 shrink-0 place-items-center rounded-[var(--radius-kecil)] bg-accent text-[13px] font-bold text-accent-on">
@@ -60,9 +60,40 @@
                 </span>
             </span>
         </a>
+
+        {{--
+            Tombol TUTUP laci, khusus lebar HP dan tablet.
+
+            Di bawah 1024px sidebar adalah laci yang menutupi halaman, dan
+            satu-satunya cara menutupnya dulu adalah menekan latar gelap di
+            sisisnya atau menekan Esc — papan ketik yang tidak dipunyai
+            pemakai HP, dan sasaran yang tidak pernah menyatakan dirinya
+            sebagai tombol. Laci yang dibuka harus punya jalan keluar yang
+            terlihat, di tempat ibu jari sudah berada: sudut yang sama dengan
+            tombol yang membukanya.
+        --}}
+        <button type="button"
+                x-on:click="$store.shell.tutupSidebar()"
+                title="Tutup menu"
+                class="grid size-10 shrink-0 place-items-center rounded-[var(--radius)] text-ink-secondary hover:bg-surface-inset hover:text-ink focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none lg:hidden">
+            <span class="sr-only">Tutup menu</span>
+            <x-si.ikon nama="x" class="size-5" />
+        </button>
+
+        {{-- Tombol ciut duduk di BARIS BRAND (DESIGN-SYSTEM.md §6), 32×32.
+             Saat menu diciutkan ia tetap tampil sebagai satu-satunya tombol di
+             baris itu — tanpa itu tidak ada lagi cara melebarkannya kembali. --}}
+        <button type="button"
+                x-on:click="$store.shell.toggleCollapsed()"
+                :title="$store.shell.collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
+                class="hidden size-8 shrink-0 place-items-center rounded-[var(--radius)] text-ink-secondary hover:bg-surface-inset hover:text-ink focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none lg:grid">
+            <span class="sr-only">Ciutkan atau lebarkan menu</span>
+            <span x-show="! $store.shell.collapsed"><x-si.ikon nama="panel-left-close" class="size-4" /></span>
+            <span x-show="$store.shell.collapsed" x-cloak><x-si.ikon nama="panel-left-open" class="size-4" /></span>
+        </button>
     </div>
 
-    <nav class="flex flex-1 flex-col overflow-x-hidden overflow-y-auto px-2 py-3">
+    <nav class="flex flex-1 flex-col overflow-x-hidden overflow-y-auto px-3 py-3">
         @foreach ($menu as $entri)
             @if ($entri['tipe'] === 'seksi')
                 {{--
@@ -73,9 +104,9 @@
                 {{-- Disembunyikan pakai KELAS, bukan atribut `hidden`: preflight
                      Tailwind menulis `[hidden]{display:none!important}`, dan aturan
                      rail di app.css tidak bisa mengalahkannya. --}}
-                <div class="mt-4 hidden h-px bg-line" data-rail="show"></div>
+                <div class="mt-4 hidden h-px shrink-0 bg-line" data-rail="show"></div>
 
-                <div class="mt-5 mb-1 px-2.5 text-[11px] font-semibold tracking-[.1em] text-ink-muted uppercase first:mt-0"
+                <div class="mt-4.5 mb-1.5 shrink-0 px-3 font-mono text-[11px] tracking-[.04em] text-ink-faint uppercase first:mt-0"
                      data-rail="hide">
                     {{ $entri['label'] }}
                 </div>
@@ -90,21 +121,6 @@
     </nav>
 
     <div class="shrink-0 border-t border-line p-2">
-        {{-- Tombol ciut tinggal di sini justru supaya ia SELALU terlihat.
-             Di kepala, ia harus menghilang saat rail — dan begitu menghilang,
-             tidak ada lagi cara melebarkan menunya kembali. --}}
-        <button type="button"
-                x-on:click="$store.shell.toggleCollapsed()"
-                :title="$store.shell.collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
-                data-rail="center"
-                class="mb-px hidden min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-kecil)] px-2.5 text-[14px] text-ink-secondary hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none lg:flex">
-            <span class="flex shrink-0">
-                <span x-show="! $store.shell.collapsed"><x-si.ikon nama="panel-left-close" class="size-[18px]" /></span>
-                <span x-show="$store.shell.collapsed" x-cloak><x-si.ikon nama="panel-left-open" class="size-[18px]" /></span>
-            </span>
-            <span class="flex-1 text-start" data-rail="hide">Ciutkan menu</span>
-        </button>
-
         {{--
             Peraga komponen adalah alat pengembang. Sebelumnya ia tampil untuk
             siapa pun yang login selama halamannya aktif, termasuk juri yang
@@ -118,8 +134,8 @@
             <a href="{{ route('design-system.si') }}"
                title="Peraga komponen"
                data-rail="center"
-               class="flex min-h-10 items-center gap-2.5 overflow-hidden rounded-[var(--radius-kecil)] px-2.5 text-[14px] whitespace-nowrap text-ink-secondary hover:bg-surface-inset hover:text-ink">
-                <x-si.ikon nama="swatch-book" class="size-[18px] shrink-0" />
+               class="flex h-9.5 items-center gap-2.5 overflow-hidden rounded-[var(--radius)] px-3 text-[13.5px] whitespace-nowrap text-ink-secondary hover:bg-surface-inset hover:text-ink">
+                <x-si.ikon nama="swatch-book" class="size-4 shrink-0" />
                 <span class="truncate" data-rail="hide">Peraga komponen</span>
             </a>
         @endif

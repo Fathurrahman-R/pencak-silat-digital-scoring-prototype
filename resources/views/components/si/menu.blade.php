@@ -37,13 +37,13 @@
         {{-- Pemicu buatan sendiri: pemanggilnya yang menentukan rupanya. --}}
         <button type="button" x-ref="pemicu" x-on:click="buka = ! buka"
                 :aria-expanded="buka" aria-haspopup="menu" aria-controls="{{ $id }}"
-                class="flex cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                class="flex cursor-pointer items-center rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ink/10">
             {{ $pemicu }}
         </button>
     @else
         <button type="button" x-ref="pemicu" x-on:click="buka = ! buka"
                 :aria-expanded="buka" aria-haspopup="menu" aria-controls="{{ $id }}"
-                {{ $attributes->class('inline-flex h-[var(--sentuh-admin)] items-center gap-2 rounded-[var(--radius)] border border-line-strong bg-surface-raised px-4 text-[15px] font-medium text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent') }}>
+                {{ $attributes->class('inline-flex h-9 items-center gap-2 rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3.5 text-[13.5px] font-medium text-ink outline-none focus-visible:ring-[3px] focus-visible:ring-ink/10') }}>
             {{ $label }}
             <x-si.ikon nama="chevron-down" class="size-4" />
         </button>

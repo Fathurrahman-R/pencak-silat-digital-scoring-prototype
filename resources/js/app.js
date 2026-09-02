@@ -23,11 +23,29 @@ Alpine.store('shell', {
         this.sidebarOpen = ! this.sidebarOpen;
     },
 
+    tutupSidebar() {
+        this.sidebarOpen = false;
+    },
+
     toggleCollapsed() {
         this.collapsed = ! this.collapsed;
         document.documentElement.dataset.sidebar = this.collapsed ? 'collapsed' : 'expanded';
         localStorage.setItem('sidebar-collapsed', this.collapsed ? '1' : '0');
     },
+});
+
+/*
+ * Halaman di belakang laci TIDAK ikut tergulir selama laci terbuka.
+ *
+ * Tanpa ini, jari yang menggeser di atas laci atau di latar gelapnya menggulir
+ * halaman di baliknya: laci ditutup, dan pembacanya mendarat di tempat yang
+ * bukan tempat ia tadi berada. Penandanya dipasang di <html> lewat kelas, dan
+ * yang benar-benar mengunci adalah CSS di app.css -- dibatasi media query
+ * lebar laci, supaya keadaan yang tertinggal dari layar sempit tidak ikut
+ * mengunci layar lebar tempat sidebar bukan laci sama sekali.
+ */
+Alpine.effect(() => {
+    document.documentElement.classList.toggle('sidebar-terbuka', Alpine.store('shell').sidebarOpen);
 });
 
 /**

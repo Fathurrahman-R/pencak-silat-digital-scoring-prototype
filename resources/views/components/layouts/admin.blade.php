@@ -32,11 +32,10 @@
         @include('layouts.partials.sidebar')
 
         <div class="flex min-w-0 flex-1 flex-col">
-            @include('layouts.partials.kepala')
+            @include('layouts.partials.kepala', ['breadcrumb' => $breadcrumb])
 
-            <main class="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-6">
+            <main class="flex w-full flex-1 flex-col gap-5 px-5 pt-7 pb-14 sm:px-8">
                 @include('layouts.partials.judul-halaman', [
-                    'breadcrumb' => $breadcrumb,
                     'heading' => $heading,
                     'description' => $description,
                     'actions' => $actions ?? null,

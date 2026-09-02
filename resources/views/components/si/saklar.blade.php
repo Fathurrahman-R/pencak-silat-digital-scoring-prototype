@@ -39,19 +39,21 @@
 
         {{-- Tuasnya ::after supaya tetap saudara kandung input — syarat agar
              varian peer-checked mengenainya. --}}
-        <span class="relative h-[24px] w-[42px] shrink-0 rounded-full border-2 border-line-strong bg-surface-inset
+        {{-- DESIGN-SYSTEM.md §8: 40×22, radius 999, knob 16px. Mati: latar
+             putih tepi zinc; hidup: latar dan tepi tinta, knob putih. --}}
+        <span class="relative h-[22px] w-[40px] shrink-0 rounded-full border border-line-strong bg-surface-raised
                      peer-checked:border-accent peer-checked:bg-accent
-                     peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2
-                     after:absolute after:top-[2px] after:left-[2px] after:size-[16px] after:rounded-full
+                     peer-focus-visible:ring-[3px] peer-focus-visible:ring-ink/10
+                     after:absolute after:top-[2px] after:left-[2px] after:size-4 after:rounded-full
                      after:bg-ink-muted after:transition-transform
                      peer-checked:after:translate-x-[18px] peer-checked:after:bg-accent-on"></span>
 
         <span class="min-w-0">
             @if ($label)
-                <span class="block text-[15px] text-ink">{{ $label }}</span>
+                <span class="block text-[13.5px] text-ink">{{ $label }}</span>
             @endif
             @if ($bantuan)
-                <span class="block text-[13px] leading-relaxed text-ink-muted">{{ $bantuan }}</span>
+                <span class="block text-[12.5px] leading-relaxed text-ink-muted">{{ $bantuan }}</span>
             @endif
         </span>
     </label>

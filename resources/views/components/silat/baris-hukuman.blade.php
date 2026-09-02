@@ -47,10 +47,12 @@
         'peringatan' => 'bg-silat-peringatan',
     ][$jenis] ?? 'bg-silat-teks-redup';
 
+    // Tinta ikon mengikuti bidangnya, bukan sebaliknya: Peringatan kini bidang
+    // putih pekat, jadi ikonnya gelap. BRIEF §2.3.
     $tintaIkon = [
-        'pembinaan' => 'text-silat-teks',
-        'teguran' => 'text-[color:var(--teguran-teks)]',
-        'peringatan' => 'text-silat-teks',
+        'pembinaan' => 'text-silat-pembinaan-teks',
+        'teguran' => 'text-silat-teguran-teks',
+        'peringatan' => 'text-silat-peringatan-teks',
     ][$jenis] ?? 'text-silat-teks';
 
     // Label mengikuti latar tempat petaknya duduk: di atas blok sudut ia harus
@@ -79,7 +81,7 @@
                 $diskualifikasi = $jenis === 'peringatan' && $i === $jumlahPetak;
             @endphp
             <span @class([
-                'flex shrink-0 items-center justify-center rounded-silat',
+                'flex shrink-0 items-center justify-center rounded-silat-kecil',
                 $bidang => $nyala,
                 'border border-silat-tepi-petak' => ! $nyala && ! $diskualifikasi,
                 'border border-dashed border-silat-tepi-petak' => ! $nyala && $diskualifikasi,

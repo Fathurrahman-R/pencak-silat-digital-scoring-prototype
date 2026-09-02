@@ -35,19 +35,19 @@
 
 @php($bisaDipilih = $selectable !== [])
 
-<div class="overflow-hidden rounded-[var(--radius)] border border-line bg-surface-raised"
+<div class="overflow-hidden rounded-[var(--radius-besar)] border border-line bg-surface-raised"
      @if ($bisaDipilih) x-data="tableSelection(@js(array_values($selectable)))" @endif>
 
     @isset($toolbar)
-        <div class="border-b border-line px-4 py-3">{{ $toolbar }}</div>
+        <div class="border-b border-line px-3.5 py-3">{{ $toolbar }}</div>
     @endisset
 
     <div class="overflow-x-auto">
-        <table {{ $attributes->class('w-full text-left text-[14px] text-ink-secondary') }}>
+        <table {{ $attributes->class('w-full text-left text-[14px] text-ink') }}>
             <thead class="bg-surface-inset">
                 <tr>
                     @if ($bisaDipilih)
-                        <th scope="col" class="w-11 py-2.5 ps-4 pe-0">
+                        <th scope="col" class="w-11 py-2.5 ps-3.5 pe-0">
                             <input type="checkbox"
                                    aria-label="Pilih semua baris di halaman ini"
                                    :checked="allChecked" x-on:change="toggleAll()"
@@ -65,7 +65,7 @@
                                 @if ($bisaDiurut && $table->sortColumn() === $kolom)
                                     aria-sort="{{ $table->sortDirection() === 'desc' ? 'descending' : 'ascending' }}"
                                 @endif
-                                class="px-4 py-2.5 text-[11px] font-semibold tracking-[.1em] whitespace-nowrap text-ink-muted uppercase">
+                                class="px-3.5 py-2.5 text-[12px] font-semibold whitespace-nowrap text-ink-secondary">
                                 @if ($bisaDiurut)
                                     <a href="{{ $table->sortUrl($kolom) }}"
                                        title="Urutkan menurut {{ $label }}"
@@ -111,6 +111,6 @@
     @endisset
 
     @isset($footer)
-        <div class="border-t border-line px-4 py-3 text-[13px] text-ink-muted">{{ $footer }}</div>
+        <div class="border-t border-line px-3.5 py-3 text-[12.5px] text-ink-muted">{{ $footer }}</div>
     @endisset
 </div>

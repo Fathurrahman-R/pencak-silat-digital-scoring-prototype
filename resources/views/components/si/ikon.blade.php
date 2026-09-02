@@ -1,6 +1,6 @@
 @props([
     'nama',
-    'class' => 'size-5',
+    'class' => 'size-4',
 ])
 
 {{--
@@ -27,5 +27,5 @@
 
 <x-dynamic-component :component="'lucide-'.$nama"
                      {{ $attributes->class($class) }}
-                     stroke-width="1.5"
+                     stroke-width="2"
                      aria-hidden="true" />

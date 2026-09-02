@@ -30,7 +30,7 @@
                    name="{{ $table?->searchParameter() ?? 'q' }}"
                    value="{{ $table?->search() }}"
                    placeholder="{{ $placeholder }}"
-                   class="block h-10 w-[260px] max-w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised ps-9 pe-3 text-[14px] text-ink outline-none placeholder:text-ink-muted focus:border-accent">
+                   class="block h-9 w-[260px] max-w-full rounded-[var(--radius)] border border-line-strong bg-surface-raised ps-9 pe-3 text-[13.5px] text-ink outline-none placeholder:text-ink-muted focus:border-accent focus:ring-[3px] focus:ring-ink/10">
         </div>
 
         @isset($filters)
@@ -47,11 +47,11 @@
     @endisset
 
     @if ($tampil !== null && $total !== null)
-        <div class="flex items-baseline gap-1.5 text-[13px] text-ink-muted">
+        <div class="flex items-baseline gap-1.5 text-[12.5px] text-ink-muted">
             <span>Menampilkan</span>
-            <span class="font-mono text-[15px] font-semibold text-ink tabular-nums">{{ $tampil }}</span>
+            <span class="font-mono text-[14px] font-medium text-ink tabular-nums">{{ $tampil }}</span>
             <span>dari</span>
-            <span class="font-mono text-[15px] font-semibold text-ink tabular-nums">{{ $total }}</span>
+            <span class="font-mono text-[14px] font-medium text-ink tabular-nums">{{ $total }}</span>
         </div>
     @endif
 

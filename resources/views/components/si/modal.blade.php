@@ -69,27 +69,29 @@
              class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto p-6"
              role="dialog" aria-modal="true" aria-labelledby="{{ $id }}-judul">
 
-            <div x-show="open" x-on:click="hide()" class="fixed inset-0 bg-black/50"></div>
+            {{-- DESIGN-SYSTEM.md §5/§8: dialog radius 14, lebar 520px, header/isi
+                 18×22, footer 16×22, latar gelap rgba(9,9,11,.45). --}}
+            <div x-show="open" x-on:click="hide()" class="fixed inset-0 bg-[rgba(9,9,11,.45)]"></div>
 
             <div x-ref="panel" tabindex="-1" x-show="open"
-                 class="relative w-full {{ $lebar[$ukuran] ?? $lebar['sedang'] }} rounded-[var(--radius)] border border-line bg-surface-raised outline-none">
+                 class="relative w-full {{ $lebar[$ukuran] ?? $lebar['sedang'] }} rounded-[var(--radius-dialog)] border border-line bg-surface-raised shadow-lg outline-none">
 
-                <div class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
-                    <h3 id="{{ $id }}-judul" class="text-[18px] font-semibold text-ink">{{ $judul }}</h3>
+                <div class="flex items-start justify-between gap-4 border-b border-line px-5.5 py-4.5">
+                    <h3 id="{{ $id }}-judul" class="text-[17px] font-semibold text-ink">{{ $judul }}</h3>
 
                     <button type="button" x-on:click="hide()"
-                            class="-me-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-kecil)] text-ink-muted hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+                            class="-me-2 grid size-10 shrink-0 place-items-center rounded-[var(--radius)] text-ink-muted hover:bg-surface-inset hover:text-ink focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none">
                         <span class="sr-only">Tutup</span>
-                        <x-si.ikon nama="x" class="size-5" />
+                        <x-si.ikon nama="x" class="size-4" />
                     </button>
                 </div>
 
-                <div class="flex flex-col gap-4 px-5 py-5 text-[14px] leading-relaxed text-ink-secondary">
+                <div class="flex flex-col gap-4 px-5.5 py-4.5 text-[13.5px] leading-relaxed text-ink-secondary">
                     {{ $slot }}
                 </div>
 
                 @isset($footer)
-                    <div class="flex flex-wrap items-center justify-end gap-2.5 border-t border-line px-5 py-4">
+                    <div class="flex flex-wrap items-center justify-end gap-2.5 border-t border-line px-5.5 py-4">
                         {{ $footer }}
                     </div>
                 @endisset

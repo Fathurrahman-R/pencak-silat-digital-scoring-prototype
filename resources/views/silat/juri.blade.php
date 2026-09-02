@@ -76,10 +76,16 @@
             </div>
         </header>
 
+        {{--
+            Galat tidak berbidang merah. Merah hanya berarti sudut pesilat
+            (BRIEF §2.2), dan sebuah pesan merah di panel yang tombolnya juga
+            merah adalah cara tercepat membuat juri salah baca. Bedanya dengan
+            pesan biasa dibawa terang teks, bukan warna.
+        --}}
         <p x-show="galat" x-text="galat" x-cloak
-           class="mx-3 shrink-0 rounded-silat bg-red-500/15 px-3 py-1.5 text-center text-[12px] text-red-300"></p>
+           class="mx-3 shrink-0 rounded-silat-kecil bg-silat-garis px-2.5 py-1.5 text-center text-[12px] font-medium text-silat-teks"></p>
         <p x-show="pesan && ! galat" x-text="pesan" x-cloak
-           class="mx-3 shrink-0 rounded-silat bg-silat-panel px-3 py-1.5 text-center text-[12px] text-silat-teks-redup"></p>
+           class="mx-3 shrink-0 rounded-silat-kecil bg-silat-garis px-2.5 py-1.5 text-center text-[12px] text-silat-teks-kedua"></p>
 
         {{--
             Jarak mendatar dan menegak SENGAJA tidak sama, dan itu bukan soal rupa.
@@ -92,7 +98,7 @@
             Sebelumnya keduanya `gap-2` (8px) — dua kesalahan dengan biaya sangat
             berbeda dibuat sama-sama mudah dilakukan.
         --}}
-        <div class="grid min-h-0 flex-1 grid-cols-2 gap-x-6 gap-y-2 p-2">
+        <div class="grid min-h-0 flex-1 grid-cols-2 gap-x-[var(--silat-lorong-sudut)] gap-y-2 px-3 pt-2 pb-3">
             <div class="grid grid-rows-3 gap-2">
                 @foreach (['pukulan', 'tendangan', 'jatuhan'] as $jenis)
                     <x-silat.tombol-nilai :jenis="$jenis" sudut="merah" x-on:click="kirimNilai('red', '{{ $jenis }}')" class="h-full" />

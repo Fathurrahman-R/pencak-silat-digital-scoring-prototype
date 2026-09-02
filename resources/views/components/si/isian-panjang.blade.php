@@ -41,7 +41,7 @@
         @required($wajib)
         @if ($dijelaskan) aria-describedby="{{ $dijelaskan }}" @endif
         @if ($galat) aria-invalid="true" @endif
-        {{ $attributes->merge(['class' => 'block w-full resize-y rounded-[var(--radius)] border bg-surface-raised px-3.5 py-3 text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-muted focus:ring-2 focus:ring-surface focus:ring-offset-2 focus:ring-offset-ink '.($galat ? 'border-danger' : 'border-line-strong')]) }}
+        {{ $attributes->merge(['class' => 'block w-full resize-y rounded-[var(--radius)] border bg-surface-raised px-3.5 py-3 text-[13.5px] leading-relaxed text-ink outline-none placeholder:text-ink-muted focus:ring-[3px] focus:ring-ink/10 '.($galat ? 'border-danger' : 'border-line-strong')]) }}
     >{{ old($kunciGalat, $value) }}</textarea>
 
     @error($kunciGalat)

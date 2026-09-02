@@ -14,7 +14,7 @@
     $kelas = implode(' ', [
         'flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-kecil)] px-2.5 py-2 text-left text-[14px]',
         '[&>svg]:size-4 [&>svg]:shrink-0',
-        'focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+        'focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none',
         $bahaya
             ? 'text-danger hover:bg-danger-soft [&>svg]:text-danger'
             : 'text-ink hover:bg-surface-inset [&>svg]:text-ink-muted',

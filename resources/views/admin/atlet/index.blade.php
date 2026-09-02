@@ -207,7 +207,7 @@
                                 <x-si.tombol tipe="submit" ukuran="kecil">Unggah</x-si.tombol>
                             </form>
 
-                            <div class="rounded-lg bg-surface-inset p-3 text-xs text-ink-muted">
+                            <div class="rounded-lg bg-surface-inset p-3 text-xs text-ink-secondary">
                                 Berkas wajib untuk atlet ini:
                                 {{ implode(', ', array_map(fn (JenisBerkas $j) => $j->label(), $athlete->berkasWajib($tournament))) }}.
                             </div>

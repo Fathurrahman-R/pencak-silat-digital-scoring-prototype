@@ -43,10 +43,10 @@
                 <a href="{{ $satu['url'] }}"
                    @if ($satu['aktif']) aria-current="page" @endif
                    @class([
-                       'inline-flex h-[var(--sentuh-admin)] items-center border-b-2 px-3.5 text-[15px] outline-none',
-                       'focus-visible:ring-2 focus-visible:ring-accent',
+                       'inline-flex h-9.5 items-center border-b-2 px-3 text-[13.5px] no-underline outline-none',
+                       'focus-visible:ring-[3px] focus-visible:ring-ink/10',
                        'border-accent font-semibold text-ink' => $satu['aktif'],
-                       'border-transparent text-ink-secondary hover:text-ink' => ! $satu['aktif'],
+                       'border-transparent text-ink-muted hover:text-ink' => ! $satu['aktif'],
                    ])>
                     {{ $satu['label'] }}
                 </a>

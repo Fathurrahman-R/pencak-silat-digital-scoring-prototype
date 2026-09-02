@@ -49,7 +49,7 @@
         <div class="flex gap-1 {{ $kananDulu ? 'flex-row-reverse' : '' }}">
             @for ($i = 1; $i <= $gaya['jumlah']; $i++)
                 @php($diskualifikasi = $jenis === 'peringatan' && $i === $gaya['jumlah'])
-                <span class="flex shrink-0 items-center justify-center rounded-[4px] border border-white/70 {{ $diskualifikasi ? 'border-dashed' : '' }}"
+                <span class="flex shrink-0 items-center justify-center rounded-silat-kecil border border-white/70 {{ $diskualifikasi ? 'border-dashed' : '' }}"
                       style="width: {{ $ukuran }}px; height: {{ $ukuran }}px;"
                       x-bind:class="(hukuman?.{{ $sisi }}?.{{ $jenis }} ?? 0) >= {{ $i }}
                           ? '{{ $nyalaBidang[$jenis] ?? 'bg-white' }} border-transparent'

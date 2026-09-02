@@ -30,12 +30,12 @@
         :class="has(@js($id)) && 'bg-accent-soft'"
     @endif
     {{ $attributes->class([
-        'border-t border-line first:border-t-0 hover:bg-surface-inset',
+        'border-t border-line first:border-t-0 hover:bg-surface-sunken',
         'cursor-pointer' => (bool) $panel,
     ]) }}>
 
     @if ($bisaDipilih)
-        <td class="w-11 py-2.5 ps-4 pe-0 align-middle" data-row-action>
+        <td class="w-11 py-2.5 ps-3.5 pe-0 align-middle" data-row-action>
             @if ($id !== null)
                 <input type="checkbox"
                        aria-label="Pilih baris ini"

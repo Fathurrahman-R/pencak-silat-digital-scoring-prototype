@@ -1,4 +1,4 @@
-<x-layouts.silat :title="$tournament->name">
+<x-layouts.silat :title="$tournament->name" permukaan="publik">
     {{--
         Halaman kejuaraan publik: PINTU MASUK, bukan etalase.
 
@@ -6,76 +6,91 @@
         apa yang sedang berjalan sekarang, kelas anak saya sudah sampai mana,
         dan siapa juaranya. Susunan halaman mengikuti urutan itu.
 
-        Dialek publik: radius nol, pembatas berupa garis dan tipografi, bukan
-        kotak berlatar. Lihat docs/BRIEF-DESAIN.md §3.
+        Wajah publik: suasana terang bawaan, kartu bertepi, radius yang sama
+        dengan admin. Lihat BRIEF-DIGITAL-SCORING.md §9.
     --}}
-    <div class="mx-auto flex min-h-screen max-w-[860px] flex-col gap-10 p-4 sm:p-6">
-        <header class="flex flex-wrap items-end justify-between gap-4">
-            <div class="min-w-0">
-                <a href="{{ route('home') }}" class="text-[12px] text-silat-teks-redup">&larr; Semua kejuaraan</a>
-                <h1 class="mt-1 text-[24px] leading-tight font-medium text-silat-teks">{{ $tournament->name }}</h1>
-                <p class="silat-angka mt-1 text-[13px] text-silat-teks-redup">
-                    {{ $tournament->venue ? $tournament->venue.' · ' : '' }}{{ $tournament->starts_on?->translatedFormat('d M Y') }}
-                </p>
-            </div>
-            <a href="{{ route('live.turnamen.medali', $tournament) }}"
-               class="shrink-0 border-b border-silat-tepi-kendali pb-1 text-[14px] font-medium text-silat-teks">
-                Perolehan medali
-            </a>
-        </header>
+    <x-silat.kepala-publik :judul="$tournament->name"
+                           :keterangan="trim(($tournament->venue ? $tournament->venue.' · ' : '').($tournament->starts_on?->translatedFormat('d M Y') ?? ''), ' ·')"
+                           :tautan="['Semua kejuaraan' => route('home'), 'Medali' => route('live.turnamen.medali', $tournament)]" />
 
+    <div class="mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-5 pt-8 pb-16 sm:px-10">
         <section>
-            <div class="border-b-2 border-silat-teks pb-2 text-[11px] tracking-[.28em] text-silat-teks uppercase">
-                Gelanggang
+            <div class="mb-4 flex items-baseline gap-3">
+                <h1 class="text-[26px] font-semibold tracking-[-0.025em] text-silat-teks">Sedang berlangsung</h1>
+                <span class="silat-angka flex items-center gap-2 text-[12px] text-silat-teks-redup">
+                    <span class="size-[7px] rounded-full bg-silat-hidup"></span>diperbarui otomatis
+                </span>
             </div>
 
+            <div class="grid gap-4 md:grid-cols-2">
             @forelse ($arenas as $papan)
                 @php($partai = $papan['partai'])
                 <a href="{{ route('live.gelanggang', $papan['arena']) }}"
-                   class="flex flex-col gap-3 border-b border-silat-garis py-4">
-                    <div class="flex items-baseline justify-between gap-4">
-                        <span class="text-[16px] font-medium text-silat-teks">{{ $papan['arena']->name }}</span>
-                        <span class="silat-angka text-[12px] text-silat-teks-redup">
-                            @if ($partai)
-                                PARTAI {{ $partai->id }} · {{ strtoupper($partai->bracket->weightClass->namaLengkap()) }}
-                            @else
-                                TIDAK ADA PARTAI BERJALAN
-                            @endif
-                        </span>
+                   class="block overflow-hidden rounded-silat-besar border border-silat-garis no-underline">
+                    <div class="flex items-center gap-2.5 border-b border-silat-garis bg-silat-panel px-4.5 py-3.5">
+                        <span class="silat-angka text-[12px] font-semibold tracking-[.1em] text-silat-teks uppercase">{{ $papan['arena']->name }}</span>
+                        <span @class([
+                            'silat-angka inline-flex h-[22px] items-center rounded-silat-kecil px-2.5 text-[10px] font-semibold tracking-[.08em] uppercase',
+                            'bg-silat-aksi text-silat-aksi-teks' => (bool) $partai,
+                            'border border-silat-tepi-kendali text-silat-teks-kedua' => ! $partai,
+                        ])>{{ $partai ? 'Berjalan' : 'Tidak ada partai' }}</span>
+                        @if ($partai)
+                            <span class="ml-auto truncate text-[13px] text-silat-teks-redup">{{ $partai->bracket->weightClass->namaLengkap() }}</span>
+                        @endif
                     </div>
 
                     @if ($partai)
                         {{-- Sudut ditandai batang tepi. Bidang penuh dipakai papan skor
                              gelanggang; di daftar begini ia menutupi halaman. --}}
-                        @foreach ([['red', 'merah', 'bg-silat-merah'], ['blue', 'biru', 'bg-silat-biru']] as [$sisi, $nama, $warna])
-                            <div class="flex items-stretch gap-4">
-                                <div class="w-[4px] shrink-0 {{ $warna }}"></div>
-                                <div class="min-w-0 flex-1 truncate text-[17px] text-silat-teks">
-                                    {{ $partai->{$sisi}?->athletes->pluck('name')->implode(', ') ?? '—' }}
-                                </div>
-                                <div class="silat-angka text-[34px] leading-none font-medium text-silat-teks tabular-nums">
-                                    {{ $papan['skor'][$nama] }}
+                        <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4.5 py-5.5">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <span class="h-11 w-1 shrink-0 rounded-full bg-silat-merah"></span>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[16px] font-semibold tracking-[-0.01em] text-silat-teks">
+                                        {{ $partai->red?->athletes->pluck('name')->implode(', ') ?? '—' }}
+                                    </p>
+                                    <p class="mt-0.5 truncate text-[13px] text-silat-teks-redup">
+                                        {{ $partai->red?->contingent->name ?? '—' }}
+                                    </p>
                                 </div>
                             </div>
-                        @endforeach
+
+                            <div class="shrink-0 text-center">
+                                <p class="silat-angka text-[38px] leading-none font-medium text-silat-teks">
+                                    {{ $papan['skor']['merah'] }} – {{ $papan['skor']['biru'] }}
+                                </p>
+                                <p class="silat-angka mt-1.5 text-[11px] text-silat-teks-redup">PARTAI {{ $partai->id }}</p>
+                            </div>
+
+                            <div class="flex min-w-0 items-center justify-end gap-3 text-right">
+                                <div class="min-w-0">
+                                    <p class="truncate text-[16px] font-semibold tracking-[-0.01em] text-silat-teks">
+                                        {{ $partai->blue?->athletes->pluck('name')->implode(', ') ?? '—' }}
+                                    </p>
+                                    <p class="mt-0.5 truncate text-[13px] text-silat-teks-redup">
+                                        {{ $partai->blue?->contingent->name ?? '—' }}
+                                    </p>
+                                </div>
+                                <span class="h-11 w-1 shrink-0 rounded-full bg-silat-biru"></span>
+                            </div>
+                        </div>
                     @endif
                 </a>
             @empty
-                <div class="border border-dashed border-silat-tepi-kendali px-5 py-8">
-                    <p class="text-[16px] font-medium text-silat-teks">Belum ada gelanggang</p>
-                    <p class="mt-1 max-w-[64ch] text-[14px] leading-relaxed text-silat-teks-redup">
+                <div class="rounded-silat-besar border border-dashed border-silat-tepi-kendali px-6 py-16 text-center md:col-span-2">
+                    <p class="text-[16px] font-semibold text-silat-teks">Belum ada gelanggang</p>
+                    <p class="mx-auto mt-1 max-w-[64ch] text-[14px] leading-relaxed text-silat-teks-redup">
                         Gelanggang muncul di sini setelah panitia menetapkannya untuk kejuaraan ini.
                     </p>
                 </div>
             @endforelse
+            </div>
         </section>
 
         <section>
-            <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
-                <span class="text-[11px] tracking-[.28em] text-silat-teks uppercase">Kelas Tanding</span>
-                <span class="silat-angka text-[12px] text-silat-teks-redup tabular-nums">
-                    {{ $kelas->flatten(1)->count() }} kelas
-                </span>
+            <div class="mb-3.5 flex items-baseline gap-3">
+                <h2 class="text-[20px] font-semibold tracking-[-0.02em] text-silat-teks">Kelas Tanding</h2>
+                <span class="silat-angka text-[11.5px] text-silat-teks-redup">{{ $kelas->flatten(1)->count() }} kelas</span>
             </div>
 
             @forelse ($kelas as $golongan => $barisan)
@@ -111,8 +126,8 @@
                     </div>
                 @endforeach
             @empty
-                <div class="border border-dashed border-silat-tepi-kendali px-5 py-8">
-                    <p class="text-[16px] font-medium text-silat-teks">Belum ada kelas Tanding</p>
+                <div class="rounded-silat-besar border border-dashed border-silat-tepi-kendali px-6 py-16 text-center">
+                    <p class="text-[16px] font-semibold text-silat-teks">Belum ada kelas Tanding</p>
                     <p class="mt-1 max-w-[64ch] text-[14px] leading-relaxed text-silat-teks-redup">
                         Kelas terbit setelah panitia membuka pendaftaran kejuaraan ini.
                     </p>
@@ -122,9 +137,7 @@
 
         @if ($jurusEvents->isNotEmpty())
             <section>
-                <div class="border-b-2 border-silat-teks pb-2 text-[11px] tracking-[.28em] text-silat-teks uppercase">
-                    Nomor Jurus
-                </div>
+                <h2 class="mb-3.5 text-[20px] font-semibold tracking-[-0.02em] text-silat-teks">Nomor Jurus</h2>
 
                 @foreach ($jurusEvents as $baris)
                     <div class="pt-5 pb-1 text-[13px] font-semibold text-silat-teks">{{ $baris['nomor']->nama() }}</div>

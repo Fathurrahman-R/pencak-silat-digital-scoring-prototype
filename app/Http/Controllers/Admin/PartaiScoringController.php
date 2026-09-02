@@ -795,6 +795,10 @@ class PartaiScoringController extends Controller
                 'round' => $s->round,
                 'corner' => $s->corner->value,
                 'label' => "{$s->point_type->label()} ({$s->value})",
+                // Angkanya berdiri sendiri di kolomnya, bukan hanya menempel di
+                // label: panel Dewan Wasit Juri membandingkan belasan baris ke
+                // bawah, dan angka yang rata kanan jauh lebih cepat dibaca.
+                'nilai' => '+'.$s->value,
                 'waktu' => $s->server_ts->toIso8601String(),
                 'verifikasi_id' => $verifikasiNilai[$s->id] ?? null,
                 // Urut supaya "Juri 1, Juri 3" tidak berganti-ganti urutan tiap resync.
@@ -812,6 +816,7 @@ class PartaiScoringController extends Controller
                 'round' => $p->round,
                 'corner' => $p->corner->value,
                 'label' => "{$p->tier->label()} ".($p->points !== null ? $p->points : '(DQ)'),
+                'nilai' => $p->points !== null ? (string) $p->points : 'DQ',
                 'waktu' => $p->created_at->toIso8601String(),
                 'verifikasi_id' => $verifikasiHukuman[$p->id] ?? null,
                 'oleh' => isset($verifikasiHukuman[$p->id])

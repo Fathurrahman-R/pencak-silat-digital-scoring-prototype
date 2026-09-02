@@ -64,10 +64,10 @@
         <div x-show="buka" x-cloak class="fixed inset-0 z-[80] flex items-start justify-center p-6 pt-[12vh]"
              role="dialog" aria-modal="true" aria-label="Cari halaman">
 
-            <div x-show="buka" x-on:click="buka = false" class="absolute inset-0 bg-black/50"></div>
+            <div x-show="buka" x-on:click="buka = false" class="absolute inset-0 bg-[rgba(9,9,11,.45)]"></div>
 
             <div x-show="buka"
-                 class="relative w-full max-w-lg overflow-hidden rounded-[var(--radius)] border border-line bg-surface-raised">
+                 class="relative w-full max-w-lg overflow-hidden rounded-[var(--radius-dialog)] border border-line bg-surface-raised shadow-lg">
 
                 <div class="flex items-center gap-3 border-b border-line px-4">
                     <x-si.ikon nama="search" class="size-4 shrink-0 text-ink-muted" />
@@ -79,7 +79,7 @@
                            x-on:keydown.arrow-up.prevent="geser(-1)"
                            x-on:keydown.enter.prevent="pergi()"
                            placeholder="Cari halaman…"
-                           class="h-12 flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted">
+                           class="h-12 flex-1 border-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-muted">
 
                     <x-si.tuts>Esc</x-si.tuts>
                 </div>

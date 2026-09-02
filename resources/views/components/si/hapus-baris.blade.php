@@ -40,9 +40,9 @@
      x-on:keydown.escape.window="terbuka = false">
 
     <div x-show="terbuka" x-cloak
-         class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+         class="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(9,9,11,.45)] p-4"
          x-on:click.self="terbuka = false">
-        <div class="w-full max-w-[460px] rounded-[var(--radius)] border border-danger bg-surface-raised p-5 text-left">
+        <div class="w-full max-w-[460px] rounded-[var(--radius-dialog)] border border-danger-line bg-surface-raised p-5.5 text-left">
             <p class="text-[11px] tracking-[.1em] text-danger uppercase">Tidak bisa dibatalkan</p>
             <p class="mt-1 text-[20px] leading-tight font-semibold text-ink">
                 Hapus {{ $benda }} <span x-text="nama"></span>?

@@ -16,9 +16,9 @@
     $dijelaskan = trim(($idGalat ?? '').' '.($idBantuan ?? ''));
 @endphp
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-1.5">
     @if ($label)
-        <label for="{{ $name }}" class="text-[14px] font-semibold text-ink">
+        <label for="{{ $name }}" class="text-[13px] font-medium text-ink">
             {{ $label }}
             @if ($wajib)
                 {{-- Tanda wajib berupa kata, bukan tanda bintang: bintang hanya
@@ -30,14 +30,14 @@
 
     <div @class([
         'flex items-center gap-2 rounded-[var(--radius)] border bg-surface-raised',
-        'h-[var(--sentuh-admin)] px-3.5',
-        'focus-within:ring-2 focus-within:ring-surface focus-within:ring-offset-2 focus-within:ring-offset-ink',
-        'border-danger' => $galat,
+        'min-h-[var(--sentuh-admin)] px-3',
+        'focus-within:border-accent focus-within:ring-[3px] focus-within:ring-ink/10',
+        'border-danger-line' => $galat,
         'border-line-strong' => ! $galat,
         'opacity-45' => $nonaktif,
     ])>
         @if ($awalan)
-            <span class="shrink-0 text-[15px] text-ink-muted">{{ $awalan }}</span>
+            <span class="shrink-0 text-[13.5px] text-ink-muted">{{ $awalan }}</span>
         @endif
 
         <input
@@ -49,7 +49,7 @@
             @disabled($nonaktif)
             @if ($dijelaskan) aria-describedby="{{ $dijelaskan }}" @endif
             @if ($galat) aria-invalid="true" @endif
-            {{ $attributes->merge(['class' => 'w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted']) }}
+            {{ $attributes->merge(['class' => 'w-full bg-transparent py-[7px] text-[13.5px] text-ink outline-none placeholder:text-ink-muted']) }}
         >
     </div>
 
@@ -60,10 +60,10 @@
         dulu.
     --}}
     @error($name)
-        <p id="{{ $idGalat }}" class="text-[14px] leading-relaxed text-danger">{{ $message }}</p>
+        <p id="{{ $idGalat }}" class="text-[12.5px] leading-relaxed text-danger">{{ $message }}</p>
     @enderror
 
     @if ($bantuan)
-        <p id="{{ $idBantuan }}" class="text-[14px] leading-relaxed text-ink-muted">{{ $bantuan }}</p>
+        <p id="{{ $idBantuan }}" class="text-[12.5px] leading-relaxed text-ink-muted">{{ $bantuan }}</p>
     @endif
 </div>

@@ -2,65 +2,78 @@
 
 <x-layouts.overlay title="Papan hasil">
     {{--
-        sebabLabel hidup di x-data ANAK, bukan disebar ke x-data induk lewat
-        {...overlayLive(cfg), ...} -- penyebaran objek membekukan getter
-        (tampilWaktu) jadi nilai statis sekali evaluasi, bukan menyalin
-        definisi getter-nya. Ditemukan langsung lewat bug nyata di panel
-        juri (lihat commit fa068e0); anak Alpine tetap bisa membaca `match`
-        dari cakupan induknya tanpa masalah, jadi cukup ditambahkan di sini.
+        Papan hasil siaran — mengikuti `overlay-siaran.dc.html`.
 
-        Tiga hal yang dulu hilang dari papan ini:
+        Satu-satunya permukaan TERANG di seluruh overlay, dan itu disengaja: ia
+        tampil beberapa detik sesudah operator mengakhiri partai, dan bidang
+        terang memisahkannya tegas dari scorebug yang menempel sepanjang
+        siaran.
 
-        1. SUDUT pemenang tidak berbidang warna. Panelnya abu netral, dan
-           satu-satunya penanda merah/biru adalah warna teks alasan menang.
-           Penonton yang baru menyalakan siaran tidak tahu sudut mana yang
-           menang tanpa membaca baris kecil di paling bawah -- baris yang
-           hanya muncul kalau hasilnya sudah disahkan.
-        2. SKOR akhir tidak ditampilkan sama sekali. Papan menyebut "menang
-           angka mutlak" tanpa satu angka pun.
-        3. Status pengesahan hanya muncul saat sudah sah. Kalau belum, papan
-           diam -- padahal halaman gelanggang publik justru menyatakannya.
-           Hasil yang belum disahkan bisa masih berubah, dan siaran adalah
-           tempat terakhir yang boleh menyembunyikan itu.
+        Tiga hal yang wajib ada di sini:
 
-        Emas dilepas dari kop "HASIL PARTAI". Ia dipakai untuk juara dan
-        medali; satu partai penyisihan bukan keduanya.
+        1. SUDUT pemenang berbidang warna penuh, bukan sekadar warna teks —
+           penonton yang baru menyalakan siaran harus tahu sudut mana yang
+           menang tanpa membaca baris kecil.
+        2. SKOR akhir kedua sudut, bukan hanya kalimat "menang angka".
+        3. Status pengesahan, dua-duanya. Hasil yang belum disahkan masih bisa
+           berubah, dan siaran adalah tempat terakhir yang boleh
+           menyembunyikan itu.
+
+        Alasan menang selalu bentuk terbaca — "Menang angka", bukan kode
+        mentah. Emas tidak dipakai di sini: ia milik juara dan medali, dan satu
+        partai penyisihan bukan keduanya.
     --}}
     <div x-data="overlayLive(@js($config))" class="relative h-full w-full">
         <div x-show="adaPartai && match?.status === 'selesai'" x-cloak
-             class="absolute top-1/2 left-1/2 flex w-[760px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-silat"
-             style="box-shadow: 0 16px 56px rgba(0,0,0,.5)">
+             x-data="{ sebabLabel: @js($sebabLabel) }"
+             class="absolute top-1/2 left-1/2 w-[1120px] -translate-x-1/2 -translate-y-1/2 bg-silat-siaran-kertas"
+             style="box-shadow: 0 20px 80px rgba(0,0,0,.55)">
 
-            {{-- Bidang sudut penuh, seperti papan skor mana pun. Lebarnya tetap
-                 supaya papan tidak bergeser saat pemenangnya berganti sudut. --}}
-            <div class="flex w-[190px] shrink-0 flex-col items-center justify-center gap-1 px-4 py-8"
-                 x-bind:class="match?.winner_corner === 'red' ? 'bg-silat-merah-dalam' : 'bg-silat-biru-dalam'">
-                <p class="text-[13px] tracking-[.14em] text-silat-teks uppercase"
-                   x-text="match?.winner_corner === 'red' ? 'Sudut Merah' : 'Sudut Biru'"></p>
-                <p class="silat-angka text-[64px] leading-none font-medium text-silat-teks"
-                   x-text="match?.winner_corner === 'red' ? skorTotal.merah : skorTotal.biru"></p>
-                <p class="silat-angka text-[15px]"
-                   x-bind:class="match?.winner_corner === 'red' ? 'text-silat-teks-merah-samar' : 'text-silat-teks-biru-samar'"
-                   x-text="'lawan ' + (match?.winner_corner === 'red' ? skorTotal.biru : skorTotal.merah)"></p>
-            </div>
-
-            <div class="flex min-w-0 flex-1 flex-col justify-center gap-1 bg-silat-panel px-10 py-8">
-                <p class="text-[13px] tracking-[.14em] text-silat-teks-redup uppercase">Hasil partai</p>
-
-                <p class="truncate text-[34px] leading-tight font-medium text-silat-teks"
-                   x-text="(match?.winner_corner === 'red' ? red : blue)?.nama"></p>
-                <p class="truncate text-[18px] text-silat-teks-redup"
-                   x-text="(match?.winner_corner === 'red' ? red : blue)?.kontingen"></p>
-
-                <p x-data="{ sebabLabel: @js($sebabLabel) }"
-                   class="mt-3 text-[17px] text-silat-teks"
+            <div class="px-12 pt-10 pb-8 text-center">
+                <p class="silat-angka text-[16px] font-bold tracking-[.2em] text-silat-latar uppercase"
+                   x-text="[kelas ? (kelas.jenis_kelamin + ' ' + kelas.golongan + ' — ' + kelas.nama) : null, babakLabel].filter(Boolean).join(' · ')"></p>
+                <p class="silat-angka mt-6.5 text-[22px] font-semibold tracking-[.12em] text-silat-latar uppercase"
                    x-text="sebabLabel[match?.win_reason] ?? match?.win_reason"></p>
-
-                {{-- Selalu tampil, dua-duanya. Diam bukan jawaban di siaran. --}}
-                <p class="mt-1 text-[14px]"
-                   x-bind:class="match?.ratified ? 'text-silat-teks-redup' : 'text-silat-teguran'"
-                   x-text="match?.ratified ? 'Hasil sudah disahkan Dewan Wasit Juri.' : 'Menunggu pengesahan Dewan Wasit Juri.'"></p>
             </div>
+
+            {{-- Bidang sudut penuh untuk pemenang, bidang kertas redup untuk
+                 yang kalah. Lebar keduanya sama supaya papan tidak bergeser
+                 saat pemenangnya berganti sudut. --}}
+            <div class="flex items-stretch">
+                <div class="flex-1 px-11 pt-6.5 pb-7 text-left"
+                     x-bind:class="match?.winner_corner === 'red' ? 'bg-silat-merah-dalam' : 'bg-silat-siaran-kertas-redup'">
+                    <p class="text-[38px] leading-[1.1] tracking-[-0.025em]"
+                       x-bind:class="match?.winner_corner === 'red' ? 'font-bold text-white' : 'font-semibold text-silat-garis'"
+                       x-text="red?.nama"></p>
+                    <p class="mt-1.5 text-[21px] leading-[1.3]"
+                       x-bind:class="match?.winner_corner === 'red' ? 'text-silat-teks-merah-redup' : 'text-silat-teks-samar'"
+                       x-text="red?.kontingen"></p>
+                </div>
+
+                <div class="flex-1 px-11 pt-6.5 pb-7 text-right"
+                     x-bind:class="match?.winner_corner === 'blue' ? 'bg-silat-biru-dalam' : 'bg-silat-siaran-kertas-redup'">
+                    <p class="text-[38px] leading-[1.1] tracking-[-0.025em]"
+                       x-bind:class="match?.winner_corner === 'blue' ? 'font-bold text-white' : 'font-semibold text-silat-garis'"
+                       x-text="blue?.nama"></p>
+                    <p class="mt-1.5 text-[21px] leading-[1.3]"
+                       x-bind:class="match?.winner_corner === 'blue' ? 'text-silat-teks-biru' : 'text-silat-teks-samar'"
+                       x-text="blue?.kontingen"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center px-12 pt-8 pb-2">
+                <p class="silat-angka text-left text-[108px] leading-[0.9] font-semibold"
+                   x-bind:class="match?.winner_corner === 'red' ? 'text-silat-latar' : 'text-silat-teks-redup'"
+                   x-text="skorTotal.merah"></p>
+                <p class="silat-angka px-7 text-[18px] font-bold tracking-[.16em] text-silat-latar uppercase">Poin akhir</p>
+                <p class="silat-angka text-right text-[108px] leading-[0.9] font-semibold"
+                   x-bind:class="match?.winner_corner === 'blue' ? 'text-silat-latar' : 'text-silat-teks-redup'"
+                   x-text="skorTotal.biru"></p>
+            </div>
+
+            {{-- Selalu tampil, dua-duanya. Diam bukan jawaban di siaran. --}}
+            <p class="border-t border-silat-siaran-kertas-redup px-12 py-5 text-center text-[18px] text-silat-teks-samar"
+               x-text="match?.ratified ? 'Hasil sudah disahkan Dewan Wasit Juri.' : 'Menunggu pengesahan Dewan Wasit Juri.'"></p>
         </div>
     </div>
 </x-layouts.overlay>

@@ -65,7 +65,7 @@
                 "background-image:url(data:image/svg+xml,{$panah});background-repeat:no-repeat;background-position:right 12px center" => ! $banyak,
             ])
             {{ $attributes->class([
-                'w-full rounded-[var(--radius)] border bg-surface-raised px-3.5 text-[15px] text-ink outline-none',
+                'w-full rounded-[var(--radius)] border bg-surface-raised px-3.5 text-[13.5px] text-ink outline-none',
                 'h-[var(--sentuh-admin)] cursor-pointer appearance-none pe-9' => ! $banyak,
                 'py-2' => $banyak,
                 'border-danger' => $galat,

@@ -1,54 +1,48 @@
 <x-layouts.overlay title="Scorebug">
+    {{--
+        Scorebug bawah-tengah — mengikuti `overlay-siaran.dc.html`.
+
+        Nol piksel yang bukan informasi: tidak ada bingkai hias, tidak ada
+        lambang, tidak ada gradien, tidak ada sudut membulat. Bidang sudut
+        memakai alpha 0.94 supaya gambar kamera tidak tertutup sepenuhnya,
+        sementara teks di atasnya tetap lolos kontras.
+
+        Deret hukuman TIDAK ikut di sini: ia berdiri sebagai lapisan sendiri di
+        kiri atas (overlay “Rincian”), supaya operator vMix bisa memanggil
+        keduanya terpisah dan scorebug tetap setinggi satu baris.
+    --}}
     <div x-data="overlayLive(@js($config))" class="relative h-full w-full">
         <div
             x-show="adaPartai" x-cloak
-            class="absolute bottom-[64px] left-1/2 flex -translate-x-1/2 items-stretch overflow-hidden rounded-silat"
-            style="box-shadow: 0 12px 40px rgba(0,0,0,.45)"
+            class="absolute bottom-[92px] left-1/2 flex -translate-x-1/2 items-stretch"
+            style="box-shadow: 0 8px 40px rgba(0,0,0,.45)"
         >
-            {{--
-                Deret hukuman ikut tampil di scorebug, bukan hanya di overlay
-                breakdown yang terpisah. Tanpanya penonton siaran melihat skor
-                melompat turun 5 atau 10 angka tanpa sebab apa pun di layar —
-                satu-satunya penjelasan ada di overlay lain yang mungkin sedang
-                tidak dipanggil operator vMix.
-
-                Bentuknya kolom kecil, bukan angka, supaya tidak bersaing dengan
-                skor: makin berat sanksinya makin putih kolomnya, mengikuti
-                aturan yang sudah dipakai blok sudut.
-            --}}
-            @php
-                // Jumlah petak dibaca dari config supaya tangga hukuman di layar
-                // penonton tidak pernah berbeda dari yang dihitung mesin scoring.
-                $kolomHukuman = [
-                    'pembinaan' => ['jumlah' => config('scoring.tanding.hukuman.pembinaan.jumlah_kolom', 2)],
-                    'teguran' => ['jumlah' => config('scoring.tanding.hukuman.teguran.jumlah_kolom', 2)],
-                    'peringatan' => ['jumlah' => config('scoring.tanding.hukuman.peringatan.jumlah_kolom', 3)],
-                ];
-            @endphp
-
-            <div class="flex w-[420px] items-center justify-between bg-silat-merah px-6 py-4">
-                <div class="min-w-0">
-                    <p class="truncate text-[22px] font-medium text-silat-teks" x-text="red?.nama"></p>
-                    <p class="truncate text-[15px] text-[#fff0f0]" x-text="red?.kontingen"></p>
-                    <x-silat.pip-hukuman :kolom="$kolomHukuman" sisi="merah" class="mt-1.5" />
+            <div class="flex h-[108px] items-center gap-7 bg-silat-siaran-merah px-8">
+                <div class="min-w-0 text-right">
+                    <p class="truncate text-[22px] leading-[1.2] font-semibold tracking-[-0.01em] text-white"
+                       x-text="red?.nama"></p>
+                    <p class="silat-angka mt-0.5 truncate text-[14px] tracking-[.06em] text-silat-teks-merah-samar uppercase"
+                       x-text="red?.kontingen"></p>
                 </div>
-                <p class="silat-angka pl-4 text-[44px] leading-none font-medium text-silat-teks" x-text="skorTotal.merah"></p>
+                <p class="silat-angka min-w-[62px] text-right text-[44px] leading-none font-semibold text-white"
+                   x-text="skorTotal.merah"></p>
             </div>
 
-            <div class="flex w-[200px] flex-col items-center justify-center bg-silat-panel px-4 py-4">
-                <p class="text-[12px] tracking-[.1em] text-silat-teks-redup" x-text="babakLabel"></p>
-                <p class="silat-angka text-[30px] leading-none font-medium text-silat-teks" x-text="tampilWaktu"></p>
-                <p class="silat-angka text-[12px] tracking-[.08em] text-silat-teks-redup"
+            <div class="flex h-[108px] w-[158px] flex-col items-center justify-center gap-[3px] bg-silat-siaran-tengah">
+                <p class="silat-angka text-[30px] leading-none font-semibold text-white" x-text="tampilWaktu"></p>
+                <p class="silat-angka text-[13px] tracking-[.12em] text-silat-teks-redup"
                    x-show="match?.current_round"
                    x-text="'BABAK ' + match?.current_round + (jumlahBabak ? '/' + jumlahBabak : '')"></p>
             </div>
 
-            <div class="flex w-[420px] items-center justify-between bg-silat-biru px-6 py-4">
-                <p class="silat-angka pr-4 text-[44px] leading-none font-medium text-silat-teks" x-text="skorTotal.biru"></p>
-                <div class="min-w-0 text-right">
-                    <p class="truncate text-[22px] font-medium text-silat-teks" x-text="blue?.nama"></p>
-                    <p class="truncate text-[15px] text-[#cbdbf7]" x-text="blue?.kontingen"></p>
-                    <x-silat.pip-hukuman :kolom="$kolomHukuman" sisi="biru" rata="kanan" class="mt-1.5" />
+            <div class="flex h-[108px] items-center gap-7 bg-silat-siaran-biru px-8">
+                <p class="silat-angka min-w-[62px] text-[44px] leading-none font-semibold text-white"
+                   x-text="skorTotal.biru"></p>
+                <div class="min-w-0">
+                    <p class="truncate text-[22px] leading-[1.2] font-semibold tracking-[-0.01em] text-white"
+                       x-text="blue?.nama"></p>
+                    <p class="silat-angka mt-0.5 truncate text-[14px] tracking-[.06em] text-silat-teks-biru-samar uppercase"
+                       x-text="blue?.kontingen"></p>
                 </div>
             </div>
         </div>

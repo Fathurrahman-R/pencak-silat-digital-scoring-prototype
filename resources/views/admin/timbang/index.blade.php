@@ -74,7 +74,7 @@
             </x-si.kartu>
 
             <x-si.kartu padat>
-                <div class="-mx-4 -mt-4 mb-0 border-b border-line bg-surface-inset px-4 py-2 text-[11px] tracking-[.1em] text-ink-muted uppercase">
+                <div class="-mx-4 -mt-4 mb-0 border-b border-line bg-surface-inset px-4 py-2 text-[11px] tracking-[.1em] text-ink-secondary uppercase">
                     Antrean · urut menurut jadwal partai paling awal
                 </div>
 

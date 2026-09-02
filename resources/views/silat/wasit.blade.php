@@ -60,9 +60,9 @@
                 --}}
                 @resource(rk('partai', ResourceAction::Update))
                     <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
-                            class="rounded-silat border border-silat-tepi-kendali px-3 py-1 text-[12px] text-silat-teks">Hentikan</button>
+                            class="h-[30px] rounded-silat-kecil border border-silat-tepi-petak px-[11px] text-[12.5px] text-silat-teks-kedua">Hentikan</button>
                     <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
-                            class="rounded-silat bg-silat-aksi px-3 py-1 text-[12px] font-medium text-silat-aksi-teks">Lanjutkan</button>
+                            class="h-[30px] rounded-silat-kecil bg-silat-aksi px-[11px] text-[12.5px] font-medium text-silat-aksi-teks">Lanjutkan</button>
                 @endresource
 
                 {{--
@@ -76,7 +76,7 @@
                     <button type="button"
                             x-show="! verifikasiBerjalan && ! menyusunVerifikasi && ! sudahSelesai"
                             x-on:click="menyusunVerifikasi = true"
-                            class="rounded-silat border border-silat-tepi-kendali px-3 py-1 text-[12px] text-silat-teks">
+                            class="h-[30px] rounded-silat-kecil border border-silat-tepi-petak px-[11px] text-[12.5px] text-silat-teks-kedua">
                         Minta verifikasi juri
                     </button>
                 @endresource
@@ -97,10 +97,11 @@
             </div>
         </header>
 
+        {{-- Galat tidak berbidang merah: merah hanya berarti sudut pesilat. --}}
         <p x-show="galat" x-text="galat" x-cloak
-           class="shrink-0 rounded-silat bg-red-500/15 px-3 py-1 text-center text-[12px] text-red-300"></p>
+           class="shrink-0 rounded-silat-kecil bg-silat-garis px-2.5 py-1 text-center text-[12px] font-medium text-silat-teks"></p>
         <p x-show="pesan && ! galat" x-text="pesan" x-cloak
-           class="shrink-0 rounded-silat bg-silat-panel px-3 py-1 text-center text-[12px] text-silat-teks-redup"></p>
+           class="shrink-0 rounded-silat-kecil bg-silat-garis px-2.5 py-1 text-center text-[12px] text-silat-teks-kedua"></p>
 
         {{--
             Verifikasi MENGGANTIKAN tangga hukuman, tidak menumpang di bawahnya.
@@ -116,23 +117,26 @@
         <template x-if="! verifikasiBerjalan && ! menyusunVerifikasi">
           <div class="flex min-h-0 flex-1 flex-col">
         @resource(rk('hukuman', ResourceAction::Create))
-            <div class="grid min-h-0 flex-1 grid-cols-[300px_1fr] gap-3"
+            <div class="grid min-h-0 flex-1 grid-cols-[296px_1fr] gap-2.5"
                  x-data="{ sudut: 'red', hitungan: 1,
                            get sudutLabel() { return this.sudut === 'red' ? 'Sudut merah' : 'Sudut biru' },
                            get kunciSisi() { return this.sudut === 'red' ? 'merah' : 'biru' } }">
 
                 {{-- Langkah 1 --}}
                 <div class="flex min-h-0 flex-col gap-2">
-                    <p class="shrink-0 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">1 · Pesilat mana</p>
+                    <p class="silat-angka shrink-0 text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">1 · Pesilat mana</p>
 
-                    @foreach (['red' => ['merah', 'silat-merah'], 'blue' => ['biru', 'silat-biru']] as $kunci => [$nama, $warna])
+                    {{-- Nama kelas ditulis UTUH, tidak dirangkai dari variabel:
+                         Tailwind hanya menghasilkan kelas yang ditemukannya di
+                         sumber. --}}
+                    @foreach (['red' => ['merah', 'bg-silat-merah'], 'blue' => ['biru', 'bg-silat-biru']] as $kunci => [$nama, $bidang])
                         <button type="button" x-on:click="sudut = '{{ $kunci }}'"
                                 x-bind:class="sudut === '{{ $kunci }}'
-                                    ? 'bg-{{ $warna }} ring-2 ring-white'
-                                    : 'border border-silat-tepi-kendali'"
+                                    ? '{{ $bidang }} ring-2 ring-white'
+                                    : 'border-[1.5px] border-silat-tepi-petak'"
                                 class="flex min-h-[var(--silat-sentuh-min)] shrink-0 flex-col items-start justify-center gap-0.5 rounded-silat px-4 text-left">
-                            <span class="text-[10px] tracking-[.12em] text-silat-teks uppercase opacity-80">Sudut {{ $nama }}</span>
-                            <span class="truncate text-[16px] font-medium text-silat-teks"
+                            <span class="silat-angka text-[10px] tracking-[.14em] text-silat-teks uppercase opacity-85">Sudut {{ $nama }}</span>
+                            <span class="truncate text-[16px] font-semibold text-silat-teks"
                                   x-text="(match.{{ $kunci }}?.athletes ?? []).join(', ') || '—'"></span>
                         </button>
                     @endforeach
@@ -147,21 +151,21 @@
                         <div class="flex items-stretch gap-1.5">
                             <button type="button" x-on:click="hitungan = Math.max(1, hitungan - 1)"
                                     aria-label="Kurangi hitungan"
-                                    class="silat-angka min-h-[var(--silat-sentuh-min)] w-14 rounded-silat border border-silat-tepi-kendali text-[20px] text-silat-teks">−</button>
-                            <div class="silat-angka flex min-h-[var(--silat-sentuh-min)] flex-1 items-center justify-center rounded-silat border border-silat-tepi-kendali bg-silat-latar text-[24px] font-medium text-silat-teks"
+                                    class="silat-angka min-h-[var(--silat-sentuh-min)] w-[52px] rounded-silat-kecil border border-silat-tepi-petak text-[22px] text-silat-teks">−</button>
+                            <div class="silat-angka flex min-h-[var(--silat-sentuh-min)] flex-1 items-center justify-center rounded-silat-kecil border border-silat-tepi-petak text-[26px] font-medium text-silat-teks"
                                  x-text="hitungan" aria-live="polite"></div>
                             <button type="button" x-on:click="hitungan = Math.min(10, hitungan + 1)"
                                     aria-label="Tambah hitungan"
-                                    class="silat-angka min-h-[var(--silat-sentuh-min)] w-14 rounded-silat border border-silat-tepi-kendali text-[20px] text-silat-teks">+</button>
+                                    class="silat-angka min-h-[var(--silat-sentuh-min)] w-[52px] rounded-silat-kecil border border-silat-tepi-petak text-[22px] text-silat-teks">+</button>
                             <button type="button" x-on:click="kirimHitungan(sudut, hitungan)"
-                                    class="min-h-[var(--silat-sentuh-min)] w-24 rounded-silat bg-silat-aksi text-[14px] font-medium text-silat-aksi-teks">Catat</button>
+                                    class="min-h-[var(--silat-sentuh-min)] w-[88px] rounded-silat-kecil bg-silat-aksi text-[14.5px] font-semibold text-silat-aksi-teks">Catat</button>
                         </div>
                     </div>
                 </div>
 
                 {{-- Langkah 2 --}}
                 <div class="flex min-h-0 flex-col gap-2">
-                    <p class="shrink-0 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">
+                    <p class="silat-angka shrink-0 text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">
                         2 · Hukuman apa · <span class="text-silat-teks" x-text="sudutLabel"></span>
                     </p>
 
@@ -188,7 +192,7 @@
                             ['kirim' => 'sedang', 'jenis' => 'teguran', 'resmi' => 'Teguran', 'sehari' => 'sedang',
                              'latar' => 'bg-silat-teguran', 'teks' => 'text-[color:var(--teguran-teks)]', 'kedua' => 'text-[color:var(--teguran-teks)]/75', 'nilai' => '−1 / −2'],
                             ['kirim' => 'berat', 'jenis' => 'peringatan', 'resmi' => 'Peringatan', 'sehari' => 'berat',
-                             'latar' => 'bg-silat-peringatan', 'teks' => 'text-silat-teks', 'kedua' => 'text-white/80', 'nilai' => '−5 / −10'],
+                             'latar' => 'bg-silat-peringatan', 'teks' => 'text-silat-peringatan-teks', 'kedua' => 'text-[color:var(--peringatan-teks)]/66', 'nilai' => '−5 / −10'],
                         ];
                     @endphp
 
@@ -209,7 +213,7 @@
                             <span class="flex items-center gap-3">
                                 <span class="flex gap-1" aria-hidden="true">
                                     @for ($i = 1; $i <= $jatah; $i++)
-                                        <span class="size-5 rounded-[3px] border {{ $tingkat['jenis'] === 'peringatan' && $i === $jatah ? 'border-dashed' : '' }}"
+                                        <span class="size-5 rounded-silat-kecil border {{ $tingkat['jenis'] === 'peringatan' && $i === $jatah ? 'border-dashed' : '' }}"
                                               x-bind:class="(hukuman?.[kunciSisi]?.{{ $tingkat['jenis'] }} ?? 0) >= {{ $i }}
                                                   ? 'bg-current border-transparent'
                                                   : 'border-current opacity-60'"></span>

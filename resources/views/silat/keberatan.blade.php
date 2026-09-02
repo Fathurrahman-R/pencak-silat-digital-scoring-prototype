@@ -15,7 +15,8 @@
             <x-silat.indikator-koneksi />
         </header>
 
-        <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
+        {{-- Galat tidak berbidang merah: merah hanya berarti sudut pesilat. --}}
+        <p x-show="galat" x-text="galat" class="rounded-silat bg-silat-garis px-4 py-2 text-[13px] font-medium text-silat-teks"></p>
         <p x-show="pesan" x-text="pesan" class="rounded-silat bg-silat-panel px-4 py-2 text-[13px] text-silat-teks-redup"></p>
 
         {{--
@@ -26,8 +27,8 @@
             harus dicari di panel lain sementara tenggat VAR terus berjalan.
         --}}
         <div class="grid gap-3 sm:grid-cols-2">
-            <x-silat.papan-skor sudut="red" kunci-skor="merah" rata="kiri" />
-            <x-silat.papan-skor sudut="blue" kunci-skor="biru" rata="kanan" />
+            <x-silat.papan-skor sudut="red" kunci-skor="merah" />
+            <x-silat.papan-skor sudut="blue" kunci-skor="biru" />
         </div>
 
         {{-- VAR -- Pasal 15 --}}
@@ -42,12 +43,15 @@
                 pertanyaan yang dijawab bentuk lebih cepat daripada angka.
             --}}
             <div class="mb-4 grid grid-cols-2 gap-3">
-                @foreach (['merah' => 'silat-merah', 'biru' => 'silat-biru'] as $sisi => $warna)
-                    <div class="flex items-center justify-between gap-3 rounded-silat border-l-[3px] border-{{ $warna }} bg-silat-latar px-3 py-2">
+                {{-- Nama kelas ditulis UTUH: kelas yang dirangkai dari variabel
+                     tidak pernah dihasilkan Tailwind, dan menempel di elemen
+                     tanpa satu pun aturan CSS. --}}
+                @foreach (['merah' => 'border-silat-merah', 'biru' => 'border-silat-biru'] as $sisi => $tepi)
+                    <div class="{{ $tepi }} flex items-center justify-between gap-3 rounded-silat border-l-[3px] bg-silat-panel px-3 py-2">
                         <span class="text-[13px] text-silat-teks">Sisa kartu sudut {{ $sisi }}</span>
                         <span class="flex gap-1.5" x-bind:aria-label="'Sisa ' + keberatan.kartu.{{ $sisi }} + ' kartu'">
                             <template x-for="n in {{ config('scoring.var.kartu_protes.tanding', 2) }}" :key="n">
-                                <span class="h-7 w-5 rounded-[3px]"
+                                <span class="h-7 w-5 rounded-silat-kecil"
                                       x-bind:class="n <= keberatan.kartu.{{ $sisi }}
                                           ? 'bg-silat-aksi'
                                           : 'border border-silat-tepi-petak'"></span>
@@ -87,7 +91,7 @@
                         </p>
 
                         <template x-if="review.keputusan">
-                            <p class="mt-1 text-[12px]" x-bind:class="review.keputusan === 'sah' ? 'text-emerald-300' : 'text-red-300'">
+                            <p class="mt-1 text-[12px] text-silat-teks-kedua">
                                 Keputusan: <span x-text="review.keputusan === 'sah' ? 'Sah' : 'Tidak Sah'"></span>
                                 <span x-show="review.catatan" x-text="'— ' + review.catatan"></span>
                             </p>
@@ -161,12 +165,12 @@
                     <template x-for="protes in keberatan.protes_manajer" :key="protes.id">
                         <div class="py-2.5" x-data="{ catatan: '' }">
                             <p class="text-[13px] text-silat-teks">
-                                <span x-text="protes.level === 'pertama' ? 'Tingkat pertama (Ketua Pertandingan)' : 'Banding (Delegasi Teknik)'"></span>
+                                <span x-text="protes.level === 'pertama' ? 'Tingkat pertama' : 'Banding — keputusan akhir'"></span>
                                 <span x-show="protes.final" class="ml-1 text-[11px] text-silat-teks">FINAL</span>
                             </p>
 
                             <template x-if="protes.keputusan">
-                                <p class="mt-1 text-[12px]" x-bind:class="protes.keputusan === 'diterima' ? 'text-emerald-300' : 'text-red-300'">
+                                <p class="mt-1 text-[12px] text-silat-teks-kedua">
                                     Keputusan: <span x-text="protes.keputusan === 'diterima' ? 'Diterima' : 'Ditolak'"></span>
                                     <span x-show="protes.catatan" x-text="'— ' + protes.catatan"></span>
                                 </p>
@@ -177,17 +181,17 @@
                                     <input type="text" x-model="catatan" placeholder="Catatan keputusan"
                                            class="w-40 rounded-silat border border-silat-garis bg-silat-latar px-2 py-1.5 text-[12px] text-silat-teks placeholder:text-silat-teks-samar">
                                     <button type="button" x-on:click="putuskanProtesManajer(protes.id, 'diterima', catatan)"
-                                            class="rounded-silat bg-emerald-500/20 px-3 py-1.5 text-[12px] text-emerald-300">Terima</button>
+                                            class="rounded-silat bg-silat-aksi px-3 py-1.5 text-[12px] font-medium text-silat-aksi-teks">Terima</button>
                                     <button type="button" x-on:click="putuskanProtesManajer(protes.id, 'ditolak', catatan)"
-                                            class="rounded-silat bg-red-500/20 px-3 py-1.5 text-[12px] text-red-300">Tolak</button>
+                                            class="rounded-silat border border-silat-tepi-petak px-3 py-1.5 text-[12px] font-medium text-silat-teks-kedua">Tolak</button>
                                 </div>
                             @endresource
 
                             @resource(rk('protes-manajer', ResourceAction::Create))
                                 <button type="button" x-show="protes.level === 'pertama' && protes.keputusan && !protes.final"
                                         x-on:click="bandingProtesManajer(protes.id, '')"
-                                        class="mt-2 rounded-silat bg-silat-biru px-3 py-1.5 text-[12px] text-silat-teks">
-                                    Ajukan banding ke Delegasi Teknik
+                                        class="mt-2 rounded-silat border border-silat-tepi-petak px-3 py-1.5 text-[12px] font-medium text-silat-teks-kedua">
+                                    Ajukan banding (keputusan akhir)
                                 </button>
                             @endresource
                         </div>

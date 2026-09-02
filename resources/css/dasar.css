@@ -8,9 +8,10 @@
    dasar-admin.css, yang hanya diimpor app.css -- bundel gelanggang tidak boleh
    ikut menanggung warna yang tidak pernah dipakainya.
 
-   Setiap warna di berkas ini punya angka kontras yang sudah dihitung
-   `scripts/kontras.mjs` — 42 pasangan, 42 lolos. Menambah warna berarti
-   menambah pasangannya ke skrip itu lebih dulu, bukan sesudahnya.
+   Nilainya diambil apa adanya dari project design `digiscoring` di Claude
+   Design — BRIEF-DIGITAL-SCORING.md §2 dan DESIGN-SYSTEM.md §2. Tidak satu pun
+   diperhalus atau dibulatkan di sini; kalau sebuah nilai perlu berubah, yang
+   diubah brief-nya lebih dulu, baru berkas ini.
 
    Rujukan lengkap beserta alasan tiap keputusan: docs/BRIEF-DESAIN.md.
 --------------------------------------------------------------------------- */
@@ -36,33 +37,40 @@
        berhenti berarti "juara". */
     --emas: #c9a227;               /* 8.13 di latar gelap, 7.67 di panel */
 
-    /* Tangga hukuman — Pasal 11.6.d.4. Pembinaan sengaja abu netral: ia tidak
-       mengurangi nilai, dan kalau tampil sekuat teguran penonton salah
-       membacanya sebagai sanksi. */
+    /* Tangga hukuman — Pasal 11.6.d.4. Tingkatnya dinyatakan lewat kenaikan
+       kontras dan bentuk, bukan lewat merah: merah hanya berarti sudut
+       pesilat. Telapak terbuka → segitiga → segi delapan.
+       BRIEF-DIGITAL-SCORING.md §2.3. */
     --pembinaan: #6b6b73;          /* teks putih: 5.28 */
-    --teguran: #d98324;            /* teks #1a1207: 6.37 */
+    --pembinaan-teks: #ffffff;
+    --teguran: #d98324;            /* teks #1a1207: 6.37 — putih hanya 2.75 */
     --teguran-teks: #1a1207;
-    --peringatan: #d42027;         /* teks putih: 5.20 */
+    --peringatan: #fafafa;         /* teks #09090b: 19.06 */
+    --peringatan-teks: #09090b;
 
     /* -----------------------------------------------------------------------
-       Inti gelap — panel gelanggang, live publik, overlay siaran, dan mode
-       gelap admin. Gelap netral, bukan hitam pekat, supaya blok merah dan biru
-       tidak terlihat mengambang di atasnya.
+       Inti gelap — panel gelanggang, overlay siaran, dan mode gelap admin.
+       Ramp zinc, sama persis dengan kolom "Gelap" di BRIEF §2.1. Live score
+       publik TIDAK lagi ikut ke sini: ia berpindah ke suasana terang, karena
+       dibuka di HP di bawah matahari.
     ----------------------------------------------------------------------- */
-    --g-latar: #0b0b0c;
-    --g-panel: #131316;
+    --g-latar: #09090b;
+    --g-panel: #18181b;
 
-    --g-garis: #2a2a2c;            /* pembatas dekoratif */
-    --g-tepi-kendali: #6a6a70;     /* tepi tombol dan isian: 3.45 di panel */
+    --g-garis: #27272a;            /* pembatas dekoratif */
+    --g-tepi-kendali: #3f3f46;     /* tepi tombol dan isian */
 
-    /* Tepi petak dan bidang "belum terisi". Nilainya sama dengan teks redup,
-       dan itu disengaja: satu nilai yang lolos di keempat latar — 5.73 di
-       latar, 5.40 di panel, 3.15 di bidang merah, 4.01 di bidang biru. */
+    /* "Mati bukan bidang" — BRIEF §2.4. Apa pun yang berarti belum terisi,
+       belum menyala, atau tidak bisa ditekan digambar sebagai TEPI, tidak
+       pernah sebagai bidang abu: bidang abu gelap di atas hitam berkontras
+       1.4–2.9 dan terbaca seperti kontrol hidup yang gagal. 5.80 di latar. */
     --g-tepi-petak: #8a8a90;
 
-    --g-teks: #ffffff;             /* 19.67 di latar, 18.54 di panel */
-    --g-teks-redup: #8a8a90;       /* 5.73 / 5.40 */
-    --g-teks-mati: #b0b0b6;        /* teks kontrol nonaktif: 13.24 */
+    --g-teks: #fafafa;             /* teks utama */
+    --g-teks-kedua: #d4d4d8;       /* teks kedua */
+    --g-teks-redup: #a1a1aa;       /* 7.76 di latar */
+    --g-teks-samar: #71717a;       /* teks paling redup */
+    --g-teks-mati: #b0b0b6;        /* teks kontrol nonaktif — panel-juri.dc.html */
 
     /* Bidang terang dengan teks gelap — jelas berbeda dari apa pun yang
        berarti sudut. 15.40. */
@@ -76,40 +84,40 @@
        Keduanya di-bundle lewat npm — gelanggang sering tanpa internet, dan
        overlay vMix tidak boleh menunggu permintaan jaringan apa pun.
     ----------------------------------------------------------------------- */
-    --huruf-antarmuka: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-    --huruf-angka: 'IBM Plex Mono', ui-monospace, monospace;
+    --huruf-antarmuka: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --huruf-angka: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
 
     /* -----------------------------------------------------------------------
-       Geometri. Dua dialek: panel dan admin memakai radius 6px; permukaan
-       publik memakai radius nol. Lihat docs/BRIEF-DESAIN.md §3.
+       Geometri. Satu geometri untuk seluruh aplikasi -- permukaan publik
+       memakai radius yang sama dengan admin. BRIEF-DIGITAL-SCORING.md §4.
     ----------------------------------------------------------------------- */
-    --radius-kecil: 4px;   /* badge dan isian kecil */
-    --radius: 6px;         /* tombol, kartu, panel */
-    --radius-besar: 12px;  /* modal dan dialog */
+    --radius-kecil: 6px;   /* badge, chip, pil kecil, petak hukuman */
+    --radius: 8px;         /* tombol, isian, kartu, blok sudut, tautan nav */
+    --radius-besar: 12px;  /* kartu besar, panel, tabel, kotak pesan */
+    --radius-dialog: 14px; /* sheet dan dialog */
 
-    /* Permukaan publik memakai radius nol -- papan pengumuman tidak punya
-       sudut membulat, dan `rounded` di mana-mana adalah tanda tangan keluaran
-       yang disusun mesin. Kelasnya ditulis langsung di sana, bukan lewat token
-       ini, supaya perbedaannya terlihat di markup. */
+    /* Jarak: kelipatan 4 -- 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40. Angka di luar
+       skala itu tidak dipakai. */
 
     /* Tombol juri ditekan cepat sambil berdiri, tanpa sempat melihat lama.
        64px adalah batas bawah yang tidak bisa ditawar di gelanggang. */
     --sentuh-gelanggang: 64px;
-    --sentuh-admin: 44px;
+    --sentuh-admin: 36px;   /* desktop */
+    --sentuh-sentuh: 44px;  /* layar sentuh dan panel lapangan */
 
     /* Lorong antara kolom merah dan biru di panel juri. Selip vertikal
        menggeser nilai pada pesilat yang benar; selip horizontal memberikan
        nilai kepada lawan. Biayanya tidak sama, jadi jaraknya tidak sama. */
-    --lorong-sudut: 24px;
+    --lorong-sudut: 28px;
 
     /* -----------------------------------------------------------------------
        Elevasi. Tidak ada kaca, noise, grid latar, maupun bevel — semuanya
        warisan boilerplate. Kedalaman dinyatakan lewat warna permukaan dan satu
        garis; bayangan hanya untuk lapisan yang benar-benar mengambang.
     ----------------------------------------------------------------------- */
-    --bayang-angkat: 0 1px 2px rgb(20 18 14 / 0.08);
-    --bayang-apung: 0 8px 24px rgb(20 18 14 / 0.14);
-    --bayang-modal: 0 24px 64px rgb(20 18 14 / 0.28);
+    --bayang-angkat: none;                          /* kartu tanpa bayangan */
+    --bayang-apung: 0 12px 28px rgb(9 9 11 / 0.14); /* dropdown */
+    --bayang-modal: 0 24px 60px rgb(9 9 11 / 0.22); /* dialog dan sheet */
 
     /* Kanvas overlay vMix dikunci, bukan responsif. Overlay siaran bukan
        halaman web biasa: ia dikomposit sebagai lapisan berukuran tetap. */

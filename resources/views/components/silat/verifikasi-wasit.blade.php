@@ -23,7 +23,7 @@
          MENYUSUN PERTANYAAN
          ============================================================ --}}
     <template x-if="! verifikasiBerjalan">
-        <div class="flex min-h-0 flex-1 flex-col gap-2"
+        <div class="flex min-h-0 flex-1 flex-col gap-2.5"
              x-data="{
                  jenis: 'jatuhan',
                  tingkat: 'sedang',
@@ -40,97 +40,83 @@
                  },
              }">
 
-            <div class="flex shrink-0 items-baseline justify-between gap-4">
-                <p class="text-[15px] font-semibold text-silat-teks">Minta verifikasi juri</p>
-                <p class="text-[11px] text-silat-teks-redup">
-                    Pasal 13 · juri memberi jawaban atas verifikasi dari Wasit
-                </p>
+            <p class="shrink-0 text-[19px] leading-tight font-semibold tracking-[-0.02em] text-silat-teks">
+                Apa yang kamu tanyakan ke juri?
+            </p>
+
+            {{-- Jenis pertanyaan. Yang terpilih ditandai tepi tebal DAN bidang
+                 yang naik, bukan warna: tidak ada warna yang bebas arti di
+                 panel gelanggang. --}}
+            <div class="grid shrink-0 grid-cols-2 gap-2.5">
+                @foreach ([
+                    ['jatuhan', 'Jatuhan', 'Sah atau tidak, dan milik sudut mana'],
+                    ['pelanggaran', 'Pelanggaran', 'Terjadi atau tidak, dan siapa pelakunya'],
+                ] as [$nilai, $judul, $pertanyaan])
+                    <button type="button" x-on:click="jenis = '{{ $nilai }}'"
+                            x-bind:class="jenis === '{{ $nilai }}'
+                                ? 'border-2 border-silat-teks bg-silat-garis text-silat-teks'
+                                : 'border-[1.5px] border-silat-tepi-petak text-silat-teks-kedua'"
+                            class="flex h-[var(--silat-sentuh-min)] flex-col items-start justify-center gap-[3px] rounded-silat px-3.5 text-left">
+                        <span class="text-[16px] leading-tight font-semibold">{{ $judul }}</span>
+                        <span class="text-[12px] leading-tight text-silat-teks-redup">{{ $pertanyaan }}</span>
+                    </button>
+                @endforeach
             </div>
 
-            <div class="grid min-h-0 flex-1 grid-cols-[1fr_1fr] gap-3">
-
-                {{-- Langkah 1 --}}
-                <div class="flex min-h-0 flex-col gap-2">
-                    <p class="shrink-0 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">1 · Yang ditanyakan</p>
-
-                    @foreach ([
-                        ['jatuhan', 'Jatuhan', 'Sudut mana yang menjatuhkan?'],
-                        ['pelanggaran', 'Pelanggaran', 'Sudut mana yang melanggar?'],
-                    ] as [$nilai, $judul, $pertanyaan])
-                        <button type="button" x-on:click="jenis = '{{ $nilai }}'"
-                                x-bind:class="jenis === '{{ $nilai }}' ? 'bg-silat-aksi text-silat-aksi-teks' : 'border border-silat-tepi-kendali text-silat-teks'"
-                                class="flex min-h-[var(--silat-sentuh-min)] shrink-0 flex-col items-start justify-center gap-0.5 rounded-silat px-4 text-left">
-                            <span class="text-[16px] leading-tight font-semibold">{{ $judul }}</span>
-                            <span class="text-[12px] leading-tight opacity-80">{{ $pertanyaan }}</span>
-                        </button>
+            {{--
+                Tingkat sanksi dipilih SEKARANG, bukan setelah juri menjawab.
+                Wasit sudah tahu pelanggaran apa yang dilihatnya; yang ia
+                ragukan cuma sudutnya. Menetapkannya di sini membuat akibat
+                verifikasi bisa dinyatakan penuh sebelum diterapkan.
+            --}}
+            <div x-show="jenis === 'pelanggaran'" x-cloak class="flex shrink-0 items-center gap-2.5">
+                <span class="silat-angka shrink-0 text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">Sanksi</span>
+                <div class="flex flex-1 gap-2">
+                    @foreach ([['ringan', 'Pembinaan'], ['sedang', 'Teguran'], ['berat', 'Peringatan']] as [$kirim, $resmi])
+                        <button type="button" x-on:click="tingkat = '{{ $kirim }}'"
+                                x-bind:class="tingkat === '{{ $kirim }}'
+                                    ? 'bg-silat-aksi text-silat-aksi-teks'
+                                    : 'border border-silat-tepi-petak text-silat-teks-kedua'"
+                                class="h-10 flex-1 rounded-silat text-[13px] font-medium">{{ $resmi }}</button>
                     @endforeach
-
-                    {{--
-                        Tingkat sanksi dipilih SEKARANG, bukan setelah juri
-                        menjawab. Wasit sudah tahu pelanggaran apa yang
-                        dilihatnya; yang ia ragukan cuma sudutnya. Menetapkannya
-                        di sini membuat akibat verifikasi bisa dinyatakan penuh
-                        sebelum diterapkan, bukan jadi keputusan kedua yang
-                        tidak pernah dilihat juri.
-                    --}}
-                    <div x-show="jenis === 'pelanggaran'" x-cloak class="flex shrink-0 flex-col gap-1.5">
-                        <p class="text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">Sanksi yang akan dijatuhkan</p>
-                        <div class="flex gap-1.5">
-                            @foreach ([['ringan', 'Pembinaan'], ['sedang', 'Teguran'], ['berat', 'Peringatan']] as [$kirim, $resmi])
-                                <button type="button" x-on:click="tingkat = '{{ $kirim }}'"
-                                        x-bind:class="tingkat === '{{ $kirim }}' ? 'bg-silat-aksi text-silat-aksi-teks' : 'border border-silat-tepi-kendali text-silat-teks'"
-                                        class="min-h-[44px] flex-1 rounded-silat text-[13px] font-medium">{{ $resmi }}</button>
-                            @endforeach
-                        </div>
-                    </div>
                 </div>
+            </div>
 
-                {{-- Langkah 2 --}}
-                <div class="flex min-h-0 flex-col gap-2">
-                    <p class="shrink-0 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">
-                        2 · Kejadian yang mana <span class="normal-case">(boleh dilewati)</span>
-                    </p>
-
-                    <div class="min-h-0 flex-1 overflow-y-auto rounded-silat border border-silat-garis">
-                        <button type="button" x-on:click="kejadian = null"
-                                x-bind:class="kejadian === null ? 'bg-white/10' : ''"
-                                class="flex w-full items-baseline justify-between gap-3 border-b border-silat-garis px-3 py-2 text-left">
-                            <span class="text-[13px] text-silat-teks">Tidak menunjuk kejadian</span>
-                            <span class="text-[11px] text-silat-teks-redup">baru saja terjadi</span>
-                        </button>
-
-                        <template x-for="baris in riwayat.slice(0, 8)" :key="baris.tipe + baris.id">
-                            <button type="button" x-on:click="kejadian = baris"
-                                    x-bind:class="kejadian?.tipe === baris.tipe && kejadian?.id === baris.id ? 'bg-white/10' : ''"
-                                    class="flex w-full items-center gap-3 border-b border-silat-garis px-3 py-2 text-left">
-                                <span class="w-[3px] shrink-0 self-stretch"
-                                      x-bind:class="baris.corner === 'red' ? 'bg-silat-merah' : 'bg-silat-biru'"></span>
-                                <span class="silat-angka w-[68px] shrink-0 text-[12px] text-silat-teks-redup"
-                                      x-text="new Date(baris.waktu).toLocaleTimeString('id-ID')"></span>
-                                <span class="min-w-0 flex-1 truncate text-[13px] text-silat-teks" x-text="baris.label"></span>
-                            </button>
-                        </template>
-                    </div>
-                </div>
+            {{-- Kejadian yang dirujuk. Boleh dilewati: sebagian pertanyaan
+                 memang tentang apa yang baru saja terjadi di depan mata. --}}
+            <div class="flex shrink-0 items-center gap-2.5">
+                <span class="silat-angka shrink-0 text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">Kejadian</span>
+                <select x-on:change="kejadian = $event.target.value === '' ? null : riwayat.slice(0, 8)[Number($event.target.value)]"
+                        aria-label="Kejadian yang dirujuk"
+                        class="h-10 flex-1 rounded-silat border border-silat-tepi-petak bg-silat-panel px-2.5 text-[13.5px] text-silat-teks">
+                    <option value="">Tidak merujuk kejadian tertentu</option>
+                    <template x-for="(baris, i) in riwayat.slice(0, 8)" :key="baris.tipe + baris.id">
+                        <option x-bind:value="i"
+                                x-text="new Date(baris.waktu).toLocaleTimeString('id-ID') + ' · ' + baris.label"></option>
+                    </template>
+                </select>
             </div>
 
             {{--
                 Peringatannya berdiri sendiri di atas tombol kirim, bukan
-                diselipkan sebagai keterangan kecil. Menghentikan panel tiga
-                juri adalah akibat yang harus dibaca sebelum menekan.
+                diselipkan sebagai keterangan kecil. Menghentikan panel juri
+                adalah akibat yang harus dibaca sebelum menekan.
             --}}
-            <div class="flex shrink-0 items-center justify-between gap-3">
-                <p class="max-w-[52ch] text-[12px] leading-relaxed text-silat-teks-redup">
-                    Panel juri akan berhenti menerima nilai sampai ketiganya menjawab.
+            <div class="flex shrink-0 items-start gap-2.5 rounded-silat bg-silat-panel px-3.5 py-3">
+                <span class="mt-1.5 size-2 shrink-0 rounded-full bg-silat-teguran"></span>
+                <p class="text-[13px] leading-[1.55] text-silat-teks-kedua">
+                    Begitu dikirim, <strong class="font-semibold">panel <span x-text="peraturan.jumlah_juri"></span> juri berhenti menerima nilai</strong>
+                    dan berganti jadi layar jawaban. Nilai yang belum sempat mereka tekan untuk kejadian ini akan hilang.
                 </p>
-                <div class="flex shrink-0 gap-2">
-                    <button type="button" x-on:click="$dispatch('tutup-verifikasi')"
-                            class="min-h-[44px] rounded-silat border border-silat-tepi-kendali px-5 text-[14px] text-silat-teks">Batal</button>
-                    <button type="button" x-on:click="kirim()" x-bind:disabled="! siap"
-                            class="min-h-[44px] rounded-silat bg-silat-aksi px-6 text-[15px] font-semibold text-silat-aksi-teks disabled:opacity-45">
-                        Kirim ke <span x-text="peraturan.jumlah_juri"></span> juri
-                    </button>
-                </div>
+            </div>
+
+            <div class="mt-auto flex shrink-0 gap-2">
+                <button type="button" x-on:click="$dispatch('tutup-verifikasi')"
+                        class="h-[var(--silat-sentuh-min)] rounded-silat border-[1.5px] border-silat-tepi-petak px-[18px] text-[15px] font-medium text-silat-teks-kedua">Batal</button>
+                <button type="button" x-on:click="kirim()" x-bind:disabled="! siap"
+                        class="h-[var(--silat-sentuh-min)] flex-1 rounded-silat bg-silat-aksi text-[16px] font-semibold text-silat-aksi-teks disabled:opacity-45">
+                    Kirim ke <span x-text="peraturan.jumlah_juri"></span> juri
+                </button>
             </div>
         </div>
     </template>
@@ -187,7 +173,7 @@
                     <div class="flex shrink-0 gap-2">
                         @foreach ([
                             ['red', 'Merah', 'bg-silat-merah-dalam'],
-                            ['tidak_ada', 'Tidak ada', 'border border-silat-tepi-kendali'],
+                            ['tidak_ada', 'Tidak ada', 'border border-silat-tepi-petak'],
                             ['blue', 'Biru', 'bg-silat-biru-dalam'],
                         ] as [$kunci, $judul, $gaya])
                             <div class="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-silat {{ $gaya }} py-2">
@@ -233,7 +219,7 @@
                             wasit, yang tidak ikut dibongkar.
                         --}}
                         <button type="button" x-on:click="batalkanVerifikasi()"
-                                class="min-h-[48px] rounded-silat border border-silat-tepi-kendali px-4 text-[14px] text-silat-teks">
+                                class="min-h-[48px] rounded-silat border border-silat-tepi-petak px-4 text-[14px] text-silat-teks-kedua">
                             Batalkan
                         </button>
                         <button type="button" x-on:click="terapkanVerifikasi()"

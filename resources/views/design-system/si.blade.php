@@ -171,6 +171,22 @@
             <x-si.pesan-kilat />
         </x-si.kartu>
 
+        {{-- BARIS FORM --}}
+        <x-si.kartu judul="Baris formulir" keterangan="Grid 260px + sisa: penjelasan di kiri, kontrolnya di kanan — bentuk yang dipakai layar setelan."
+                    padat>
+            <x-si.baris-form judul="Nama kejuaraan" keterangan="Tercetak di berita acara dan halaman publik.">
+                <x-si.isian name="contoh_baris_form" label="Nama" />
+            </x-si.baris-form>
+            <x-si.baris-form judul="Suasana bawaan" keterangan="Berlaku untuk wajah publik; panel gelanggang tidak ikut saklar ini.">
+                <x-si.saklar name="contoh_baris_saklar" label="Terang bawaan" dicentang />
+            </x-si.baris-form>
+        </x-si.kartu>
+
+        {{-- RANGKA MEMUAT --}}
+        <x-si.kartu judul="Rangka memuat" keterangan="Isi, bukan spinner — bentuknya sudah menyatakan apa yang sebentar lagi muncul. Lebarnya bervariasi supaya tidak terbaca sebagai tabel kosong.">
+            <x-si.rangka :baris="4" />
+        </x-si.kartu>
+
         {{-- KEADAAN KOSONG --}}
         <x-si.kartu judul="Keadaan kosong" keterangan="Wajib menyebutkan apa yang membuka isinya, bukan sekadar “tidak ada data”.">
             <x-si.kosong judul="Belum ada medali"

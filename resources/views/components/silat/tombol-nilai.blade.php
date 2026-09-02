@@ -50,7 +50,7 @@
             'min-h-[var(--silat-sentuh-min)] min-w-[var(--silat-sentuh-min)] px-4 py-3',
             'transition-none touch-manipulation',
             'active:translate-y-px',
-            'disabled:bg-transparent disabled:text-silat-teks-mati disabled:ring-1 disabled:ring-silat-tepi-kendali',
+            'disabled:bg-transparent disabled:text-silat-teks-mati disabled:ring-[1.5px] disabled:ring-silat-tepi-petak',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
         ]),
     ]) }}

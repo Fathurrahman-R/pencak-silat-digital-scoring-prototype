@@ -14,10 +14,10 @@
 
 @php
     $kelas = [
-        'px-4 py-3 align-middle',
+        'px-3.5 py-[11px] align-middle',
         'text-right' => $align === 'right' || $numeric,
         'text-center' => $align === 'center',
-        'font-mono text-[13px] tabular-nums' => $numeric,
+        'font-mono tabular-nums' => $numeric,
         'font-medium whitespace-nowrap text-ink' => $header,
     ];
 @endphp

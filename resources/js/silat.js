@@ -145,6 +145,18 @@ Alpine.data('partaiPanel', (cfg) => ({
     pesan: null,
     galat: null,
     indikator: { red: [], blue: [] },
+
+    /*
+     * Indikator per TEKNIK, dipakai panel operator: yang menentukan sebuah
+     * nilai sah bukan berapa juri yang menekan, melainkan berapa juri yang
+     * menekan teknik yang SAMA dalam satu window konsensus. Operator yang
+     * hanya melihat "dua juri menekan" tidak bisa membedakan dua pukulan yang
+     * sepakat dari satu pukulan dan satu tendangan yang tidak.
+     */
+    indikatorTeknik: {
+        red: { pukulan: [], tendangan: [], jatuhan: [] },
+        blue: { pukulan: [], tendangan: [], jatuhan: [] },
+    },
     sisaMsTampil: 0,
     _petaJuri: {},
     _waktuIndikator: { red: null, blue: null },
@@ -202,6 +214,25 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     get babakAktif() {
         return this.rounds.find((r) => r.round === this.match.current_round) ?? null;
+    },
+
+    /**
+     * Selisih tiap sudut terhadap lawannya, sudah bertanda -- dipakai panel
+     * operator, tempat kedua blok bertumpuk dan angkanya dibandingkan sekolom.
+     * Kosong saat imbang: "+ 0" dan "- 0" tidak menyatakan apa pun.
+     */
+    get selisih() {
+        const beda = (this.skorTotal.merah ?? 0) - (this.skorTotal.biru ?? 0);
+
+        if (beda === 0) {
+            return { merah: '', biru: '' };
+        }
+
+        const besar = Math.abs(beda);
+
+        return beda > 0
+            ? { merah: `+ ${besar}`, biru: `- ${besar}` }
+            : { merah: `- ${besar}`, biru: `+ ${besar}` };
     },
 
     get sudahSelesai() {
@@ -566,15 +597,26 @@ Alpine.data('partaiPanel', (cfg) => ({
             this.indikator[sisi] = [...this.indikator[sisi], nomor];
         }
 
+        const teknik = e.point_type;
+
+        if (teknik && this.indikatorTeknik[sisi][teknik] && !this.indikatorTeknik[sisi][teknik].includes(nomor)) {
+            this.indikatorTeknik[sisi] = {
+                ...this.indikatorTeknik[sisi],
+                [teknik]: [...this.indikatorTeknik[sisi][teknik], nomor],
+            };
+        }
+
         clearTimeout(this._waktuIndikator[sisi]);
         this._waktuIndikator[sisi] = setTimeout(() => {
             this.indikator[sisi] = [];
+            this.indikatorTeknik[sisi] = { pukulan: [], tendangan: [], jatuhan: [] };
         }, this.peraturan.window_konsensus_ms + 500);
     },
 
     _tandaiIndikatorSelesai(corner) {
         const sisi = corner === 'red' ? 'red' : 'blue';
         this.indikator[sisi] = [];
+        this.indikatorTeknik[sisi] = { pukulan: [], tendangan: [], jatuhan: [] };
         clearTimeout(this._waktuIndikator[sisi]);
     },
 }));

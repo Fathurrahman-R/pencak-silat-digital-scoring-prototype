@@ -46,14 +46,14 @@
                  class="flex w-full max-w-[380px] items-start gap-3 rounded-[var(--radius)] border border-line bg-surface-raised p-4 shadow-lg">
                 <x-si.ikon :nama="$g['ikon']" class="mt-0.5 size-[20px] shrink-0 {{ $g['warna'] }}" />
 
-                <div class="flex-1 text-[15px] leading-relaxed text-ink">{{ $satu['isi'] }}</div>
+                <div class="flex-1 text-[13.5px] leading-relaxed text-ink">{{ $satu['isi'] }}</div>
 
                 {{-- Sasaran 44px: tombol tutup 16px meleset di layar sentuh, dan
                      pesan yang tidak bisa ditutup akan menghalangi isi halaman. --}}
                 <button type="button" x-on:click="tampil = false"
-                        class="-m-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-kecil)] text-ink-muted hover:bg-surface-inset hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+                        class="-m-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-kecil)] text-ink-muted hover:bg-surface-inset hover:text-ink focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none">
                     <span class="sr-only">Tutup pesan</span>
-                    <x-si.ikon nama="x" class="size-5" />
+                    <x-si.ikon nama="x" class="size-4" />
                 </button>
             </div>
         @endforeach

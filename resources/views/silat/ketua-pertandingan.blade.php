@@ -30,7 +30,7 @@
         </header>
 
         <p x-show="galat" x-text="galat" x-cloak
-           class="shrink-0 rounded-silat bg-red-500/15 px-3 py-1.5 text-center text-[13px] text-red-300"></p>
+           class="shrink-0 rounded-silat bg-silat-garis px-3 py-1.5 text-center text-[13px] font-medium text-silat-teks"></p>
         <p x-show="pesan && ! galat" x-text="pesan" x-cloak
            class="shrink-0 rounded-silat bg-silat-panel px-3 py-1.5 text-center text-[13px] text-silat-teks-redup"></p>
 

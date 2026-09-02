@@ -1,4 +1,4 @@
-<x-layouts.silat :title="'Perolehan Medali — '.$tournament->name">
+<x-layouts.silat :title="'Perolehan Medali — '.$tournament->name" permukaan="publik">
     {{--
         Emoji 🥇🥈🥉 dibuang dari halaman ini.
 
@@ -12,18 +12,17 @@
         Emas hanya menandai baris peringkat pertama. Begitu ia dipakai untuk
         eyebrow atau hiasan judul, ia berhenti berarti "juara".
     --}}
-    <div class="mx-auto flex min-h-screen max-w-[860px] flex-col gap-10 p-4 sm:p-6">
-        <header>
-            <a href="{{ route('live.turnamen', $tournament) }}" class="text-[12px] text-silat-teks-redup">
-                &larr; {{ $tournament->name }}
-            </a>
-            <h1 class="mt-1 text-[24px] leading-tight font-medium text-silat-teks">Perolehan medali</h1>
-        </header>
+    <x-silat.kepala-publik :judul="$tournament->name" keterangan="Perolehan medali"
+                           :tautan="['Kejuaraan' => route('live.turnamen', $tournament), 'Medali' => route('live.turnamen.medali', $tournament)]"
+                           aktif="Medali" />
+
+    <div class="mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-5 pt-8 pb-16 sm:px-10">
+        <h1 class="text-[26px] font-semibold tracking-[-0.025em] text-silat-teks">Perolehan medali</h1>
 
         <section>
-            <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
-                <span class="text-[11px] tracking-[.28em] text-silat-teks uppercase">Peringkat umum</span>
-                <div class="flex items-baseline gap-4 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">
+            <div class="flex items-baseline justify-between rounded-t-silat-besar border border-silat-garis bg-silat-panel px-4 py-3">
+                <span class="silat-angka text-[12px] font-semibold tracking-[.1em] text-silat-teks uppercase">Peringkat umum</span>
+                <div class="silat-angka flex items-baseline gap-4 text-[11px] tracking-[.1em] text-silat-teks-redup uppercase">
                     <span class="w-12 text-right">Emas</span>
                     <span class="w-12 text-right">Perak</span>
                     <span class="w-14 text-right">Perunggu</span>
@@ -31,9 +30,10 @@
                 </div>
             </div>
 
+            <div class="overflow-hidden rounded-b-silat-besar border border-t-0 border-silat-garis">
             @forelse ($peringkatUmum as $i => $baris)
                 @php($juara = $i === 0)
-                <div class="flex items-baseline gap-4 border-b border-silat-garis py-3">
+                <div @class(['flex items-baseline gap-4 px-4 py-3', 'border-t border-silat-garis' => $i > 0])>
                     <span class="silat-angka w-6 text-[14px] tabular-nums {{ $juara ? 'text-silat-emas' : 'text-silat-teks-redup' }}">{{ $i + 1 }}</span>
                     <span class="min-w-0 flex-1 truncate text-[17px] {{ $juara ? 'font-semibold' : '' }} text-silat-teks">{{ $baris['kontingen'] }}</span>
                     <span class="silat-angka w-12 text-right text-[17px] font-medium tabular-nums {{ $juara ? 'text-silat-emas' : 'text-silat-teks' }}">{{ $baris['emas'] }}</span>
@@ -43,20 +43,19 @@
                 </div>
             @empty
                 {{-- Keadaan kosong menyebutkan APA YANG MEMBUKA ISINYA. --}}
-                <div class="border border-dashed border-silat-tepi-kendali px-5 py-8">
-                    <p class="text-[16px] font-medium text-silat-teks">Belum ada medali</p>
-                    <p class="mt-1 max-w-[64ch] text-[14px] leading-relaxed text-silat-teks-redup">
+                <div class="px-6 py-16 text-center">
+                    <p class="text-[16px] font-semibold text-silat-teks">Belum ada medali</p>
+                    <p class="mx-auto mt-1 max-w-[64ch] text-[14px] leading-relaxed text-silat-teks-redup">
                         Medali muncul setelah hasil partai atau penampilan Jurus disahkan Dewan Wasit Juri.
                     </p>
                 </div>
             @endforelse
+            </div>
         </section>
 
         @if ($tanding->isNotEmpty())
             <section>
-                <div class="border-b-2 border-silat-teks pb-2 text-[11px] tracking-[.28em] text-silat-teks uppercase">
-                    Juara kelas Tanding
-                </div>
+                <h2 class="mb-3.5 text-[20px] font-semibold tracking-[-0.02em] text-silat-teks">Juara kelas Tanding</h2>
 
                 @foreach ($tanding as $baris)
                     <div class="flex flex-col gap-1 border-b border-silat-garis py-3 sm:flex-row sm:items-baseline sm:gap-6">

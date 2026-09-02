@@ -1,6 +1,19 @@
 @import 'tailwindcss';
 @import './dasar.css';
 
+/*
+    Palet panitia ikut dimuat di sini SEMATA untuk bagan.
+    <x-si.pohon-bagan> adalah komponen yang sama persis yang dipakai halaman
+    bagan panitia, dan ia dipakai apa adanya oleh bagan publik maupun overlay
+    siaran: satu bagan, satu rupa, di ketiga permukaan. Komponen itu memakai
+    token panitia (corner-*, ink-*, line-*, surface-*), jadi nilainya harus
+    ikut tersedia di bundel ini -- disalin ulang dengan nilai sendiri berarti
+    keduanya bisa menyimpang diam-diam, yang justru masalah yang sedang
+    diselesaikan. Berkas ini hanya berisi deklarasi variabel; tidak ada satu
+    pun aturan yang menyentuh komponen gelanggang.
+*/
+@import './dasar-admin.css';
+
 /* ---------------------------------------------------------------------------
    Design system gelanggang
    ---------------------------------------------------------------------------
@@ -20,18 +33,19 @@
 
 /* Font ikut di-bundle, bukan diambil dari CDN. Gelanggang sering tanpa
    internet, dan overlay vMix tidak boleh menunggu permintaan jaringan apa pun.
-   Sora tidak dipakai di sini: papan skor hanya butuh satu wajah antarmuka dan
-   satu wajah angka. */
-@import '@fontsource-variable/space-grotesk';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/500.css';
-@import '@fontsource/ibm-plex-mono/600.css';
+   Dua wajah saja: Geist untuk antarmuka, Geist Mono untuk angka. */
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 
 @source '../views/components/silat/**/*.blade.php';
 @source '../views/layouts/silat.blade.php';
 @source '../views/layouts/overlay.blade.php';
 @source '../views/silat/**/*.blade.php';
 @source '../views/overlay/**/*.blade.php';
+@source '../views/public/**/*.blade.php';
+
+/* Bagan dipinjam utuh dari bundel panitia -- lihat catatan @import di atas. */
+@source '../views/components/si/pohon-bagan.blade.php';
 
 /* ---------------------------------------------------------------------------
    Token mentah
@@ -53,29 +67,34 @@
     --silat-panel: var(--g-panel);
     --silat-garis: var(--g-garis);
 
-    /* Bidang "mati" dulu #2e2e33 dan berkontras 1.46 terhadap latar: pip babak
-       dan titik juri yang belum menyala praktis tidak terlihat. Sekarang
-       menunjuk tepi kendali yang terukur 3.66. */
+    /* Apa pun yang berarti "belum menyala" digambar sebagai TEPI, bukan
+       bidang -- pip babak dan titik juri memakai `--silat-tepi-petak`
+       (#8a8a90). Nama `--silat-mati` dipertahankan untuk garis pemisah halus
+       di dalam panel. BRIEF §2.4. */
     --silat-mati: var(--g-tepi-kendali);
 
     --silat-teks: var(--g-teks);
+    --silat-teks-kedua: var(--g-teks-kedua);
     --silat-teks-redup: var(--g-teks-redup);
 
-    /* `--silat-teks-samar` dulu #6e6e76 -- inilah penyebab temuan K3, saat
-       istilah resmi hukuman ditulis berkontras 1.03-1.74 dan wasit praktis
-       tidak bisa membacanya. Namanya dipertahankan karena masih dipakai 13
-       berkas; nilainya kini sama dengan teks redup yang terukur 5.73/5.40,
-       jadi ketiga belas berkas itu ikut membaik tanpa disentuh.
-
-       Tidak ada tingkat yang lebih redup dari ini. Kalau sebuah teks terlalu
-       tidak penting untuk `--silat-teks-redup`, teks itu tidak perlu ada. */
-    --silat-teks-samar: var(--g-teks-redup);
+    /* Tingkat paling redup dalam ramp gelap BRIEF §2.1 (#71717a, 4.12 di
+       latar). Dipakai untuk meta dan cap waktu, tidak pernah untuk istilah
+       naskah: hukuman ditulis dengan `--silat-teks` atau `--silat-teks-kedua`.
+       Itu yang dulu jadi temuan K3, saat istilah resmi hukuman berkontras
+       1.03-1.74 dan wasit praktis tidak bisa membacanya. */
+    --silat-teks-samar: var(--g-teks-samar);
 
     --silat-emas: var(--emas);
 
+    /* Tangga hukuman. Peringatan tidak lagi berbidang merah -- merah hanya
+       berarti sudut pesilat. Tingkatnya naik lewat kontras dan bentuk:
+       tepi abu → bidang oranye → bidang putih pekat. BRIEF §2.3. */
     --silat-pembinaan: var(--pembinaan);
+    --silat-pembinaan-teks: var(--pembinaan-teks);
     --silat-teguran: var(--teguran);
+    --silat-teguran-teks: var(--teguran-teks);
     --silat-peringatan: var(--peringatan);
+    --silat-peringatan-teks: var(--peringatan-teks);
 
     --silat-aksi: var(--g-aksi);
     --silat-aksi-teks: var(--g-aksi-teks);
@@ -84,6 +103,9 @@
        keempat latar: 5.73 di latar, 5.40 di panel, 3.15 di bidang merah,
        4.01 di bidang biru. */
     --silat-tepi-petak: var(--g-tepi-petak);
+
+    /* Tepi kartu partai dan garis penghubung di bagan -- DESIGN-SYSTEM.md §8. */
+    --silat-tepi-bagan: var(--g-teks-redup);
     --silat-tepi-kendali: var(--g-tepi-kendali);
     --silat-teks-mati: var(--g-teks-mati);
     --silat-hidup: var(--g-hidup);
@@ -97,9 +119,42 @@
     --silat-sentuh-min: var(--sentuh-gelanggang);
     --silat-lorong-sudut: var(--lorong-sudut);
     --silat-radius: var(--radius);
+    --silat-radius-kecil: var(--radius-kecil);   /* badge dan petak hukuman */
+    --silat-radius-besar: var(--radius-besar);   /* kartu besar dan panel */
+    --silat-radius-dialog: var(--radius-dialog); /* papan live dan dialog */
+
+    /* Bidang overlay siaran memakai alpha 0.94 supaya gambar kamera tidak
+       tertutup sepenuhnya, sementara teks di atasnya tetap lolos kontras.
+       Nilainya sama dengan bidang sudut dan latar gelap, hanya ditipiskan. */
+    --silat-siaran-merah: rgb(122 20 24 / 0.94);
+    --silat-siaran-biru: rgb(12 42 99 / 0.94);
+    --silat-siaran-tengah: rgb(9 9 11 / 0.94);
+
+    /* Papan hasil siaran adalah satu-satunya permukaan TERANG di overlay:
+       ia tampil beberapa detik sesudah partai berakhir, dan bidang terang
+       memisahkannya tegas dari scorebug yang menempel sepanjang siaran. */
+    --silat-siaran-kertas: rgb(255 255 255 / 0.96);
+    --silat-siaran-kertas-redup: rgb(228 228 231 / 0.96);
 
     --silat-overlay-lebar: var(--overlay-lebar);
     --silat-overlay-tinggi: var(--overlay-tinggi);
+
+    /* -----------------------------------------------------------------------
+       Nama token panitia, dipetakan persis seperti di app.css.
+       Hanya dipakai <x-si.pohon-bagan>, yang dipinjam utuh dari bundel admin
+       supaya bagan di overlay dan halaman publik identik dengan bagan panitia.
+    ----------------------------------------------------------------------- */
+    --surface-raised: var(--k-kertas-naik);
+    --surface-inset: var(--k-kertas-dalam);
+    --border-subtle: var(--k-garis);
+    --border-strong: var(--k-tepi-kendali);
+    --text-primary: var(--k-tinta);
+    --text-secondary: var(--k-tinta-kedua);
+    --text-muted: var(--k-tinta-redup);
+    --corner-red: var(--sudut-merah-dalam);
+    --corner-blue: var(--sudut-biru-dalam);
+    --corner-red-on: #ffffff;
+    --corner-blue-on: #ffffff;
 }
 
 @theme inline {
@@ -119,6 +174,7 @@
     --color-silat-emas: var(--silat-emas);
 
     --color-silat-tepi-petak: var(--silat-tepi-petak);
+    --color-silat-tepi-bagan: var(--silat-tepi-bagan);
     --color-silat-tepi-kendali: var(--silat-tepi-kendali);
     --color-silat-teks-mati: var(--silat-teks-mati);
     --color-silat-hidup: var(--silat-hidup);
@@ -133,18 +189,106 @@
     --color-silat-aksi-teks: var(--silat-aksi-teks);
 
     --color-silat-pembinaan: var(--silat-pembinaan);
+    --color-silat-pembinaan-teks: var(--silat-pembinaan-teks);
     --color-silat-teguran: var(--silat-teguran);
+    --color-silat-teguran-teks: var(--silat-teguran-teks);
     --color-silat-peringatan: var(--silat-peringatan);
+    --color-silat-peringatan-teks: var(--silat-peringatan-teks);
+    --color-silat-teks-kedua: var(--silat-teks-kedua);
+
+    --color-silat-siaran-merah: var(--silat-siaran-merah);
+    --color-silat-siaran-biru: var(--silat-siaran-biru);
+    --color-silat-siaran-tengah: var(--silat-siaran-tengah);
+    --color-silat-siaran-kertas: var(--silat-siaran-kertas);
+    --color-silat-siaran-kertas-redup: var(--silat-siaran-kertas-redup);
 
     --font-silat: var(--huruf-antarmuka);
     --font-silat-angka: var(--huruf-angka);
 
     --radius-silat: var(--silat-radius);
+    --radius-silat-kecil: var(--silat-radius-kecil);
+    --radius-silat-besar: var(--silat-radius-besar);
+    --radius-silat-dialog: var(--silat-radius-dialog);
+
+    /* -----------------------------------------------------------------------
+       Token panitia yang dipakai <x-si.pohon-bagan>.
+       Namanya sengaja sama persis dengan bundel admin, dan nilainya menunjuk
+       ke variabel yang sama (dasar-admin.css) -- itulah yang membuat bagan di
+       overlay dan halaman publik mustahil menyimpang dari bagan panitia.
+    ----------------------------------------------------------------------- */
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-inset: var(--surface-inset);
+    --color-line: var(--border-subtle);
+    --color-line-strong: var(--border-strong);
+    --color-ink: var(--text-primary);
+    --color-ink-secondary: var(--text-secondary);
+    --color-ink-muted: var(--text-muted);
+    --color-corner-red: var(--corner-red);
+    --color-corner-blue: var(--corner-blue);
+    --color-corner-red-on: var(--corner-red-on);
+    --color-corner-blue-on: var(--corner-blue-on);
 }
 
 /* ---------------------------------------------------------------------------
    Dasar
 --------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+   Wajah publik — satu-satunya permukaan silat yang punya suasana terang
+   ---------------------------------------------------------------------------
+   Beranda, live score, bagan, dan medali dibuka di HP di bawah matahari, jadi
+   bawaannya TERANG dengan saklar manual (BRIEF §9). Panel gelanggang dan
+   overlay siaran tidak ikut: keduanya gelap permanen.
+
+   Yang ditukar hanya nilai `--silat-*`; seluruh komponen memanggil nama token
+   yang sama, jadi tidak satu pun perlu varian kelas.
+--------------------------------------------------------------------------- */
+
+.silat-publik {
+    --silat-latar: #ffffff;
+    --silat-panel: #fafafa;
+    --silat-garis: #e4e4e7;
+    --silat-mati: #d4d4d8;
+    --silat-tepi-kendali: #d4d4d8;
+    --silat-tepi-petak: #8a8a90;
+    --silat-tepi-bagan: #a1a1aa;
+
+    --silat-teks: #09090b;
+    --silat-teks-kedua: #3f3f46;
+    --silat-teks-redup: #71717a;
+    --silat-teks-samar: #a1a1aa;
+    --silat-teks-mati: #a1a1aa;
+
+    --silat-aksi: #18181b;
+    --silat-aksi-teks: #fafafa;
+
+    /* Emas di atas kertas butuh nilai yang lebih gelap daripada di atas
+       panggung: #c9a227 hanya 1.9 di atas putih. DESIGN-SYSTEM.md §2. */
+    --silat-emas: #8a6d10;
+    --silat-hidup: #16a34a;
+}
+
+:root[data-theme='dark'] .silat-publik {
+    --silat-latar: var(--g-latar);
+    --silat-panel: var(--g-panel);
+    --silat-garis: var(--g-garis);
+    --silat-mati: var(--g-tepi-kendali);
+    --silat-tepi-kendali: var(--g-tepi-kendali);
+    --silat-tepi-petak: var(--g-tepi-petak);
+    --silat-tepi-bagan: var(--g-teks-redup);
+
+    --silat-teks: var(--g-teks);
+    --silat-teks-kedua: var(--g-teks-kedua);
+    --silat-teks-redup: var(--g-teks-redup);
+    --silat-teks-samar: var(--g-teks-samar);
+    --silat-teks-mati: var(--g-teks-mati);
+
+    --silat-aksi: var(--g-aksi);
+    --silat-aksi-teks: var(--g-aksi-teks);
+
+    --silat-emas: var(--emas);
+    --silat-hidup: var(--g-hidup);
+}
 
 @layer base {
     .silat {
@@ -153,9 +297,15 @@
         -webkit-font-smoothing: antialiased;
     }
 
-    /* Panggung papan skor: panel gelanggang dan halaman live score publik. */
+    /* Panggung papan skor: panel gelanggang dan overlay. */
     .silat-panggung {
         background: var(--silat-latar);
+        min-height: 100vh;
+    }
+
+    .silat-publik {
+        background: var(--silat-latar);
+        color: var(--silat-teks);
         min-height: 100vh;
     }
 

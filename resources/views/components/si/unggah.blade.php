@@ -26,7 +26,7 @@
 
 <div class="flex flex-col gap-2" x-data="{ namaBerkas: '' }">
     @if ($label)
-        <label for="{{ $id }}" class="text-[14px] font-semibold text-ink">
+        <label for="{{ $id }}" class="text-[13px] font-medium text-ink">
             {{ $label }}
             @if ($wajib)
                 <span class="font-normal text-ink-muted">— wajib diisi</span>
@@ -35,12 +35,12 @@
     @endif
 
     <div @class([
-        'flex items-center gap-3 rounded-[var(--radius)] border px-3.5 py-3',
-        'border-danger' => $galat,
+        'flex items-center gap-3 rounded-[var(--radius)] border px-3.5 py-2.5',
+        'border-danger-line' => $galat,
         'border-line-strong' => ! $galat,
     ])>
         <label for="{{ $id }}"
-               class="inline-flex h-10 shrink-0 cursor-pointer items-center rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3.5 text-[14px] font-medium text-ink">
+               class="inline-flex h-9 shrink-0 cursor-pointer items-center rounded-[var(--radius)] border border-line-strong bg-surface-raised px-3.5 text-[13.5px] font-medium text-ink">
             Pilih berkas
         </label>
 
@@ -54,16 +54,16 @@
                class="sr-only"
                {{ $attributes }}>
 
-        <span class="min-w-0 flex-1 truncate text-[14px]"
+        <span class="min-w-0 flex-1 truncate text-[13.5px]"
               x-bind:class="namaBerkas ? 'text-ink' : 'text-ink-muted'"
               x-text="namaBerkas || 'Belum ada berkas dipilih'"></span>
     </div>
 
     @error($kunciGalat)
-        <p id="{{ $id }}-galat" class="text-[14px] leading-relaxed text-danger">{{ $message }}</p>
+        <p id="{{ $id }}-galat" class="text-[12.5px] leading-relaxed text-danger">{{ $message }}</p>
     @enderror
 
     @if ($bantuan)
-        <p class="text-[14px] leading-relaxed text-ink-muted">{{ $bantuan }}</p>
+        <p class="text-[12.5px] leading-relaxed text-ink-muted">{{ $bantuan }}</p>
     @endif
 </div>

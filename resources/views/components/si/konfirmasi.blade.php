@@ -53,12 +53,12 @@
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
              role="dialog" aria-modal="true" aria-labelledby="judul-{{ $nama }}">
 
-            <div class="absolute inset-0 bg-[rgb(8_8_10/0.72)]" x-on:click="tutup()" aria-hidden="true"></div>
+            <div class="absolute inset-0 bg-[rgba(9,9,11,.45)]" x-on:click="tutup()" aria-hidden="true"></div>
 
-            <div class="relative w-full max-w-[520px] rounded-[var(--radius-besar)] border border-line bg-surface-raised shadow-[var(--bayang-modal)]">
+            <div class="relative w-full max-w-[520px] rounded-[var(--radius-dialog)] border border-line bg-surface-raised shadow-lg">
                 <div class="flex flex-col gap-3 px-6 pt-6">
                     <h2 id="judul-{{ $nama }}" class="text-[22px] leading-snug font-bold text-ink">{{ $judul }}</h2>
-                    <p class="text-[15px] leading-relaxed text-ink-secondary">{{ $akibat }}</p>
+                    <p class="text-[13.5px] leading-relaxed text-ink-secondary">{{ $akibat }}</p>
                     @if ($bilaBatal)
                         <p class="text-[14px] leading-relaxed text-ink-muted">{{ $bilaBatal }}</p>
                     @endif
@@ -70,7 +70,7 @@
                             Ketik <strong class="font-semibold text-ink">{{ $ketik }}</strong> untuk melanjutkan
                         </label>
                         <input id="ketik-{{ $nama }}" x-model="ketikan" type="text" autocomplete="off"
-                               class="h-[var(--sentuh-admin)] rounded-[var(--radius)] border border-line-strong bg-surface px-3.5 text-[15px] text-ink outline-none focus:ring-2 focus:ring-surface focus:ring-offset-2 focus:ring-offset-ink">
+                               class="h-9 rounded-[var(--radius)] border border-line-strong bg-surface px-3.5 text-[13.5px] text-ink outline-none focus:ring-[3px] focus:ring-ink/10">
                     </div>
                 @endif
 

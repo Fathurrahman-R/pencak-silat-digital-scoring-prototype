@@ -17,12 +17,12 @@
             <span class="mt-[7px] size-2 shrink-0 rounded-full {{ $loop->first ? 'bg-accent' : 'bg-line-strong' }}"></span>
 
             <div class="min-w-0 flex-1">
-                <p @class(['text-[14px] leading-relaxed text-ink', 'font-semibold' => $loop->first])>
+                <p @class(['text-[13.5px] leading-relaxed text-ink', 'font-semibold' => $loop->first])>
                     {{ $butir['teks'] }}
                 </p>
 
                 @if ($butir['waktu'] ?? null)
-                    <p class="mt-0.5 text-[13px] text-ink-muted">{{ $butir['waktu'] }}</p>
+                    <p class="mt-0.5 text-[12.5px] text-ink-muted">{{ $butir['waktu'] }}</p>
                 @endif
             </div>
         </li>

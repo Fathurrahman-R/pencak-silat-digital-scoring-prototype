@@ -218,7 +218,7 @@
                         ['Tugaskan aparat, lalu jalankan partai', 'Wasit dan juri menemukan partai yang ditugaskan langsung dari halaman depan mereka.'],
                     ] as $i => [$langkah, $catatan])
                         <li class="flex items-start gap-3.5">
-                            <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-muted">
+                            <span class="num flex size-6 shrink-0 items-center justify-center rounded-sm bg-surface-inset text-[11px] text-ink-secondary">
                                 {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
                             </span>
                             <p class="text-sm text-ink-secondary">

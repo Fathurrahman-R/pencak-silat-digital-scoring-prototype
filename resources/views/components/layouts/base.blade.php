@@ -23,7 +23,7 @@
     sesuatu yang bergradasi di belakangnya, karena di atas warna rata kaca
     hanya jadi kotak abu-abu. Kacanya sudah dibuang, jadi semburatnya ikut.
 --}}
-<body class="min-h-screen bg-surface font-sans text-body leading-relaxed text-ink antialiased">
+<body class="min-h-screen overflow-x-hidden bg-surface font-sans text-body leading-relaxed text-ink antialiased">
     {{--
         x-data kosong di pembungkus ini bukan formalitas: Alpine hanya
         memproses elemen yang punya leluhur ber-x-data. Tanpanya, setiap

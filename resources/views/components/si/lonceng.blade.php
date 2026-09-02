@@ -34,7 +34,7 @@
 
     <button type="button" x-ref="pemicu" x-on:click="buka = ! buka"
             :aria-expanded="buka" aria-haspopup="menu"
-            class="relative inline-flex size-[34px] items-center justify-center rounded-[var(--radius-kecil)] border border-line-strong bg-surface-raised text-ink-secondary hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+            class="relative inline-flex size-[34px] items-center justify-center rounded-[var(--radius-kecil)] border border-line-strong bg-surface-raised text-ink-secondary hover:text-ink focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none">
         {{-- Direktif yang menempel di huruf sebelumnya tidak dikenali Blade:
              `Notifikasi@if` terbaca sebagai teks biasa, dan @endif-nya jadi
              yatim. Karena itu ditulis di barisnya sendiri. --}}

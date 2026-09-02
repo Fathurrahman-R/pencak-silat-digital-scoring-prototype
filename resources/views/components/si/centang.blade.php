@@ -52,7 +52,7 @@
                    {{ $attributes->class([
                        'peer size-[22px] appearance-none rounded-[var(--radius-kecil)] border-2 bg-surface-raised',
                        'checked:border-accent checked:bg-accent',
-                       'focus-visible:ring-2 focus-visible:ring-surface focus-visible:ring-offset-2 focus-visible:ring-offset-ink focus-visible:outline-none',
+                       'focus-visible:ring-[3px] focus-visible:ring-ink/10 focus-visible:outline-none',
                        'border-danger' => $galat,
                        'border-line-strong' => ! $galat,
                    ]) }}>
@@ -66,7 +66,7 @@
 
         <span class="min-w-0">
             @if ($label)
-                <span class="block text-[15px] text-ink">{{ $label }}</span>
+                <span class="block text-[13.5px] text-ink">{{ $label }}</span>
             @endif
             @if ($bantuan)
                 <span class="block text-[13px] leading-relaxed text-ink-muted">{{ $bantuan }}</span>
