@@ -126,6 +126,42 @@ php artisan queue:listen --tries=1
 
 `--host=0.0.0.0` wajib untuk kedua perintah pertama -- tanpa itu, server hanya menerima koneksi dari mesin itu sendiri dan HP di LAN tidak akan bisa menyambung sama sekali.
 
+### `php artisan serve` melayani SATU permintaan pada satu waktu
+
+Server bawaan PHP tidak punya banyak pekerja di Windows: permintaan kedua menunggu yang pertama selesai.
+
+Akibatnya baru terasa saat gelanggang ramai: tiga juri menekan beruntun, empat panel dan lima halaman overlay masing-masing menarik keadaan terbaru, dan antreannya tumbuh lebih cepat daripada terurai. Layar tertinggal beberapa detik dari matras, dan aksi seperti membatalkan nilai ikut terasa lambat karena permintaannya mengantre di belakang tarikan-tarikan itu.
+
+Diukur di satu mesin pengembangan, endpoint state yang sama:
+
+| | 1 permintaan | 5 bersamaan | 10 bersamaan |
+|---|---|---|---|
+| `php artisan serve` | ~200 ms | ~1150 ms | — |
+| Herd (Nginx + PHP-FPM) | ~200 ms | ~440 ms | ~724 ms |
+
+Lima permintaan yang berbaris memakan waktu lima kali lipat; yang berbarengan tidak.
+
+Sisi aplikasi sudah menekan jumlah tarikan: letupan siaran digabung jadi satu tarikan, dan angka skor dipasang langsung dari muatan siarannya. Sisanya urusan server.
+
+**Untuk hari-H, jangan pakai `php artisan serve`.** Pakai Herd (sudah direkomendasikan di §1) atau Nginx/Apache + PHP-FPM yang dipasang sendiri.
+
+Mendaftarkan proyek ke Herd, sekali saja:
+
+```powershell
+cd D:\digiscoring-prototype
+herd link digiscoring
+```
+
+Situsnya lalu hidup di `http://digiscoring.test` (Herd ikut memperbarui `APP_URL`). Reverb tetap dijalankan sendiri seperti di atas -- Herd hanya melayani HTTP, bukan WebSocket:
+
+```powershell
+php artisan reverb:start --host=0.0.0.0 --port=8080
+```
+
+Untuk HP juri dan wasit di LAN, `*.test` tidak akan terselesaikan dari perangkat lain. Pakai alamat IP mesin server (`http://192.168.1.10:8000`) lewat `php artisan serve` untuk latihan kecil, atau setel Herd/Nginx melayani IP mesin itu untuk kejuaraan sungguhan.
+
+`php artisan serve` tetap memadai untuk memasang, menguji, dan latihan satu-dua orang.
+
 ## 7. Firewall Windows
 
 Izinkan port masuk untuk PHP dan Reverb:
