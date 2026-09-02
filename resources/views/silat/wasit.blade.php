@@ -199,8 +199,40 @@
                     <div class="mt-auto flex shrink-0 flex-col gap-1.5 rounded-silat bg-silat-panel p-2">
                         <div class="flex items-baseline justify-between">
                             <span class="text-[12px] font-medium text-silat-teks">Hitungan jatuh</span>
-                            <span class="text-[11px] text-silat-teks-redup" x-text="sudutLabel"></span>
+                            {{-- Arahnya disebut: yang dihitung adalah pesilat yang JATUH,
+                                 kebalikan dari tombol Jatuhan di atas yang memberi nilai
+                                 kepada yang menjatuhkan. Satu pemilih sudut, dua arti. --}}
+                            <span class="text-[11px] text-silat-teks-redup" x-text="'yang jatuh: ' + sudutLabel"></span>
                         </div>
+
+                        {{--
+                            Riwayat hitungan babak ini, dinyatakan SEBELUM tombol ditekan.
+
+                            Akibat hitungan adalah yang terberat di seluruh panel ini:
+                            hitungan ke-9 menjatuhkan Teguran I, ke-10 mengakhiri partai,
+                            dan hitungan beruntun ketiga dalam satu babak membuat lawannya
+                            menang teknik. Tanpa baris ini wasit menekan hitungan ketiga
+                            tanpa tahu bahwa tekanannya menghabisi partai, dan setelah
+                            partai berhenti tidak ada tempat untuk memeriksa hitungan yang
+                            sebenarnya sudah berapa.
+                        --}}
+                        <p class="text-[11.5px] leading-snug text-silat-teks-kedua">
+                            <span x-text="hitunganTeknik[kunciSisi].jumlah === 0
+                                ? 'Belum pernah dihitung babak ini.'
+                                : ('Sudah ' + hitunganTeknik[kunciSisi].jumlah + '× babak ini'
+                                    + (hitunganTeknik[kunciSisi].terakhir
+                                        ? ', terakhir sampai hitungan ' + hitunganTeknik[kunciSisi].terakhir
+                                        : '') + '.')"></span>
+
+                            <span x-show="hitunganTeknik[kunciSisi].beruntun > 0"
+                                  x-bind:class="hitunganTeknik[kunciSisi].beruntun + 1 >= hitunganTeknik.ambang_beruntun
+                                      ? 'font-semibold text-silat-peringatan'
+                                      : 'text-silat-teks-redup'"
+                                  x-text="hitunganTeknik[kunciSisi].beruntun + 1 >= hitunganTeknik.ambang_beruntun
+                                      ? 'Satu hitungan lagi: lawan menang teknik.'
+                                      : ('Beruntun ' + hitunganTeknik[kunciSisi].beruntun + ' dari '
+                                          + hitunganTeknik.ambang_beruntun + '.')"></span>
+                        </p>
                         <div class="flex items-stretch gap-1.5">
                             <button type="button" x-on:click="hitungan = Math.max(1, hitungan - 1)"
                                     aria-label="Kurangi hitungan"

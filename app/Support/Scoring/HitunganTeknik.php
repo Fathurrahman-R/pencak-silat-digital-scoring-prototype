@@ -54,7 +54,7 @@ class HitunganTeknik
             return $hitungan->refresh();
         }
 
-        if ($this->hitunganBeruntun($match, $sudut, $babak) >= $beruntunMenang) {
+        if ($this->beruntun($match, $sudut, $babak) >= $beruntunMenang) {
             $this->timer->akhiriPartai($match, $this->lawan($match, $sudut), 'teknik');
         }
 
@@ -64,8 +64,12 @@ class HitunganTeknik
     /**
      * Berapa kali beruntun sudut ini dihitung dalam babak ini, tanpa
      * diselingi hitungan terhadap sudut lawan.
+     *
+     * Terbuka untuk dibaca panel, bukan cuma dipakai di dalam sini: wasit yang
+     * tidak melihat angka ini menekan hitungan ketiga tanpa tahu bahwa
+     * tekanannya mengakhiri partai.
      */
-    private function hitunganBeruntun(SilatMatch $match, Sudut $sudut, int $babak): int
+    public function beruntun(SilatMatch $match, Sudut $sudut, int $babak): int
     {
         $beruntun = 0;
 
@@ -78,6 +82,32 @@ class HitunganTeknik
         }
 
         return $beruntun;
+    }
+
+    /**
+     * Hitungan tertinggi yang terakhir dicatat untuk sudut ini di babak ini.
+     *
+     * Kosong berarti sudut ini belum pernah dihitung babak ini. Dipakai panel
+     * wasit untuk menyatakan sampai berapa hitungan terakhir berjalan --
+     * angka yang menentukan Teguran I (hitungan 9) dan menang mutlak
+     * (hitungan 10), dan yang selama ini hanya ada di kepala wasit.
+     */
+    public function terakhir(SilatMatch $match, Sudut $sudut, int $babak): ?int
+    {
+        return $match->technicalCounts()
+            ->where('round', $babak)
+            ->where('corner', $sudut)
+            ->orderByDesc('id')
+            ->value('count_reached');
+    }
+
+    /** Berapa kali sudut ini dihitung sepanjang babak ini, beruntun maupun tidak. */
+    public function jumlah(SilatMatch $match, Sudut $sudut, int $babak): int
+    {
+        return $match->technicalCounts()
+            ->where('round', $babak)
+            ->where('corner', $sudut)
+            ->count();
     }
 
     private function lawan(SilatMatch $match, Sudut $sudut)

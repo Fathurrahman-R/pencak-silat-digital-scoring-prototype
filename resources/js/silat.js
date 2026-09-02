@@ -136,6 +136,20 @@ Alpine.data('partaiPanel', (cfg) => ({
         merah: { pembinaan: 0, teguran: 0, peringatan: 0, diskualifikasi: false },
         biru: { pembinaan: 0, teguran: 0, peringatan: 0, diskualifikasi: false },
     },
+
+    /*
+     * Hitungan teknik babak berjalan. Akibatnya paling berat di seluruh
+     * sistem -- hitungan ke-9 Teguran I, ke-10 menang mutlak, beruntun ketiga
+     * menang teknik -- jadi angkanya harus terbaca wasit SEBELUM ia menekan,
+     * bukan disimpulkan dari partai yang tiba-tiba berhenti.
+     */
+    hitunganTeknik: {
+        merah: { jumlah: 0, beruntun: 0, terakhir: null },
+        biru: { jumlah: 0, beruntun: 0, terakhir: null },
+        ambang_beruntun: 3,
+        ambang_teguran: 9,
+        ambang_mutlak: 10,
+    },
     tawaranWmp: null,
     peraturan: { jumlah_juri: 3, ambang_sepakat: 2, window_konsensus_ms: 2000, jumlah_babak: 3 },
     officials: [],
@@ -517,6 +531,10 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.rounds = data.rounds;
         this.skorTotal = data.skor_total;
         this.hukuman = data.hukuman;
+        // Namanya dibedakan dari penghitung 1-10 di panel wasit: keduanya
+        // bernama "hitungan", dan x-data anak yang menaunginya akan menutupi
+        // state ini kalau namanya sama.
+        this.hitunganTeknik = data.hitungan ?? this.hitunganTeknik;
         this.tawaranWmp = data.tawaran_wmp;
         this.peraturan = data.peraturan;
         this.officials = data.officials;

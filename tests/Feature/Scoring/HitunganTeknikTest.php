@@ -91,6 +91,37 @@ it('tidak menghitung beruntun bila diselingi hitungan terhadap sudut lain', func
     expect($this->match->fresh()->status)->toBe(SilatMatch::STATUS_BERLANGSUNG);
 });
 
+/*
+ * Hitungan harus bisa dibaca ulang, bukan cuma diingat wasit.
+ *
+ * Tiga hitungan beruntun dalam satu babak mengakhiri partai, berapa pun angka
+ * yang dicapai tiap hitungan -- tiga kali "hitungan 1" pun cukup. Tanpa angka
+ * yang terbaca, wasit menekan yang ketiga tanpa tahu bahwa tekanannya
+ * menghabisi partai, dan sesudahnya tidak ada tempat memeriksa hitungan yang
+ * sebenarnya sudah berapa.
+ */
+it('menyatakan jumlah, beruntun, dan hitungan terakhir per sudut', function () {
+    $this->hitung->catat($this->match, Sudut::Biru, 1, 3, $this->wasit);
+    $this->hitung->catat($this->match, Sudut::Biru, 1, 6, $this->wasit);
+
+    expect($this->hitung->jumlah($this->match, Sudut::Biru, 1))->toBe(2)
+        ->and($this->hitung->beruntun($this->match, Sudut::Biru, 1))->toBe(2)
+        ->and($this->hitung->terakhir($this->match, Sudut::Biru, 1))->toBe(6)
+        // Sudut lawan tidak ikut terbawa.
+        ->and($this->hitung->jumlah($this->match, Sudut::Merah, 1))->toBe(0)
+        ->and($this->hitung->terakhir($this->match, Sudut::Merah, 1))->toBeNull();
+});
+
+it('memutus beruntun saat hitungan berpindah sudut, tanpa menghapus jumlahnya', function () {
+    $this->hitung->catat($this->match, Sudut::Biru, 1, 2, $this->wasit);
+    $this->hitung->catat($this->match, Sudut::Merah, 1, 2, $this->wasit);
+
+    expect($this->hitung->jumlah($this->match, Sudut::Biru, 1))->toBe(1)
+        // Beruntun biru putus karena hitungan terakhir milik merah.
+        ->and($this->hitung->beruntun($this->match, Sudut::Biru, 1))->toBe(0)
+        ->and($this->hitung->beruntun($this->match, Sudut::Merah, 1))->toBe(1);
+});
+
 it('menolak hitungan di luar rentang satu sampai sepuluh', function () {
     $this->hitung->catat($this->match, Sudut::Biru, 1, 11, $this->wasit);
 })->throws(RuntimeException::class, 'antara 1 dan 10');

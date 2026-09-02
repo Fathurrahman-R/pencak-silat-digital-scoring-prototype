@@ -676,6 +676,23 @@ class PartaiScoringController extends Controller
             'diskualifikasi' => $this->tangga->sudahDiskualifikasi($match, $sudut),
         ];
 
+        /*
+         * Hitungan teknik babak ini, per sudut.
+         *
+         * Sebelumnya tidak ada satu pun panel yang menampilkannya, sementara
+         * akibatnya paling berat di seluruh sistem: hitungan ke-9 menjatuhkan
+         * Teguran I, ke-10 mengakhiri partai, dan hitungan beruntun ketiga
+         * dalam satu babak membuat lawannya menang teknik. Wasit yang tidak
+         * melihat angka ini menekan hitungan ketiga tanpa tahu bahwa
+         * tekanannya menghabisi partai -- dan setelah partai berhenti, tidak
+         * ada tempat untuk memeriksa hitungan yang sebenarnya sudah berapa.
+         */
+        $hitunganTeknik = fn (Sudut $sudut) => [
+            'jumlah' => $this->hitungan->jumlah($match, $sudut, $babakSekarang),
+            'beruntun' => $this->hitungan->beruntun($match, $sudut, $babakSekarang),
+            'terakhir' => $this->hitungan->terakhir($match, $sudut, $babakSekarang),
+        ];
+
         return [
             'match' => [
                 'id' => $match->id,
@@ -703,6 +720,16 @@ class PartaiScoringController extends Controller
             'hukuman' => [
                 'merah' => $penalti(Sudut::Merah),
                 'biru' => $penalti(Sudut::Biru),
+            ],
+            'hitungan' => [
+                'merah' => $hitunganTeknik(Sudut::Merah),
+                'biru' => $hitunganTeknik(Sudut::Biru),
+                // Ambangnya ikut dikirim supaya panel menyatakan sisa tekanan
+                // yang tersedia, bukan memajang angka telanjang yang artinya
+                // hanya diketahui orang yang hafal Pasal 11.6.g.3.
+                'ambang_beruntun' => (int) config('scoring.tanding.hitungan_teknik.menang_teknik_setelah_hitungan_beruntun'),
+                'ambang_teguran' => (int) config('scoring.tanding.hitungan_teknik.teguran_pada_hitungan'),
+                'ambang_mutlak' => (int) config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan'),
             ],
             'tawaran_wmp' => $this->kalkulator->cekTawaranWmp($match)?->value,
             'peraturan' => [

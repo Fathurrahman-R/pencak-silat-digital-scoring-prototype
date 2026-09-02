@@ -114,6 +114,35 @@ it('memasang kendali jatuhan di panel wasit', function () {
         ->assertSee('saranJatuhan', false);
 });
 
+it('menyertakan hitungan teknik di state partai', function () {
+    /*
+     * Angka ini yang membuat wasit tahu tekanan berikutnya mengakhiri partai
+     * atau tidak. Selama ia tidak ada di state, tidak ada panel yang bisa
+     * menampilkannya berapa pun rapinya tata letaknya.
+     */
+    $wasit = ($this->buatUser)('wasit');
+
+    $state = $this->actingAs($wasit)
+        ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->json();
+
+    expect($state['hitungan']['merah'])->toBe(['jumlah' => 0, 'beruntun' => 0, 'terakhir' => null])
+        ->and($state['hitungan']['ambang_beruntun'])->toBe(3)
+        ->and($state['hitungan']['ambang_teguran'])->toBe(9)
+        ->and($state['hitungan']['ambang_mutlak'])->toBe(10);
+});
+
+it('menampilkan riwayat hitungan di panel wasit', function () {
+    $wasit = ($this->buatUser)('wasit');
+
+    $this->actingAs($wasit)
+        ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertSee('hitunganTeknik[kunciSisi].beruntun', false)
+        ->assertSee('Belum pernah dihitung babak ini.');
+});
+
 it('tidak memasang indikator jatuhan juri di panel operator', function () {
     /*
      * Indikator teknik di panel operator menghitung berapa juri yang menekan
