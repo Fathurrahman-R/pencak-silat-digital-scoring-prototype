@@ -36,7 +36,18 @@ return [
             'secret' => env('REVERB_APP_SECRET'),
             'app_id' => env('REVERB_APP_ID'),
             'options' => [
-                'host' => env('REVERB_HOST'),
+                /*
+                 * Alamat yang dipakai APLIKASI untuk mendorong siaran ke
+                 * Reverb, bukan alamat yang dibuka peramban.
+                 *
+                 * Keduanya sering mesin yang sama, tapi jalurnya tidak: lewat
+                 * IP LAN mesin sendiri, satu siaran diukur 15,7 ms; lewat
+                 * loopback 3,1 ms. Tiap penekanan tombol juri mendorong satu
+                 * sampai dua siaran, dan selisihnya menempel di setiap
+                 * tekanan sepanjang pertandingan. REVERB_HOST tetap IP LAN
+                 * karena itulah yang disambungi HP juri dan vMix.
+                 */
+                'host' => env('REVERB_PUBLISH_HOST', env('REVERB_HOST')),
                 'port' => env('REVERB_PORT', 443),
                 'scheme' => env('REVERB_SCHEME', 'https'),
                 'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
