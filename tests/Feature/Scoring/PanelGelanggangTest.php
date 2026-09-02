@@ -45,10 +45,18 @@ beforeEach(function () {
 it('menampilkan panel operator dan menyisipkan konfigurasi alamat aksi', function () {
     $operator = ($this->buatUser)('operator-it');
 
+    /*
+     * Eyebrow "OPERATOR GELANGGANG" yang dulu ada di kepala panel dibuang
+     * pada rombak Digital Scoring -- kepala kolom kanan sekarang menyebut
+     * gelanggang dan nomor partainya langsung, penanda yang lebih berguna
+     * daripada label peran yang statis. Sama seperti panel wasit di bawah:
+     * eyebrow hanya hiasan, jadi yang diuji adalah identitas partai yang
+     * sesungguhnya dirender.
+     */
     $this->actingAs($operator)
         ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
         ->assertOk()
-        ->assertSee('OPERATOR GELANGGANG')
+        ->assertSee('Partai '.$this->match->id)
         ->assertSee('partaiPanel', false)
         ->assertSee('timerMulai', false);
 });

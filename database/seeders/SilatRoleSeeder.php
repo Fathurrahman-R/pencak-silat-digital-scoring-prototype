@@ -16,11 +16,35 @@ use Illuminate\Database\Seeder;
  * naskah.
  *
  * Aparat yang tidak menyentuh aplikasi — Announcer, Petugas Medis, Petugas
- * Lapangan — sengaja tidak dibuatkan peran. Bendahara bukan bagian Pasal 13;
- * ia fungsi penyelenggara yang dibutuhkan modul keuangan.
+ * Lapangan — sengaja tidak dibuatkan peran.
+ *
+ * Beberapa jabatan naskah digabung karena di lapangan dipegang orang yang
+ * sama, dan peran yang tidak pernah dipakai justru memperbesar permukaan
+ * salah-tugas:
+ *
+ *   Sekretariat Pertandingan  = Sekretaris + Bendahara + Petugas Timbang Badan.
+ *                               Satu meja pra-acara: berkas, tagihan, timbangan.
+ *   Ketua Pertandingan        menyerap Delegasi Teknik. Wewenang Delegasi
+ *                               (pengesahan hasil, putusan protes) seluruhnya
+ *                               sudah dipegang Ketua, jadi perannya sendiri
+ *                               tidak pernah menambah apa pun.
  */
 class SilatRoleSeeder extends Seeder
 {
+    /**
+     * Peran yang sudah digabung ke peran lain.
+     *
+     * Dihapus, bukan dibiarkan menganggur: peran kosong yang masih terdaftar
+     * tetap bisa dipilih di panel Pengguna, dan akun yang menerimanya akan
+     * diam-diam kehilangan seluruh kewenangannya.
+     */
+    private const DIBUBARKAN = [
+        'delegasi-teknik' => 'ketua-pertandingan',
+        'sekretaris-pertandingan' => 'sekretariat',
+        'bendahara' => 'sekretariat',
+        'petugas-timbang' => 'sekretariat',
+    ];
+
     public function run(): void
     {
         foreach ($this->definitions() as $definition) {
@@ -34,6 +58,34 @@ class SilatRoleSeeder extends Seeder
 
             $role->syncPermissions($this->permissionsFor($definition['grants']));
         }
+
+        $this->bubarkanPeranLama();
+    }
+
+    /**
+     * Memindahkan pemegang peran lama ke peran penggantinya, lalu membuang
+     * peran lamanya.
+     *
+     * Dijalankan setelah definisi, bukan sebelumnya: peran pengganti harus
+     * sudah ada sebelum ada akun yang dipindahkan ke sana. Pada pemasangan
+     * yang masih bersih tidak ada yang dikerjakan sama sekali.
+     */
+    private function bubarkanPeranLama(): void
+    {
+        foreach (self::DIBUBARKAN as $lama => $pengganti) {
+            $peran = Role::where('name', $lama)->where('guard_name', 'web')->first();
+
+            if ($peran === null) {
+                continue;
+            }
+
+            foreach ($peran->users()->get() as $pengguna) {
+                $pengguna->assignRole($pengganti);
+                $pengguna->removeRole($peran);
+            }
+
+            $peran->delete();
+        }
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -44,24 +96,9 @@ class SilatRoleSeeder extends Seeder
 
         return [
             [
-                'name' => 'delegasi-teknik',
-                'label' => 'Delegasi Teknik',
-                'description' => 'Memutus banding secara final dan berwenang menghentikan atau menunda pertandingan.',
-                'grants' => [
-                    'turnamen' => $lihat,
-                    'jadwal' => $lihat,
-                    'bagan' => $lihat,
-                    'partai' => $lihat,
-                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve],
-                    'var' => $lihat,
-                    'protes-manajer' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
-                    'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
-                ],
-            ],
-            [
                 'name' => 'ketua-pertandingan',
                 'label' => 'Ketua Pertandingan',
-                'description' => 'Mengatur kelancaran pertandingan, memimpin verifikasi juri, dan memutus protes tingkat pertama.',
+                'description' => 'Mengatur kelancaran pertandingan, memimpin verifikasi juri, mengesahkan hasil, dan memutus protes sampai tingkat akhir.',
                 'grants' => [
                     'turnamen' => $lihat,
                     'gelanggang' => $lihat,
@@ -166,9 +203,9 @@ class SilatRoleSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'sekretaris-pertandingan',
-                'label' => 'Sekretaris Pertandingan',
-                'description' => 'Menerima pendaftaran kontingen, memeriksa berkas peserta, dan mengesahkan keikutsertaannya. Petugas Teknis, Pasal 13.',
+                'name' => 'sekretariat',
+                'label' => 'Sekretariat Pertandingan',
+                'description' => 'Meja pra-acara: menerima pendaftaran, memeriksa berkas, menagih dan mencatat pembayaran, lalu menimbang peserta Tanding.',
                 'grants' => [
                     'turnamen' => $lihat,
                     'kontingen' => $ubah,
@@ -186,33 +223,23 @@ class SilatRoleSeeder extends Seeder
                         ResourceAction::Export,
                     ],
 
-                    'invoice' => $lihat,
+                    /*
+                     * Bekas kewenangan Bendahara. Tarif boleh disusun ulang,
+                     * tagihan boleh dikunci dan ditandai lunas — tapi tidak
+                     * ada Delete pada invoice: tagihan yang sudah terbit
+                     * bagian dari catatan keuangan kejuaraan.
+                     */
+                    'tarif' => $ubah,
+                    'invoice' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Export],
+
+                    // Bekas kewenangan Petugas Timbang Badan.
+                    'timbang-badan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
+
                     'kelas-tanding' => $lihat,
                     'nomor-jurus' => $lihat,
                     'bagan' => $lihat,
                     'jadwal' => $lihat,
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
-                ],
-            ],
-            [
-                'name' => 'petugas-timbang',
-                'label' => 'Petugas Timbang Badan',
-                'description' => 'Mencatat berat badan dan menentukan lolos atau gugurnya atlet terhadap kelas yang diikuti.',
-                'grants' => [
-                    'atlet' => $lihat,
-                    'pendaftaran' => $lihat,
-                    'timbang-badan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
-                ],
-            ],
-            [
-                'name' => 'bendahara',
-                'label' => 'Bendahara Panitia',
-                'description' => 'Mengatur tarif, memantau tagihan, dan menandai pembayaran manual. Di luar Pasal 13.',
-                'grants' => [
-                    'kontingen' => $lihat,
-                    'tarif' => $ubah,
-                    'invoice' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Export],
-                    'pendaftaran' => $lihat,
                 ],
             ],
             [

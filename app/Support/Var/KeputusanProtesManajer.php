@@ -7,8 +7,9 @@ use App\Models\User;
 use RuntimeException;
 
 /**
- * Keputusan Protes Manajer -- tingkat pertama oleh Ketua Pertandingan,
- * banding oleh Delegasi Teknik. Keputusan banding bersifat final; lihat
+ * Keputusan Protes Manajer -- dua tingkat, keduanya diputus pemegang
+ * `protes-manajer => setujui`, yaitu Ketua Pertandingan sejak peran Delegasi
+ * Teknik dilebur ke sana. Keputusan banding bersifat final; lihat
  * `ManagerProtest::final()`.
  */
 class KeputusanProtesManajer

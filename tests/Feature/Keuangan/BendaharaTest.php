@@ -4,6 +4,7 @@ use App\Actions\Keuangan\KelolaInvoice;
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Enums\ResourceAction;
 use App\Enums\StatusInvoice;
 use App\Models\Athlete;
 use App\Models\AuditLog;
@@ -285,37 +286,43 @@ it('menolak official kontingen mengunduh bukti bayar kontingen lain', function (
 });
 
 /*
- * Pembatasan di atas tidak boleh mengenai panitia. Bendahara justru pemilik
- * halaman ini, dan sekretaris memakainya untuk mencocokkan pendaftaran
- * dengan pembayaran -- keduanya harus tetap melihat seluruh kontingen.
- *
- * Keduanya diuji terpisah karena izinnya berbeda: bendahara memegang
- * invoice.update tapi tidak kontingen.update, sekretaris justru sebaliknya.
- * Aturan yang hanya memeriksa salah satunya akan mengosongkan halaman bagi
- * yang lain.
+ * Pembatasan di atas tidak boleh mengenai panitia. Sekretariat pemilik
+ * halaman ini: ia menagih, mencatat pembayaran, sekaligus mencocokkannya
+ * dengan pendaftaran -- ia harus tetap melihat seluruh kontingen.
  */
-it('tetap menampilkan seluruh tagihan kepada bendahara', function () {
+it('tetap menampilkan seluruh tagihan kepada sekretariat', function () {
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Satu');
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
 
-    $bendahara = User::factory()->create();
-    $bendahara->syncRoles(['bendahara']);
+    $sekretariat = User::factory()->create();
+    $sekretariat->syncRoles(['sekretariat']);
 
-    $this->actingAs($bendahara)
+    $this->actingAs($sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
         ->assertOk()
         ->assertSee('Kontingen Satu')
         ->assertSee('Kontingen Dua');
 });
 
-it('tetap menampilkan seluruh tagihan kepada sekretaris pertandingan', function () {
+/*
+ * Diuji lewat izin langsung, bukan lewat peran, karena tidak ada lagi peran
+ * yang bentuknya begini sejak Bendahara dilebur ke Sekretariat. Bentuknya
+ * tetap perlu dijaga: siapa pun yang memegang tagihan tanpa hak ubah
+ * kontingen -- peran bentukan panitia lewat panel Role, misalnya -- akan
+ * mendapat halaman kosong kalau penyaring kontingen dipasang di sini.
+ */
+it('tetap menampilkan seluruh tagihan kepada pemegang izin tagihan tanpa hak ubah kontingen', function () {
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Satu');
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
 
-    $sekretaris = User::factory()->create();
-    $sekretaris->syncRoles(['sekretaris-pertandingan']);
+    $penagih = User::factory()->create();
+    $penagih->givePermissionTo([
+        rk('invoice', ResourceAction::View),
+        rk('invoice', ResourceAction::Update),
+        rk('kontingen', ResourceAction::View),
+    ]);
 
-    $this->actingAs($sekretaris)
+    $this->actingAs($penagih)
         ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
         ->assertOk()
         ->assertSee('Kontingen Satu')

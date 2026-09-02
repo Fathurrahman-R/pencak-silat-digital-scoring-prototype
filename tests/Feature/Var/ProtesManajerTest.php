@@ -36,7 +36,7 @@ beforeEach(function () {
     ]);
 
     $this->ketuaPertandingan = User::factory()->create();
-    $this->delegasiTeknik = User::factory()->create();
+    $this->pemutusBanding = User::factory()->create();
     $this->ajukan = new PengajuanProtesManajer;
     $this->putuskan = new KeputusanProtesManajer;
 });
@@ -67,7 +67,7 @@ it('mengajukan banding setelah tingkat pertama diputuskan', function () {
     $pertama = ($this->ajukan)->pertama($this->match, 'alasan');
     ($this->putuskan)($pertama, ManagerProtest::DITOLAK, 'tidak cukup bukti', $this->ketuaPertandingan);
 
-    $banding = ($this->ajukan)->banding($pertama->fresh(), 'naik banding ke delegasi teknik');
+    $banding = ($this->ajukan)->banding($pertama->fresh(), 'naik banding, keputusan akhir');
 
     expect($banding->level)->toBe(ManagerProtest::BANDING)
         ->and($banding->parent_id)->toBe($pertama->id);
@@ -80,7 +80,7 @@ it('keputusan banding bersifat final', function () {
 
     expect($banding->final())->toBeFalse();
 
-    ($this->putuskan)($banding, ManagerProtest::DITERIMA, 'dikabulkan', $this->delegasiTeknik);
+    ($this->putuskan)($banding, ManagerProtest::DITERIMA, 'dikabulkan', $this->pemutusBanding);
 
     expect($banding->fresh()->final())->toBeTrue();
 });

@@ -26,8 +26,8 @@ use App\Models\WeightClass;
  * pergi. Yang jumlahnya nol tidak muncul sama sekali — daftar yang penuh
  * baris bernilai nol menyembunyikan yang benar-benar menunggu.
  *
- * Baris disaring resource key, jadi Bendahara hanya melihat tagihan dan
- * Petugas Timbang Badan hanya melihat timbangan. Satu layar, isi menyesuaikan
+ * Baris disaring resource key, jadi Sekretariat melihat tagihan dan timbangan
+ * sedangkan Ketua Pertandingan tidak melihat keduanya. Satu layar, isi menyesuaikan
  * izin — bukan beranda berbeda per role, yang berarti tiap kebutuhan baru
  * harus ditambahkan di beberapa tempat.
  */

@@ -6,7 +6,6 @@ use App\Actions\Keuangan\KelolaInvoice;
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisBerkas;
-use App\Enums\JenisJurus;
 use App\Enums\JenisKelamin;
 use App\Enums\KategoriPertandingan;
 use App\Enums\StatusPendaftaran;
@@ -15,7 +14,6 @@ use App\Models\Arena;
 use App\Models\Athlete;
 use App\Models\Contingent;
 use App\Models\FeeSchedule;
-use App\Models\JurusEvent;
 use App\Models\ManualPayment;
 use App\Models\MatchOfficial;
 use App\Models\Registration;
@@ -29,7 +27,6 @@ use App\Support\Bagan\PenjadwalPartai;
 use App\Support\Keuangan\InvoiceBuilder;
 use App\Support\Pendaftaran\DaftarkanPeserta;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -43,10 +40,22 @@ use Illuminate\Support\Str;
  * sudah lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci,
  * jadwal, dan penugasan aparat.
  *
+ * Ukurannya sengaja sebesar kejuaraan sungguhan: 100 pesilat, kelas A sampai E
+ * golongan Dewasa, masing-masing 10 putra dan 10 putri, tersebar rata ke
+ * sepuluh kontingen. Sepuluh bagan berukuran 16 yang enam tempatnya kosong,
+ * jadi bye tersebar di babak pertama — ukuran itulah yang memunculkan hal-hal
+ * yang tidak pernah terlihat
+ * pada data empat peserta: halaman jadwal yang panjang, bagan yang harus
+ * digulir, dan daftar verifikasi yang tidak muat satu layar.
+ *
+ * Seluruhnya kategori Tanding. Nomor Jurus tidak diikutkan supaya jumlah
+ * pesilatnya bulat 100 dan tiap kelas benar-benar berisi sepuluh — mesin
+ * penilaian Jurus diuji lewat test suite, bukan lewat data simulasi ini.
+ *
  * Yang sengaja TIDAK dikerjakan seeder ini: menjalankan partai, memasukkan
- * nilai juri, menjatuhkan hukuman, membuat penampilan Jurus, dan mengesahkan
- * hasil. Justru itulah yang mau diuji manual — kalau seeder ikut mengerjakannya,
- * yang tersisa untuk diuji tinggal membaca angka yang sudah jadi.
+ * nilai juri, menjatuhkan hukuman, dan mengesahkan hasil. Justru itulah yang
+ * mau diuji manual — kalau seeder ikut mengerjakannya, yang tersisa untuk
+ * diuji tinggal membaca angka yang sudah jadi.
  *
  * Seluruh data dibuat lewat kelas yang sama dengan yang dipakai controller
  * (DaftarkanPeserta, InvoiceBuilder, BracketGenerator, PenjadwalPartai), bukan
@@ -66,6 +75,34 @@ class SimulasiTurnamenSeeder extends Seeder
 
     /** Disk tempat berkas peserta dan bukti bayar disimpan (lihat AthleteController). */
     private const DISK = 'local';
+
+    /**
+     * Satu angka yang menentukan ukuran seluruh kejuaraan.
+     *
+     * Tiap kontingen mengirim tepat satu putra dan satu putri per kelas, jadi
+     * angka ini sekaligus jumlah kontingen, jumlah peserta tiap kelas, dan
+     * jumlah pesilat tiap kontingen (kali dua kelamin). Pembagian rata itulah
+     * yang membuat tidak ada satu kontingen pun mengirim dua orang ke kelas
+     * yang sama, dan tidak ada atlet yang punya dua partai bersamaan.
+     *
+     *   10  100 pesilat, bagan 16; babak pertama 2 partai sungguhan + 6 bye,
+     *       lalu perempat final penuh 4 partai
+     *    8   80 pesilat, bagan 8 tanpa bye sama sekali
+     *   16  160 pesilat, bagan 16 penuh
+     *
+     * Bye hilang sama sekali hanya kalau angkanya pangkat dua. Pada 10 peserta,
+     * enam tempat yang kosong disebar susunan unggulan baku ke partai yang
+     * berbeda-beda, jadi tidak ada satu cabang pun yang melenggang ke babak
+     * belakang tanpa bertanding. Lihat UrutanUnggulan dan
+     * BracketGenerator::isiTempat().
+     *
+     * Daftar nama kontingen di buatKontingen() memuat 10 baris; menaikkan angka
+     * ini di atas 10 perlu tambahan nama.
+     */
+    private const JUMLAH_KONTINGEN = 10;
+
+    /** Kelas Dewasa yang dipertandingkan, untuk putra maupun putri. */
+    private const KODE_KELAS = ['A', 'B', 'C', 'D', 'E'];
 
     private Tournament $tournament;
 
@@ -110,22 +147,23 @@ class SimulasiTurnamenSeeder extends Seeder
     // ---------------------------------------------------------------- akun
 
     /**
-     * Satu akun per peran, plus juri sebanyak yang dibutuhkan kategori Jurus.
+     * Satu akun per peran, ditambah juri dan official sebanyak yang dibutuhkan.
      *
-     * Enam juri, bukan tiga: kategori Jurus mensyaratkan minimal 4 dan wajib
-     * genap (Pasal 16.1.b), dan enam juri yang sama bisa dipecah dua untuk
-     * menjalankan dua gelanggang Tanding sekaligus.
+     * Enam juri, bukan tiga: dua gelanggang berjalan bersamaan dan tiap partai
+     * memakai juri sebanyak setelan kejuaraan, jadi juri 1-3 memegang
+     * Gelanggang A dan juri 4-6 Gelanggang B tanpa satu orang pun merangkap.
+     *
+     * Tiga jabatan pra-acara — Sekretaris, Bendahara, Petugas Timbang Badan —
+     * kini satu peran `sekretariat`, jadi satu akun saja yang menjalankan
+     * verifikasi berkas, penagihan, dan timbang badan.
      */
     private function buatAkun(): void
     {
         $daftar = [
-            'delegasi' => ['Budi Santoso', 'delegasi-teknik'],
             'ketua' => ['Hendra Wijaya', 'ketua-pertandingan'],
             'pengawas' => ['Siti Rahayu', 'pengawas-wasit-juri'],
             'komisi' => ['Agus Salim', 'wasit-komisi-protes'],
-            'sekretaris' => ['Dewi Lestari', 'sekretaris-pertandingan'],
-            'bendahara' => ['Rina Kartika', 'bendahara'],
-            'timbang' => ['Joko Prasetyo', 'petugas-timbang'],
+            'sekretariat' => ['Dewi Lestari', 'sekretariat'],
             'operator' => ['Fajar Nugroho', 'operator-it'],
             'operator2' => ['Yudi Hartono', 'operator-it'],
             'wasit1' => ['Bambang Sutrisno', 'wasit'],
@@ -136,7 +174,7 @@ class SimulasiTurnamenSeeder extends Seeder
             $daftar["juri{$nomor}"] = ["Juri {$nomor}", 'juri'];
         }
 
-        foreach (range(1, 4) as $nomor) {
+        foreach (range(1, self::JUMLAH_KONTINGEN) as $nomor) {
             $daftar["official{$nomor}"] = ["Official Kontingen {$nomor}", 'official-kontingen'];
         }
 
@@ -252,9 +290,17 @@ class SimulasiTurnamenSeeder extends Seeder
             ['Merpati Putih Bandung', 'Jawa Barat'],
             ['Tapak Suci Yogyakarta', 'DI Yogyakarta'],
             ['Setia Hati Terate Surabaya', 'Jawa Timur'],
+            ['Pagar Nusa Semarang', 'Jawa Tengah'],
+            ['Perisai Putih Denpasar', 'Bali'],
+            ['Kera Sakti Medan', 'Sumatera Utara'],
+            ['Silat Minang Padang', 'Sumatera Barat'],
+            ['Bina Raga Makassar', 'Sulawesi Selatan'],
+            ['Garuda Sakti Pontianak', 'Kalimantan Barat'],
         ];
 
-        foreach ($daftar as $indeks => [$nama, $daerah]) {
+        // Dipotong sesuai ukuran kejuaraan: menurunkan JUMLAH_KONTINGEN cukup
+        // satu angka, tanpa perlu ikut memangkas daftar nama di atas.
+        foreach (array_slice($daftar, 0, self::JUMLAH_KONTINGEN) as $indeks => [$nama, $daerah]) {
             $nomor = $indeks + 1;
 
             $this->kontingen["k{$nomor}"] = Contingent::create([
@@ -269,65 +315,40 @@ class SimulasiTurnamenSeeder extends Seeder
     }
 
     /**
-     * Empat kelas dipertandingkan, dipilih supaya tiap bentuk bagan dan tiap
-     * jenis penagihan ikut teruji:
+     * Seratus pesilat: kelas A sampai E, tiap kelas 10 putra dan 10 putri.
      *
-     *   Tanding putra   4 peserta  -> bagan penuh, dua semifinal dan satu final
-     *   Tanding putri   5 peserta  -> bagan dengan bye, sekaligus menguji
-     *                                 kewajiban surat tidak hamil
-     *   Jurus Tunggal   3 peserta  -> penilaian median tanpa bagan
-     *   Jurus Ganda     2 tim      -> tagihan per tim, bukan per orang
+     * Tiap kontingen mengirim tepat satu putra dan satu putri per kelas, jadi
+     * tidak ada satu pun kontingen yang bertemu dirinya sendiri di babak
+     * pertama, dan tidak ada atlet yang punya dua partai pada saat yang sama.
+     *
+     * Sepuluh peserta per kelas jatuh ke bagan berukuran 16, jadi enam tempat
+     * dibiarkan kosong. Susunan unggulan baku menyebarnya sehingga babak
+     * pertama berisi dua partai sungguhan dan enam bye yang langsung
+     * diluluskan, lalu perempat final penuh empat partai — keadaan yang paling
+     * mudah salah dibaca panel jadwal maupun panel bagan, dan justru itu yang
+     * mau diuji.
      */
     private function buatPeserta(): void
     {
         $daftarkan = app(DaftarkanPeserta::class);
 
-        $kelasPutra = $this->kelasTanding(JenisKelamin::Putra);
-        $kelasPutri = $this->kelasTanding(JenisKelamin::Putri);
-        $tunggal = $this->nomorJurus(JenisJurus::Tunggal, JenisKelamin::Putra);
-        $ganda = $this->nomorJurus(JenisJurus::Ganda, JenisKelamin::Putra);
+        foreach (self::KODE_KELAS as $urutanKelas => $kode) {
+            foreach (JenisKelamin::cases() as $jenisKelamin) {
+                $kelas = $this->kelasTanding($kode, $jenisKelamin);
 
-        $namaPutra = ['Dimas Prakoso', 'Andika Saputra', 'Bagus Wicaksono', 'Candra Setiawan'];
-        $namaPutri = ['Ayu Permatasari', 'Nadia Safitri', 'Intan Maharani', 'Putri Anggraini', 'Sari Wulandari'];
-        $namaTunggal = ['Rizky Ramadhan', 'Ilham Maulana', 'Gilang Pratama'];
-        $namaGanda = [['Arif Budiman', 'Deni Kurniawan'], ['Faisal Rahman', 'Galih Saputro']];
+                foreach (range(0, self::JUMLAH_KONTINGEN - 1) as $urutanKontingen) {
+                    $kontingen = $this->kontingen['k'.($urutanKontingen + 1)];
 
-        // Tanding putra: satu peserta dari tiap kontingen.
-        foreach ($namaPutra as $indeks => $nama) {
-            $kontingen = $this->kontingen['k'.($indeks + 1)];
-            $atlet = $this->buatAtlet($kontingen, $nama, JenisKelamin::Putra, $this->beratTengah($kelasPutra));
+                    $atlet = $this->buatAtlet(
+                        $kontingen,
+                        $this->namaPesilat($jenisKelamin, $urutanKontingen, $urutanKelas),
+                        $jenisKelamin,
+                        $this->beratDalamKelas($kelas, $urutanKontingen),
+                    );
 
-            $daftarkan->tanding($kontingen, $kelasPutra, $atlet);
-        }
-
-        /*
-         * Tanding putri: lima peserta dari empat kontingen -- kontingen pertama
-         * mengirim dua. Jumlah ganjil inilah yang memaksa generator bagan
-         * menyebar bye, dan itu bagian yang paling mudah salah kalau tidak
-         * pernah dijalankan dengan data sungguhan.
-         */
-        foreach ($namaPutri as $indeks => $nama) {
-            $kontingen = $this->kontingen['k'.(($indeks % 4) + 1)];
-            $atlet = $this->buatAtlet($kontingen, $nama, JenisKelamin::Putri, $this->beratTengah($kelasPutri));
-
-            $daftarkan->tanding($kontingen, $kelasPutri, $atlet);
-        }
-
-        foreach ($namaTunggal as $indeks => $nama) {
-            $kontingen = $this->kontingen['k'.($indeks + 1)];
-            $atlet = $this->buatAtlet($kontingen, $nama, JenisKelamin::Putra);
-
-            $daftarkan->jurus($kontingen, $tunggal, collect([$atlet]));
-        }
-
-        foreach ($namaGanda as $indeks => $pasangan) {
-            $kontingen = $this->kontingen['k'.($indeks + 1)];
-
-            $atlet = collect($pasangan)->map(
-                fn (string $nama): Athlete => $this->buatAtlet($kontingen, $nama, JenisKelamin::Putra),
-            );
-
-            $daftarkan->jurus($kontingen, $ganda, $atlet);
+                    $daftarkan->tanding($kontingen, $kelas, $atlet);
+                }
+            }
         }
 
         // Seluruh pendaftaran diajukan sekaligus, seperti official yang menekan
@@ -406,7 +427,7 @@ class SimulasiTurnamenSeeder extends Seeder
                 'proof_path' => $path,
                 'proof_original_name' => $nama,
                 'paid_at' => now(),
-                'recorded_by' => $this->akun['bendahara']->id,
+                'recorded_by' => $this->akun['sekretariat']->id,
             ]);
 
             $total += $invoice->total_amount;
@@ -422,7 +443,7 @@ class SimulasiTurnamenSeeder extends Seeder
         $this->pendaftaran()->each(function (Registration $pendaftaran): void {
             $pendaftaran->update([
                 'status' => StatusPendaftaran::Terverifikasi,
-                'verified_by' => $this->akun['sekretaris']->id,
+                'verified_by' => $this->akun['sekretariat']->id,
                 'verified_at' => now(),
             ]);
         });
@@ -451,7 +472,7 @@ class SimulasiTurnamenSeeder extends Seeder
                     'weight' => $atlet->weight_claim,
                     'passed' => true,
                     'weighed_at' => now(),
-                    'recorded_by' => $this->akun['timbang']->id,
+                    'recorded_by' => $this->akun['sekretariat']->id,
                     'notes' => 'Timbang badan simulasi.',
                 ]);
 
@@ -480,8 +501,21 @@ class SimulasiTurnamenSeeder extends Seeder
                 continue;
             }
 
+            /*
+             * Diundi acak, bukan diurutkan menurut pendaftaran.
+             *
+             * Kalau tidak diacak, tempat unggulan diisi persis urutan
+             * kontingen, sehingga kontingen terakhirlah yang selalu kebagian
+             * partai babak pertama sementara kontingen pertama selalu
+             * mendapat bye — di kesepuluh kelas sekaligus. Susunan bagannya
+             * sah, tapi sebarannya tidak menyerupai undian sungguhan dan
+             * membuat uji manual selalu bertemu pola yang sama.
+             *
+             * Bentuk bagannya sendiri tidak ikut berubah: berapa pun hasil
+             * undian, jumlah bye dan jumlah partai tiap babak tetap sama.
+             */
             $generator->kunci(
-                $generator->untukKelas($kelas, acak: false),
+                $generator->untukKelas($kelas, acak: true),
                 $this->akun['ketua'],
             );
 
@@ -492,28 +526,39 @@ class SimulasiTurnamenSeeder extends Seeder
     }
 
     /**
-     * Partai babak pertama ditempatkan ke dua gelanggang berselang-seling,
-     * dengan jarak 45 menit -- di atas jeda aman 30 menit yang dipakai
-     * PenjadwalPartai untuk mendeteksi atlet bentrok.
+     * Partai yang sudah punya dua peserta ditempatkan ke dua gelanggang
+     * berselang-seling, berjarak 20 menit per gelanggang.
+     *
+     * Empat puluh partai tidak muat dalam satu pagi kalau jaraknya selebar
+     * data empat peserta dulu. Dua puluh menit tetap aman: penjadwal hanya
+     * menolak kalau satu atlet dijadwalkan di dua gelanggang dalam jarak 30
+     * menit, sedangkan di sini tidak ada satu pun atlet yang punya dua partai
+     * siap — masing-masing baru bertanding sekali sebelum babak berikutnya
+     * terisi.
+     *
+     * Mulai pukul 08.00 hari pertama, bukan satu jam dari sekarang: jadwal
+     * yang dimulai tengah malam membuat halaman jadwal dan papan skor publik
+     * terbaca aneh saat disimulasikan.
      */
     private function jadwalkanPartai(): void
     {
         $penjadwal = app(PenjadwalPartai::class);
         $gelanggang = Arena::where('tournament_id', $this->tournament->id)->orderBy('sort_order')->get();
-        $mulai = Carbon::now()->addHour()->startOfHour();
+        $mulai = $this->tournament->starts_on->clone()->setTime(8, 0);
         $terjadwal = 0;
 
         foreach ($this->partaiSiap() as $indeks => $partai) {
             $penjadwal->tetapkan(
                 $partai,
                 $gelanggang[$indeks % $gelanggang->count()],
-                $mulai->clone()->addMinutes(45 * intdiv($indeks, $gelanggang->count())),
+                $mulai->clone()->addMinutes(20 * intdiv($indeks, $gelanggang->count())),
             );
 
             $terjadwal++;
         }
 
-        $this->command?->info("Jadwal: {$terjadwal} partai ditempatkan ke {$gelanggang->count()} gelanggang.");
+        $this->command?->info("Jadwal: {$terjadwal} partai ditempatkan ke {$gelanggang->count()} gelanggang, mulai "
+            .$mulai->translatedFormat('d M H:i').'.');
     }
 
     /**
@@ -572,30 +617,54 @@ class SimulasiTurnamenSeeder extends Seeder
             ->values();
     }
 
-    private function kelasTanding(JenisKelamin $jenisKelamin): WeightClass
+    private function kelasTanding(string $kode, JenisKelamin $jenisKelamin): WeightClass
     {
         return WeightClass::where('tournament_id', $this->tournament->id)
             ->where('golongan_usia', GolonganUsia::Dewasa)
             ->where('jenis_kelamin', $jenisKelamin)
-            ->whereNotNull('weight_min')
-            ->whereNotNull('weight_max')
-            ->orderBy('sort_order')
+            ->where('code', $kode)
             ->firstOrFail();
     }
 
-    private function nomorJurus(JenisJurus $jenis, JenisKelamin $jenisKelamin): JurusEvent
+    /**
+     * Nama pesilat dari dua kolam kata, bukan seratus baris yang diketik satu
+     * per satu.
+     *
+     * Nama depan bergeser mengikuti kelas dan nama belakang bergeser tiga kali
+     * lebih cepat, sehingga lima puluh pasangan tiap jenis kelamin tidak ada
+     * yang kembar, dan sepuluh pesilat satu kontingen tetap terbaca sebagai
+     * sepuluh orang berbeda — bukan satu marga yang diulang.
+     */
+    private function namaPesilat(JenisKelamin $jenisKelamin, int $urutanKontingen, int $urutanKelas): string
     {
-        return JurusEvent::where('tournament_id', $this->tournament->id)
-            ->where('golongan_usia', GolonganUsia::Dewasa)
-            ->where('jenis', $jenis)
-            ->where('jenis_kelamin', $jenisKelamin)
-            ->firstOrFail();
+        $depan = $jenisKelamin === JenisKelamin::Putra
+            ? ['Dimas', 'Andika', 'Bagus', 'Candra', 'Eko', 'Rizky', 'Ilham', 'Gilang', 'Arif', 'Deni']
+            : ['Ayu', 'Nadia', 'Intan', 'Putri', 'Sari', 'Dinda', 'Fitri', 'Lestari', 'Mega', 'Rani'];
+
+        $belakang = ['Prakoso', 'Saputra', 'Wicaksono', 'Setiawan', 'Nugraha',
+            'Ramadhan', 'Maulana', 'Pratama', 'Budiman', 'Kurniawan'];
+
+        $jumlah = self::JUMLAH_KONTINGEN;
+
+        return $depan[($urutanKontingen + $urutanKelas) % $jumlah]
+            .' '.$belakang[($urutanKontingen + 3 * $urutanKelas) % $jumlah];
     }
 
-    /** Berat di tengah rentang kelas, supaya lolos klaim maupun timbang badan. */
-    private function beratTengah(WeightClass $kelas): float
+    /**
+     * Berat yang pasti berada di dalam rentang kelas, sedikit berbeda tiap
+     * pesilat.
+     *
+     * Dijaga di sepertiga sampai dua pertiga rentang, tidak pernah menyentuh
+     * batasnya: kelas terendah memakai batas bawah inklusif sedangkan kelas
+     * lain eksklusif, dan berat yang tepat di angka batas akan lolos di satu
+     * kelas tapi ditolak di kelas berikutnya.
+     */
+    private function beratDalamKelas(WeightClass $kelas, int $urutan): float
     {
-        return round(((float) $kelas->weight_min + (float) $kelas->weight_max) / 2, 1);
+        $bawah = (float) $kelas->weight_min;
+        $rentang = (float) $kelas->weight_max - $bawah;
+
+        return round($bawah + $rentang * (1 / 3 + $urutan / (3 * self::JUMLAH_KONTINGEN)), 1);
     }
 
     private function ringkasan(): void
@@ -607,10 +676,14 @@ class SimulasiTurnamenSeeder extends Seeder
         $this->command?->info('=== Kejuaraan simulasi siap dipakai ===');
         $this->command?->line("Kejuaraan  : #{$id} — {$this->tournament->name}");
         $this->command?->line('Gelanggang : '.$gelanggang->implode(', '));
+        $this->command?->line('Peserta    : '.Athlete::whereIn('contingent_id', collect($this->kontingen)->pluck('id'))->count()
+            .' pesilat Tanding, kelas '.self::KODE_KELAS[0].'–'.self::KODE_KELAS[count(self::KODE_KELAS) - 1]
+            .' Dewasa, '.count($this->kontingen).' kontingen');
         $this->command?->line('Kata sandi : '.self::KATA_SANDI.' (seluruh akun)');
         $this->command?->newLine();
-        $this->command?->line('Akun  ketua@'.self::DOMAIN.'  operator@'.self::DOMAIN.'  wasit1@'.self::DOMAIN.'  juri1@'.self::DOMAIN.' … juri6@'.self::DOMAIN);
-        $this->command?->line('      sekretaris@ bendahara@ timbang@ pengawas@ komisi@ delegasi@ official1@ … official4@');
+        $this->command?->line('Akun  ketua@'.self::DOMAIN.'  operator@'.self::DOMAIN.' (Gelanggang A)  operator2@'.self::DOMAIN.' (Gelanggang B)');
+        $this->command?->line('      wasit1@'.self::DOMAIN.'  wasit2@'.self::DOMAIN.'  juri1@'.self::DOMAIN.' … juri6@'.self::DOMAIN);
+        $this->command?->line('      sekretariat@ pengawas@ komisi@ official1@ … official'.self::JUMLAH_KONTINGEN.'@');
         $this->command?->newLine();
         $this->command?->line("Panel operator partai pertama tersedia di menu Jadwal kejuaraan #{$id}.");
         $this->command?->line("Live publik  : /live/turnamen/{$id}");

@@ -101,7 +101,7 @@ class VarController extends Controller
 
         $this->jalankan(fn () => $this->ajukanManajer->banding($managerProtest, $data['catatan'] ?? null));
 
-        return $this->respond($request, $match, 'success', 'Banding diajukan ke Delegasi Teknik.');
+        return $this->respond($request, $match, 'success', 'Banding diajukan — keputusannya bersifat final.');
     }
 
     public function putuskanManajer(Request $request, Tournament $tournament, SilatMatch $match, ManagerProtest $managerProtest): RedirectResponse|JsonResponse

@@ -29,6 +29,20 @@ beforeEach(function () {
     $regBiru = Registration::factory()->for($kontingen)->terverifikasi()->create(['weight_class_id' => $kelas->id]);
     $regBiru->athletes()->attach(Athlete::factory()->for($kontingen)->create(['name' => 'Andi']));
 
+    /*
+     * Tempat undian ikut dibuat, seperti yang selalu dilakukan
+     * App\Support\Bagan\BracketGenerator: babak pertama sebuah bagan digambar
+     * dari TEMPAT-nya, bukan dari partainya -- pesilat yang mendapat bye punya
+     * tempat tanpa pernah punya partai di babak itu. Bagan publik, bagan
+     * panitia, dan overlay memakai satu penghitung yang sama
+     * (App\Support\Bagan\PohonBagan), jadi bagan tanpa tempat akan tampil
+     * kosong di ketiganya.
+     */
+    $bracket->slots()->createMany([
+        ['position' => 1, 'registration_id' => $regMerah->id],
+        ['position' => 2, 'registration_id' => $regBiru->id],
+    ]);
+
     $this->match = SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
         'red_registration_id' => $regMerah->id, 'blue_registration_id' => $regBiru->id,

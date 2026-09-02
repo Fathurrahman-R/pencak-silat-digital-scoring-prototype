@@ -68,12 +68,12 @@ it('mengosongkan penugasan bila tidak ada yang dipilih', function () {
 });
 
 it('menolak pengguna yang bukan operator', function () {
-    $bendahara = User::factory()->create();
-    $bendahara->syncRoles(['bendahara']);
+    $sekretariat = User::factory()->create();
+    $sekretariat->syncRoles(['sekretariat']);
 
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.gelanggang.operator', [$this->tournament, $this->gelanggang]), [
-            'operator_id' => [$bendahara->id],
+            'operator_id' => [$sekretariat->id],
         ])
         ->assertSessionHasErrors('operator_id.0');
 

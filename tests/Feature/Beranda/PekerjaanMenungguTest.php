@@ -107,17 +107,15 @@ it('menghitung tagihan lewat kontingennya, bukan lewat kejuaraan', function () {
 /*
  * Inti dari "satu layar, isi menyesuaikan izin".
  *
- * Yang dipasangkan di sini Bendahara dan Petugas Timbang Badan, karena
- * keduanya saling melengkapi: Bendahara memegang `invoice` tapi tidak
- * `timbang-badan`, dan Petugas Timbang sebaliknya. Kalau penyaringnya lepas,
- * kedua-duanya akan melihat seluruh daftar.
+ * Yang dipasangkan di sini Sekretariat dan Ketua Pertandingan, karena
+ * keduanya berlawanan penuh pada dua baris pra-acara: Sekretariat memegang
+ * `invoice` sekaligus `timbang-badan`, Ketua Pertandingan tidak memegang
+ * satu pun. Kalau penyaringnya lepas, Ketua akan ikut melihat daftar
+ * tagihan dan daftar timbang yang bukan urusannya.
  *
- * Yang TIDAK diuji di sini: antrean verifikasi. Keduanya sama-sama memegang
- * `pendaftaran => lihat` -- Bendahara butuh melihat pendaftaran karena
- * tagihannya dihitung dari sana, dan Petugas Timbang butuh tahu siapa yang
- * pendaftarannya sudah sah sebelum menimbangnya. Memakainya sebagai pembeda
- * akan menghasilkan uji yang gagal karena premisnya keliru, bukan karena
- * kodenya salah.
+ * Sejak Bendahara dan Petugas Timbang dilebur ke Sekretariat, tidak ada lagi
+ * dua peran yang saling melengkapi satu-lawan-satu seperti dulu — pembedanya
+ * kini "punya semua" lawan "tidak punya sama sekali".
  */
 it('hanya menampilkan baris yang izinnya dimiliki pengguna', function () {
     $kelas = WeightClass::factory()->create(['tournament_id' => $this->turnamen->id]);
@@ -129,16 +127,16 @@ it('hanya menampilkan baris yang izinnya dimiliki pengguna', function () {
 
     kontingenNunggak($this->turnamen, $kelas, 'Kontingen Uji');
 
-    masukSebagai('bendahara');
-    $bendahara = collect(pekerjaan($this->turnamen))->pluck('benda');
+    masukSebagai('sekretariat');
+    $sekretariat = collect(pekerjaan($this->turnamen))->pluck('benda');
 
-    masukSebagai('petugas-timbang');
-    $timbang = collect(pekerjaan($this->turnamen))->pluck('benda');
+    masukSebagai('ketua-pertandingan');
+    $ketua = collect(pekerjaan($this->turnamen))->pluck('benda');
 
-    expect($bendahara)->toContain('tagihan kontingen belum lunas')
-        ->and($bendahara)->not->toContain('pesilat belum ditimbang')
-        ->and($timbang)->toContain('pesilat belum ditimbang')
-        ->and($timbang)->not->toContain('tagihan kontingen belum lunas');
+    expect($sekretariat)->toContain('tagihan kontingen belum lunas')
+        ->and($sekretariat)->toContain('pesilat belum ditimbang')
+        ->and($ketua)->not->toContain('tagihan kontingen belum lunas')
+        ->and($ketua)->not->toContain('pesilat belum ditimbang');
 });
 
 it('tiap baris membawa jumlah, sebab, dan tautannya', function () {

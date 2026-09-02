@@ -22,8 +22,8 @@ use Database\Seeders\SilatRoleSeeder;
 beforeEach(function () {
     $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
 
-    $this->sekretaris = User::factory()->create();
-    $this->sekretaris->syncRoles(['sekretaris-pertandingan']);
+    $this->sekretariat = User::factory()->create();
+    $this->sekretariat->syncRoles(['sekretariat']);
 
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
@@ -64,14 +64,14 @@ it('mengesahkan pendaftaran yang berkasnya lengkap dan tagihannya lunas', functi
     $registration = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
     lunasiKontingen($this->kontingen);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/setujui")
         ->assertSessionHasNoErrors();
 
     $registration->refresh();
 
     expect($registration->status)->toBe(StatusPendaftaran::Terverifikasi)
-        ->and($registration->verified_by)->toBe($this->sekretaris->id)
+        ->and($registration->verified_by)->toBe($this->sekretariat->id)
         ->and($registration->verified_at)->not->toBeNull();
 
     expect(AuditLog::where('action', 'pendaftaran.verifikasi')->count())->toBe(1);
@@ -85,7 +85,7 @@ it('mengesahkan pendaftaran yang berkasnya lengkap dan tagihannya lunas', functi
 it('menolak mengesahkan pendaftaran saat tagihan belum lunas', function () {
     $registration = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/setujui")
         ->assertSessionHasErrors('verifikasi');
 
@@ -102,7 +102,7 @@ it('menolak mengesahkan pendaftaran saat berkas wajib belum lengkap', function (
 
     lunasiKontingen($this->kontingen);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/setujui")
         ->assertSessionHasErrors('verifikasi');
 
@@ -112,7 +112,7 @@ it('menolak mengesahkan pendaftaran saat berkas wajib belum lengkap', function (
 it('menolak pendaftaran beserta alasan yang tercatat', function () {
     $registration = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/tolak", [
             'rejection_reason' => 'Surat keterangan sehat terbit lebih dari satu minggu sebelum pertandingan.',
         ])
@@ -134,7 +134,7 @@ it('menolak pendaftaran beserta alasan yang tercatat', function () {
 it('menolak alasan penolakan yang terlalu pendek', function () {
     $registration = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/tolak", [
             'rejection_reason' => 'kurang',
         ])
@@ -149,7 +149,7 @@ it('menolak memutus pendaftaran yang belum diajukan', function () {
 
     lunasiKontingen($this->kontingen);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}/setujui")
         ->assertSessionHasErrors('verifikasi');
 });
@@ -164,8 +164,8 @@ it('mengembalikan pendaftaran ke antrean beserta jejaknya', function () {
 
     $dasar = "/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}";
 
-    $this->actingAs($this->sekretaris)->post("{$dasar}/setujui");
-    $this->actingAs($this->sekretaris)->post("{$dasar}/tinjau-ulang")->assertSessionHasNoErrors();
+    $this->actingAs($this->sekretariat)->post("{$dasar}/setujui");
+    $this->actingAs($this->sekretariat)->post("{$dasar}/tinjau-ulang")->assertSessionHasNoErrors();
 
     $registration->refresh();
 
@@ -182,11 +182,11 @@ it('membersihkan alasan penolakan saat pendaftaran akhirnya disahkan', function 
 
     $dasar = "/admin/turnamen/{$this->tournament->id}/verifikasi/{$registration->id}";
 
-    $this->actingAs($this->sekretaris)->post("{$dasar}/tolak", [
+    $this->actingAs($this->sekretariat)->post("{$dasar}/tolak", [
         'rejection_reason' => 'Foto atlet tidak terbaca, mohon unggah ulang.',
     ]);
-    $this->actingAs($this->sekretaris)->post("{$dasar}/tinjau-ulang");
-    $this->actingAs($this->sekretaris)->post("{$dasar}/setujui");
+    $this->actingAs($this->sekretariat)->post("{$dasar}/tinjau-ulang");
+    $this->actingAs($this->sekretariat)->post("{$dasar}/setujui");
 
     expect($registration->fresh())
         ->status->toBe(StatusPendaftaran::Terverifikasi)
@@ -197,7 +197,7 @@ it('menolak pendaftaran kejuaraan lain lewat alamat yang ditukar', function () {
     $lain = Tournament::factory()->create();
     $registration = pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->post("/admin/turnamen/{$lain->id}/verifikasi/{$registration->id}/setujui")
         ->assertNotFound();
 });
@@ -213,10 +213,10 @@ it('menutup panel verifikasi dari official kontingen', function () {
         ->assertForbidden();
 });
 
-it('menampilkan antrean verifikasi kepada sekretaris pertandingan', function () {
+it('menampilkan antrean verifikasi kepada sekretariat pertandingan', function () {
     pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/verifikasi")
         ->assertOk()
         ->assertSee($this->kontingen->name)
@@ -248,7 +248,7 @@ it('mencari pendaftaran menurut nama atlet maupun kontingen', function () {
 
     pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $hasil = $this->actingAs($this->sekretaris)
+    $hasil = $this->actingAs($this->sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&q=Zulkifli")
         ->assertOk()
         ->viewData('registrations');
@@ -274,7 +274,7 @@ it('membuat hitungan chip ikut menyusut oleh pencarian, tapi tidak oleh penyarin
     pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
     pendaftaranSiap($this->kontingen, $this->kelasC, $this->tournament);
 
-    $tanpaCari = $this->actingAs($this->sekretaris)
+    $tanpaCari = $this->actingAs($this->sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=ditolak")
         ->assertOk()
         ->viewData('hitungan');
@@ -282,7 +282,7 @@ it('membuat hitungan chip ikut menyusut oleh pencarian, tapi tidak oleh penyarin
     // Penyaring status tidak menyusutkan hitungan.
     expect($tanpaCari['semua'])->toBe(3);
 
-    $denganCari = $this->actingAs($this->sekretaris)
+    $denganCari = $this->actingAs($this->sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&q=Zulkifli")
         ->assertOk()
         ->viewData('hitungan');
@@ -308,7 +308,7 @@ it('membawa berkas peserta terpilih beserta yang kurang, disebut satu per satu',
         ->create(['weight_class_id' => $this->kelasC->id]);
     $registration->athletes()->attach($athlete);
 
-    $berkas = $this->actingAs($this->sekretaris)
+    $berkas = $this->actingAs($this->sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/verifikasi?status=semua&peserta={$registration->id}")
         ->assertOk()
         ->viewData('berkas');

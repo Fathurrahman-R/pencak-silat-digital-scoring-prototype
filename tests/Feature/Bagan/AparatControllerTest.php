@@ -283,18 +283,18 @@ it('tidak menyatakan bentrok saat salah satu partai belum terjadwal', function (
 
 /*
  * Yang diperiksa bukan cuma "penggunanya ada", tapi "penggunanya memang
- * wasit/juri". Tanpa itu, bendahara bisa terdaftar sebagai juri dan official
+ * wasit/juri". Tanpa itu, petugas sekretariat bisa terdaftar sebagai juri dan official
  * kontingen -- yang jelas berkepentingan atas hasil -- bisa jadi wasit.
  * Keduanya tidak akan bisa membuka panelnya, jadi kesalahan itu baru
  * ketahuan saat partai hendak dimulai, dengan aparat sahnya sudah tergusur.
  */
 it('menolak pengguna tanpa peran wasit sebagai wasit', function () {
-    $bendahara = User::factory()->create();
-    $bendahara->syncRoles(['bendahara']);
+    $sekretariat = User::factory()->create();
+    $sekretariat->syncRoles(['sekretariat']);
 
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
-            'wasit_id' => $bendahara->id,
+            'wasit_id' => $sekretariat->id,
             'juri_id' => $this->juri->take(3)->pluck('id')->all(),
         ])
         ->assertSessionHasErrors('wasit_id');
@@ -303,13 +303,13 @@ it('menolak pengguna tanpa peran wasit sebagai wasit', function () {
 });
 
 it('menolak pengguna tanpa peran juri sebagai juri', function () {
-    $bendahara = User::factory()->create();
-    $bendahara->syncRoles(['bendahara']);
+    $sekretariat = User::factory()->create();
+    $sekretariat->syncRoles(['sekretariat']);
 
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
             'wasit_id' => $this->wasit->id,
-            'juri_id' => [$bendahara->id, ...$this->juri->take(2)->pluck('id')->all()],
+            'juri_id' => [$sekretariat->id, ...$this->juri->take(2)->pluck('id')->all()],
         ])
         ->assertSessionHasErrors('juri_id.0');
 

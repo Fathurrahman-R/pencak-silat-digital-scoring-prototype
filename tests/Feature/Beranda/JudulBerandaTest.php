@@ -32,7 +32,7 @@ it('memakai judul Indonesia yang sama dengan menunya', function (string $peran) 
     ($this->masuk)($peran)
         ->assertSee('Beranda')
         ->assertDontSee('Dashboard');
-})->with(['sekretaris-pertandingan', 'juri', 'operator-it', 'bendahara']);
+})->with(['sekretariat', 'juri', 'operator-it', 'ketua-pertandingan']);
 
 it('tetap membedakan panitia dan aparat lewat keterangannya', function () {
     ($this->masuk)('juri')->assertSee('Partai tempat Anda ditugaskan hari ini.');

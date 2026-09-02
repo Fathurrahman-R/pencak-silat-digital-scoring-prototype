@@ -1,6 +1,13 @@
 <?php
 
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
+use App\Enums\GolonganUsia;
+use App\Enums\JenisKelamin;
+use App\Models\Athlete;
+use App\Models\Bracket;
+use App\Models\Contingent;
+use App\Models\Registration;
+use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use Database\Seeders\ResourceSeeder;
@@ -14,39 +21,39 @@ beforeEach(function () {
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
-    $this->sekretaris = User::factory()->create();
-    $this->sekretaris->syncRoles(['sekretaris-pertandingan']);
+    $this->sekretariat = User::factory()->create();
+    $this->sekretariat->syncRoles(['sekretariat']);
 });
 
 it('menampilkan halaman rekap', function () {
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.index', $this->tournament))
         ->assertOk()
         ->assertSee('Peringkat umum kontingen');
 });
 
 it('mengekspor rekap medali sebagai PDF', function () {
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.ekspor.medali-pdf', $this->tournament))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/pdf');
 });
 
 it('mengekspor rekap medali sebagai CSV', function () {
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.ekspor.medali', $this->tournament))
         ->assertOk()
         ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 });
 
 it('mengekspor daftar peserta sebagai CSV', function () {
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.ekspor.peserta', $this->tournament))
         ->assertOk();
 });
 
 it('mengekspor jadwal sebagai CSV', function () {
-    $this->actingAs($this->sekretaris)
+    $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.ekspor.jadwal', $this->tournament))
         ->assertOk();
 });
@@ -78,15 +85,15 @@ it('menampilkan medali sebagai kolom berjudul, bukan emoji', function () {
      * data karangan yang disuntik ke view — supaya uji ini ikut menjaga jalur
      * yang menghasilkan angkanya.
      */
-    $kontingen = App\Models\Contingent::factory()->for($this->tournament)->create(['name' => 'Padepokan Uji']);
+    $kontingen = Contingent::factory()->for($this->tournament)->create(['name' => 'Padepokan Uji']);
     $kelas = $this->tournament->weightClasses()
-        ->untuk(App\Enums\GolonganUsia::Dewasa, App\Enums\JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
-    $bracket = App\Models\Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
+        ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
+    $bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
 
     $peserta = function (string $nama) use ($kontingen, $kelas) {
-        $reg = App\Models\Registration::factory()->for($kontingen)->terverifikasi()
+        $reg = Registration::factory()->for($kontingen)->terverifikasi()
             ->create(['weight_class_id' => $kelas->id]);
-        $reg->athletes()->attach(App\Models\Athlete::factory()->for($kontingen)->create(['name' => $nama]));
+        $reg->athletes()->attach(Athlete::factory()->for($kontingen)->create(['name' => $nama]));
 
         return $reg;
     };
@@ -94,15 +101,15 @@ it('menampilkan medali sebagai kolom berjudul, bukan emoji', function () {
     $juara = $peserta('Juara Emas');
     $runner = $peserta('Juara Perak');
 
-    App\Models\SilatMatch::create([
+    SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
         'red_registration_id' => $juara->id, 'blue_registration_id' => $runner->id,
         'winner_registration_id' => $juara->id, 'win_reason' => 'angka',
-        'status' => App\Models\SilatMatch::STATUS_SELESAI,
-        'ratified_at' => now(), 'ratified_by' => $this->sekretaris->id,
+        'status' => SilatMatch::STATUS_SELESAI,
+        'ratified_at' => now(), 'ratified_by' => $this->sekretariat->id,
     ]);
 
-    $halaman = $this->actingAs($this->sekretaris)
+    $halaman = $this->actingAs($this->sekretariat)
         ->get(route('admin.turnamen.rekap.index', $this->tournament))
         ->assertOk();
 

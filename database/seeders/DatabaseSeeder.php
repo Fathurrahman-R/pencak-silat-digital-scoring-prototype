@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             SilatResourceSeeder::class,
             SilatRoleSeeder::class,
+            SimulasiTurnamenSeeder::class,
         ]);
 
         $this->account('Super Admin', 'super@example.com', config('resources.super_admin_role'));
