@@ -26,7 +26,13 @@
     $redup = $biru ? 'text-silat-teks-biru-samar' : 'text-silat-teks-merah-samar';
     $kedua = $biru ? 'text-silat-teks-biru' : 'text-silat-teks-merah-redup';
 
-    $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan', 'jatuhan' => 'Jatuhan'];
+    /*
+     * Dua teknik saja. Jatuhan tidak lagi ditekan juri -- nilainya mutlak dan
+     * diterbitkan wasit -- jadi barisnya tidak akan pernah menyala. Indikator
+     * yang selamanya kosong terbaca operator sebagai juri yang tidak menekan,
+     * bukan sebagai teknik yang memang bukan urusan juri.
+     */
+    $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan'];
 @endphp
 
 <div class="{{ $bidang }} flex min-h-0 flex-1 items-stretch">

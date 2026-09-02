@@ -160,9 +160,14 @@
                         melayani dua aksi berlawanan arah, dan itu tempat salah
                         tekan lahir.
                     --}}
-                    {{-- Blok php, bukan bentuk sebaris: @php() sebaris tidak mengenal
-                         tanda kurung bersarang, dan pemanggilan berantai di dalamnya
-                         dikompilasi jadi PHP yang menelan blok di bawahnya. --}}
+                    {{-- Blok php, bukan bentuk sebaris. Bentuk sebaris tidak mengenal tanda
+                         kurung bersarang, dan pemanggilan berantai di dalamnya dikompilasi
+                         jadi PHP yang menelan blok di bawahnya.
+
+                         Nama direktifnya sengaja TIDAK ditulis dengan tanda at di sini --
+                         lihat peringatan di kepala berkas: direktif dikompilasi sebelum
+                         komentar dihapus, jadi yang tertulis di dalam komentar pun ikut
+                         diproses. --}}
                     @php
                         $nilaiJatuhan = $tournament->peraturan()->nilaiUntuk('jatuhan');
                     @endphp

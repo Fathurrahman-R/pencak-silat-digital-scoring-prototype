@@ -154,8 +154,8 @@ Alpine.data('partaiPanel', (cfg) => ({
      * sepakat dari satu pukulan dan satu tendangan yang tidak.
      */
     indikatorTeknik: {
-        red: { pukulan: [], tendangan: [], jatuhan: [] },
-        blue: { pukulan: [], tendangan: [], jatuhan: [] },
+        red: { pukulan: [], tendangan: [] },
+        blue: { pukulan: [], tendangan: [] },
     },
     sisaMsTampil: 0,
     _petaJuri: {},

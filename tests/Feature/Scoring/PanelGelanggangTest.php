@@ -97,13 +97,40 @@ it('memasang kendali jatuhan di panel wasit', function () {
      * Jatuhan sederajat dengan hukuman: nilainya mutlak dan diputuskan orang
      * yang berdiri di gelanggang, jadi tombolnya berdiri di panel yang sama
      * dengan Pembinaan, Teguran, dan Peringatan.
+     *
+     * Yang diperiksa PEMANGGIL AKSINYA, bukan kata "Jatuhan": kata itu juga
+     * dipakai daftar jenis verifikasi di panel yang sama, jadi uji yang
+     * mencarinya tetap hijau walau tombolnya hilang sama sekali. Itu persis
+     * yang sempat terjadi -- satu direktif liar di dalam komentar Blade
+     * menelan seluruh blok tombolnya, dan ujinya tidak menyadari apa pun.
      */
     $wasit = ($this->buatUser)('wasit');
 
     $this->actingAs($wasit)
         ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
         ->assertOk()
-        ->assertSee('Jatuhan');
+        ->assertSee('terbitkanJatuhan(sudut)', false)
+        // Sarannya ikut: wasit yang sempat bertanya ke juri membacanya di sini.
+        ->assertSee('saranJatuhan', false);
+});
+
+it('tidak memasang indikator jatuhan juri di panel operator', function () {
+    /*
+     * Indikator teknik di panel operator menghitung berapa juri yang menekan
+     * teknik yang sama. Jatuhan tidak lagi ditekan juri, jadi barisnya tidak
+     * akan pernah menyala -- dan indikator yang selamanya kosong terbaca
+     * operator sebagai juri yang tidak menekan, bukan sebagai teknik yang
+     * memang bukan urusan juri.
+     */
+    $operator = ($this->buatUser)('operator-it');
+
+    $halaman = $this->actingAs($operator)
+        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->assertOk();
+
+    $halaman->assertSee('Pukulan')
+        ->assertSee('Tendangan')
+        ->assertDontSee('indikatorTeknik?.red?.jatuhan', false);
 });
 
 it('tidak lagi memasang tombol jatuhan di panel juri', function () {
