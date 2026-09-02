@@ -52,6 +52,15 @@
             <x-si.tabel.baris :id="$tournament->id" :panel="route('admin.turnamen.panel', $tournament)">
                 <x-si.tabel.sel header>
                     {{ $tournament->name }}
+
+                    {{-- Penanda, bukan tombol: satu-satunya kejuaraan yang
+                         sedang dikerjakan, dan barisnya sendiri yang
+                         menyebutnya. Tanpa ini tidak ada cara tahu isi sidebar
+                         itu milik baris yang mana. --}}
+                    @if ($turnamenAktif?->is($tournament))
+                        <x-si.badge ikon="check" class="ms-1.5 align-middle">Sedang dibuka</x-si.badge>
+                    @endif
+
                     @if ($tournament->venue)
                         <span class="block truncate text-xs font-normal text-ink-muted">{{ $tournament->venue }}</span>
                     @endif
@@ -82,8 +91,22 @@
 
                 <x-si.tabel.sel align="right">
                     <div class="flex justify-end gap-1" data-row-action>
-                        {{-- Membuka kejuaraan menjadikannya kejuaraan aktif,
-                             dan seluruh bagiannya muncul di sidebar. --}}
+                        {{-- Satu-satunya cara berpindah kejuaraan, dan ia
+                             mengatakannya sendiri.
+
+                             Dulu perpindahan itu efek samping: "Ubah" ikut
+                             membuka kejuaraan yang barisnya ditekan, begitu
+                             pula panel intip yang muncul saat baris diklik.
+                             Menyunting alamat tempat pertandingan mengganti
+                             seluruh isi sidebar, dan tidak ada satu kata pun
+                             yang memberi tahu. --}}
+                        @if (! $turnamenAktif?->is($tournament))
+                            <form method="POST" action="{{ route('admin.turnamen.buka', $tournament) }}">
+                                @csrf
+                                <x-si.tombol tipe="submit" ukuran="kecil">Buka</x-si.tombol>
+                            </form>
+                        @endif
+
                         @resource(rk('turnamen', ResourceAction::Update))
                             <x-si.tombol :tautan="route('admin.turnamen.edit', $tournament)"
                                          varian="kedua" ukuran="kecil">

@@ -6,9 +6,11 @@ use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\StatusTurnamen;
 use App\Http\Controllers\Concerns\HandlesBulkDestroy;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\IngatTurnamenAktif;
 use App\Http\Requests\Admin\StoreTournamentRequest;
 use App\Http\Requests\Admin\UpdateTournamentRequest;
 use App\Models\Tournament;
+use App\Support\Navigation\NavigationBuilder;
 use App\Support\Table\TableBuilder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,7 +35,28 @@ class TournamentController extends Controller
             'tournaments' => $table->paginate(),
             'table' => $table,
             'statuses' => StatusTurnamen::options(),
+            // Baris mana yang sedang dibuka. Diambil dari sumber yang sama
+            // dengan sidebar, supaya penanda di daftar dan nama di kepala
+            // sidebar tidak pernah menunjuk kejuaraan yang berbeda.
+            'turnamenAktif' => app(NavigationBuilder::class)->turnamenAktif(),
         ]);
+    }
+
+    /**
+     * Membuka kejuaraan: menjadikannya kejuaraan yang dikerjakan.
+     *
+     * Berdiri sendiri sebagai aksi, bukan menumpang halaman lain. Sebelumnya
+     * perpindahan terjadi diam-diam di setiap halaman ber-{tournament} --
+     * termasuk "Ubah" dan panel intip di daftar kejuaraan -- jadi kejuaraan
+     * aktif berganti tanpa pernah ada yang memintanya.
+     */
+    public function buka(Request $request, Tournament $tournament): RedirectResponse
+    {
+        $request->session()->put(IngatTurnamenAktif::KUNCI, $tournament->id);
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', "Kejuaraan “{$tournament->name}” dibuka.");
     }
 
     public function create(): View
