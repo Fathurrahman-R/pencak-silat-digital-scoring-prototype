@@ -69,7 +69,7 @@
                             <p class="truncate text-xs text-ink-muted">
                                 {{ $tugas['sebutan'] }} · {{ $tugas['kelas'] }}
                                 @if ($tugas['gelanggang']) · {{ $tugas['gelanggang'] }} @endif
-                                @if ($tugas['waktu']) · {{ $tugas['waktu'] }} @endif
+                                @if ($tugas['urutan']) · urutan {{ $tugas['urutan'] }} @endif
                             </p>
                         </div>
 
@@ -162,15 +162,15 @@
             @endif
 
             <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-                <x-si.kartu judul="Partai hari ini" :keterangan="now()->translatedFormat('l, d F Y')">
-                    @forelse ($partaiHariIni as $gelanggang => $daftar)
+                <x-si.kartu judul="Antrean gelanggang" keterangan="Urut tayang, yang sudah selesai tidak ikut">
+                    @forelse ($antrean as $gelanggang => $daftar)
                         <div class="mb-4 last:mb-0">
                             <p class="eyebrow mb-2">{{ $gelanggang }}</p>
 
                             <div class="divide-y divide-line">
                                 @foreach ($daftar as $partai)
                                     <div class="flex items-center gap-3 py-2">
-                                        <span class="num w-[46px] shrink-0 text-xs text-ink-muted">{{ $partai['waktu'] ?? '—' }}</span>
+                                        <span class="num w-[46px] shrink-0 text-xs text-ink-muted">{{ $partai['urutan'] ?? '—' }}</span>
 
                                         <div class="min-w-0 flex-1">
                                             <p class="truncate text-sm text-ink">
@@ -183,16 +183,14 @@
 
                                         @if ($partai['berlangsung'])
                                             <x-si.badge varian="sukses">Berlangsung</x-si.badge>
-                                        @elseif ($partai['selesai'])
-                                            <x-si.badge varian="netral">Selesai</x-si.badge>
                                         @endif
                                     </div>
                                 @endforeach
                             </div>
                         </div>
                     @empty
-                        <x-si.kosong judul="Tidak ada partai terjadwal hari ini"
-                                     syarat="Partai muncul di sini setelah bagan dikunci dan jadwal ditetapkan lewat menu Pertandingan → Jadwal." />
+                        <x-si.kosong judul="Tidak ada partai yang mengantre"
+                                     syarat="Partai muncul di sini setelah bagan dikunci dan ditempatkan ke gelanggang lewat menu Pertandingan → Jadwal." />
                     @endforelse
                 </x-si.kartu>
 

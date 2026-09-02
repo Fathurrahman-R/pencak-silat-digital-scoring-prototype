@@ -64,7 +64,6 @@ it('menjadwalkan partai lewat form', function () {
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.jadwal.tetapkan', [$this->tournament, $partai]), [
             'arena_id' => $this->arena->id,
-            'scheduled_at' => now()->addDay()->format('Y-m-d\TH:i'),
         ])
         ->assertRedirect()
         ->assertSessionHas('success');
@@ -79,7 +78,6 @@ it('menolak menjadwalkan ke gelanggang kejuaraan lain', function () {
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.jadwal.tetapkan', [$this->tournament, $partai]), [
             'arena_id' => $arenaLain->id,
-            'scheduled_at' => now()->addDay()->format('Y-m-d\TH:i'),
         ])
         ->assertSessionHasErrors('arena_id');
 
@@ -91,7 +89,6 @@ it('melepas jadwal partai lewat form', function () {
 
     $this->actingAs($this->admin)->post(route('admin.turnamen.jadwal.tetapkan', [$this->tournament, $partai]), [
         'arena_id' => $this->arena->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d\TH:i'),
     ]);
 
     $this->actingAs($this->admin)
@@ -137,7 +134,7 @@ it('memindahkan partai ke urutan tujuan dalam satu tindakan', function () {
         $m = ($this->buatPartai)($kode);
         $this->actingAs($this->admin)->post(
             "/admin/turnamen/{$this->tournament->id}/jadwal/{$m->id}/tetapkan",
-            ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+            ['arena_id' => $this->arena->id],
         );
 
         return $m->refresh();
@@ -172,7 +169,7 @@ it('merapatkan nomor urut yang bolong saat memindahkan', function () {
     foreach ([$a, $b] as $m) {
         $this->actingAs($this->admin)->post(
             "/admin/turnamen/{$this->tournament->id}/jadwal/{$m->id}/tetapkan",
-            ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+            ['arena_id' => $this->arena->id],
         );
     }
 
@@ -197,7 +194,7 @@ it('menyatakan partai yang aparatnya belum lengkap', function () {
 
     $this->actingAs($this->admin)->post(
         "/admin/turnamen/{$this->tournament->id}/jadwal/{$partai->id}/tetapkan",
-        ['arena_id' => $this->arena->id, 'scheduled_at' => '2026-09-01T09:00'],
+        ['arena_id' => $this->arena->id],
     );
 
     $halaman = $this->actingAs($this->admin)

@@ -138,8 +138,8 @@ it('menolak partai yang bukan milik kejuaraan di alamat', function () {
  * --------------------------------------------------------------------
  */
 
-/** Partai kedua di gelanggang lain, dengan jadwal yang bisa diatur. */
-function partaiLain(Tournament $tournament, Contingent $kontingen, ?string $jadwal, string $status = SilatMatch::STATUS_TERJADWAL): SilatMatch
+/** Partai kedua di gelanggang lain, dengan status yang bisa diatur. */
+function partaiLain(Tournament $tournament, Contingent $kontingen, string $status = SilatMatch::STATUS_TERJADWAL): SilatMatch
 {
     $kelas = $tournament->weightClasses()
         ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'B')->firstOrFail();
@@ -157,20 +157,18 @@ function partaiLain(Tournament $tournament, Contingent $kontingen, ?string $jadw
         'arena_id' => Arena::factory()->for($tournament)->create(['name' => 'Gelanggang 2'])->id,
         'red_registration_id' => $merah->id, 'blue_registration_id' => $biru->id,
         'status' => $status,
-        'scheduled_at' => $jadwal,
     ]);
 }
 
-it('menolak aparat yang sedang bertugas di gelanggang lain pada jam berdekatan', function () {
-    /*
-     * Satu orang tidak bisa berdiri di dua gelanggang sekaligus. Sampai
-     * sekarang tidak ada satu pun pemeriksaan yang menegakkannya: panitia
-     * memilih orang yang sedang memimpin partai di sebelah, dan yang ketahuan
-     * bukan sistemnya melainkan kursi juri yang kosong saat partai dimulai.
-     */
-    $this->match->update(['scheduled_at' => '2026-09-01 10:00']);
-
-    $lain = partaiLain($this->tournament, $this->kontingen, '2026-09-01 10:20');
+/*
+ * Satu orang tidak bisa berdiri di dua gelanggang sekaligus.
+ *
+ * Sejak jadwal jadi urutan tayang tanpa jam, tidak ada lagi jarak waktu yang
+ * bisa dihitung -- yang tersisa satu-satunya keadaan yang benar-benar
+ * mustahil: memimpin dua partai yang sama-sama sedang berjalan.
+ */
+it('menolak juri yang partainya sedang berlangsung di gelanggang lain', function () {
+    $lain = partaiLain($this->tournament, $this->kontingen, SilatMatch::STATUS_BERLANGSUNG);
     MatchOfficial::create([
         'match_id' => $lain->id, 'user_id' => $this->juri[0]->id,
         'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
@@ -192,15 +190,27 @@ it('menolak aparat yang sedang bertugas di gelanggang lain pada jam berdekatan',
     expect($this->match->officials()->count())->toBe(0);
 });
 
-it('mengizinkan aparat yang sama pada partai berjam jauh', function () {
-    /*
-     * Satu orang memang memimpin banyak partai sepanjang hari. Menolak
-     * berdasarkan keanggotaan, bukan jadwal, akan memblokir seluruh hari kerja
-     * aparat yang sama.
-     */
-    $this->match->update(['scheduled_at' => '2026-09-01 10:00']);
+it('menolak wasit yang partainya sedang berlangsung di gelanggang lain', function () {
+    $lain = partaiLain($this->tournament, $this->kontingen, SilatMatch::STATUS_BERLANGSUNG);
+    MatchOfficial::create([
+        'match_id' => $lain->id, 'user_id' => $this->wasit->id, 'role' => MatchOfficial::ROLE_WASIT,
+    ]);
 
-    $lain = partaiLain($this->tournament, $this->kontingen, '2026-09-01 14:00');
+    $this->actingAs($this->admin)
+        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
+            'wasit_id' => $this->wasit->id,
+            'juri_id' => [$this->juri[0]->id, $this->juri[1]->id, $this->juri[2]->id],
+        ])
+        ->assertSessionHasErrors('wasit_id');
+});
+
+/*
+ * Satu orang memang memimpin banyak partai sepanjang hari, dan panitia lazim
+ * menugaskan aparat untuk sepuluh partai berikutnya sekaligus sebelum satu pun
+ * dimulai. Menolak berdasarkan keanggotaan akan menghalangi urutan kerja itu.
+ */
+it('mengizinkan aparat yang sama pada partai lain yang belum dimulai', function () {
+    $lain = partaiLain($this->tournament, $this->kontingen);
     MatchOfficial::create([
         'match_id' => $lain->id, 'user_id' => $this->juri[0]->id,
         'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
@@ -216,31 +226,13 @@ it('mengizinkan aparat yang sama pada partai berjam jauh', function () {
     expect($this->match->officials()->count())->toBe(4);
 });
 
-it('menolak aparat yang partainya sedang berlangsung, berapa pun jadwal tertulisnya', function () {
-    $this->match->update(['scheduled_at' => '2026-09-01 10:00']);
-
-    $lain = partaiLain($this->tournament, $this->kontingen, '2026-09-01 07:00', SilatMatch::STATUS_BERLANGSUNG);
-    MatchOfficial::create([
-        'match_id' => $lain->id, 'user_id' => $this->wasit->id, 'role' => MatchOfficial::ROLE_WASIT,
-    ]);
-
-    $this->actingAs($this->admin)
-        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
-            'wasit_id' => $this->wasit->id,
-            'juri_id' => [$this->juri[0]->id, $this->juri[1]->id, $this->juri[2]->id],
-        ])
-        ->assertSessionHasErrors('wasit_id');
-});
-
 it('membawa sebab bentrok ke halaman penugasan, bukan menghapus namanya dari daftar', function () {
     /*
      * Menghapus yang bentrok dari daftar akan membuat panitia yang mencari
      * nama dan tidak menemukannya mengira orangnya belum terdaftar, lalu
      * membuat akun kedua.
      */
-    $this->match->update(['scheduled_at' => '2026-09-01 10:00']);
-
-    $lain = partaiLain($this->tournament, $this->kontingen, '2026-09-01 10:15');
+    $lain = partaiLain($this->tournament, $this->kontingen, SilatMatch::STATUS_BERLANGSUNG);
     MatchOfficial::create([
         'match_id' => $lain->id, 'user_id' => $this->juri[0]->id,
         'role' => MatchOfficial::ROLE_JURI, 'number' => 2,
@@ -258,27 +250,6 @@ it('membawa sebab bentrok ke halaman penugasan, bukan menghapus namanya dari daf
 
     // Namanya tetap ada di daftar pilihan.
     expect($halaman->viewData('juriTersedia')->keys()->all())->toContain($this->juri[0]->id);
-});
-
-it('tidak menyatakan bentrok saat salah satu partai belum terjadwal', function () {
-    /*
-     * Menugaskan aparat sebelum jadwalnya disusun adalah urutan kerja yang
-     * lazim; menolaknya akan menghalangi panitia bekerja.
-     */
-    $this->match->update(['scheduled_at' => null]);
-
-    $lain = partaiLain($this->tournament, $this->kontingen, null);
-    MatchOfficial::create([
-        'match_id' => $lain->id, 'user_id' => $this->juri[0]->id,
-        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
-    ]);
-
-    $this->actingAs($this->admin)
-        ->post(route('admin.turnamen.partai.aparat.store', [$this->tournament, $this->match]), [
-            'wasit_id' => $this->wasit->id,
-            'juri_id' => [$this->juri[0]->id, $this->juri[1]->id, $this->juri[2]->id],
-        ])
-        ->assertSessionHasNoErrors();
 });
 
 /*

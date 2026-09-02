@@ -15,23 +15,12 @@ use Illuminate\Support\Collection;
  * ternyata sedang memimpin partai di gelanggang sebelah, dan yang ketahuan
  * bukan sistemnya melainkan kursi juri yang kosong saat partai dimulai.
  *
- * Bentrok dihitung terhadap JADWAL, bukan terhadap keanggotaan. Aparat yang
- * ditugaskan di partai lain pada jam yang jauh sama sekali tidak bentrok —
- * satu orang memang memimpin banyak partai sepanjang hari.
+ * Bentrok dihitung terhadap STATUS partai lain, bukan terhadap keanggotaan.
+ * Satu orang memang memimpin banyak partai sepanjang hari; yang mustahil
+ * hanyalah memimpin dua partai yang sama-sama sedang berjalan.
  */
 class KetersediaanAparat
 {
-    /**
-     * Rentang bentrok, dalam menit sebelum dan sesudah jadwal partai.
-     *
-     * Satu partai Tanding berlangsung tiga babak dua menit, ditambah jeda,
-     * persiapan, dan pengesahan hasil — pada praktiknya menghabiskan sekitar
-     * dua puluh menit gelanggang. Empat puluh lima menit memberi kelonggaran
-     * untuk partai yang molor karena protes atau verifikasi juri, tanpa
-     * memblokir seluruh hari kerja aparat yang sama.
-     */
-    private const RENTANG_MENIT = 45;
-
     /**
      * Alasan tiap orang tidak bisa ditugaskan di partai ini, dipetakan per id.
      *
@@ -47,14 +36,12 @@ class KetersediaanAparat
             return [];
         }
 
-        $jadwal = $match->scheduled_at;
-
         $lain = MatchOfficial::query()
             ->whereIn('user_id', $userIds)
             ->where('match_id', '!=', $match->id)
             ->with(['match.arena:id,name'])
             ->get()
-            ->filter(fn (MatchOfficial $o) => $this->berbenturan($o->match, $match, $jadwal));
+            ->filter(fn (MatchOfficial $o) => $this->berbenturan($o->match, $match));
 
         $alasan = [];
 
@@ -67,32 +54,25 @@ class KetersediaanAparat
         return $alasan;
     }
 
-    private function berbenturan(?SilatMatch $lain, SilatMatch $ini, $jadwal): bool
+    /**
+     * Bentrok dinyatakan dari STATUS partai lain, bukan dari jaraknya di jam.
+     *
+     * Sejak jadwal jadi urutan tayang tanpa jam, tidak ada lagi jarak yang
+     * bisa dihitung. Yang tersisa satu-satunya keadaan yang benar-benar
+     * mustahil: seorang aparat memimpin dua partai yang sama-sama berjalan.
+     *
+     * Partai yang baru terjadwal TIDAK dianggap bentrok. Panitia lazim
+     * menugaskan aparat untuk sepuluh partai berikutnya sekaligus sebelum
+     * satu pun dimulai, dan menolaknya berarti menghalangi urutan kerja yang
+     * memang dipakai di gelanggang.
+     */
+    private function berbenturan(?SilatMatch $lain, SilatMatch $ini): bool
     {
         if ($lain === null || $lain->id === $ini->id) {
             return false;
         }
 
-        // Partai yang sudah selesai tidak memakai siapa pun lagi.
-        if ($lain->status === SilatMatch::STATUS_SELESAI) {
-            return false;
-        }
-
-        // Yang sedang berlangsung selalu bentrok, berapa pun jadwal tertulisnya.
-        if ($lain->status === SilatMatch::STATUS_BERLANGSUNG) {
-            return true;
-        }
-
-        /*
-         * Salah satu belum terjadwal: tidak ada dasar untuk menyatakan
-         * bentrok, dan menolaknya akan menghalangi panitia menugaskan aparat
-         * sebelum jadwalnya disusun -- urutan kerja yang justru lazim.
-         */
-        if ($jadwal === null || $lain->scheduled_at === null) {
-            return false;
-        }
-
-        return $lain->scheduled_at->diffInMinutes($jadwal, absolute: true) < self::RENTANG_MENIT;
+        return $lain->status === SilatMatch::STATUS_BERLANGSUNG;
     }
 
     private function kalimat(MatchOfficial $petugas): string
@@ -106,11 +86,8 @@ class KetersediaanAparat
                 : "{$peran} di partai yang sedang berlangsung";
         }
 
-        $jam = $petugas->match->scheduled_at?->translatedFormat('H:i');
-
         return match (true) {
-            $gelanggang !== null && $jam !== null => "{$peran} di {$gelanggang} jam {$jam}",
-            $gelanggang !== null => "{$peran} di {$gelanggang}",
+            $gelanggang !== null => "{$peran} di {$gelanggang}, partai {$petugas->match_id}",
             default => "{$peran} di partai {$petugas->match_id}",
         };
     }

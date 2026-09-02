@@ -49,7 +49,6 @@ beforeEach(function () {
         return SilatMatch::create([
             'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
             'arena_id' => $gelanggang->id, 'order_in_arena' => $urutan,
-            'scheduled_at' => '2026-09-01 08:00',
             'red_registration_id' => $sudut[0]->id, 'blue_registration_id' => $sudut[1]->id,
             'status' => SilatMatch::STATUS_TERJADWAL,
         ]);

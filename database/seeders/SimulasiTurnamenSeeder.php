@@ -526,39 +526,28 @@ class SimulasiTurnamenSeeder extends Seeder
     }
 
     /**
-     * Partai yang sudah punya dua peserta ditempatkan ke dua gelanggang
-     * berselang-seling, berjarak 20 menit per gelanggang.
+     * Partai yang sudah punya dua peserta dibagi ke dua gelanggang
+     * berselang-seling, urut menurut nomor tayang tiap gelanggang.
      *
-     * Empat puluh partai tidak muat dalam satu pagi kalau jaraknya selebar
-     * data empat peserta dulu. Dua puluh menit tetap aman: penjadwal hanya
-     * menolak kalau satu atlet dijadwalkan di dua gelanggang dalam jarak 30
-     * menit, sedangkan di sini tidak ada satu pun atlet yang punya dua partai
-     * siap — masing-masing baru bertanding sekali sebelum babak berikutnya
-     * terisi.
-     *
-     * Mulai pukul 08.00 hari pertama, bukan satu jam dari sekarang: jadwal
-     * yang dimulai tengah malam membuat halaman jadwal dan papan skor publik
-     * terbaca aneh saat disimulasikan.
+     * Berselang-seling, bukan sekelas sekaligus per gelanggang: dua gelanggang
+     * yang berjalan bersamaan itulah yang memunculkan hal-hal yang tidak
+     * pernah terlihat pada data satu gelanggang -- penugasan aparat yang
+     * berebut orang, dan papan skor publik yang harus menampilkan dua partai
+     * berbeda pada saat yang sama.
      */
     private function jadwalkanPartai(): void
     {
         $penjadwal = app(PenjadwalPartai::class);
         $gelanggang = Arena::where('tournament_id', $this->tournament->id)->orderBy('sort_order')->get();
-        $mulai = $this->tournament->starts_on->clone()->setTime(8, 0);
         $terjadwal = 0;
 
         foreach ($this->partaiSiap() as $indeks => $partai) {
-            $penjadwal->tetapkan(
-                $partai,
-                $gelanggang[$indeks % $gelanggang->count()],
-                $mulai->clone()->addMinutes(20 * intdiv($indeks, $gelanggang->count())),
-            );
+            $penjadwal->tetapkan($partai, $gelanggang[$indeks % $gelanggang->count()]);
 
             $terjadwal++;
         }
 
-        $this->command?->info("Jadwal: {$terjadwal} partai ditempatkan ke {$gelanggang->count()} gelanggang, mulai "
-            .$mulai->translatedFormat('d M H:i').'.');
+        $this->command?->info("Jadwal: {$terjadwal} partai ditempatkan ke {$gelanggang->count()} gelanggang.");
     }
 
     /**

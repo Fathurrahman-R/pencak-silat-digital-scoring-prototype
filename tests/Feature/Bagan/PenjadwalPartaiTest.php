@@ -52,31 +52,29 @@ beforeEach(function () {
 it('menjadwalkan partai ke gelanggang dengan urutan tayang otomatis', function () {
     $partai = ($this->buatPartai)('C');
 
-    $dijadwalkan = $this->penjadwal->tetapkan($partai, $this->arena1, now()->setTime(9, 0));
+    $dijadwalkan = $this->penjadwal->tetapkan($partai, $this->arena1);
 
     expect($dijadwalkan->arena_id)->toBe($this->arena1->id)
-        ->and($dijadwalkan->order_in_arena)->toBe(1)
-        ->and($dijadwalkan->scheduled_at->format('H:i'))->toBe('09:00');
+        ->and($dijadwalkan->order_in_arena)->toBe(1);
 });
 
 it('menambah urutan tayang di akhir antrean gelanggang yang sudah terisi', function () {
     $partaiSatu = ($this->buatPartai)('C');
     $partaiDua = ($this->buatPartai)('D');
 
-    $this->penjadwal->tetapkan($partaiSatu, $this->arena1, now()->setTime(9, 0));
-    $hasil = $this->penjadwal->tetapkan($partaiDua, $this->arena1, now()->setTime(10, 0));
+    $this->penjadwal->tetapkan($partaiSatu, $this->arena1);
+    $hasil = $this->penjadwal->tetapkan($partaiDua, $this->arena1);
 
     expect($hasil->order_in_arena)->toBe(2);
 });
 
 it('melepas jadwal partai', function () {
     $partai = ($this->buatPartai)('C');
-    $this->penjadwal->tetapkan($partai, $this->arena1, now()->setTime(9, 0));
+    $this->penjadwal->tetapkan($partai, $this->arena1);
 
     $dilepas = $this->penjadwal->lepas($partai);
 
     expect($dilepas->arena_id)->toBeNull()
-        ->and($dilepas->scheduled_at)->toBeNull()
         ->and($dilepas->order_in_arena)->toBeNull();
 });
 
@@ -93,57 +91,45 @@ it('menolak menjadwalkan partai yang belum punya dua peserta', function () {
         'red_registration_id' => $reg->id, 'status' => SilatMatch::STATUS_TERJADWAL,
     ]);
 
-    $this->penjadwal->tetapkan($partai, $this->arena1, now());
+    $this->penjadwal->tetapkan($partai, $this->arena1);
 })->throws(RuntimeException::class, 'belum bisa dijadwalkan');
 
 it('menolak menjadwalkan partai yang sudah selesai', function () {
     $partai = ($this->buatPartai)('C');
     $partai->update(['status' => SilatMatch::STATUS_SELESAI, 'winner_registration_id' => $partai->red_registration_id]);
 
-    $this->penjadwal->tetapkan($partai, $this->arena1, now());
+    $this->penjadwal->tetapkan($partai, $this->arena1);
 })->throws(RuntimeException::class, 'sudah selesai');
 
-it('menolak menjadwalkan dua partai atlet yang sama ke gelanggang berbeda pada waktu berdekatan', function () {
+/*
+ * Penjaga bentrok berbasis jam dilepas bersama jamnya.
+ *
+ * Dulu penjadwal menolak satu atlet yang dijadwalkan di dua gelanggang dalam
+ * jarak 30 menit. Sejak jadwal jadi urutan tayang, tidak ada jarak yang bisa
+ * dihitung -- dan menebaknya dari nomor urut dua gelanggang berbeda akan
+ * salah, karena kedua gelanggang tidak berjalan dengan kecepatan yang sama.
+ * Yang menandai partai sedang dipakai adalah statusnya, dan panitia gelanggang
+ * yang memegang urutannya.
+ */
+it('mengizinkan atlet yang sama ditempatkan di dua gelanggang', function () {
     $budi = Athlete::factory()->for($this->kontingen)->create(['name' => 'Budi Santoso']);
 
     $partaiSatu = ($this->buatPartai)('C', merah: $budi);
     $partaiDua = ($this->buatPartai)('D', merah: $budi);
 
-    $this->penjadwal->tetapkan($partaiSatu, $this->arena1, now()->setTime(9, 0));
+    $this->penjadwal->tetapkan($partaiSatu, $this->arena1);
+    $hasil = $this->penjadwal->tetapkan($partaiDua, $this->arena2);
 
-    $this->penjadwal->tetapkan($partaiDua, $this->arena2, now()->setTime(9, 20));
-})->throws(RuntimeException::class, 'Budi Santoso');
-
-it('mengizinkan atlet yang sama dijadwalkan berdekatan di gelanggang yang sama', function () {
-    $budi = Athlete::factory()->for($this->kontingen)->create(['name' => 'Budi Santoso']);
-
-    $partaiSatu = ($this->buatPartai)('C', merah: $budi);
-    $partaiDua = ($this->buatPartai)('D', merah: $budi);
-
-    $this->penjadwal->tetapkan($partaiSatu, $this->arena1, now()->setTime(9, 0));
-    $hasil = $this->penjadwal->tetapkan($partaiDua, $this->arena1, now()->setTime(9, 20));
-
-    expect($hasil->arena_id)->toBe($this->arena1->id);
-});
-
-it('mengizinkan atlet yang sama dijadwalkan di gelanggang berbeda bila jaraknya cukup jauh', function () {
-    $budi = Athlete::factory()->for($this->kontingen)->create(['name' => 'Budi Santoso']);
-
-    $partaiSatu = ($this->buatPartai)('C', merah: $budi);
-    $partaiDua = ($this->buatPartai)('D', merah: $budi);
-
-    $this->penjadwal->tetapkan($partaiSatu, $this->arena1, now()->setTime(9, 0));
-    $hasil = $this->penjadwal->tetapkan($partaiDua, $this->arena2, now()->setTime(10, 0));
-
-    expect($hasil->arena_id)->toBe($this->arena2->id);
+    expect($hasil->arena_id)->toBe($this->arena2->id)
+        ->and($hasil->order_in_arena)->toBe(1);
 });
 
 it('menukar urutan tayang dengan tetangganya', function () {
     $partaiSatu = ($this->buatPartai)('C');
     $partaiDua = ($this->buatPartai)('D');
 
-    $this->penjadwal->tetapkan($partaiSatu, $this->arena1, now()->setTime(9, 0));
-    $this->penjadwal->tetapkan($partaiDua, $this->arena1, now()->setTime(10, 0));
+    $this->penjadwal->tetapkan($partaiSatu, $this->arena1);
+    $this->penjadwal->tetapkan($partaiDua, $this->arena1);
 
     $this->penjadwal->urutkan($partaiDua, -1);
 

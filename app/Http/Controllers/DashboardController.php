@@ -30,24 +30,29 @@ class DashboardController extends Controller
             // menampilkannya membuat halaman depan mereka terasa salah alamat.
             'tampilkanRingkasan' => resource_allows(rk('turnamen', ResourceAction::View)),
             'pekerjaan' => $this->pekerjaan->untuk($turnamen),
-            'partaiHariIni' => $turnamen ? $this->partaiHariIni($turnamen) : [],
+            'antrean' => $turnamen ? $this->antreanGelanggang($turnamen) : [],
             'hasilTerakhir' => $turnamen ? $this->hasilTerakhir($turnamen) : [],
         ]);
     }
 
     /**
-     * Jadwal hari ini per gelanggang.
+     * Antrean tiap gelanggang: partai yang sudah ditempatkan dan belum selesai.
      *
      * Menggantikan grafik "Pengguna baru 6 bulan terakhir" yang tidak pernah
      * berarti apa-apa bagi panitia dan menyeret 843 kB apexcharts ke dalam
      * bundel admin demi satu batang. Daftar ini dirender HTML biasa.
      *
+     * Batasnya gelanggang, bukan tanggal. Jadwal tidak lagi menyimpan jam,
+     * jadi "hari ini" tidak punya arti yang bisa dihitung -- yang berarti
+     * bagi panitia adalah apa yang masih mengantre di depannya.
+     *
      * @return array<string, array<int, array<string, mixed>>>
      */
-    private function partaiHariIni(Tournament $turnamen): array
+    private function antreanGelanggang(Tournament $turnamen): array
     {
         return SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $turnamen->weightClasses()->select('id')))
-            ->whereDate('scheduled_at', today())
+            ->whereNotNull('arena_id')
+            ->where('status', '!=', SilatMatch::STATUS_SELESAI)
             ->with(['arena', 'bracket.weightClass', 'red.athletes', 'blue.athletes'])
             ->orderBy('order_in_arena')
             ->get()
@@ -56,9 +61,8 @@ class DashboardController extends Controller
                 'kelas' => $m->bracket->weightClass->name,
                 'merah' => $m->red?->athletes->pluck('name')->implode(', '),
                 'biru' => $m->blue?->athletes->pluck('name')->implode(', '),
-                'waktu' => $m->scheduled_at?->format('H:i'),
+                'urutan' => $m->order_in_arena,
                 'berlangsung' => $m->status === SilatMatch::STATUS_BERLANGSUNG,
-                'selesai' => $m->status === SilatMatch::STATUS_SELESAI,
             ])->values()->all())
             ->all();
     }
@@ -124,7 +128,7 @@ class DashboardController extends Controller
             ->get();
 
         return $penugasan
-            ->sortBy(fn (MatchOfficial $tugas) => $tugas->match->scheduled_at ?? now()->addCentury())
+            ->sortBy(fn (MatchOfficial $tugas) => $tugas->match->order_in_arena ?? PHP_INT_MAX)
             ->map(function (MatchOfficial $tugas): array {
                 $match = $tugas->match;
                 $tournament = $match->bracket->weightClass->tournament;
@@ -134,7 +138,7 @@ class DashboardController extends Controller
                     'kelas' => $match->bracket->weightClass->name,
                     'kejuaraan' => $tournament->name,
                     'gelanggang' => $match->arena?->name,
-                    'waktu' => $match->scheduled_at?->translatedFormat('D, d M H:i'),
+                    'urutan' => $match->order_in_arena,
                     'merah' => $match->red?->athletes->pluck('name')->implode(', '),
                     'merah_kontingen' => $match->red?->contingent->name,
                     'biru' => $match->blue?->athletes->pluck('name')->implode(', '),

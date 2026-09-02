@@ -160,7 +160,7 @@ it('mengunci bagan dan menjadwalkan partai babak pertama beserta aparatnya', fun
 
     foreach ($partai as $satu) {
         expect($satu->arena_id)->not->toBeNull("partai #{$satu->id} tidak dijadwalkan")
-            ->and($satu->scheduled_at)->not->toBeNull()
+            ->and($satu->order_in_arena)->not->toBeNull()
             ->and($satu->officials()->where('role', MatchOfficial::ROLE_WASIT)->count())->toBe(1)
             ->and($satu->officials()->where('role', MatchOfficial::ROLE_JURI)->count())->toBe($jumlahJuri);
 

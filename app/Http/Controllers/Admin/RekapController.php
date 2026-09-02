@@ -94,13 +94,12 @@ class RekapController extends Controller
 
         return response()->streamDownload(function () use ($matches) {
             $keluar = fopen('php://output', 'wb');
-            TulisCsv::tulis($keluar, ['Gelanggang', 'Urutan', 'Waktu', 'Kelas', 'Merah', 'Biru', 'Status']);
+            TulisCsv::tulis($keluar, ['Gelanggang', 'Urutan', 'Kelas', 'Merah', 'Biru', 'Status']);
 
             foreach ($matches as [$namaArena, $partai]) {
                 TulisCsv::tulis($keluar, [
                     $namaArena,
                     $partai->order_in_arena,
-                    optional($partai->scheduled_at)->format('Y-m-d H:i'),
                     // Nama lengkap, bukan "Kelas A" saja: cetakan ini dibaca
                     // tanpa konteks kolom lain, dan Kelas A putra dan putri
                     // akan tampak sebagai dua baris yang identik.

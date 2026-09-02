@@ -1,17 +1,22 @@
 <?php
 
+use App\Actions\Keuangan\KelolaInvoice;
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
-use App\Enums\JenisBerkas;
 use App\Enums\JenisJurus;
 use App\Enums\JenisKelamin;
 use App\Enums\StatusPendaftaran;
+use App\Models\Arena;
 use App\Models\Athlete;
+use App\Models\Bracket;
 use App\Models\Contingent;
+use App\Models\FeeSchedule;
 use App\Models\Registration;
 use App\Models\RegistrationDocument;
+use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Keuangan\InvoiceBuilder;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\SilatResourceSeeder;
@@ -162,14 +167,14 @@ it('mengajukan pendaftaran saat berkas sudah lengkap', function () {
  * menambah atlet, lalu uang nominal lama yang masuk.
  */
 it('menolak menambah pendaftaran saat tagihan sedang menunggu pembayaran', function () {
-    App\Models\FeeSchedule::factory()->for($this->tournament)->create(['amount' => 150_000]);
+    FeeSchedule::factory()->for($this->tournament)->create(['amount' => 150_000]);
 
     $pertama = pesilatDewasa($this->kontingen);
     $pendaftaran = Registration::factory()->for($this->kontingen)->create(['weight_class_id' => $this->kelasC->id]);
     $pendaftaran->athletes()->attach($pertama);
 
-    $builder = new App\Support\Keuangan\InvoiceBuilder;
-    (new App\Actions\Keuangan\KelolaInvoice($builder))->kunci($builder->untuk($this->kontingen));
+    $builder = new InvoiceBuilder;
+    (new KelolaInvoice($builder))->kunci($builder->untuk($this->kontingen));
 
     $this->actingAs($this->admin)
         ->post("/admin/turnamen/{$this->tournament->id}/kontingen/{$this->kontingen->id}/pendaftaran/tanding", [
@@ -268,14 +273,15 @@ it('tidak menampilkan peserta jurus di panel timbang badan', function () {
  * --------------------------------------------------------------------
  */
 
-it('mengurutkan antrean timbang menurut jadwal partai, bukan abjad nama', function () {
+it('mengurutkan antrean timbang menurut urutan tayang partai, bukan abjad nama', function () {
     /*
-     * Petugas timbang bekerja mengikuti antrean gelanggang: yang bertanding
-     * jam sepuluh harus ditimbang sebelum yang bertanding jam satu. Daftar
-     * abjad tidak membawa satu pun petunjuk itu, dan petugas yang mengikutinya
-     * akan menahan partai pertama karena pesilatnya berhuruf Z.
+     * Petugas timbang bekerja mengikuti antrean gelanggang: yang tayang
+     * pertama harus ditimbang sebelum yang tayang belakangan. Daftar abjad
+     * tidak membawa satu pun petunjuk itu, dan petugas yang mengikutinya akan
+     * menahan partai pertama karena pesilatnya berhuruf Z.
      */
-    $bracket = App\Models\Bracket::create(['weight_class_id' => $this->kelasC->id, 'size' => 2]);
+    $bracket = Bracket::create(['weight_class_id' => $this->kelasC->id, 'size' => 2]);
+    $gelanggang = Arena::factory()->for($this->tournament)->create();
 
     $awal = Registration::factory()->for($this->kontingen)->terverifikasi()
         ->create(['weight_class_id' => $this->kelasC->id]);
@@ -285,18 +291,18 @@ it('mengurutkan antrean timbang menurut jadwal partai, bukan abjad nama', functi
         ->create(['weight_class_id' => $this->kelasC->id]);
     $akhir->athletes()->attach(pesilatDewasa($this->kontingen, ['name' => 'Andi Pratama']));
 
-    App\Models\SilatMatch::create([
+    SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
         'red_registration_id' => $awal->id,
-        'status' => App\Models\SilatMatch::STATUS_TERJADWAL,
-        'scheduled_at' => now()->setTime(10, 0),
+        'status' => SilatMatch::STATUS_TERJADWAL,
+        'arena_id' => $gelanggang->id, 'order_in_arena' => 1,
     ]);
 
-    App\Models\SilatMatch::create([
+    SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 2,
         'red_registration_id' => $akhir->id,
-        'status' => App\Models\SilatMatch::STATUS_TERJADWAL,
-        'scheduled_at' => now()->setTime(13, 0),
+        'status' => SilatMatch::STATUS_TERJADWAL,
+        'arena_id' => $gelanggang->id, 'order_in_arena' => 2,
     ]);
 
     $urut = $this->actingAs($this->admin)

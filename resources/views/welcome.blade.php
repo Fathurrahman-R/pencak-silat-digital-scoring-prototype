@@ -79,20 +79,21 @@
             </div>
         @endif
 
-        @if ($jadwalHariIni->isNotEmpty())
-            {{-- Jadwal hari ini: yang sebenarnya dicari orang yang berdiri di GOR --}}
+        @if ($antrean->isNotEmpty())
+            {{-- Antrean gelanggang: yang sebenarnya dicari orang yang berdiri di GOR.
+                 Bukan jam, melainkan berapa partai lagi sebelum gilirannya. --}}
             <div class="px-6 pt-10 sm:px-10">
                 <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
-                    <span class="text-[11px] tracking-[.28em] uppercase">Jadwal hari ini</span>
-                    <span class="text-[12px] text-silat-teks-redup">{{ $jadwalHariIni->count() }} partai</span>
+                    <span class="text-[11px] tracking-[.28em] uppercase">Antrean gelanggang</span>
+                    <span class="text-[12px] text-silat-teks-redup">{{ $antrean->count() }} partai</span>
                 </div>
 
-                @foreach ($jadwalHariIni as $partai)
+                @foreach ($antrean as $partai)
                     @php($berlangsung = $partai->status === App\Models\SilatMatch::STATUS_BERLANGSUNG)
                     <div class="flex items-center gap-4 border-b border-silat-garis py-3 {{ $berlangsung ? 'bg-silat-merah-dalam/25' : '' }}">
                         <div class="w-[3px] shrink-0 self-stretch {{ $berlangsung ? 'bg-silat-merah' : '' }}"></div>
                         <div class="silat-angka w-16 shrink-0 text-[15px] font-medium tabular-nums">
-                            {{ $partai->scheduled_at?->format('H:i') ?? '—' }}
+                            {{ $partai->order_in_arena ? 'No. '.$partai->order_in_arena : '—' }}
                         </div>
                         <div class="silat-angka w-10 shrink-0 text-[13px] text-silat-teks-redup tabular-nums">{{ $partai->id }}</div>
                         <div class="min-w-0 flex-1 truncate text-[15px]">

@@ -9,9 +9,9 @@
                  ]">
     <div class="space-y-4">
         <x-si.callout varian="keterangan" judul="Hanya partai yang kedua sudutnya sudah pasti yang muncul di sini">
-            Partai yang masih menunggu pemenang babak sebelumnya belum bisa dijadwalkan. Satu atlet
-            yang sudah dijadwalkan di satu gelanggang akan ditolak bila dijadwalkan ulang di gelanggang
-            lain pada waktu yang berdekatan.
+            Partai yang masih menunggu pemenang babak sebelumnya belum bisa dijadwalkan. Jadwal di
+            sini adalah urutan tayang, bukan jam: partai berjalan menurut nomor urutnya, dan yang
+            sedang dipertandingkan ditandai statusnya.
         </x-si.callout>
 
         @foreach ($arenas as $arena)
@@ -91,10 +91,6 @@
                                 · {{ $partai->bracket->namaBabak($partai->round) }}
                             </p>
                         </div>
-
-                        <span class="shrink-0 font-mono text-[13px] text-ink-muted tabular-nums">
-                            {{ $partai->scheduled_at?->translatedFormat('d M, H:i') }}
-                        </span>
 
                         {{-- Kelengkapan aparat dinyatakan, bukan disembunyikan.
                              Panel juri tidak menerima nilai sampai ketiganya
@@ -200,10 +196,6 @@
 
                             <div class="w-44">
                                 <x-si.pilihan name="arena_id" :options="$arenas->pluck('name', 'id')" placeholder="Gelanggang" />
-                            </div>
-
-                            <div class="w-52">
-                                <x-si.isian tipe="datetime-local" name="scheduled_at" />
                             </div>
 
                             <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">Jadwalkan</x-si.tombol>

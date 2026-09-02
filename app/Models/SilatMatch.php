@@ -40,7 +40,6 @@ class SilatMatch extends Model
         'ratified_by',
         'arena_id',
         'order_in_arena',
-        'scheduled_at',
     ];
 
     protected function casts(): array
@@ -50,7 +49,6 @@ class SilatMatch extends Model
             'position' => 'integer',
             'current_round' => 'integer',
             'ratified_at' => 'datetime',
-            'scheduled_at' => 'datetime',
         ];
     }
 

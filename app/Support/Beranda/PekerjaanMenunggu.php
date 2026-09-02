@@ -182,7 +182,7 @@ class PekerjaanMenunggu
         $jumlah = SilatMatch::whereHas('bracket', fn ($q) => $q->whereIn('weight_class_id', $idKelas))
             ->whereNotNull('red_registration_id')
             ->whereNotNull('blue_registration_id')
-            ->whereNull('scheduled_at')
+            ->whereNull('arena_id')
             ->count();
 
         return $this->baris(

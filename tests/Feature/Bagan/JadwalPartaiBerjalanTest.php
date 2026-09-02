@@ -54,7 +54,6 @@ beforeEach(function () {
     $this->buatPartai = fn (string $status) => SilatMatch::create([
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
         'arena_id' => $this->gelanggang->id, 'order_in_arena' => 1,
-        'scheduled_at' => '2026-09-01 08:00',
         'red_registration_id' => $sudut[0]->id, 'blue_registration_id' => $sudut[1]->id,
         'status' => $status,
     ]);
@@ -96,7 +95,6 @@ it('menolak menjadwalkan ulang partai yang sudah selesai', function () {
     $this->actingAs($this->ketua)
         ->post(route('admin.turnamen.jadwal.tetapkan', [$this->tournament, $partai]), [
             'arena_id' => $this->gelanggangLain->id,
-            'scheduled_at' => '2026-09-01 10:00',
         ])
         ->assertSessionHas('error');
 

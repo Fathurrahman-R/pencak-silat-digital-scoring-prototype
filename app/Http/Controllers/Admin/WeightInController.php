@@ -90,9 +90,9 @@ class WeightInController extends Controller
             ->with([
                 'athletes', 'contingent', 'weightClass',
                 'weightIns' => fn ($q) => $q->latest('weighed_at'),
-                // Jadwal partai terdekat menentukan urutan antrean.
-                'matchesAsRed' => fn ($q) => $q->whereNotNull('scheduled_at')->orderBy('scheduled_at'),
-                'matchesAsBlue' => fn ($q) => $q->whereNotNull('scheduled_at')->orderBy('scheduled_at'),
+                // Urutan tayang partai terdekat menentukan urutan antrean timbang.
+                'matchesAsRed' => fn ($q) => $q->whereNotNull('arena_id')->orderBy('order_in_arena'),
+                'matchesAsBlue' => fn ($q) => $q->whereNotNull('arena_id')->orderBy('order_in_arena'),
             ])
             ->get()
             // Golongan yang tidak menjalani timbang badan disaring di sini,
@@ -114,16 +114,23 @@ class WeightInController extends Controller
              */
             ->sortBy(fn (Registration $r) => sprintf(
                 '%020d|%s',
-                $this->jadwalTerdekat($r)?->getTimestamp() ?? PHP_INT_MAX,
+                $this->urutanTerdekat($r) ?? PHP_INT_MAX,
                 $r->athletes->first()?->name ?? '',
             ))
             ->values();
     }
 
-    private function jadwalTerdekat(Registration $registration): ?\Illuminate\Support\Carbon
+    /**
+     * Nomor urut tayang partai terdekat pesilat ini.
+     *
+     * Menggantikan jam partai sebagai patokan antrean timbang: jadwal tidak
+     * lagi menyimpan jam, dan yang menentukan siapa ditimbang lebih dulu
+     * adalah siapa yang lebih dulu naik gelanggang.
+     */
+    private function urutanTerdekat(Registration $registration): ?int
     {
         return $registration->matchesAsRed->merge($registration->matchesAsBlue)
-            ->pluck('scheduled_at')->filter()->sort()->first();
+            ->pluck('order_in_arena')->filter()->sort()->first();
     }
 
     /**

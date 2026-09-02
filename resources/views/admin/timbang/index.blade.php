@@ -75,7 +75,7 @@
 
             <x-si.kartu padat>
                 <div class="-mx-4 -mt-4 mb-0 border-b border-line bg-surface-inset px-4 py-2 text-[11px] tracking-[.1em] text-ink-secondary uppercase">
-                    Antrean · urut menurut jadwal partai paling awal
+                    Antrean · urut menurut partai yang paling dulu tayang
                 </div>
 
                 @forelse ($registrations as $registration)
@@ -83,8 +83,8 @@
                         $athlete = $registration->athletes->first();
                         $kelas = $registration->weightClass;
                         $terakhir = $registration->weightIns->first();
-                        $jadwal = $registration->matchesAsRed->merge($registration->matchesAsBlue)
-                            ->pluck('scheduled_at')->filter()->sort()->first();
+                        $urutan = $registration->matchesAsRed->merge($registration->matchesAsBlue)
+                            ->pluck('order_in_arena')->filter()->sort()->first();
                         $sedang = $terpilih && $terpilih->id === $registration->id;
                     @endphp
 
@@ -102,7 +102,7 @@
 
                         <div class="shrink-0 text-right">
                             <div class="font-mono text-[13px] text-ink-muted tabular-nums">
-                                {{ $jadwal?->translatedFormat('d M, H:i') ?? 'Belum terjadwal' }}
+                                {{ $urutan ? 'Urutan '.$urutan : 'Belum terjadwal' }}
                             </div>
                             @if (! $terakhir && $athlete?->weight_claim)
                                 <div class="mt-0.5 text-[12px] text-ink-muted">Klaim {{ $athlete->weight_claim }} kg</div>

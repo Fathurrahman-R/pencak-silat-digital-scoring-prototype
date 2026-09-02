@@ -11,7 +11,6 @@ use App\Support\Bagan\PenjadwalPartai;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 
@@ -107,11 +106,10 @@ class JadwalController extends Controller
 
         $data = $request->validate([
             'arena_id' => ['required', 'integer', Rule::exists('arenas', 'id')->where('tournament_id', $tournament->id)],
-            'scheduled_at' => ['required', 'date'],
         ]);
 
         try {
-            $this->penjadwal->tetapkan($match, Arena::findOrFail($data['arena_id']), Carbon::parse($data['scheduled_at']));
+            $this->penjadwal->tetapkan($match, Arena::findOrFail($data['arena_id']));
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }

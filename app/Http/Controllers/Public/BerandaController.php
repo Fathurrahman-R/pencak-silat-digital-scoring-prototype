@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Enums\StatusTurnamen;
+use App\Enums\Sudut;
 use App\Http\Controllers\Controller;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
@@ -56,30 +57,33 @@ class BerandaController extends Controller
         return view('welcome', [
             'kejuaraan' => $kejuaraan,
             'berjalan' => $berjalan,
-            'jadwalHariIni' => $berjalan ? $this->jadwalHariIni($berjalan) : collect(),
+            'antrean' => $berjalan ? $this->antreanPartai($berjalan) : collect(),
             'papanGelanggang' => $berjalan ? $this->papanGelanggang($berjalan) : collect(),
             'medali' => $berjalan ? $this->medali->peringkatUmum($berjalan)->take(3) : collect(),
         ]);
     }
 
     /**
-     * Jadwal partai hari ini -- yang paling dicari orang yang berdiri di GOR.
+     * Antrean partai berikutnya -- yang paling dicari orang yang berdiri di GOR.
      *
-     * Dibatasi hari berjalan, bukan seluruh kejuaraan: daftar lima hari penuh
-     * tidak menjawab pertanyaan "partai saya jam berapa".
+     * Yang sudah selesai tidak ikut, dan urutannya urutan tayang gelanggang.
+     * Pertanyaan yang dibawa penonton bukan "partai saya jam berapa" -- jadwal
+     * tidak menyimpan jam -- melainkan "berapa partai lagi sebelum giliran
+     * saya".
      */
-    private function jadwalHariIni(Tournament $tournament): Collection
+    private function antreanPartai(Tournament $tournament): Collection
     {
         return SilatMatch::query()
             ->whereHas('bracket.weightClass', fn ($q) => $q->where('tournament_id', $tournament->id))
-            ->whereDate('scheduled_at', today())
+            ->whereNotNull('arena_id')
+            ->where('status', '!=', SilatMatch::STATUS_SELESAI)
             ->with([
                 'bracket.weightClass:id,name,jenis_kelamin,golongan_usia',
                 'arena:id,name',
                 'red.athletes:id,name',
                 'blue.athletes:id,name',
             ])
-            ->orderBy('scheduled_at')
+            ->orderBy('arena_id')
             ->orderBy('order_in_arena')
             ->take(12)
             ->get();
@@ -107,8 +111,8 @@ class BerandaController extends Controller
                     'arena' => $arena,
                     'partai' => $partai,
                     'skor' => $partai ? [
-                        'merah' => $this->skor->skor($partai, \App\Enums\Sudut::Merah),
-                        'biru' => $this->skor->skor($partai, \App\Enums\Sudut::Biru),
+                        'merah' => $this->skor->skor($partai, Sudut::Merah),
+                        'biru' => $this->skor->skor($partai, Sudut::Biru),
                     ] : null,
                 ];
             });
