@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusBabak;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MatchRound extends Model
 {
     use HasFactory;
+
+    /*
+     * Kunci ULID, bukan auto-increment.
+     *
+     * Tiap gelanggang menjalankan basis datanya sendiri, dan penghitung
+     * auto-increment tiap basis data mulai dari satu. Dua gelanggang akan
+     * menerbitkan baris bernomor sama, dan saat datanya digabungkan tidak ada
+     * cara memilih di antara keduanya yang tidak membuang salah satu catatan
+     * sungguhan.
+     */
+    use HasUlids;
 
     /** Lihat catatan yang sama di App\Models\JudgeInput. */
     protected $dateFormat = 'Y-m-d H:i:s.v';
