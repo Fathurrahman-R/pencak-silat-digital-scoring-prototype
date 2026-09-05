@@ -6,6 +6,7 @@ use App\Enums\Sudut;
 use App\Enums\TingkatHukuman;
 use App\Enums\TingkatPelanggaran;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Penalty extends Model
 {
     use HasFactory;
+
+    /*
+     * Kunci ULID, bukan auto-increment. Tiap gelanggang menjalankan basis
+     * datanya sendiri, dan penghitung auto-increment tiap basis data mulai
+     * dari satu -- dua gelanggang akan menerbitkan baris bernomor sama.
+     */
+    use HasUlids;
 
     protected $fillable = [
         'match_id',
