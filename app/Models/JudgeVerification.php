@@ -6,6 +6,7 @@ use App\Enums\JawabanVerifikasi;
 use App\Enums\JenisVerifikasi;
 use App\Enums\TingkatPelanggaran;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class JudgeVerification extends Model
 {
     use HasFactory;
+
+    /*
+     * Kunci ULID, bukan auto-increment. Tiap gelanggang menjalankan basis
+     * datanya sendiri, dan penghitung auto-increment tiap basis data mulai
+     * dari satu -- dua gelanggang akan menerbitkan baris bernomor sama.
+     */
+    use HasUlids;
 
     public const BERJALAN = 'berjalan';
 

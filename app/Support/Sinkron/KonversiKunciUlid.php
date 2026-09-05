@@ -137,20 +137,103 @@ class KonversiKunciUlid
     private static function pasangUlangIndex(array $index): void
     {
         foreach ($index as [$tabel, $nama, $kolom, $unik]) {
-            $sudahAda = DB::selectOne(
-                'SELECT 1 x FROM information_schema.STATISTICS
-                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1',
-                [$tabel, $nama],
+            /*
+             * Memeriksa KOLOMNYA, bukan cuma namanya.
+             *
+             * Membuang satu kolom dari index gabungan tidak membuang
+             * index itu -- MySQL MEMPERSEMPITNYA, diam-diam, dan namanya
+             * tetap sama. Unique(judge_verification_id, judge_user_id)
+             * menyusut jadi unique(judge_user_id) persis begini, dan
+             * artinya berubah total: dari "satu juri satu jawaban per
+             * polling" menjadi "satu juri satu jawaban seumur hidup".
+             * Polling verifikasi kedua di gelanggang yang sama akan
+             * ditolak basis data, di tengah pertandingan, dengan pesan
+             * yang tidak menyebut sebabnya.
+             *
+             * Yang menyusut dibongkar dan dibangun ulang utuh.
+             */
+            $sekarang = array_map(
+                static fn ($b) => $b->COLUMN_NAME,
+                DB::select(
+                    'SELECT COLUMN_NAME FROM information_schema.STATISTICS
+                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?
+                     ORDER BY SEQ_IN_INDEX',
+                    [$tabel, $nama],
+                ),
             );
 
-            if ($sudahAda !== null) {
+            if ($sekarang === $kolom) {
                 continue;
             }
 
             $daftar = '`'.implode('`, `', $kolom).'`';
             $jenis = $unik ? 'UNIQUE INDEX' : 'INDEX';
 
-            DB::statement("ALTER TABLE `{$tabel}` ADD {$jenis} `{$nama}` ({$daftar})");
+            if ($sekarang === []) {
+                DB::statement("ALTER TABLE `{$tabel}` ADD {$jenis} `{$nama}` ({$daftar})");
+
+                continue;
+            }
+
+            /*
+             * Yang menyusut dibangun dulu, baru yang lama dibuang.
+             *
+             * Urutan terbalik akan gagal: MySQL menolak membuang index yang
+             * sedang dipakai sebuah foreign key untuk memenuhi kebutuhan
+             * indexnya, dan index gabungan sering merangkap peran itu tanpa
+             * ada yang menyadarinya. Membangun penggantinya lebih dulu memberi
+             * foreign key itu tempat bersandar, sehingga yang lama boleh
+             * pergi.
+             */
+            $sementara = substr($nama.'_ulid_tmp', -64);
+
+            DB::statement("ALTER TABLE `{$tabel}` ADD {$jenis} `{$sementara}` ({$daftar})");
+            self::pastikanForeignKeyPunyaSandaran($tabel, $nama);
+            DB::statement("ALTER TABLE `{$tabel}` DROP INDEX `{$nama}`");
+            DB::statement("ALTER TABLE `{$tabel}` RENAME INDEX `{$sementara}` TO `{$nama}`");
+        }
+    }
+
+    /**
+     * Memberi tiap foreign key index sandaran sendiri sebelum satu index
+     * dibuang.
+     *
+     * MySQL menolak membuang index yang menjadi satu-satunya sandaran sebuah
+     * foreign key, dan index gabungan sering merangkap peran itu tanpa
+     * terlihat. Kasus nyatanya: unique(judge_verification_id, judge_user_id)
+     * yang menyusut jadi unique(judge_user_id) mendadak menjadi satu-satunya
+     * index yang diawali judge_user_id, sehingga foreign key ke tabel users
+     * bersandar padanya -- dan index itu justru yang harus dibongkar untuk
+     * memulihkan bentuk aslinya.
+     *
+     * Index penggantinya dinamai mengikuti konvensi Laravel, sama seperti yang
+     * dibuat MySQL sendiri kalau foreign key-nya dipasang tanpa index lain
+     * yang memenuhinya.
+     */
+    private static function pastikanForeignKeyPunyaSandaran(string $tabel, string $akanDibuang): void
+    {
+        $kolomForeign = DB::select(
+            'SELECT DISTINCT COLUMN_NAME nama FROM information_schema.KEY_COLUMN_USAGE
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL',
+            [$tabel],
+        );
+
+        foreach ($kolomForeign as $kolom) {
+            $sandaran = DB::selectOne(
+                'SELECT 1 x FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+                   AND COLUMN_NAME = ? AND SEQ_IN_INDEX = 1 AND INDEX_NAME <> ?
+                 LIMIT 1',
+                [$tabel, $kolom->nama, $akanDibuang],
+            );
+
+            if ($sandaran !== null) {
+                continue;
+            }
+
+            $nama = substr("{$tabel}_{$kolom->nama}_foreign", -64);
+
+            DB::statement("ALTER TABLE `{$tabel}` ADD INDEX `{$nama}` (`{$kolom->nama}`)");
         }
     }
 
