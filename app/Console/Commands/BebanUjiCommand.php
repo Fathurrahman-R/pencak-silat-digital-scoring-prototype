@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Menumpuk riwayat penilaian sebanyak satu hari pertandingan sungguhan.
@@ -134,6 +135,9 @@ class BebanUjiCommand extends Command
             // sejalan dengan 40-an nilai per partai yang terlihat di data uji.
             if ($i % 12 === 0) {
                 $nilai[] = [
+                    // Kunci dibangkitkan di sini: penyisipan massal lewat query
+                    // builder melewati model, jadi HasUlids tidak berjalan.
+                    'id' => (string) Str::ulid(),
                     'match_id' => $matchId,
                     'round' => $babak,
                     'corner' => $sisi,

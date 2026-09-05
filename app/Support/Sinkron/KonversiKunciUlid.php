@@ -50,6 +50,7 @@ class KonversiKunciUlid
     public static function keUlid(string $tabel, array $penunjuk = []): void
     {
         $fk = self::simpanDefinisiForeignKey($penunjuk);
+        $index = self::simpanDefinisiIndex($penunjuk);
 
         self::tambahKolomUlid($tabel);
         self::isiUlid($tabel);
@@ -73,6 +74,84 @@ class KonversiKunciUlid
         foreach ($fk as [$tabelPenunjuk, $kolom, $nama, $onDelete]) {
             self::pasangForeignKey($tabelPenunjuk, $kolom, $tabel, $nama, $onDelete);
         }
+
+        self::pasangUlangIndex($index);
+    }
+
+    /**
+     * Menyimpan index milik kolom penunjuk sebelum kolomnya dibongkar.
+     *
+     * Membuang sebuah kolom ikut membuang setiap index yang memuatnya, tanpa
+     * peringatan. Index judge_inputs.score_event_id hilang persis begini pada
+     * percobaan pertama -- index yang dipasang justru karena tanpa dia panel
+     * dewan juri memindai seratus ribu baris untuk menemukan tiga puluh, dan
+     * kehilangannya tidak menimbulkan galat apa pun. Yang muncul cuma panel
+     * yang melambat lagi, beberapa hari kemudian, tanpa sebab yang kelihatan.
+     *
+     * Index bikinan foreign key TIDAK ikut disimpan: MySQL membuatnya sendiri
+     * saat constraint dipasang kembali, dan menduplikasinya berarti dua index
+     * identik yang sama-sama harus diperbarui tiap penulisan.
+     *
+     * @param  list<array{0: string, 1: string}>  $penunjuk
+     * @return list<array{0: string, 1: string, 2: list<string>, 3: bool}>
+     */
+    private static function simpanDefinisiIndex(array $penunjuk): array
+    {
+        $hasil = [];
+
+        foreach ($penunjuk as [$tabelPenunjuk, $kolom]) {
+            $namaIndex = DB::select(
+                "SELECT DISTINCT s.INDEX_NAME nama, s.NON_UNIQUE unik
+                 FROM information_schema.STATISTICS s
+                 WHERE s.TABLE_SCHEMA = DATABASE() AND s.TABLE_NAME = ?
+                   AND s.COLUMN_NAME = ? AND s.INDEX_NAME <> 'PRIMARY'
+                   AND s.INDEX_NAME NOT IN (
+                       SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+                       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = s.TABLE_NAME
+                         AND REFERENCED_TABLE_NAME IS NOT NULL
+                   )",
+                [$tabelPenunjuk, $kolom],
+            );
+
+            foreach ($namaIndex as $satu) {
+                // Seluruh kolom index ikut dibaca: index gabungan harus
+                // dibangun kembali utuh, bukan menyusut jadi satu kolom.
+                $kolomIndex = array_map(
+                    static fn ($b) => $b->COLUMN_NAME,
+                    DB::select(
+                        'SELECT COLUMN_NAME FROM information_schema.STATISTICS
+                         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?
+                         ORDER BY SEQ_IN_INDEX',
+                        [$tabelPenunjuk, $satu->nama],
+                    ),
+                );
+
+                $hasil[] = [$tabelPenunjuk, $satu->nama, $kolomIndex, (int) $satu->unik === 0];
+            }
+        }
+
+        return $hasil;
+    }
+
+    /** @param  list<array{0: string, 1: string, 2: list<string>, 3: bool}>  $index */
+    private static function pasangUlangIndex(array $index): void
+    {
+        foreach ($index as [$tabel, $nama, $kolom, $unik]) {
+            $sudahAda = DB::selectOne(
+                'SELECT 1 x FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1',
+                [$tabel, $nama],
+            );
+
+            if ($sudahAda !== null) {
+                continue;
+            }
+
+            $daftar = '`'.implode('`, `', $kolom).'`';
+            $jenis = $unik ? 'UNIQUE INDEX' : 'INDEX';
+
+            DB::statement("ALTER TABLE `{$tabel}` ADD {$jenis} `{$nama}` ({$daftar})");
+        }
     }
 
     /**
@@ -92,6 +171,7 @@ class KonversiKunciUlid
     public static function keInteger(string $tabel, array $penunjuk = []): void
     {
         $fk = self::simpanDefinisiForeignKey($penunjuk);
+        $index = self::simpanDefinisiIndex($penunjuk);
 
         DB::statement("ALTER TABLE `{$tabel}` ADD COLUMN `id_lama` BIGINT UNSIGNED NULL AFTER `id`");
 
@@ -125,6 +205,8 @@ class KonversiKunciUlid
         foreach ($fk as [$tabelPenunjuk, $kolom, $nama, $onDelete]) {
             self::pasangForeignKey($tabelPenunjuk, $kolom, $tabel, $nama, $onDelete);
         }
+
+        self::pasangUlangIndex($index);
     }
 
     private static function tambahKolomUlid(string $tabel): void
