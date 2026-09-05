@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HeaderKeamanan;
 use App\Http\Middleware\IngatTurnamenAktif;
 use App\Http\Middleware\SiaranAktif;
+use App\Http\Middleware\TokenSinkron;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -88,6 +89,27 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('live')
                 ->name('live.')
                 ->group(base_path('routes/live.php'));
+
+            /*
+             * Sinkron antar laptop gelanggang: kelompok rute ketiga yang
+             * sengaja di luar grup 'web'.
+             *
+             * Yang mengetuk di sini bukan orang melainkan laptop gelanggang
+             * lain -- ia tidak punya sesi, tidak punya kuki, dan tidak bisa
+             * login. Melewatkan StartSession berarti tiap penarikan tidak
+             * menulis baris sesi yang tidak akan pernah dibaca siapa pun.
+             *
+             * Dua pengaman menggantikannya, dan keduanya harus ada:
+             * TokenSinkron (token bersama yang disalin panitia antar mesin,
+             * dan yang membuat endpoint ini MATI kalau belum diisi) serta
+             * AllowLocalNetworkOnly. Data kejuaraan lengkap mengalir lewat
+             * sini; ia tidak boleh bisa dijangkau dari luar LAN gelanggang
+             * dalam keadaan apa pun.
+             */
+            Route::middleware([SubstituteBindings::class, AllowLocalNetworkOnly::class, TokenSinkron::class])
+                ->prefix('sinkron')
+                ->name('sinkron.')
+                ->group(base_path('routes/sinkron.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -8,6 +8,7 @@ use App\Models\ArenaOfficial;
 use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\User;
+use App\Support\Bagan\KesiapanHulu;
 use App\Support\Scoring\MatchTimer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -34,7 +35,10 @@ use RuntimeException;
  */
 class PointerPartaiAktif
 {
-    public function __construct(private readonly MatchTimer $timer) {}
+    public function __construct(
+        private readonly MatchTimer $timer,
+        private readonly KesiapanHulu $kesiapan,
+    ) {}
 
     /**
      * Menunjuk partai yang ditayangkan gelanggang.
@@ -50,6 +54,8 @@ class PointerPartaiAktif
         if ($match->arena_id !== $arena->id) {
             throw new RuntimeException('Partai ini tidak dijadwalkan di gelanggang ini.');
         }
+
+        $this->pastikanHuluSudahSampai($match, $paksa);
 
         $sebelumnya = $this->partaiAktif($arena);
 
@@ -142,6 +148,42 @@ class PointerPartaiAktif
             ->orderBy('id')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Menahan partai yang salah satu sudutnya belum bisa diketahui.
+     *
+     * Pemenang partai hulu di gelanggang lain baru sampai ke laptop ini
+     * setelah ada yang menekan tombol sinkron. Menayangkan partainya sebelum
+     * itu berarti memanggil pesilat yang belum ditentukan ke matras -- dan
+     * yang lebih buruk, pengendali mengisi sudutnya sendiri dengan tebakan.
+     *
+     * Pesannya menyebut gelanggang mana yang ditunggu. "Data belum lengkap"
+     * saja akan dijawab dengan menekan semua tombol sinkron satu per satu,
+     * di tengah hari pertandingan.
+     *
+     * Bisa ditembus dengan $paksa, jalan yang sama dengan meninggalkan partai
+     * yang belum diakhiri: kadang panitia memang sudah tahu hasilnya dari
+     * gelanggang sebelah dan tidak bisa menunggu jaringan.
+     *
+     * @throws RuntimeException
+     */
+    private function pastikanHuluSudahSampai(SilatMatch $match, bool $paksa): void
+    {
+        if ($paksa) {
+            return;
+        }
+
+        $menunggu = $this->kesiapan->gelanggangDitunggu($match);
+
+        if ($menunggu === []) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'Hasil dari '.implode(' dan ', $menunggu).' belum sampai ke gelanggang ini. '
+            .'Tarik sinkron dulu lewat menu Sinkron Gelanggang, atau pindah paksa kalau hasilnya sudah pasti.',
+        );
     }
 
     /**

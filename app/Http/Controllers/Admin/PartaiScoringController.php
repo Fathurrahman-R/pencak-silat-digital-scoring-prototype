@@ -77,7 +77,7 @@ class PartaiScoringController extends Controller
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, request()->user());
 
-        return view('silat.operator', [
+        return view('silat.papan', [
             'tournament' => $tournament,
             'match' => $match->load('bracket.weightClass'),
             'config' => $this->konfigPanel($tournament, $match),
@@ -541,7 +541,12 @@ class PartaiScoringController extends Controller
             'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
             'corner' => ['required', Rule::enum(Sudut::class)],
             'verifikasi_id' => [
-                'nullable', 'integer',
+                // String, bukan integer: kunci judge_verifications sudah pindah
+                // ke ULID. Aturan yang tertinggal di sini tidak melempar galat,
+                // ia MENOLAK permintaan yang sah -- wasit menerbitkan jatuhan
+                // hasil pertanyaan ke juri dan yang kembali cuma pesan validasi
+                // tentang kolom yang tidak pernah ia isi sendiri.
+                'nullable', 'string',
                 Rule::exists('judge_verifications', 'id')->where('match_id', $match->id),
             ],
         ], [

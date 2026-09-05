@@ -13,6 +13,7 @@ use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Bagan\PenjadwalPartai;
+use App\Support\Bagan\KesiapanHulu;
 use App\Support\Gelanggang\PointerPartaiAktif;
 use App\Support\Live\StatePartaiPublik;
 use App\Support\Scoring\MatchTimer;
@@ -38,7 +39,7 @@ beforeEach(function () {
     $this->bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 4]);
 
     $this->pengendali = User::factory()->create();
-    $this->pointer = new PointerPartaiAktif(new MatchTimer);
+    $this->pointer = new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class));
 
     $this->buatPartai = function (int $posisi, array $ganti = []) use ($kelas) {
         $daftar = fn () => tap(

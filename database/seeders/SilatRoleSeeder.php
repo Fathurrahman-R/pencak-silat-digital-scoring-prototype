@@ -113,6 +113,9 @@ class SilatRoleSeeder extends Seeder
                      * alih tanpa menunggu penugasan ulang.
                      */
                     'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                    // Wewenangnya lintas gelanggang, jadi ia juga yang paling
+                    // butuh menarik data dari laptop lain.
+                    'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
                     // Ketua Pertandingan menampung protes VAR maupun Protes
                     // Manajer atas nama pelatih (keduanya diajukan pelatih di
@@ -205,6 +208,14 @@ class SilatRoleSeeder extends Seeder
                     'gelanggang' => $lihat,
                     'jadwal' => $lihat,
                     'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                    /*
+                     * Menarik data dari gelanggang lain. Diberikan ke
+                     * pengendali, bukan ditahan di sekretariat, karena yang
+                     * pertama tahu bahwa hasil hulu belum sampai adalah orang
+                     * yang partainya ditolak sistem -- dan ia sedang berdiri
+                     * di gelanggang, bukan di meja panitia.
+                     */
+                    'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,

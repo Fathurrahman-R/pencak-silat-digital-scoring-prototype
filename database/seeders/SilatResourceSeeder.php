@@ -184,6 +184,25 @@ class SilatResourceSeeder extends Seeder
                 'locked' => true,
             ],
             [
+                'key' => 'sinkron-gelanggang',
+                'label' => 'Sinkron Gelanggang',
+                'group' => 'Pertandingan',
+                'description' => 'Menarik data dari laptop gelanggang lain dan melihat sudah sampai mana pertukarannya.',
+                /*
+                 * Update, bukan Manage: menarik data BUKAN wewenang terberat --
+                 * ia tidak bisa mengubah hasil pertandingan, hanya membawa
+                 * masuk apa yang sudah diputuskan di gelanggang lain. Baris
+                 * yang datang pun disaring aturan kepemilikan, jadi penarikan
+                 * tidak bisa menimpa catatan gelanggang ini sendiri.
+                 *
+                 * Terkunci karena tanpa jalur ini bagan lintas gelanggang
+                 * berhenti di tengah hari: partai lanjutan tidak pernah tahu
+                 * siapa pemenang babak sebelumnya.
+                 */
+                'actions' => [ResourceAction::View, ResourceAction::Update],
+                'locked' => true,
+            ],
+            [
                 'key' => 'penilaian',
                 'label' => 'Penilaian Juri',
                 'group' => 'Pertandingan',

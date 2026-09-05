@@ -12,6 +12,7 @@ use App\Models\Registration;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Bagan\KesiapanHulu;
 use App\Support\Gelanggang\PointerPartaiAktif;
 use App\Support\Scoring\BabakSusulan;
 use App\Support\Scoring\MatchTimer;
@@ -63,7 +64,7 @@ beforeEach(function () {
     $this->pengendali->syncRoles(['pengendali-gelanggang']);
     $this->arena->pengendali()->attach($this->pengendali->id);
 
-    $this->pointer = new PointerPartaiAktif(new MatchTimer);
+    $this->pointer = new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class));
 });
 
 it('membuka panel kendali gelanggang', function () {
@@ -422,6 +423,23 @@ it('menyiapkan blok keberatan di panel wasit untuk protes yang sedang berjalan',
         // Kartunya MENGGANTIKAN tangga hukuman, tidak menumpang di bawahnya:
         // panel ini dirancang untuk 844x390 dan sudah penuh.
         ->assertSee('protesBerjalan', false);
+});
+
+/*
+ * Papan gelanggang sempat memakai manifest JURI.
+ *
+ * `peranDariView()` tidak mengenali viewnya, jadi ia jatuh ke `default` --
+ * dan ikon yang dipasang di layar utama laptop gelanggang menyebut dirinya
+ * Panel Juri. Persis kekeliruan yang manifest per-peran ini dibuat untuk
+ * mencegah.
+ */
+it('menyajikan manifest papan gelanggang dengan namanya sendiri', function () {
+    $this->actingAs($this->pengendali)
+        ->get(route('admin.turnamen.gelanggang.panel.manifest', [$this->tournament, $this->arena, 'papan']))
+        ->assertOk()
+        ->assertJsonPath('start_url', route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
+        ->assertJsonPath('short_name', 'Papan '.$this->arena->code)
+        ->assertJsonPath('name', 'Papan Gelanggang — '.$this->arena->name);
 });
 
 it('menyajikan manifest PWA untuk komisi protes dan ketua pertandingan', function () {

@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SiaranController;
+use App\Http\Controllers\Admin\SinkronController;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
@@ -80,6 +81,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |
     */
     Route::prefix('admin')->name('admin.')->group(function () {
+        /*
+         * Sinkron gelanggang TIDAK berada di bawah {tournament}.
+         *
+         * Yang diaturnya adalah sifat MESIN ini -- gelanggang mana yang
+         * dipegangnya, laptop mana tetangganya, sudah sampai mana
+         * pertukarannya -- dan itu tidak berubah saat panitia berpindah
+         * kejuaraan. Menaruhnya di bawah turnamen akan menyarankan bahwa tiap
+         * kejuaraan punya daftar peer sendiri, yang tidak benar dan akan
+         * dijalankan orang sebagai kalau benar.
+         *
+         * Rute yang dipanggil PEER ada di routes/sinkron.php, dijaga token,
+         * bukan di sini. Yang ini dipanggil operator yang sudah login.
+         */
+        Route::controller(SinkronController::class)->prefix('sinkron')->name('sinkron.')->group(function () {
+            Route::get('/', 'index')->name('index')
+                ->middleware('resource:'.rk('sinkron-gelanggang', ResourceAction::View));
+            Route::post('/tarik', 'tarik')->name('tarik')
+                ->middleware('resource:'.rk('sinkron-gelanggang', ResourceAction::Update));
+        });
+
         Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
             Route::get('/', 'index')->name('index')->middleware('resource:'.rk('users', ResourceAction::View));
             Route::get('/create', 'create')->name('create')->middleware('resource:'.rk('users', ResourceAction::Create));
