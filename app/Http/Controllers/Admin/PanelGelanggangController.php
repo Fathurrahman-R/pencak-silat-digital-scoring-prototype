@@ -91,7 +91,7 @@ class PanelGelanggangController extends Controller
      */
     public function papan(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.operator', $request, $tournament, $arena);
+        return $this->panel('silat.papan', $request, $tournament, $arena);
     }
 
     public function wasit(Request $request, Tournament $tournament, Arena $arena): View
@@ -155,6 +155,7 @@ class PanelGelanggangController extends Controller
             'wasit' => ['Panel Wasit', 'Wasit', 'Papan hukuman dan hitungan teknik untuk wasit gelanggang.'],
             'dewan-juri' => ['Panel Dewan Wasit Juri', 'Dewan', 'Peninjauan nilai, pembatalan, dan pengesahan hasil partai.'],
             'kendali' => ['Kendali Gelanggang', 'Kendali', 'Timer, perpindahan babak, dan pergantian jadwal gelanggang.'],
+            'papan' => ['Papan Gelanggang', 'Papan', 'Skor, timer, dan nama pesilat untuk layar gelanggang.'],
             'komisi-protes' => ['Panel Komisi Protes', 'Protes', 'Protes VAR dan protes manajer untuk satu gelanggang.'],
             'ketua' => ['Panel Ketua Pertandingan', 'Ketua', 'Skor berjalan, protes, dan hasil partai satu gelanggang.'],
         ];
@@ -410,6 +411,7 @@ class PanelGelanggangController extends Controller
             'silat.kendali' => 'kendali',
             'silat.keberatan' => 'komisi-protes',
             'silat.panel-ketua' => 'ketua',
+            'silat.papan' => 'papan',
             default => 'juri',
         };
     }

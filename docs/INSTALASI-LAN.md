@@ -1,6 +1,10 @@
-# Panduan Instalasi — Satu Mesin Windows untuk LAN Gelanggang
+# Panduan Instalasi — Satu Mesin Windows per Gelanggang
 
 > NFR-08: seluruh sistem harus bisa dipasang dari nol di satu mesin Windows, dan setelah dependensi terunduh, tidak butuh akses internet lagi untuk berjalan.
+
+> **Dokumen ini memasang SATU mesin.** Untuk kejuaraan lebih dari satu gelanggang, ulangi seluruh langkah di tiap laptop gelanggang, ditambah satu laptop lagi sebagai node global. Penyetelan yang membedakannya — `SINKRON_PERAN`, `SINKRON_NODE`, `SINKRON_ARENA`, `SINKRON_TOKEN`, `SINKRON_PEER` — ada di [MULTI-GELANGGANG.md](MULTI-GELANGGANG.md), dan arsip buktinya di [ARSIP-BUKTI.md](ARSIP-BUKTI.md).
+>
+> **Sebelum memigrasikan basis data yang sudah berisi riwayat:** konversi kunci ke ULID memakan sekitar sepuluh menit per seratus ribu baris `judge_inputs`. Jangan dijalankan di sela pertandingan.
 
 ## 1. Prasyarat (butuh internet, sekali saja)
 
@@ -390,6 +394,16 @@ Rincian isinya ada di [README](../README.md#kejuaraan-siap-uji-untuk-simulasi-ma
 - [ ] Satu juri menekan teknik yang sama dua kali beruntun -- titiknya harus terlihat berkedip ulang, bukan diam
 - [ ] Cabut WiFi satu HP juri di tengah percobaan, sambungkan lagi, pastikan panel resync sendiri tanpa reload manual
 - [ ] Matikan dan nyalakan ulang `reverb:start`, pastikan seluruh panel pulih ke state benar. Selama Reverb mati, tombol nilai harus tetap membalas dalam hitungan detik (bukan menggantung) dan panel penekannya tetap memperbarui diri
+
+### Kalau memakai lebih dari satu gelanggang
+
+- [ ] `php artisan silat:kesehatan` di tiap laptop -- ketiga metriknya hijau
+- [ ] Buka **Sinkron Gelanggang**, pastikan tiap peer terdaftar dan tidak ada peringatan token
+- [ ] Tarik dari node global di tiap laptop gelanggang, pastikan bagan dan jadwalnya masuk
+- [ ] Sahkan satu partai percobaan, lalu periksa `php artisan silat:arsip` di laptop itu: partainya harus tercatat **diterima**, bukan menunggu
+- [ ] Coba tayangkan partai yang hulunya berjalan di gelanggang lain sebelum ditarik -- **harus ditolak**, dengan pesan yang menyebut nama gelanggangnya
+- [ ] Tarik dari gelanggang itu, lalu tayangkan lagi -- kali ini harus lolos
+- [ ] Matikan node global, sahkan satu partai lagi: pengesahannya **tetap berhasil**, dan partainya menumpuk di antrean arsip. Hidupkan lagi, tekan `silat:arsip --dorong`, antreannya harus habis
 
 ## Setelah ini
 

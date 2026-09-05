@@ -40,7 +40,13 @@ flowchart TB
     Server -.->|hanya saat pendaftaran & pembayaran, sebelum hari-H| Midtrans
 ```
 
-**Kenapa satu mesin.** vMix Pro dan server Laravel berjalan di mesin yang sama (keputusan yang sudah dikonfirmasi di awal proyek). Konsekuensinya: PHP-FPM, MySQL, Reverb, dan lima Browser Input vMix berebut CPU yang sama dipakai encoder streaming. Alamat host, port Reverb, dan port aplikasi semuanya dibaca dari `.env` (NFR-09) supaya bisa dipindah ke mesin terpisah tanpa mengubah kode kalau ternyata berat.
+**Kenapa satu mesin PER GELANGGANG.** vMix Pro dan server Laravel berjalan di mesin yang sama (keputusan yang sudah dikonfirmasi di awal proyek). Konsekuensinya: PHP-FPM, MySQL, Reverb, dan lima Browser Input vMix berebut CPU yang sama dipakai encoder streaming. Alamat host, port Reverb, dan port aplikasi semuanya dibaca dari `.env` (NFR-09).
+
+Diagram di atas menggambarkan SATU gelanggang. Satu laptop tidak realistis untuk lebih dari satu gelanggang sekaligus, jadi tiap gelanggang menjalankan salinannya sendiri -- lengkap dengan MySQL dan Reverb sendiri -- dan pertukaran datanya dilakukan sadar lewat tombol. Ditambah satu laptop lagi sebagai node global: tidak melayani gelanggang mana pun, tapi jadi satu-satunya penulis data kejuaraan dan penampung arsip bukti.
+
+Aturan satu penulis itulah yang menggantikan resolusi konflik: keadaan bentroknya dibuat tidak bisa terjadi, bukan dipecahkan sesudah terjadi. Rinciannya di `docs/MULTI-GELANGGANG.md`, dan arsip buktinya di `docs/ARSIP-BUKTI.md`.
+
+Konsekuensi yang perlu diingat saat membaca sisa dokumen ini: apa pun yang disebut "lintas gelanggang" di bawah -- panel Ketua Pertandingan, rekap medali, deteksi konflik aparat -- kini melihat data sejauh sinkron terakhir, bukan keadaan langsung.
 
 **Channel publiknya bersyarat.** `public-live.{arena}` hanya disiarkan selama `OVERLAY_ENABLED` atau `LIVE_SCORE_ENABLED` menyala (lihat `App\Support\Live\SaluranArena` dan bagian 4c di `docs/INSTALASI-LAN.md`). Saat keduanya mati, kelima event siaran hanya mendorong ke channel presence panel gelanggang -- satu dorongan per event, bukan dua.
 
