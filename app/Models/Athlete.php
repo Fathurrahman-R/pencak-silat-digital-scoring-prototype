@@ -63,7 +63,10 @@ class Athlete extends Model
     {
         $acuan = ($tournament ?? $this->contingent->tournament)->starts_on ?? now();
 
-        return $this->birth_date->diffInYears($acuan);
+        // Carbon 3 mengembalikan pecahan; dibulatkan ke bawah secara eksplisit
+        // supaya PHP 8.4 tidak memperingatkan konversi implisit -- dan supaya
+        // pembulatannya jadi keputusan yang tertulis, bukan efek samping.
+        return (int) $this->birth_date->diffInYears($acuan);
     }
 
     public function golonganUsia(?Tournament $tournament = null): ?GolonganUsia

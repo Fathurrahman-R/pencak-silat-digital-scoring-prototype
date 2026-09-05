@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\GolonganUsia;
+use App\Enums\FormatJurus;
 use App\Enums\JenisJurus;
 use App\Enums\JenisKelamin;
 use App\Models\Concerns\UrutGolonganUsia;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JurusEvent extends Model
 {
@@ -20,6 +22,7 @@ class JurusEvent extends Model
     protected $fillable = [
         'tournament_id',
         'jenis',
+        'format',
         'golongan_usia',
         'jenis_kelamin',
         'waktu_acuan_ms',
@@ -31,6 +34,7 @@ class JurusEvent extends Model
     {
         return [
             'jenis' => JenisJurus::class,
+            'format' => FormatJurus::class,
             'golongan_usia' => GolonganUsia::class,
             'jenis_kelamin' => JenisKelamin::class,
             'is_active' => 'boolean',
@@ -40,6 +44,12 @@ class JurusEvent extends Model
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
+    }
+
+    /** Bagan gugur nomor ini -- hanya ada untuk format battle. */
+    public function bagan(): HasOne
+    {
+        return $this->hasOne(JurusBracket::class);
     }
 
     public function performances(): HasMany

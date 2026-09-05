@@ -47,7 +47,7 @@ it('mencatat pembinaan pertama tanpa pengurangan nilai', function () {
     expect($p->tier)->toBe(TingkatHukuman::Pembinaan)
         ->and($p->level)->toBe(1)
         ->and($p->points)->toBe(0)
-        ->and($this->tangga->jumlahPembinaan($this->match, Sudut::Merah))->toBe(1);
+        ->and($this->tangga->jumlahPembinaan($this->match, Sudut::Merah, 1))->toBe(1);
 });
 
 it('menaikkan pelanggaran ringan ketiga menjadi Teguran I dengan pengurangan satu', function () {
@@ -61,15 +61,38 @@ it('menaikkan pelanggaran ringan ketiga menjadi Teguran I dengan pengurangan sat
         ->and($ketiga->points)->toBe(-1);
 });
 
-it('memberikan pembinaan lagi setelah eskalasi ke teguran', function () {
+/*
+ * Hitungan pembinaan tidak tersetel ulang oleh eskalasi. Begitu dua pembinaan
+ * tercatat dalam satu babak, setiap pelanggaran ringan berikutnya di babak itu
+ * naik jadi Teguran -- tidak kembali ke pembinaan.
+ */
+it('tidak kembali ke pembinaan setelah eskalasi dalam babak yang sama', function () {
     $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit);
     $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit);
     $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit); // -> Teguran I
 
     $lagi = $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit);
 
-    expect($lagi->tier)->toBe(TingkatHukuman::Pembinaan)
-        ->and($lagi->level)->toBe(1);
+    expect($lagi->tier)->toBe(TingkatHukuman::Teguran)
+        ->and($lagi->level)->toBe(2)
+        ->and($lagi->points)->toBe(-2);
+});
+
+/*
+ * MENYIMPANG DARI NASKAH dengan sadar -- keputusan penyelenggara, alasannya di
+ * config/scoring.php. Wasit di gelanggang mengingat pembinaan dalam babak yang
+ * sedang berjalan, bukan sepanjang partai.
+ */
+it('mereset hitungan pembinaan tiap babak baru', function () {
+    $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit);
+    $this->tangga->catat($this->match, Sudut::Merah, 1, TingkatPelanggaran::Ringan, null, $this->wasit);
+
+    $babakDua = $this->tangga->catat($this->match, Sudut::Merah, 2, TingkatPelanggaran::Ringan, null, $this->wasit);
+
+    expect($babakDua->tier)->toBe(TingkatHukuman::Pembinaan)
+        ->and($babakDua->level)->toBe(1)
+        ->and($this->tangga->jumlahPembinaan($this->match, Sudut::Merah, 1))->toBe(2)
+        ->and($this->tangga->jumlahPembinaan($this->match, Sudut::Merah, 2))->toBe(1);
 });
 
 it('menjatuhkan Teguran langsung untuk pelanggaran sedang tanpa melewati pembinaan', function () {
@@ -88,7 +111,7 @@ it('menjatuhkan Peringatan I langsung untuk pelanggaran berat tanpa melewati teg
         ->and($p->points)->toBe(-5);
 });
 
-it('menaikkan teguran ketiga dalam satu babak menjadi Peringatan I, bukan teguran', function () {
+it('menaikkan pelanggaran setelah dua teguran dalam satu babak menjadi Peringatan I', function () {
     $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran I
     $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran II
 
@@ -99,15 +122,31 @@ it('menaikkan teguran ketiga dalam satu babak menjadi Peringatan I, bukan tegura
         ->and($ketiga->points)->toBe(-5);
 });
 
-it('mereset hitungan teguran tiap babak baru', function () {
-    $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit);
+/*
+ * Pasal 11.6.d.4.b.3 punya dua pemicu. Yang ini pemicu pertamanya: teguran
+ * ketiga SEPANJANG PARTAI, tanpa peduli babaknya. Sebelum perbaikan ini
+ * hitungan teguran direset tiap babak, sehingga cabang ini tidak pernah jalan.
+ */
+it('menaikkan teguran ketiga sepanjang partai menjadi Peringatan I', function () {
+    $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran I
+    $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran II
+
+    $babakTiga = $this->tangga->catat($this->match, Sudut::Biru, 3, TingkatPelanggaran::Sedang, null, $this->wasit);
+
+    expect($babakTiga->tier)->toBe(TingkatHukuman::Peringatan)
+        ->and($babakTiga->level)->toBe(1)
+        ->and($babakTiga->points)->toBe(-5);
+});
+
+/** Tingkat teguran berjalan sepanjang partai, tidak mengulang dari I tiap babak. */
+it('melanjutkan tingkat teguran ke babak berikutnya', function () {
     $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit);
 
-    // Babak baru -- teguran babak sebelumnya tidak ikut terbawa.
     $babakDua = $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit);
 
     expect($babakDua->tier)->toBe(TingkatHukuman::Teguran)
-        ->and($babakDua->level)->toBe(1);
+        ->and($babakDua->level)->toBe(2)
+        ->and($babakDua->points)->toBe(-2);
 });
 
 it('tidak mereset peringatan saat babak berganti', function () {

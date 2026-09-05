@@ -1,6 +1,6 @@
 @php use App\Enums\ResourceAction; @endphp
 
-<x-layouts.silat :title="'Dewan Wasit Juri — '.$match->bracket->weightClass->name">
+<x-layouts.silat :title="'Dewan Wasit Juri — '.$match->bracket->weightClass->name" :manifest="$manifestUrl ?? null">
     {{--
         Panel Dewan Wasit Juri — mengikuti `panel-dewan-wasit-juri.dc.html`.
 
@@ -23,9 +23,8 @@
                 <p class="mt-1 truncate text-[18px] font-medium tracking-[-0.01em] text-silat-teks">
                     {{ $match->bracket->weightClass->jenis_kelamin->label() }}
                     {{ $match->bracket->weightClass->golongan_usia->label() }} —
-                    {{ $match->bracket->weightClass->name }}
-                    · {{ $match->bracket->namaBabak($match->round) }}
-                    · Partai {{ $match->id }}
+                    <span x-text="[identitas.kelas, identitas.babak_bagan, 'Partai ' + (identitas.partai ?? '—')]
+                        .filter(Boolean).join(' · ')"></span>
                 </p>
             </div>
 
@@ -176,6 +175,18 @@
                     <x-silat.papan-skor sudut="blue" kunci-skor="biru" />
                 </div>
 
+                {{--
+                    Papan hasil, di atas kartu pengesahan.
+
+                    Peninjau butuh melihat rincian angka SEBELUM menekan
+                    sahkan, bukan sesudah -- dan sampai sekarang satu-satunya
+                    tempat rincian itu ada adalah berita acara PDF, yang baru
+                    bisa dicetak setelah pengesahan.
+                --}}
+                <template x-if="sudahSelesai">
+                    <x-silat.papan-hasil />
+                </template>
+
                 {{-- Pengesahan hasil --}}
                 <div class="rounded-silat-besar border border-silat-garis p-4.5"
                      x-data="{ sebabLabel: @js(App\Support\Scoring\AlasanMenang::peta()) }">
@@ -205,7 +216,7 @@
                     @resource(rk('hasil-partai', ResourceAction::Approve))
                         <button type="button" x-show="sudahSelesai && ! match.ratified" x-cloak x-on:click="sahkan()"
                                 class="mt-3.5 h-14 w-full rounded-silat bg-silat-aksi text-[15px] font-semibold text-silat-aksi-teks">
-                            Sahkan hasil Partai {{ $match->id }}
+                            Sahkan hasil Partai <span x-text="identitas.partai ?? match?.id"></span>
                         </button>
 
                         <div x-show="match.ratified" x-cloak
@@ -215,6 +226,17 @@
                         </div>
                     @endresource
                 </div>
+
+                {{--
+                    Kartu protes yang sedang berjalan, di layar yang sama.
+
+                    Pasal 15 ayat 3 huruf d menetapkan protes VAR diputus Wasit
+                    Komisi Protes bersama Pengawas/Dewan Wasit Juri dan Wasit.
+                    Selama blok ini hanya hidup di panel keberatan, yang duduk
+                    di kursi Dewan Wasit Juri harus berpindah halaman untuk
+                    membacanya -- sementara tenggat lima menitnya berjalan.
+                --}}
+                <x-silat.blok-keberatan />
 
                 <div class="rounded-silat-besar border border-silat-garis p-4.5">
                     <p class="silat-angka text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">Catatan pembatalan</p>

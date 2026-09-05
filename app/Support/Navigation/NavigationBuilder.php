@@ -169,6 +169,18 @@ class NavigationBuilder
         }
 
         /*
+         * Menu yang kehilangan gunanya saat sebuah saklar menyala.
+         *
+         * Nilainya kunci config, bukan closure, supaya berkas navigasi tetap
+         * bisa dilewatkan `config:cache`. Rutenya sendiri tidak ikut hilang:
+         * pendaftaran lama yang telanjur masuk antrean masih harus bisa
+         * diputuskan lewat alamatnya.
+         */
+        if (isset($item['sembunyi_bila']) && config($item['sembunyi_bila'])) {
+            return null;
+        }
+
+        /*
          * Item yang butuh kejuaraan aktif tidak bisa dibentuk alamatnya sebelum
          * ada kejuaraan yang dibuka, jadi disembunyikan seluruhnya — bukan
          * ditampilkan sebagai tautan mati.

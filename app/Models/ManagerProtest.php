@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\AkibatProtes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -30,6 +31,8 @@ class ManagerProtest extends Model
         'formulir_dikembalikan_at',
         'diputuskan_at',
         'keputusan',
+        'akibat',
+        'akibat_diterapkan_at',
         'diputuskan_oleh',
         'catatan',
     ];
@@ -42,7 +45,23 @@ class ManagerProtest extends Model
             'tenggat_keputusan_at' => 'datetime',
             'formulir_dikembalikan_at' => 'datetime',
             'diputuskan_at' => 'datetime',
+            'akibat' => AkibatProtes::class,
+            'akibat_diterapkan_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Protes yang diterima tapi akibatnya belum dijalankan.
+     *
+     * Selama ini benar, hasil partai tidak boleh disahkan: pemenang yang naik
+     * slot bagan sebelum babak tambahannya dimainkan membawa seluruh bagan ke
+     * susunan yang salah.
+     */
+    public function akibatMenunggu(): bool
+    {
+        return $this->keputusan === 'diterima'
+            && $this->akibat !== null
+            && $this->akibat_diterapkan_at === null;
     }
 
     public function match(): BelongsTo

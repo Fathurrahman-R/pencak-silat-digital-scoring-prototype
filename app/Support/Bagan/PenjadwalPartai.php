@@ -54,6 +54,7 @@ class PenjadwalPartai
          * tayangnya bagian dari catatan hasil yang masuk berita acara.
          */
         $this->pastikanBelumDimulai($match, 'dilepas dari gelanggangnya');
+        $this->pastikanTidakSedangDitayangkan($match);
 
         $match->update(['arena_id' => null, 'order_in_arena' => null]);
 
@@ -75,6 +76,29 @@ class PenjadwalPartai
 
         if ($match->selesai()) {
             throw new RuntimeException("Partai ini sudah selesai — tidak bisa {$aksi}.");
+        }
+    }
+
+    /**
+     * Partai yang sedang ditunjuk gelanggang tidak boleh dilepas.
+     *
+     * Statusnya boleh saja masih `terjadwal` -- pengendali sudah memilihnya
+     * sebagai partai berikutnya, papan tampilan gelanggang dan overlay siaran
+     * sudah menampilkan nama kedua pesilat, tapi babaknya belum ditekan mulai.
+     * Melepasnya di detik itu membuat pointer menunjuk partai tanpa gelanggang,
+     * dan tayangannya jatuh kembali ke turunan lama: partai lain, tanpa satu
+     * pun pesan yang menjelaskan kenapa.
+     */
+    private function pastikanTidakSedangDitayangkan(SilatMatch $match): void
+    {
+        $ditayangkan = Arena::whereKey($match->arena_id)
+            ->where('active_match_id', $match->id)
+            ->exists();
+
+        if ($ditayangkan) {
+            throw new RuntimeException(
+                'Partai ini sedang ditayangkan di gelanggangnya — pindahkan dulu partai aktif gelanggang itu.',
+            );
         }
     }
 

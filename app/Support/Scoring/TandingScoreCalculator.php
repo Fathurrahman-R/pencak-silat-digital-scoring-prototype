@@ -2,6 +2,7 @@
 
 namespace App\Support\Scoring;
 
+use App\Enums\JenisSerangan;
 use App\Enums\Sudut;
 use App\Models\SilatMatch;
 
@@ -74,6 +75,109 @@ class TandingScoreCalculator
         }
 
         return ['total' => $total, 'babak' => $babak];
+    }
+
+    /**
+     * Berapa KALI tiap jenis serangan terbit sepanjang partai, per sudut.
+     *
+     * Bukan jumlah nilainya -- jumlah kejadiannya. "Menang angka 21-14" tidak
+     * menjelaskan apa pun sampai pembacanya tahu 21 itu tersusun dari berapa
+     * pukulan, tendangan, dan jatuhan.
+     *
+     * Hanya nilai yang BERLAKU yang dihitung: yang dibatalkan tidak ikut
+     * menyusun skornya, jadi ia juga tidak boleh muncul di rinciannya.
+     *
+     * Sebelumnya kueri ini hanya hidup di StatePartaiPublik, sehingga rincian
+     * itu cuma bisa dibaca lewat overlay siaran. Ia diangkat ke sini supaya
+     * papan hasil di panel gelanggang membaca angka yang sama persis, bukan
+     * angka yang kebetulan mirip.
+     *
+     * @return array{
+     *     merah: array<string, int>,
+     *     biru: array<string, int>,
+     * }
+     */
+    public function rekapTeknik(SilatMatch $match): array
+    {
+        $terbit = $match->scoreEvents()->berlaku()
+            ->selectRaw('corner, point_type, count(*) as jumlah')
+            ->groupBy('corner', 'point_type')
+            ->get();
+
+        $perSudut = fn (Sudut $sudut) => collect(JenisSerangan::cases())
+            ->mapWithKeys(fn (JenisSerangan $jenis) => [
+                $jenis->value => (int) $terbit
+                    ->firstWhere(fn ($baris) => $baris->corner === $sudut && $baris->point_type === $jenis)
+                    ?->jumlah,
+            ])
+            ->all();
+
+        return [
+            'merah' => $perSudut(Sudut::Merah),
+            'biru' => $perSudut(Sudut::Biru),
+        ];
+    }
+
+    /**
+     * Penyelesaian saat KEDUA pesilat sama-sama tidak bisa bangkit --
+     * Pasal 11.6.e.2.c.(b) dan (c).
+     *
+     * Naskah memberi dua jalan, dan yang menentukan bukan hitungannya melainkan
+     * apakah sudah ada nilai:
+     *
+     *   belum ada nilai, di babak I  -> ditimbang, yang lebih ringan menang
+     *   sudah ada nilai              -> nilai terbanyak
+     *
+     * Mengembalikan TAWARAN, bukan keputusan. Pola yang sama dengan
+     * cekTawaranWmp(): yang menekan tombol akhiri tetap manusia, karena naskah
+     * menyuruh "mempertimbangkan faktor-faktor berikut" -- kalimat yang tidak
+     * bisa dijalankan mesin sendirian.
+     *
+     * @param  \Illuminate\Support\Collection<int, \App\Models\TechnicalCount>|null  $hitunganBabak
+     *                                                                                hitungan babak ini yang SUDAH dimuat pemanggil -- endpoint state
+     *                                                                                sudah memegangnya, dan menanyakannya lagi berarti satu perjalanan
+     *                                                                                lagi ke basis data di jalur yang ditarik tiap nilai terbit
+     * @return array{sebab: string, pemenang: ?string}|null
+     */
+    public function penyelesaianHitunganSerentak(
+        SilatMatch $match,
+        int $hitunganMutlak,
+        ?\Illuminate\Support\Collection $hitunganBabak = null,
+    ): ?array {
+        $babak = $match->current_round ?? 1;
+
+        $hitungan = $hitunganBabak ?? $match->technicalCounts()->where('round', $babak)->get();
+
+        $serentak = $hitungan
+            ->filter(fn ($h) => $h->count_reached >= $hitunganMutlak)
+            ->pluck('corner')
+            ->unique();
+
+        // Kedua sudut harus sama-sama mencapai hitungan mutlak di babak ini.
+        if ($serentak->count() < 2) {
+            return null;
+        }
+
+        $skor = $this->rekapSkor($match)['total'];
+        $adaNilai = $skor['merah'] !== 0 || $skor['biru'] !== 0;
+
+        if (! $adaNilai && $babak === 1) {
+            return [
+                'sebab' => 'berat_badan_teringan',
+                'pemenang' => $this->pemecahBeratBadan($match)?->value,
+            ];
+        }
+
+        if ($skor['merah'] === $skor['biru']) {
+            // Naskah tidak menyebut apa yang terjadi kalau nilainya pun sama.
+            // Yang jujur: tawarkan tanpa pemenang, biar aparat yang memutus.
+            return ['sebab' => 'nilai_terbanyak', 'pemenang' => null];
+        }
+
+        return [
+            'sebab' => 'nilai_terbanyak',
+            'pemenang' => ($skor['merah'] > $skor['biru'] ? Sudut::Merah : Sudut::Biru)->value,
+        ];
     }
 
     /**

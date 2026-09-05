@@ -1,18 +1,4 @@
-<x-layouts.silat :title="'Juri — '.$match->bracket->weightClass->name">
-    @push('head')
-        {{--
-            `crossorigin="use-credentials"` bukan hiasan. Manifest diambil peramban
-            tanpa kredensial secara bawaan, jadi tanpa atribut ini permintaannya
-            masuk sebagai tamu, kena redirect ke /login, dan yang diterima adalah
-            HTML — peramban menolaknya dengan "Manifest: Line: 1, column: 1,
-            Syntax error" dan panel juri tidak pernah bisa dipasang sebagai PWA.
-            Rutenya berada di balik auth, jadi manifest ini memang wajib bercookie.
-        --}}
-        <link rel="manifest" href="{{ $manifestUrl }}" crossorigin="use-credentials">
-        <link rel="icon" href="/icons/juri.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/icons/juri.svg">
-    @endpush
-
+<x-layouts.silat :title="'Juri — '.$match->bracket->weightClass->name" :manifest="$manifestUrl ?? null">
     {{--
         x-data hanya memanggil partaiPanel(cfg) langsung, TIDAK disebar lewat
         {...partaiPanel(cfg), ...tambahan}. Penyebaran objek mengevaluasi
@@ -54,6 +40,12 @@
         <template x-if="! verifikasiBerjalan">
             <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 
+        {{-- Bagian yang paling menentukan apakah fitur ini aman: juri yang
+             tidak menyadari panelnya sedang mencatat babak lama akan menekan
+             nilai untuk kejadian di depan matanya, dan nilai itu masuk ke babak
+             yang sudah selesai -- kekeliruan tanpa jalan koreksi murah. --}}
+        <x-silat.pita-susulan />
+
         <header class="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 py-1.5">
             <div class="flex min-w-0 items-center gap-2">
                 <span class="size-2.5 shrink-0 rounded-full bg-silat-merah"></span>
@@ -62,9 +54,19 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <p class="silat-angka text-[11px] whitespace-nowrap text-silat-teks-redup">
+                {{--
+                    Selama susulan, keadaan babak berjalan DISEMBUNYIKAN
+                    seluruhnya, bukan ditampilkan diam. Keterangan yang diam
+                    mudah disangka panel macet; keterangan yang hilang tidak.
+                --}}
+                <p class="silat-angka text-[11px] whitespace-nowrap text-silat-teks-redup"
+                   x-show="! susulanTerbuka">
                     Babak <span x-text="match.current_round ?? '–'"></span>
                     <span x-show="babakAktif?.status !== 'berjalan'">· menunggu wasit</span>
+                </p>
+                <p class="silat-angka text-[11px] whitespace-nowrap text-amber-300"
+                   x-show="susulanTerbuka" x-cloak>
+                    Babak berjalan dijeda
                 </p>
                 <x-silat.indikator-koneksi />
             </div>

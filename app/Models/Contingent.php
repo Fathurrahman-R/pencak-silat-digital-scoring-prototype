@@ -65,6 +65,12 @@ class Contingent extends Model
      */
     public function pendaftaranBeku(): bool
     {
+        // Kejuaraan yang tidak menjadikan tagihan sebagai syarat tidak punya
+        // alasan membekukan pendaftaran saat sesi pembayaran dibuka.
+        if (config('pendaftaran.lewati_pembayaran')) {
+            return false;
+        }
+
         return $this->invoice?->status->membekukanPendaftaran() ?? false;
     }
 

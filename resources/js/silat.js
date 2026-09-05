@@ -1,7 +1,22 @@
 import Alpine from 'alpinejs';
 
-import './echo';
+import { siapkanEcho } from './echo';
 import './overlay/connection';
+
+/**
+ * Koneksi Reverb dibuka SELALU, kecuali halamannya menyatakan tidak
+ * membutuhkannya lewat <meta name="realtime" content="0">.
+ *
+ * Arah bawaannya sengaja begini, bukan sebaliknya. Halaman statis yang
+ * terlewat menyatakan diri hanya menyisakan satu koneksi menganggur --
+ * pemborosan kecil. Panel juri yang terlewat menyatakan diri kehilangan
+ * seluruh realtime-nya: tombolnya tetap bisa ditekan, nilainya tidak sampai
+ * ke mana pun, dan pertandingan berjalan terus dengan skor yang salah.
+ * Antara dua arah kesalahan itu, hanya satu yang boleh terjadi diam-diam.
+ */
+if (document.querySelector('meta[name="realtime"][content="0"]') === null) {
+    siapkanEcho();
+}
 
 /**
  * Bundel gelanggang: panel juri, panel wasit, panel operator, live score
@@ -32,6 +47,35 @@ Alpine.store('koneksi', {
         this.status = status;
     },
 });
+
+/**
+ * Menerjemahkan respons gagal jadi kalimat yang bisa ditindaklanjuti.
+ *
+ * Panel gelanggang dibuka pagi dan dibiarkan menyala sampai malam. Sesinya
+ * bisa berakhir di tengah jalan -- dan sebelum ini yang muncul di layar juri
+ * adalah "CSRF token mismatch." apa adanya: benar secara teknis, tapi tidak
+ * memberi tahu siapa pun apa yang harus dilakukan. Terukur pada panel yang
+ * sudah terbuka 9,5 jam.
+ */
+function pesanGagal(status, body) {
+    if (status === 419) {
+        return 'Sesi Anda sudah berakhir. Muat ulang halaman ini lalu masuk lagi sebelum melanjutkan.';
+    }
+
+    if (status === 403) {
+        return body.message ?? 'Anda tidak berwenang melakukan aksi ini pada partai ini.';
+    }
+
+    if (status === 404) {
+        return 'Partai ini sudah tidak ada. Muat ulang halaman dan buka partai dari menu Jadwal.';
+    }
+
+    if (status >= 500) {
+        return 'Server gelanggang sedang bermasalah. Coba lagi; kalau berulang, panggil operator IT.';
+    }
+
+    return body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+}
 
 function pantauKoneksi() {
     const pusher = window.Echo?.connector?.pusher;
@@ -138,6 +182,43 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     /*
+     * Berapa KALI tiap teknik terbit, per sudut -- bukan jumlah nilainya.
+     * Dibaca papan hasil yang muncul sesudah partai selesai.
+     */
+    teknik: {
+        merah: { pukulan: 0, tendangan: 0, jatuhan: 0 },
+        biru: { pukulan: 0, tendangan: 0, jatuhan: 0 },
+    },
+
+    /*
+     * Blok panel gelanggang: mode, gelanggang, antrean jadwal, dan alamat aksi
+     * partai yang sedang tayang.
+     *
+     * Ada juga di panel per-partai, isinya cuma lebih sedikit -- dengan begitu
+     * tidak ada satu pun tempat di view yang perlu bertanya "panel ini yang
+     * mana" sebelum membaca sesuatu.
+     */
+    panel: cfg.mode ? { mode: cfg.mode, arena: null, antrean: [], aksi: {} } : null,
+
+    /*
+     * Babak lama yang sedang dibuka untuk pencatatan susulan, kalau ada.
+     *
+     * Selama ia terisi, SELURUH input panel ini masuk ke babak itu -- bukan ke
+     * babak berjalan. Yang membaca nilainya `babakInput`.
+     */
+    susulan: null,
+
+    /*
+     * Identitas partai yang sedang ditayangkan -- nomor, kelas, tahap bagan.
+     *
+     * Dibaca kepala panel. Sebelum panel mengikuti gelanggang, Blade mencetak
+     * ini langsung dari $match dan itu memang cukup; begitu partai bisa
+     * berganti tanpa halaman dimuat ulang, yang dicetak Blade membeku di
+     * partai yang sudah ditinggalkan.
+     */
+    identitas: { partai: cfg.matchId, gelanggang: null, kelas: null, golongan: null, jenis_kelamin: null, babak_bagan: null },
+
+    /*
      * Hitungan teknik babak berjalan. Akibatnya paling berat di seluruh
      * sistem -- hitungan ke-9 Teguran I, ke-10 menang mutlak, beruntun ketiga
      * menang teknik -- jadi angkanya harus terbaca wasit SEBELUM ia menekan,
@@ -151,7 +232,14 @@ Alpine.data('partaiPanel', (cfg) => ({
         ambang_mutlak: 10,
     },
     tawaranWmp: null,
-    peraturan: { jumlah_juri: 3, ambang_sepakat: 2, window_konsensus_ms: 2000, jumlah_babak: 3 },
+
+    /*
+     * Penyelesaian yang ditawarkan saat KEDUA pesilat sama-sama tidak bangkit
+     * -- Pasal 11.6.c huruf b dan c. Bentuknya { sebab, pemenang }: sistem
+     * menghitung, aparat yang menekan.
+     */
+    tawaranSerentak: null,
+    peraturan: { jumlah_juri: 3, ambang_sepakat: 2, window_konsensus_ms: 2000, jumlah_babak: 3, durasi_babak_ms: 0 },
     officials: [],
     riwayat: [],
     keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
@@ -171,11 +259,29 @@ Alpine.data('partaiPanel', (cfg) => ({
         blue: { pukulan: [], tendangan: [] },
     },
     sisaMsTampil: 0,
-    // Berkunci `${sisi}-${teknik}`: tiap teknik punya jendela konsensusnya
-    // sendiri, jadi tenggat padamnya pun sendiri-sendiri.
+    /*
+     * Berkunci `${sisi}-${teknik}-${nomor}`: satu penghitung padam untuk TIAP
+     * JURI, bukan satu untuk tiap teknik.
+     *
+     * Jendela konsensus berjalan sejak tekanan MASING-MASING juri. Dengan satu
+     * penghitung per teknik, tekanan juri kedua mengulang tenggat juri pertama:
+     * Juri 1 menekan di detik 0, Juri 3 menekan di detik 1,8, dan titik Juri 1
+     * baru padam di detik 4,3 -- padahal jendelanya sudah tutup di detik 2 dan
+     * server sudah membuangnya. Operator membaca layar yang bilang masih ada
+     * yang ditunggu, padahal tidak ada.
+     */
     _waktuIndikator: {},
+    // Berkunci `${sisi}-${teknik}`, naik tiap kali tekniknya dipadamkan --
+    // membatalkan nyala susulan yang sudah tidak berlaku. Lihat _padaInputJuri.
+    _generasiIndikator: {},
+    // Partai + babak yang sedang diwakili isi indikatorTeknik. Begitu salah
+    // satunya berganti, titik-titik lama tidak menyatakan apa pun lagi.
+    _indikatorUntuk: null,
     _sedangMenarik: false,
     _perluTarikLagi: false,
+    _tenggatSegarkan: null,
+    _tenggatCadangan: null,
+    _siaranTerakhirAt: 0,
     _tickAnchorMs: 0,
     _tickAt: 0,
     _rafId: null,
@@ -189,12 +295,41 @@ Alpine.data('partaiPanel', (cfg) => ({
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 this._kunciLayar();
+
+                /*
+                 * Jamnya ikut ditarik ulang, bukan cuma kunci layarnya.
+                 *
+                 * Hitung mundur di layar diinterpolasi lokal dari acuan
+                 * terakhir. Selama tab tersembunyi, acuan itu jadi basi:
+                 * begitu tab dibuka lagi, jam melanjutkan hitungan dari
+                 * angka yang sudah salah dan tidak pernah mengoreksi diri
+                 * sampai kebetulan ada siaran masuk. Operator yang kembali
+                 * ke panel melihat sisa waktu yang meyakinkan tapi keliru --
+                 * pada satu pengukuran, 53 detik lebih banyak daripada
+                 * sisa yang sebenarnya.
+                 */
+                this.muatUlang();
+            }
+        });
+
+        /*
+         * Halaman yang dipulihkan dari bfcache (tombol Kembali) tidak
+         * menjalankan init() lagi, jadi ia kembali dengan seluruh state
+         * lamanya. `persisted` menandai kejadian itu.
+         */
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                this.muatUlang();
             }
         });
     },
 
     destroy() {
         this._hentikanInterpolasi();
+        this._hentikanDenyutSinkron();
+        clearTimeout(this._tenggatSegarkan);
+        clearTimeout(this._tenggatCadangan);
+        this._bersihkanIndikator();
     },
 
     /**
@@ -219,6 +354,21 @@ Alpine.data('partaiPanel', (cfg) => ({
         }
     },
 
+    get susulanTerbuka() {
+        return this.susulan !== null;
+    },
+
+    /**
+     * Babak yang akan tercatat kalau tombol ditekan SEKARANG.
+     *
+     * Seluruh pengirim -- nilai juri, hukuman wasit, hitungan teknik --
+     * membacanya dari sini, bukan dari `match.current_round`. Satu tempat,
+     * supaya tidak ada pengirim yang tertinggal saat aturannya berubah.
+     */
+    get babakInput() {
+        return this.susulan?.round ?? this.match.current_round;
+    },
+
     /** Dipakai tampilan jam -- MM:SS dari sisaMsTampil, yang diinterpolasi lokal antara dua siaran timer. */
     get tampilWaktu() {
         const totalDetik = Math.ceil(this.sisaMsTampil / 1000);
@@ -229,7 +379,17 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     get babakAktif() {
-        return this.rounds.find((r) => r.round === this.match.current_round) ?? null;
+        /*
+         * Bertahan terhadap keadaan tanpa partai.
+         *
+         * Panel kendali dirender juga di gelanggang yang belum dipilihkan
+         * partai -- di situlah pengendali memilihnya. Muatan state untuk
+         * keadaan itu tidak punya `rounds` maupun `match`, dan Alpine tetap
+         * mengevaluasi setiap ekspresi di dalam `x-show` yang bernilai salah,
+         * jadi getter ini tetap dipanggil. Tanpa penjagaan di sini, membuka
+         * gelanggang kosong membanjiri konsol dengan TypeError.
+         */
+        return (this.rounds ?? []).find((r) => r.round === this.match?.current_round) ?? null;
     },
 
     /**
@@ -252,7 +412,7 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     get sudahSelesai() {
-        return this.match.status === 'selesai';
+        return this.match?.status === 'selesai';
     },
 
     /**
@@ -270,11 +430,19 @@ Alpine.data('partaiPanel', (cfg) => ({
         }
 
         if (!this.babakAktif || this.babakAktif.status === 'belum_mulai') {
-            return this.match.current_round ?? 1;
+            return this.match?.current_round ?? 1;
         }
 
         if (this.babakAktif.status === 'selesai') {
-            return this.match.current_round + 1;
+            const berikutnya = this.match.current_round + 1;
+
+            /*
+             * Babak terakhir sudah selesai -- tidak ada babak berikutnya
+             * untuk ditawarkan. Sebelum ini tombolnya tetap digambar
+             * ("Mulai babak 4" pada golongan berbabak tiga), dan operator
+             * baru tahu setelah menekannya dan dijawab penolakan.
+             */
+            return berikutnya > this.peraturan.jumlah_babak ? null : berikutnya;
         }
 
         return null;
@@ -328,6 +496,22 @@ Alpine.data('partaiPanel', (cfg) => ({
     },
 
     /**
+     * Tarikan yang dipicu SIARAN, ditunda sesaat supaya letupan jadi satu.
+     *
+     * Penggabungan di muatUlang() hanya menangkap siaran yang datang selagi
+     * tarikan berjalan. Yang datang di sela-selanya -- dua nilai terbit dalam
+     * satu pertukaran serangan, hukuman menyusul sepersekian detik kemudian --
+     * masih melahirkan tarikan sendiri-sendiri. Tenggang pendek ini menyatukan
+     * mereka tanpa terasa: angka skor sudah dipasang seketika dari muatan
+     * siarannya sendiri, jadi yang tertunda cuma hal-hal yang tidak dibawa
+     * siaran (riwayat, tawaran WMP, verifikasi).
+     */
+    _jadwalkanMuatUlang() {
+        clearTimeout(this._tenggatSegarkan);
+        this._tenggatSegarkan = setTimeout(() => this.muatUlang(), 150);
+    },
+
+    /**
      * Semua tombol aksi memanggil ini -- POST ke alamat yang dikirim server,
      * umpan balik lewat `pesan`/`galat`.
      *
@@ -337,13 +521,16 @@ Alpine.data('partaiPanel', (cfg) => ({
      * saja menekan tombol tidak boleh bergantung padanya -- kalau Reverb
      * sedang tidak terjangkau, ia tetap harus langsung melihat akibat
      * tekanannya sendiri.
+     *
+     * `segarkan: false` dipakai tombol yang ditekan BERUNTUN -- lihat
+     * kirimNilai(), yang memakai jaring pengaman lain untuk janji yang sama.
      */
-    async kirim(url, data = {}) {
+    async kirim(url, data = {}, { segarkan = true, metode = 'POST' } = {}) {
         this.galat = null;
 
         try {
             const res = await fetch(url, {
-                method: 'POST',
+                method: metode,
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
@@ -355,13 +542,16 @@ Alpine.data('partaiPanel', (cfg) => ({
             const body = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                this.galat = body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+                this.galat = pesanGagal(res.status, body);
 
                 return false;
             }
 
             this.pesan = body.pesan ?? null;
-            await this.muatUlang();
+
+            if (segarkan) {
+                await this.muatUlang();
+            }
 
             return true;
         } catch (e) {
@@ -369,6 +559,29 @@ Alpine.data('partaiPanel', (cfg) => ({
 
             return false;
         }
+    },
+
+    /**
+     * Memindahkan partai yang ditayangkan gelanggang.
+     *
+     * `null` berarti mengosongkan gelanggang. Penolakan "partai masih
+     * berjalan" datang dari server, bukan disimpulkan di sini -- klien tidak
+     * pernah memutuskan sendiri apa yang boleh ditinggalkan.
+     */
+    pilihPartai(matchId, paksa = false) {
+        if (! this.cfg.pilihPartai) {
+            return;
+        }
+
+        return this.kirim(this.cfg.pilihPartai, { match_id: matchId, paksa }, { segarkan: true });
+    },
+
+    bukaSusulan(babak) {
+        return this.kirim(this.cfg.bukaSusulan, { babak }, { segarkan: true });
+    },
+
+    tutupSusulan() {
+        return this.kirim(this.cfg.tutupSusulan, {}, { segarkan: true, metode: 'DELETE' });
     },
 
     mulaiBabak() {
@@ -421,6 +634,30 @@ Alpine.data('partaiPanel', (cfg) => ({
         return this.verifikasi?.berjalan === true;
     },
 
+    /*
+     * Ada protes VAR yang belum diputus.
+     *
+     * Pasal 15 ayat 3 huruf d menyuruh Wasit Komisi Protes memutuskannya
+     * BERSAMA Pengawas/Dewan Wasit Juri dan Wasit, jadi panel wasit harus
+     * menampilkannya tanpa berpindah halaman. Panel itu dirancang untuk
+     * 844x390 dan sudah penuh, jadi kartunya MENGGANTIKAN tangga hukuman
+     * selama tenggatnya berjalan -- pola yang sama dengan verifikasi juri.
+     */
+    get protesBerjalan() {
+        return this.protesTerdekat !== null;
+    },
+
+    /** Protes VAR belum diputus yang tenggatnya paling dekat habis. */
+    get protesTerdekat() {
+        const terbuka = (this.keberatan?.var_reviews ?? []).filter((r) => ! r.keputusan);
+
+        if (terbuka.length === 0) {
+            return null;
+        }
+
+        return terbuka.reduce((a, b) => ((a.sisa_detik ?? 0) <= (b.sisa_detik ?? 0) ? a : b));
+    },
+
     /** Apakah pengguna panel ini sudah menjawab verifikasi yang berjalan. */
     get sudahMenjawabVerifikasi() {
         if (!this.verifikasi) {
@@ -443,7 +680,7 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     mintaVerifikasi(jenis, tingkat = null, kejadian = {}) {
         return this.kirim(this.cfg.verifikasiMinta, {
-            babak: this.match.current_round,
+            babak: this.babakInput,
             jenis,
             tingkat_pelanggaran: tingkat,
             score_event_id: kejadian.score_event_id ?? null,
@@ -485,17 +722,60 @@ Alpine.data('partaiPanel', (cfg) => ({
      * yang sedang aktif berbeda dari yang dikira juri, server yang
      * memutuskan dan menolaknya dengan alasan jelas, bukan JS diam-diam
      * mengirim ke babak yang salah.
+     *
+     * SATU-SATUNYA tombol yang tidak menarik state penuh sesudah POST-nya.
+     *
+     * Inilah tombol yang ditekan paling sering dan paling beruntun: saat atlet
+     * bergerak cepat, tiga juri menekan berkali-kali dalam hitungan detik. Tiap
+     * tarikan susulan itu payload panel penuh, dan yang menariknya bukan cuma
+     * penekannya -- tiap panel lain ikut menarik begitu nilainya terbit. Satu
+     * tekanan melahirkan belasan permintaan, dan antreannya tumbuh lebih cepat
+     * daripada terurai.
+     *
+     * Janji "penekan tombol tidak boleh bergantung pada Reverb" tetap dipegang,
+     * caranya saja yang berubah: kalau tidak ada siaran APA PUN yang tiba dalam
+     * satu setengah detik sesudah tekanan, state ditarik seperti dulu. Reverb
+     * sehat -- dan indikator tekanannya memang datang dari sana -- tidak ada
+     * tarikan sama sekali.
      */
-    kirimNilai(corner, jenis) {
-        return this.kirim(this.cfg.nilai, { babak: this.match.current_round, corner, jenis });
+    async kirimNilai(corner, jenis) {
+        const dikirimAt = Date.now();
+        const hasil = await this.kirim(
+            this.cfg.nilai,
+            { babak: this.babakInput, corner, jenis },
+            { segarkan: false },
+        );
+
+        if (hasil) {
+            clearTimeout(this._tenggatCadangan);
+            this._tenggatCadangan = setTimeout(() => {
+                if (this._siaranTerakhirAt < dikirimAt) {
+                    this.muatUlang();
+                }
+            }, 1500);
+        }
+
+        return hasil;
     },
 
     kirimHukuman(corner, tingkat, catatan) {
-        return this.kirim(this.cfg.hukuman, { babak: this.match.current_round, corner, tingkat, catatan: catatan || null });
+        return this.kirim(this.cfg.hukuman, { babak: this.babakInput, corner, tingkat, catatan: catatan || null });
     },
 
     kirimHitungan(corner, hitungan) {
-        return this.kirim(this.cfg.hitungan, { babak: this.match.current_round, corner, hitungan });
+        return this.kirim(this.cfg.hitungan, { babak: this.babakInput, corner, hitungan });
+    },
+
+    /*
+     * Kedua pesilat jatuh dan tidak bangkit -- Pasal 11.6.c huruf b.
+     *
+     * Bukan dua tekanan hitungan biasa: jalur satu sudut menjatuhkan Teguran di
+     * hitungan ke-9 dan mengakhiri partai dengan pemenang di ke-10, dan
+     * keduanya keliru di sini. Servernya mencatat dua baris tanpa akibat itu,
+     * lalu panel menawarkan penyelesaian yang benar.
+     */
+    kirimHitunganSerentak(hitungan) {
+        return this.kirim(this.cfg.hitungan, { babak: this.babakInput, hitungan, serentak: true });
     },
 
     /**
@@ -512,7 +792,7 @@ Alpine.data('partaiPanel', (cfg) => ({
      */
     terbitkanJatuhan(corner) {
         return this.kirim(this.cfg.jatuhan, {
-            babak: this.match.current_round,
+            babak: this.babakInput,
             corner,
             verifikasi_id: this.saranJatuhan?.id ?? null,
         });
@@ -541,7 +821,7 @@ Alpine.data('partaiPanel', (cfg) => ({
     /** Pelatih mengangkat kartu meminta tinjauan video -- Pasal 15.2.a. */
     ajukanVar(corner, kejadian, scoreEventId = null, penaltyId = null) {
         return this.kirim(this.cfg.varAjukan, {
-            babak: this.match.current_round, corner, kejadian,
+            babak: this.babakInput, corner, kejadian,
             score_event_id: scoreEventId, penalty_id: penaltyId,
         });
     },
@@ -559,20 +839,95 @@ Alpine.data('partaiPanel', (cfg) => ({
         return this.kirim(this.cfg.protesManajerBanding.replace('__ID__', id), { catatan: catatan || null });
     },
 
-    putuskanProtesManajer(id, keputusan, catatan) {
-        return this.kirim(this.cfg.protesManajerPutuskan.replace('__ID__', id), { keputusan, catatan: catatan || null });
+    /*
+     * Protes yang DITERIMA wajib menyebut akibatnya -- Pasal 15 ayat 4 huruf
+     * c.e menyediakan tiga bentuk jawaban, dan tidak satu pun di antaranya
+     * berbunyi "diterima tanpa akibat". Servernya menolak kalau kosong, jadi
+     * mengirimnya tanpa akibat berarti tombol Terima tidak pernah bisa
+     * berhasil.
+     */
+    putuskanProtesManajer(id, keputusan, catatan, akibat = null) {
+        return this.kirim(this.cfg.protesManajerPutuskan.replace('__ID__', id), {
+            keputusan,
+            catatan: catatan || null,
+            akibat: keputusan === 'diterima' ? akibat || null : null,
+        });
+    },
+
+    /*
+     * Judul tab mengikuti partai, tidak berhenti di partai yang membukanya.
+     *
+     * Judulnya dicetak Blade saat halaman dimuat, dan panel gelanggang
+     * berpindah partai TANPA memuat ulang -- jadi label tabnya membeku
+     * menyebut kelas yang sudah ditinggalkan. Di laptop gelanggang, tempat
+     * papan, kendali, dan dewan juri dibuka berdampingan, label tab itulah
+     * satu-satunya cara membedakannya tanpa mengklik.
+     *
+     * Awalan peran dan nama aplikasi diambil dari judul awal, bukan ditulis
+     * ulang di sini: keduanya sudah ditentukan layout, dan menyalinnya berarti
+     * dua tempat yang harus diubah bersamaan.
+     */
+    _segarkanJudul() {
+        if (this._polaJudul === undefined) {
+            const bagian = document.title.split(' — ');
+
+            this._polaJudul = bagian.length >= 3
+                ? { awalan: bagian[0], akhiran: bagian.slice(2).join(' — ') }
+                : null;
+        }
+
+        if (this._polaJudul === null || ! this.identitas?.kelas) {
+            return;
+        }
+
+        document.title = `${this._polaJudul.awalan} — ${this.identitas.kelas} — ${this._polaJudul.akhiran}`;
     },
 
     _terapkan(data) {
+        const idBaru = data.match?.id ?? null;
+        const gantiPartai = this.match?.id != null && idBaru !== this.match.id;
+
+        if (gantiPartai) {
+            this._resetPartai();
+        }
+
+        const penanda = `${data.match?.id}-${data.match?.current_round}`;
+
+        if (this._indikatorUntuk !== null && this._indikatorUntuk !== penanda) {
+            this._bersihkanIndikator();
+        }
+
+        this._indikatorUntuk = penanda;
+
         this.match = data.match;
         this.rounds = data.rounds;
         this.skorTotal = data.skor_total;
         this.hukuman = data.hukuman;
+        this.teknik = data.teknik ?? this.teknik;
+        this.susulan = data.susulan ?? null;
+        this.identitas = data.identitas ?? this.identitas;
+        this._segarkanJudul();
+
+        /*
+         * Alamat aksi diserap ke cfg, bukan disimpan terpisah: seluruh
+         * pemanggil sudah membaca `this.cfg.timerMulai` dan kawan-kawannya.
+         * Panel per-gelanggang menghitungnya ulang tiap partai berganti, dan
+         * itu satu-satunya hal yang membuatnya berpindah tanpa memuat ulang
+         * halaman.
+         */
+        if (data.panel) {
+            this.panel = data.panel;
+
+            if (data.panel.aksi) {
+                this.cfg = { ...this.cfg, ...data.panel.aksi, matchId: data.match?.id ?? null };
+            }
+        }
         // Namanya dibedakan dari penghitung 1-10 di panel wasit: keduanya
         // bernama "hitungan", dan x-data anak yang menaunginya akan menutupi
         // state ini kalau namanya sama.
         this.hitunganTeknik = data.hitungan ?? this.hitunganTeknik;
         this.tawaranWmp = data.tawaran_wmp;
+        this.tawaranSerentak = data.tawaran_serentak ?? null;
         this.peraturan = data.peraturan;
         this.officials = data.officials;
         this.riwayat = data.riwayat;
@@ -580,6 +935,52 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.verifikasi = data.verifikasi;
 
         this._segarkanTimer();
+    },
+
+    /**
+     * Membuang keadaan yang terikat partai sebelumnya.
+     *
+     * Dipanggil hanya di panel gelanggang, saat pengendali memindahkan jadwal.
+     * Yang dibuang bukan sembarang: tiap barisnya menutup satu kekeliruan yang
+     * benar-benar bisa terjadi di matras.
+     */
+    _resetPartai() {
+        // Pesan "Babak 3 diselesaikan" dari partai sebelumnya menempel di
+        // partai baru dan terbaca sebagai kabar tentang yang sekarang.
+        this.pesan = null;
+        this.galat = null;
+
+        // Polling verifikasi partai lama muncul di panel juri partai baru --
+        // juri menjawab pertanyaan tentang kejadian yang bukan di depannya.
+        this.verifikasi = null;
+
+        // Tawaran WMP yang menempel memicu tombol akhiri untuk partai yang
+        // salah. Sama untuk tawaran hitungan serentak.
+        this.tawaranWmp = null;
+        this.tawaranSerentak = null;
+
+        // Riwayat dan keberatan menunjuk id milik partai lama; tombol
+        // batalkan di panel dewan juri akan mengirim id yang keliru.
+        this.riwayat = [];
+        this.keberatan = { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] };
+
+        // Tarikan susulan partai lama yang masih dijadwalkan akan menimpa
+        // state yang baru saja diisi.
+        clearTimeout(this._tenggatSegarkan);
+        clearTimeout(this._tenggatCadangan);
+
+        // Jam yang terus berjalan di partai yang belum dimulai.
+        this._hentikanInterpolasi();
+        this.sisaMsTampil = 0;
+
+        this._bersihkanIndikator();
+
+        /*
+         * Komponen anak punya state sendiri yang tidak terjangkau dari sini --
+         * dialog hukuman yang terbuka, catatan yang setengah diketik. Mereka
+         * mendengarkan peristiwa ini dan membersihkan miliknya masing-masing.
+         */
+        window.dispatchEvent(new CustomEvent('partai-berganti'));
     },
 
     /**
@@ -598,7 +999,14 @@ Alpine.data('partaiPanel', (cfg) => ({
 
         if (!aktif) {
             this._hentikanInterpolasi();
-            this.sisaMsTampil = 0;
+
+            /*
+             * Belum ada satu pun baris babak: jam menampilkan durasi penuh
+             * babak, bukan 00:00. Nol di layar sebelum pertandingan mulai
+             * membuat operator tidak punya cara memastikan berapa lama babak
+             * yang akan ia jalankan -- dan terbaca seperti timer yang rusak.
+             */
+            this.sisaMsTampil = this.peraturan?.durasi_babak_ms ?? 0;
 
             return;
         }
@@ -609,9 +1017,41 @@ Alpine.data('partaiPanel', (cfg) => ({
 
         if (aktif.status === 'berjalan') {
             this._mulaiInterpolasi();
+            this._mulaiDenyutSinkron();
         } else {
             this._hentikanInterpolasi();
+            this._hentikanDenyutSinkron();
         }
+    },
+
+    /**
+     * Denyut sinkron: selama babak berjalan, state ditarik ulang tiap 20
+     * detik supaya jam mengoreksi diri.
+     *
+     * Hitung mundur di layar diinterpolasi lokal dari satu titik acuan, dan
+     * acuan itu hanya diperbarui saat ada siaran masuk. Kalau tabnya sempat
+     * tersembunyi, halaman dipulihkan dari cache tombol Kembali, atau satu
+     * siaran hilang di jaringan gelanggang, acuannya jadi basi dan jam terus
+     * berjalan dari angka yang salah tanpa pernah mengoreksi diri. Terukur
+     * satu kali meleset 58 detik -- dan yang membaca layar tidak punya cara
+     * tahu bahwa angka itu keliru.
+     *
+     * Dua puluh detik cukup jarang untuk tidak menambah beban (satu tarikan
+     * per panel per 20 detik, jauh di bawah denyut 6 detik yang sudah dipakai
+     * panel pemantau) dan cukup sering untuk membuat penyimpangan tidak
+     * pernah tumbuh melewati satu petak jam.
+     */
+    _mulaiDenyutSinkron() {
+        if (this._denyutId) {
+            return;
+        }
+
+        this._denyutId = setInterval(() => this.muatUlang(), 20000);
+    },
+
+    _hentikanDenyutSinkron() {
+        clearInterval(this._denyutId);
+        this._denyutId = null;
     },
 
     _mulaiInterpolasi() {
@@ -638,11 +1078,36 @@ Alpine.data('partaiPanel', (cfg) => ({
             return;
         }
 
-        const segarkan = () => this.muatUlang();
+        /*
+         * Tiap siaran yang tiba menandai bahwa Reverb hidup. Yang membacanya
+         * kirimNilai(): selama tanda itu terus diperbarui, ia tidak perlu
+         * menarik state sendiri sesudah tekanan.
+         */
+        const segarkan = () => {
+            this._siaranTerakhirAt = Date.now();
+            this._jadwalkanMuatUlang();
+        };
 
         window.Echo.join(`arena.${this.cfg.arenaId}`)
-            .listen('.timer.berubah', (e) => this._padaTimer(e))
+            .listen('.timer.berubah', (e) => {
+                this._siaranTerakhirAt = Date.now();
+                this._padaTimer(e);
+            })
             .listen('.skor.terbit', (e) => {
+                /*
+                 * Siaran gelanggang ini juga membawa nilai partai LAIN begitu
+                 * panel mengikuti gelanggang, bukan satu partai.
+                 *
+                 * Selama panel terikat satu partai, penjagaan ini tidak pernah
+                 * menggigit. Begitu ia mengikuti gelanggang, siaran yang
+                 * menyusul dari partai yang baru saja ditinggalkan akan
+                 * menimpa angka partai baru -- papan menampilkan skor milik
+                 * pertandingan yang sudah usai.
+                 */
+                if (e.match_id !== this.match.id) {
+                    return;
+                }
+
                 this._tandaiIndikatorSelesai(e.corner, e.point_type);
 
                 /*
@@ -662,7 +1127,10 @@ Alpine.data('partaiPanel', (cfg) => ({
             })
             .listen('.hukuman.terbit', segarkan)
             .listen('.partai.berubah', segarkan)
-            .listen('.juri.input', (e) => this._padaInputJuri(e))
+            .listen('.juri.input', (e) => {
+                this._siaranTerakhirAt = Date.now();
+                this._padaInputJuri(e);
+            })
             /*
              * Panel juri harus beralih SERENTAK. Juri yang panelnya terlambat
              * beralih akan menekan tombol nilai untuk kejadian yang sedang
@@ -674,7 +1142,27 @@ Alpine.data('partaiPanel', (cfg) => ({
              * cuma pemicunya; isinya diambil dari state, yang memang disaring
              * menurut peran yang memintanya.
              */
-            .listen('.verifikasi.berubah', segarkan);
+            .listen('.verifikasi.berubah', segarkan)
+            /*
+             * Gelanggang berpindah partai.
+             *
+             * Tarikan PENUH, bukan tambal parsial. Ini perubahan modus, bukan
+             * perubahan angka: alamat aksi, riwayat, keberatan, dan verifikasi
+             * semuanya berganti pemilik sekaligus. Di situ kebenaran
+             * mengalahkan latensi.
+             */
+            /*
+             * Babak susulan dibuka atau ditutup. Tarikan penuh: ini perubahan
+             * modus, dan panel juri harus beralih serentak.
+             */
+            .listen('.babak-susulan.berubah', () => {
+                this._siaranTerakhirAt = Date.now();
+                this.muatUlang();
+            })
+            .listen('.gelanggang.partai', () => {
+                this._siaranTerakhirAt = Date.now();
+                this.muatUlang();
+            });
     },
 
     /**
@@ -711,7 +1199,10 @@ Alpine.data('partaiPanel', (cfg) => ({
         this._segarkanTimer();
     },
 
-    /** Titik indikator "juri menekan" -- murni tampilan sementara, dibersihkan sendiri setelah window konsensus lewat atau nilainya terbit. */
+    /**
+     * Titik indikator "juri menekan" -- murni tampilan sementara, dibersihkan
+     * sendiri setelah jendela konsensus juri ITU lewat, atau nilainya terbit.
+     */
     _padaInputJuri(e) {
         if (e.match_id !== this.match.id || e.ditolak) {
             return;
@@ -732,28 +1223,67 @@ Alpine.data('partaiPanel', (cfg) => ({
         const sisi = e.corner === 'red' ? 'red' : 'blue';
         const teknik = e.point_type;
 
-        if (!teknik || !this.indikatorTeknik[sisi][teknik] || this.indikatorTeknik[sisi][teknik].includes(nomor)) {
+        if (!teknik || !this.indikatorTeknik[sisi][teknik]) {
             return;
         }
 
-        this.indikatorTeknik[sisi] = {
-            ...this.indikatorTeknik[sisi],
-            [teknik]: [...this.indikatorTeknik[sisi][teknik], nomor],
-        };
+        /*
+         * Tekanan ulang oleh juri yang SAMA tidak lagi diabaikan.
+         *
+         * Dulu nomor yang sudah ada di daftar membuat fungsi ini pulang lebih
+         * awal. Akibatnya juri yang menekan dua kali beruntun untuk teknik yang
+         * sama -- lazim saat serangan datang bertubi -- tidak melihat perubahan
+         * apa pun di layar, dan membacanya sebagai tekanan yang tidak masuk.
+         * Titiknya sekarang dipadamkan sekejap lalu dinyalakan lagi, jadi
+         * tekanan keduanya terlihat, dan tenggatnya dihitung ulang dari tekanan
+         * yang baru itu.
+         */
+        const sudahAda = this.indikatorTeknik[sisi][teknik].includes(nomor);
+
+        if (sudahAda) {
+            this._setIndikator(sisi, teknik, this.indikatorTeknik[sisi][teknik].filter((n) => n !== nomor));
+        }
 
         /*
-         * Satu penghitung waktu per SUDUT DAN TEKNIK, bukan satu per sudut.
+         * Nyala susulan dibatalkan kalau tekniknya keburu dipadamkan.
          *
-         * Jendela konsensus berjalan sendiri-sendiri untuk tiap teknik:
-         * Juri 1 menekan pukulan lalu tendangan, dan keduanya punya tenggat
-         * sendiri. Dengan satu penghitung per sudut, tekanan tendangan
-         * mengulang tenggat pukulan, lalu satu penghitung yang jatuh tempo
-         * memadamkan KEDUANYA -- termasuk yang jendelanya masih terbuka.
+         * Selama jeda 80 milidetik itu, nilai bisa terbit dan memadamkan
+         * seluruh titik teknik ini. Tanpa penanda generasi, nyala susulan
+         * menghidupkan lagi titik yang baru saja dinyatakan selesai, dan ia
+         * menetap sampai tenggatnya sendiri -- layar menyatakan ada yang
+         * ditunggu untuk nilai yang sudah terbit.
          */
-        this._batalkanPadam(sisi, teknik);
-        this._waktuIndikator[`${sisi}-${teknik}`] = setTimeout(
-            () => this._padamkanIndikator(sisi, teknik),
-            this.peraturan.window_konsensus_ms + 500,
+        const kunciPadam = `${sisi}-${teknik}`;
+        const generasi = this._generasiIndikator[kunciPadam] ?? 0;
+
+        const nyalakan = () => {
+            if ((this._generasiIndikator[kunciPadam] ?? 0) !== generasi) {
+                return;
+            }
+
+            this._setIndikator(sisi, teknik, [...this.indikatorTeknik[sisi][teknik], nomor]);
+        };
+
+        if (sudahAda) {
+            setTimeout(nyalakan, 80);
+        } else {
+            nyalakan();
+        }
+
+        /*
+         * Satu penghitung waktu per JURI, bukan per sudut+teknik.
+         *
+         * Tenggatnya dibawa siaran (`kedaluwarsa_ms`) karena yang berlaku
+         * adalah jendela konsensus partai ini, yang bisa ditimpa per turnamen.
+         * Margin kecil ditambahkan supaya titik tidak padam sesaat SEBELUM
+         * server benar-benar menutup jendelanya.
+         */
+        const tenggat = (e.kedaluwarsa_ms ?? this.peraturan.window_konsensus_ms) + 250;
+
+        this._batalkanPadam(sisi, teknik, nomor);
+        this._waktuIndikator[`${sisi}-${teknik}-${nomor}`] = setTimeout(
+            () => this._padamkanSatu(sisi, teknik, nomor),
+            tenggat,
         );
     },
 
@@ -780,13 +1310,47 @@ Alpine.data('partaiPanel', (cfg) => ({
         Object.keys(this.indikatorTeknik[sisi]).forEach((t) => this._padamkanIndikator(sisi, t));
     },
 
+    /** Seluruh juri untuk satu teknik padam sekaligus -- dipakai saat nilainya terbit. */
     _padamkanIndikator(sisi, teknik) {
-        this._batalkanPadam(sisi, teknik);
-        this.indikatorTeknik[sisi] = { ...this.indikatorTeknik[sisi], [teknik]: [] };
+        (this.indikatorTeknik[sisi][teknik] ?? []).forEach((n) => this._batalkanPadam(sisi, teknik, n));
+
+        const kunci = `${sisi}-${teknik}`;
+        this._generasiIndikator[kunci] = (this._generasiIndikator[kunci] ?? 0) + 1;
+
+        this._setIndikator(sisi, teknik, []);
     },
 
-    _batalkanPadam(sisi, teknik) {
-        clearTimeout(this._waktuIndikator[`${sisi}-${teknik}`]);
+    /** Satu juri saja yang padam -- jendela konsensus JURI ITU yang tutup. */
+    _padamkanSatu(sisi, teknik, nomor) {
+        this._batalkanPadam(sisi, teknik, nomor);
+        this._setIndikator(sisi, teknik, (this.indikatorTeknik[sisi][teknik] ?? []).filter((n) => n !== nomor));
+    },
+
+    // Objek sudutnya diganti utuh, bukan disunting di tempat: Alpine hanya
+    // melacak perubahan yang lewat penetapan properti.
+    _setIndikator(sisi, teknik, daftar) {
+        this.indikatorTeknik[sisi] = { ...this.indikatorTeknik[sisi], [teknik]: daftar };
+    },
+
+    _batalkanPadam(sisi, teknik, nomor) {
+        clearTimeout(this._waktuIndikator[`${sisi}-${teknik}-${nomor}`]);
+        delete this._waktuIndikator[`${sisi}-${teknik}-${nomor}`];
+    },
+
+    /**
+     * Seluruh titik dikosongkan saat partai atau babaknya berganti.
+     *
+     * Indikator menyatakan "ada yang sedang ditunggu SEKARANG". Tekanan dari
+     * babak atau partai sebelumnya tidak menunggu apa pun lagi, dan tidak ada
+     * siaran yang akan datang untuk memadamkannya.
+     */
+    _bersihkanIndikator() {
+        Object.keys(this._waktuIndikator).forEach((k) => clearTimeout(this._waktuIndikator[k]));
+        this._waktuIndikator = {};
+
+        Object.keys(this.indikatorTeknik).forEach((sisi) => {
+            Object.keys(this.indikatorTeknik[sisi]).forEach((t) => this._padamkanIndikator(sisi, t));
+        });
     },
 }));
 
@@ -935,6 +1499,57 @@ Alpine.data('panelKetua', (cfg) => ({
  * (hitung naik dari `started_at`), bukan hitung mundur server-authoritative
  * seperti timer partai.
  */
+/**
+ * Perbandingan nilai kedua sudut satu battle Jurus.
+ *
+ * Read-only dan tanpa Echo: halaman ini dibaca SESUDAH battle selesai, saat
+ * tidak ada lagi yang berubah. Menyambungkan WebSocket untuk data yang sudah
+ * diam hanya menambah satu koneksi yang menganggur di gelanggang yang
+ * jaringannya sudah sibuk.
+ */
+Alpine.data('perbandinganBattle', (cfg) => ({
+    cfg,
+    memuat: true,
+    battle: null,
+    merah: null,
+    biru: null,
+    selisih: null,
+
+    init() {
+        this.muat();
+    },
+
+    async muat() {
+        try {
+            const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+
+            if (!res.ok) {
+                return;
+            }
+
+            const data = await res.json();
+
+            this.battle = data.battle;
+            this.merah = data.merah;
+            this.biru = data.biru;
+            this.selisih = data.selisih;
+        } finally {
+            this.memuat = false;
+        }
+    },
+
+    /** Sudut ini yang memenangkan battle. */
+    menang(sudut) {
+        const sisi = sudut === 'merah' ? this.merah : this.biru;
+
+        return Boolean(
+            this.battle?.winner_registration_id
+            && sisi
+            && this.battle.winner_registration_id === sisi.registration_id,
+        );
+    },
+}));
+
 Alpine.data('jurusPanel', (cfg) => ({
     cfg,
     memuat: true,
@@ -1021,7 +1636,7 @@ Alpine.data('jurusPanel', (cfg) => ({
             const body = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                this.galat = body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+                this.galat = pesanGagal(res.status, body);
 
                 return false;
             }

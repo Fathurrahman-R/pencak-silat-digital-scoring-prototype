@@ -1,3 +1,5 @@
+@php use App\Enums\ResourceAction; @endphp
+
 <x-layouts.admin heading="Kategori Jurus"
                  :description="$tournament->name"
                  :breadcrumb="[
@@ -20,6 +22,37 @@
                                 {{ $event->performances_count }} penampilan dibuat
                             </p>
                         </div>
+
+                        {{--
+                            Format dipilih di sini, bukan disimpulkan migrasi.
+
+                            Naskah 2025 hanya mengenal sistem gugur (Pasal
+                            12.1.b.1), tapi kolomnya berbawaan `penampilan`
+                            supaya kejuaraan yang sudah tersusun tidak berubah
+                            bentuk di tengah jalan. Panitia yang memutuskan
+                            kapan pindah.
+                        --}}
+                        @resource(rk('nomor-jurus', ResourceAction::Update))
+                            <form method="POST" action="{{ route('admin.turnamen.jurus.format', [$tournament, $event]) }}"
+                                  class="flex shrink-0 items-center gap-2">
+                                @csrf
+                                <select name="format" class="rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs"
+                                        onchange="this.form.requestSubmit()">
+                                    @foreach (App\Enums\FormatJurus::cases() as $pilihan)
+                                        <option value="{{ $pilihan->value }}" @selected($event->format === $pilihan)>
+                                            {{ $pilihan->label() }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <noscript><x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">Simpan</x-si.tombol></noscript>
+                            </form>
+                        @endresource
+
+                        @unless (resource_allows(rk('nomor-jurus', ResourceAction::Update)))
+                            <x-si.badge :varian="$event->format->pakaiBagan() ? 'info' : 'netral'">
+                                {{ $event->format->label() }}
+                            </x-si.badge>
+                        @endunless
 
                         <x-si.tombol :tautan="route('admin.turnamen.jurus.index', [$tournament, $event])" varian="kedua" ukuran="kecil">
                             Kelola penampilan

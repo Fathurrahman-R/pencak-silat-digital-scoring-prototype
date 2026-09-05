@@ -1,6 +1,6 @@
 @php use App\Enums\ResourceAction; @endphp
 
-<x-layouts.silat :title="'Wasit — '.$match->bracket->weightClass->name">
+<x-layouts.silat :title="'Wasit — '.$match->bracket->weightClass->name" :manifest="$manifestUrl ?? null">
     {{--
         Wasit memegang HP dalam orientasi landscape 844x390 sambil berdiri di
         matras. Tinggi layar tinggal ~390px, jadi tidak ada ruang untuk kepala
@@ -44,9 +44,45 @@
            "
            class="flex min-h-0 flex-1 flex-col gap-2">
 
+        {{-- Wasit mencatat hukuman ke babak yang sedang dibuka, sama seperti
+             juri mencatat nilai. Ia butuh peringatan yang sama tegasnya. --}}
+        <x-silat.pita-susulan ringkas />
+
+        {{--
+            Protes VAR yang sedang berjalan, satu baris.
+
+            Pasal 15 ayat 3 huruf d menyuruh Wasit ikut memutuskannya bersama
+            Wasit Komisi Protes dan Pengawas/Dewan Wasit Juri, jadi ia harus
+            tahu ada protes berjalan tanpa meninggalkan papan tombolnya.
+
+            Yang ditampilkan hanya KEADAANNYA, bukan kartu penuh berikut
+            tombol memutus: tombol itu wewenang Wasit Komisi Protes, dan
+            panel ini dirancang untuk 844x390 -- kartu setinggi itu akan
+            mendorong tangga hukuman keluar layar. Tangga hukuman sengaja
+            TETAP bisa ditekan: pertandingan tidak selalu berhenti selama
+            protes ditinjau, dan mengunci papan wasit selama lima menit
+            adalah harga yang jauh lebih mahal daripada satu baris kabar.
+        --}}
+        <template x-if="protesBerjalan">
+            <div class="flex shrink-0 items-center gap-2.5 border-b border-silat-teguran bg-silat-panel px-3 py-2">
+                <span class="size-2 shrink-0 rounded-full bg-silat-teguran"></span>
+                <p class="text-[12.5px] leading-snug text-silat-teks-kedua">
+                    Protes VAR sedang ditinjau Wasit Komisi Protes
+                    <span x-show="protesTerdekat" x-text="'— ' + (protesTerdekat?.corner === 'red' ? 'sudut merah' : 'sudut biru')
+                        + ', babak ' + protesTerdekat?.round + ': ' + protesTerdekat?.kejadian"></span>
+                </p>
+                <span class="silat-angka ml-auto shrink-0 text-[15px] font-medium text-silat-teguran"
+                      x-show="protesTerdekat && ! protesTerdekat.lewat_tenggat"
+                      x-text="String(Math.floor((protesTerdekat?.sisa_detik ?? 0) / 60)).padStart(2, '0')
+                          + ':' + String((protesTerdekat?.sisa_detik ?? 0) % 60).padStart(2, '0')"
+                      aria-live="off"></span>
+            </div>
+        </template>
+
         <header class="flex shrink-0 items-center justify-between gap-4">
             <div class="flex items-baseline gap-3">
-                <span class="silat-angka text-[13px] font-medium text-silat-teks">Partai {{ $match->id }}</span>
+                <span class="silat-angka text-[13px] font-medium text-silat-teks"
+                      x-text="'Partai ' + (identitas.partai ?? '—')"></span>
                 <span class="silat-angka text-[12px] text-silat-teks-redup">
                     Babak <span x-text="match.current_round ?? '–'"></span>/<span x-text="peraturan.jumlah_babak"></span>
                 </span>
@@ -245,6 +281,24 @@
                             <button type="button" x-on:click="kirimHitungan(sudut, hitungan)"
                                     class="min-h-[var(--silat-sentuh-min)] w-[88px] rounded-silat-kecil bg-silat-aksi text-[14.5px] font-semibold text-silat-aksi-teks">Catat</button>
                         </div>
+
+                        {{--
+                            Keduanya jatuh -- Pasal 11.6.c huruf b: "Jika kedua
+                            Pesilat tidak segera bangkit, maka dilakukan
+                            hitungan teknik untuk keduanya."
+
+                            Berdiri terpisah dari Catat, dan sengaja tidak
+                            memakai pemilih sudut di atasnya: tekanan ini tidak
+                            punya sudut. Akibatnya pun berbeda -- tidak ada
+                            Teguran di hitungan ke-9 dan tidak ada pemenang di
+                            ke-10, karena naskah menyuruh menimbang berat badan
+                            atau menghitung nilai terbanyak. Penyelesaiannya
+                            ditawarkan panel operator, bukan diputus di sini.
+                        --}}
+                        <button type="button" x-on:click="kirimHitunganSerentak(hitungan)"
+                                class="min-h-[var(--silat-sentuh-min)] rounded-silat-kecil border border-silat-tepi-petak text-[13.5px] font-medium text-silat-teks-kedua">
+                            Keduanya jatuh — catat hitungan <span class="silat-angka" x-text="hitungan"></span> untuk dua sudut
+                        </button>
                     </div>
                 </div>
 

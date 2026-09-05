@@ -27,15 +27,22 @@ class ArenaController extends Controller
     {
         return view('admin.gelanggang.index', [
             'tournament' => $tournament,
-            'arenas' => $tournament->arenas()->with('operators:id,name')->get(),
-            // Daftar calon operator dipakai modal penugasan. Operator
-            // nonaktif tidak ditawarkan -- akunnya tidak bisa masuk.
-            'calonOperator' => User::query()
-                ->where('is_active', true)
-                ->whereHas('roles', fn ($q) => $q->where('name', 'operator-it'))
-                ->orderBy('name')
-                ->get(['id', 'name']),
+            'arenas' => $tournament->arenas()->with(['operators:id,name', 'pengendali:id,name'])->get(),
+            // Daftar calon dipakai modal penugasan. Yang nonaktif tidak
+            // ditawarkan -- akunnya tidak bisa masuk.
+            'calonOperator' => $this->calonBerperan('operator-it'),
+            'calonPengendali' => $this->calonBerperan('pengendali-gelanggang'),
         ]);
+    }
+
+    /** @return \Illuminate\Support\Collection<int, User> */
+    private function calonBerperan(string $peran): \Illuminate\Support\Collection
+    {
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas('roles', fn ($q) => $q->where('name', $peran))
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function store(StoreArenaRequest $request, Tournament $tournament): RedirectResponse
@@ -97,6 +104,39 @@ class ArenaController extends Controller
         return redirect()
             ->route('admin.turnamen.gelanggang.index', $tournament)
             ->with('success', "Operator “{$arena->name}” diperbarui.");
+    }
+
+    /**
+     * Pengendali gelanggang -- cermin simpanOperator(), peran yang berbeda.
+     *
+     * Dipisah, bukan digabung dengan satu formulir bertingkat: keduanya
+     * memegang gelanggang yang sama tapi menjawab pertanyaan berbeda. Operator
+     * menjalankan papan tampilan dan siaran; pengendali memimpin jalannya
+     * partai. Menugaskan orang yang salah pada yang kedua berarti timer
+     * gelanggang dipegang orang yang tidak duduk di sana.
+     */
+    public function simpanPengendali(Request $request, Tournament $tournament, Arena $arena): RedirectResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+
+        $data = $request->validate([
+            'pengendali_id' => ['nullable', 'array'],
+            'pengendali_id.*' => [
+                'required',
+                Rule::exists('users', 'id')->where('is_active', true),
+                function (string $atribut, mixed $nilai, Closure $gagal) {
+                    if (! User::find($nilai)?->hasRole('pengendali-gelanggang')) {
+                        $gagal('Pengguna yang dipilih bukan Pengendali Gelanggang.');
+                    }
+                },
+            ],
+        ]);
+
+        $arena->pengendali()->sync($data['pengendali_id'] ?? []);
+
+        return redirect()
+            ->route('admin.turnamen.gelanggang.index', $tournament)
+            ->with('success', "Pengendali “{$arena->name}” diperbarui.");
     }
 
     public function destroy(Tournament $tournament, Arena $arena): RedirectResponse

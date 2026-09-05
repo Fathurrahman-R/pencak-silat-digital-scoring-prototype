@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ResourceAction;
+use App\Models\ArenaOfficial;
 use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
@@ -10,6 +11,7 @@ use App\Support\Beranda\PekerjaanMenunggu;
 use App\Support\Navigation\NavigationBuilder;
 use App\Support\Scoring\AlasanMenang;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class DashboardController extends Controller
 {
@@ -18,9 +20,13 @@ class DashboardController extends Controller
         private readonly PekerjaanMenunggu $pekerjaan,
     ) {}
 
-    public function __invoke(): View
+    public function __invoke(): View|RedirectResponse
     {
         $turnamen = $this->navigasi->turnamenAktif();
+
+        if ($alihkan = $this->alihkanKePanelGelanggang($turnamen)) {
+            return $alihkan;
+        }
 
         return view('dashboard', [
             'turnamen' => $turnamen,
@@ -33,6 +39,67 @@ class DashboardController extends Controller
             'antrean' => $turnamen ? $this->antreanGelanggang($turnamen) : [],
             'hasilTerakhir' => $turnamen ? $this->hasilTerakhir($turnamen) : [],
         ]);
+    }
+
+    /**
+     * Petugas satu gelanggang mendarat langsung di panelnya.
+     *
+     * Dashboard tidak berarti apa-apa bagi juri yang duduk di gelanggang yang
+     * sama sepanjang hari: satu-satunya hal yang dicarinya di sana adalah
+     * tautan ke panelnya sendiri. Menghapus langkah itu berarti menghapus
+     * seluruh navigasi dari pekerjaannya -- ia login, dan tombol nilai sudah
+     * ada di depannya.
+     *
+     * Yang bertugas di LEBIH DARI SATU gelanggang tidak dialihkan: sistem
+     * tidak punya dasar memilih salah satunya, dan menebak berarti
+     * mendaratkannya di gelanggang yang keliru.
+     *
+     * Pengalihan ini tidak pernah mengunci. `?dashboard=1` melewatinya, dan
+     * panel menyediakan tautannya -- petugas yang juga memegang peran lain
+     * tidak boleh terperangkap di satu layar.
+     */
+    private function alihkanKePanelGelanggang(?Tournament $turnamen): ?RedirectResponse
+    {
+        if ($turnamen === null || request()->boolean('dashboard')) {
+            return null;
+        }
+
+        /*
+         * Seluruh peran yang bertugas DI gelanggang, bukan hanya juri dan
+         * wasit. Yang duduk di kursi Dewan Wasit Juri, Komisi Protes, atau
+         * Ketua Pertandingan sepanjang hari juga tidak punya alasan melewati
+         * dashboard lebih dulu -- dan panelnya sama-sama mengikuti partai
+         * aktif gelanggangnya.
+         *
+         * Pengendali Gelanggang dan Operator IT sengaja TIDAK di sini:
+         * pekerjaan mereka justru mengurus perpindahan, jadi mereka butuh
+         * layar yang memandang lebih dari satu partai.
+         */
+        $panel = [
+            MatchOfficial::ROLE_JURI => 'juri',
+            MatchOfficial::ROLE_WASIT => 'wasit',
+            'dewan-juri' => 'dewan-juri',
+            'komisi-protes' => 'komisi-protes',
+            'ketua-pertandingan' => 'ketua',
+        ];
+
+        $tugas = ArenaOfficial::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('role', array_keys($panel))
+            ->whereHas('arena', fn ($q) => $q->where('tournament_id', $turnamen->id)->where('is_active', true))
+            ->with('arena')
+            ->get();
+
+        if ($tugas->count() !== 1) {
+            return null;
+        }
+
+        $satu = $tugas->first();
+
+        return redirect()->route(
+            "admin.turnamen.gelanggang.panel.{$panel[$satu->role]}",
+            [$turnamen, $satu->arena],
+        );
     }
 
     /**
@@ -144,12 +211,31 @@ class DashboardController extends Controller
                     'biru' => $match->blue?->athletes->pluck('name')->implode(', '),
                     'biru_kontingen' => $match->blue?->contingent->name,
                     'berlangsung' => $match->status === SilatMatch::STATUS_BERLANGSUNG,
-                    'url' => route(
-                        $tugas->role === MatchOfficial::ROLE_WASIT
-                            ? 'admin.turnamen.partai.wasit'
-                            : 'admin.turnamen.partai.juri',
-                        [$tournament, $match],
-                    ),
+                    /*
+                     * Menunjuk panel GELANGGANG kalau partainya sudah
+                     * dijadwalkan.
+                     *
+                     * Alamat per-partai basi begitu pengendali memindahkan
+                     * jadwal, dan petugas yang menekan kartu lama mendarat di
+                     * partai yang sudah lewat. Alamat gelanggang tidak pernah
+                     * basi: ia mengikuti apa pun yang sedang ditayangkan.
+                     *
+                     * Partai yang belum punya gelanggang tetap memakai alamat
+                     * lama -- tidak ada gelanggang untuk diikuti.
+                     */
+                    'url' => $match->arena !== null
+                        ? route(
+                            $tugas->role === MatchOfficial::ROLE_WASIT
+                                ? 'admin.turnamen.gelanggang.panel.wasit'
+                                : 'admin.turnamen.gelanggang.panel.juri',
+                            [$tournament, $match->arena],
+                        )
+                        : route(
+                            $tugas->role === MatchOfficial::ROLE_WASIT
+                                ? 'admin.turnamen.partai.wasit'
+                                : 'admin.turnamen.partai.juri',
+                            [$tournament, $match],
+                        ),
                 ];
             })
             ->values()

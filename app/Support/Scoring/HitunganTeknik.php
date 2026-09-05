@@ -7,6 +7,7 @@ use App\Models\SilatMatch;
 use App\Models\TechnicalCount;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
@@ -24,6 +25,39 @@ class HitunganTeknik
         private readonly TanggaHukuman $tangga,
         private readonly MatchTimer $timer,
     ) {}
+
+    /**
+     * Hitungan teknik untuk KEDUA sudut sekaligus -- Pasal 11.6.e.2.c.(b).
+     *
+     * "Jika kedua Pesilat tidak segera bangkit, maka dilakukan hitungan teknik
+     * untuk keduanya." Satu tindakan wasit, dua baris tercatat: riwayatnya
+     * tetap per sudut seperti hitungan biasa, karena berita acara menyebut
+     * hitungan yang diterima masing-masing pesilat.
+     *
+     * TIDAK mengakhiri partai sendiri meski mencapai sepuluh. Naskah menyuruh
+     * mempertimbangkan beberapa faktor -- berat badan atau nilai terbanyak --
+     * dan keduanya butuh keputusan manusia. Yang dilakukan di sini hanya
+     * mencatat; tawarannya dibaca panel lewat
+     * TandingScoreCalculator::penyelesaianHitunganSerentak().
+     *
+     * @return array<int, TechnicalCount>
+     */
+    public function catatSerentak(SilatMatch $match, int $babak, int $hitunganTertinggi, User $pencatat): array
+    {
+        if ($hitunganTertinggi < 1 || $hitunganTertinggi > 10) {
+            throw new RuntimeException('Hitungan harus antara 1 dan 10.');
+        }
+
+        return DB::transaction(fn () => collect(Sudut::cases())
+            ->map(fn (Sudut $sudut) => TechnicalCount::create([
+                'match_id' => $match->id,
+                'round' => $babak,
+                'corner' => $sudut,
+                'count_reached' => $hitunganTertinggi,
+                'created_by' => $pencatat->id,
+            ]))
+            ->all());
+    }
 
     public function catat(SilatMatch $match, Sudut $sudut, int $babak, int $hitunganTertinggi, User $pencatat): TechnicalCount
     {

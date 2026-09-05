@@ -8,6 +8,7 @@ use App\Enums\TingkatPelanggaran;
 use App\Events\Scoring\MatchStateChanged;
 use App\Events\Scoring\PenaltyIssued;
 use App\Events\Scoring\TimerTicked;
+use App\Http\Controllers\Concerns\MenjagaAparatGelanggang;
 use App\Http\Controllers\Controller;
 use App\Models\JudgeVerification;
 use App\Models\MatchOfficial;
@@ -16,15 +17,17 @@ use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Panel\KonfigPanel;
+use App\Support\Panel\StatePartaiPanel;
 use App\Support\Scoring\CatatInputJuri;
 use App\Support\Scoring\HitunganTeknik;
 use App\Support\Scoring\MatchTimer;
-use App\Support\Scoring\PollingVerifikasi;
 use App\Support\Scoring\TandingScoreCalculator;
 use App\Support\Scoring\TanggaHukuman;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Closure;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,13 +54,14 @@ use Throwable;
  */
 class PartaiScoringController extends Controller
 {
+    use MenjagaAparatGelanggang;
+
     public function __construct(
         private readonly MatchTimer $timer,
         private readonly TanggaHukuman $tangga,
         private readonly HitunganTeknik $hitungan,
         private readonly CatatInputJuri $catatInput,
         private readonly TandingScoreCalculator $kalkulator,
-        private readonly PollingVerifikasi $polling,
     ) {}
 
     /** Resync state penuh -- dipanggil tiap panel memuat ulang atau tersambung kembali. */
@@ -65,12 +69,13 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
 
-        return response()->json($this->stateArray($match, $request->user()));
+        return response()->json(app(StatePartaiPanel::class)($match, $request->user()));
     }
 
     public function operator(Tournament $tournament, SilatMatch $match): View
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, request()->user());
 
         return view('silat.operator', [
             'tournament' => $tournament,
@@ -79,9 +84,14 @@ class PartaiScoringController extends Controller
         ]);
     }
 
-    public function wasit(Tournament $tournament, SilatMatch $match): View
+    public function wasit(Tournament $tournament, SilatMatch $match): View|RedirectResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, request()->user());
+
+        if ($alihkan = $this->alihkanKeGelanggang($tournament, $match, 'wasit')) {
+            return $alihkan;
+        }
 
         return view('silat.wasit', [
             'tournament' => $tournament,
@@ -112,9 +122,23 @@ class PartaiScoringController extends Controller
         ]);
     }
 
-    public function juri(Tournament $tournament, SilatMatch $match): View
+    /*
+     * Panelnya sendiri ikut dijaga, bukan hanya aksinya.
+     *
+     * Sebelum ini, juri gelanggang sebelah bisa membuka papan tombol partai
+     * yang bukan tugasnya: halaman tampil utuh dengan nama kedua pesilat dan
+     * keempat tombol menyala, dan penolakan baru muncul setelah ia menekan.
+     * Di gelanggang, kekeliruan itu terbaca sebagai panel yang rusak, bukan
+     * sebagai partai yang salah dibuka.
+     */
+    public function juri(Tournament $tournament, SilatMatch $match): View|RedirectResponse
     {
         $this->pastikanMilik($tournament, $match);
+        $this->pastikanAparatPartai($match, request()->user());
+
+        if ($alihkan = $this->alihkanKeGelanggang($tournament, $match, 'juri')) {
+            return $alihkan;
+        }
 
         return view('silat.juri', [
             'tournament' => $tournament,
@@ -244,51 +268,50 @@ class PartaiScoringController extends Controller
         ])->header('Content-Type', 'application/manifest+json');
     }
 
-    /** Alamat resync + seluruh aksi, dikirim ke panel Alpine lewat @js(...) -- JS tidak pernah menyusun route Laravel sendiri. */
+    /**
+     * Alamat resync + seluruh aksi, dikirim ke panel Alpine lewat @js(...).
+     *
+     * Isinya pindah ke App\Support\Panel\KonfigPanel karena panel
+     * per-gelanggang harus bisa menghitung ulang alamat aksinya tiap kali
+     * pengendali memindahkan jadwal. Bentuk keluarannya sengaja tidak berubah
+     * sedikit pun -- panel per-partai membaca kunci yang sama seperti
+     * sebelumnya.
+     *
+     * @return array<string, mixed>
+     */
     private function konfigPanel(Tournament $tournament, SilatMatch $match): array
     {
-        return [
-            'matchId' => $match->id,
-            'arenaId' => $match->arena_id,
-            /*
-             * Panel perlu tahu ia sedang dipegang siapa, bukan cuma partai
-             * apa. Layar verifikasi juri memakainya untuk membedakan "kamu
-             * belum menjawab" dari "kamu sudah, tinggal menunggu yang lain" --
-             * dua keadaan yang tampilannya harus jauh berbeda supaya juri
-             * tidak menekan dua kali.
-             */
-            'userId' => auth()->id(),
-            'state' => route('admin.turnamen.partai.state', [$tournament, $match]),
-            'timerMulai' => route('admin.turnamen.partai.timer.mulai', [$tournament, $match]),
-            'timerJeda' => route('admin.turnamen.partai.timer.jeda', [$tournament, $match]),
-            'timerLanjut' => route('admin.turnamen.partai.timer.lanjut', [$tournament, $match]),
-            'timerReset' => route('admin.turnamen.partai.timer.reset', [$tournament, $match]),
-            'timerSelesai' => route('admin.turnamen.partai.timer.selesai-babak', [$tournament, $match]),
-            'akhiri' => route('admin.turnamen.partai.akhiri', [$tournament, $match]),
-            'sahkan' => route('admin.turnamen.partai.sahkan', [$tournament, $match]),
-            'nilai' => route('admin.turnamen.partai.nilai', [$tournament, $match]),
-            'jatuhan' => route('admin.turnamen.partai.jatuhan', [$tournament, $match]),
-            'hukuman' => route('admin.turnamen.partai.hukuman', [$tournament, $match]),
-            'hitungan' => route('admin.turnamen.partai.hitungan', [$tournament, $match]),
-            'nilaiBatal' => route('admin.turnamen.partai.nilai.batal', [$tournament, $match, '__ID__']),
-            'hukumanBatal' => route('admin.turnamen.partai.hukuman.batal', [$tournament, $match, '__ID__']),
-            'verifikasiMinta' => route('admin.turnamen.partai.verifikasi.minta', [$tournament, $match]),
-            'verifikasiJawab' => route('admin.turnamen.partai.verifikasi.jawab', [$tournament, $match, '__ID__']),
-            'verifikasiTerapkan' => route('admin.turnamen.partai.verifikasi.terapkan', [$tournament, $match, '__ID__']),
-            'verifikasiBatalkan' => route('admin.turnamen.partai.verifikasi.batalkan', [$tournament, $match, '__ID__']),
-            'varAjukan' => route('admin.turnamen.partai.keberatan.var.ajukan', [$tournament, $match]),
-            'varPutuskan' => route('admin.turnamen.partai.keberatan.var.putuskan', [$tournament, $match, '__ID__']),
-            'protesManajerAjukan' => route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$tournament, $match]),
-            'protesManajerBanding' => route('admin.turnamen.partai.keberatan.protes-manajer.banding', [$tournament, $match, '__ID__']),
-            'protesManajerPutuskan' => route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$tournament, $match, '__ID__']),
-        ];
+        return app(KonfigPanel::class)(
+            $tournament,
+            $match,
+            $match->arena,
+            request()->user(),
+            mode: 'partai',
+        );
     }
 
     public function mulaiBabak(Request $request, Tournament $tournament, SilatMatch $match): RedirectResponse|JsonResponse
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
-        $data = $request->validate(['babak' => ['required', 'integer', 'min:1']]);
+
+        /*
+         * Batas atasnya ikut divalidasi di sini, bukan cuma di MatchTimer.
+         *
+         * Tanpa `max`, permintaan babak 99 lolos validasi dan baru ditolak
+         * oleh pemeriksaan "babak sebelumnya belum selesai" -- yang lalu
+         * menjawab "Babak 98 belum selesai", kalimat yang menyesatkan siapa
+         * pun yang membacanya di panel.
+         */
+        $jumlahBabak = $this->jumlahBabak($match);
+
+        $data = $request->validate([
+            'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
+        ], [
+            'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
+        ], [
+            'babak' => 'Babak',
+        ]);
 
         $round = $this->jalankan(fn () => $this->timer->mulaiBabak($match, (int) $data['babak']));
         $this->siarkan(fn () => TimerTicked::dispatch($round));
@@ -343,9 +366,21 @@ class PartaiScoringController extends Controller
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
 
+        /*
+         * Pengesahan mengunci pemenang, bukan cuma angkanya.
+         *
+         * Pembatalan nilai dan hukuman sudah menolak partai yang disahkan,
+         * tapi jalur ini dulu tidak: satu permintaan "Akhiri partai" lagi
+         * masih menukar pemenang dan menyeret perubahannya naik ke bagan,
+         * sementara stempel pengesahan lama tetap terpasang seolah tidak
+         * terjadi apa-apa. Koreksi setelah pengesahan hanya lewat protes
+         * manajer, sama seperti koreksi nilai.
+         */
+        $this->pastikanBelumDisahkan($match);
+
         $data = $request->validate([
             'corner' => ['required', Rule::enum(Sudut::class)],
-            'sebab' => ['required', 'string', 'in:angka,teknik,mutlak,wmp,undur_diri,cedera,wo'],
+            'sebab' => ['required', 'string', 'in:angka,teknik,mutlak,wmp,undur_diri,cedera,wo,berat_badan_teringan,nilai_terbanyak'],
         ]);
 
         $sudut = Sudut::from($data['corner']);
@@ -372,6 +407,23 @@ class PartaiScoringController extends Controller
 
         if ($match->disahkan()) {
             throw ValidationException::withMessages(['match' => 'Partai ini sudah disahkan.']);
+        }
+
+        /*
+         * Protes manajer yang diterima tapi akibatnya belum dijalankan menahan
+         * pengesahan -- Pasal 15 ayat 4 huruf c.e.
+         *
+         * Tanpa ini, pemenang naik ke slot bagan berikutnya SEBELUM babak
+         * tambahannya dimainkan. Bagan yang telanjur bergeser tidak bisa
+         * ditarik kembali tanpa membatalkan partai-partai sesudahnya.
+         */
+        $menunggu = $match->managerProtests->first(fn ($protes) => $protes->akibatMenunggu());
+
+        if ($menunggu !== null) {
+            throw ValidationException::withMessages([
+                'match' => "Protes manajer diterima dengan akibat “{$menunggu->akibat->label()}”, dan akibat itu belum dijalankan. "
+                    .'Jalankan dulu sebelum hasilnya disahkan.',
+            ]);
         }
 
         $match->update(['ratified_at' => now(), 'ratified_by' => $request->user()->id]);
@@ -480,6 +532,8 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanBelumSelesai($match);
+        $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 
         $jumlahBabak = $this->jumlahBabak($match);
 
@@ -526,6 +580,8 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanBelumSelesai($match);
+        $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 
         $data = $request->validate([
             'babak' => ['required', 'integer', 'min:1', 'max:'.$this->jumlahBabak($match)],
@@ -562,10 +618,16 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanBelumSelesai($match);
+        $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 
         $data = $request->validate([
             'babak' => ['required', 'integer', 'min:1', 'max:'.$this->jumlahBabak($match)],
-            'corner' => ['required', Rule::enum(Sudut::class)],
+            'serentak' => ['sometimes', 'boolean'],
+            // Wajib kecuali hitungannya serentak -- yang serentak tidak punya
+            // sudut, dan memaksanya menyebut satu berarti mengarang sudut yang
+            // tidak diputuskan siapa pun.
+            'corner' => [Rule::requiredIf(fn () => ! $request->boolean('serentak')), 'nullable', Rule::enum(Sudut::class)],
             'hitungan' => ['required', 'integer', 'min:1', 'max:10'],
         ], [
             'hitungan.max' => 'Hitungan wasit berhenti di 10.',
@@ -574,6 +636,27 @@ class PartaiScoringController extends Controller
             'corner' => 'Sudut',
             'hitungan' => 'Hitungan',
         ]);
+
+        /*
+         * Hitungan serentak BUKAN dua tekanan hitungan biasa -- Pasal 11.6.c
+         * huruf b. Jalur satu sudut menjatuhkan Teguran di hitungan ke-9 dan
+         * mengakhiri partai dengan pemenang di ke-10; keduanya keliru saat yang
+         * jatuh adalah kedua pesilat, karena naskah justru menyuruh menimbang
+         * berat badan atau menghitung nilai terbanyak. Karena itu ia punya
+         * jalurnya sendiri, dan panel yang menawarkan penyelesaiannya.
+         */
+        if ($request->boolean('serentak')) {
+            $this->jalankan(fn () => $this->hitungan->catatSerentak(
+                $match,
+                (int) $data['babak'],
+                (int) $data['hitungan'],
+                $request->user(),
+            ));
+
+            $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
+
+            return $this->respond($request, $match, 'success', 'Hitungan serentak tercatat untuk kedua sudut.');
+        }
 
         $this->jalankan(fn () => $this->hitungan->catat(
             $match,
@@ -659,329 +742,6 @@ class PartaiScoringController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function stateArray(SilatMatch $match, ?User $untuk = null): array
-    {
-        $match->load([
-            'red.athletes', 'red.contingent', 'blue.athletes', 'blue.contingent',
-            'bracket.weightClass.tournament.ruleSetting', 'rounds', 'officials.user',
-        ]);
-
-        $peraturan = $match->bracket->weightClass->tournament->peraturan();
-        $babakSekarang = $match->current_round ?? 1;
-
-        /*
-         * Angka-angka partai dikumpulkan dalam empat query, bukan lebih dari
-         * tiga puluh.
-         *
-         * Endpoint ini ditarik tiap kali ada nilai terbit, oleh setiap panel
-         * yang sedang terbuka. Ditanyakan per angka -- skor tiap babak, tiap
-         * tahap hukuman, tiap hitungan teknik, dua sudut masing-masing -- satu
-         * tarikan layar jadi puluhan perjalanan ke basis data, dan di server
-         * yang melayani satu permintaan pada satu waktu, semuanya mengantre
-         * tepat di depan tekanan tombol juri berikutnya.
-         *
-         * Aturannya tetap tinggal di TanggaHukuman dan HitunganTeknik; yang
-         * pindah ke sini cuma keputusan MEMUAT barisnya sekali.
-         */
-        $rekap = $this->kalkulator->rekapSkor($match);
-        $hukumanBerlaku = $match->penalties()->berlaku()->get(['id', 'round', 'corner', 'tier']);
-        $hitunganBabakIni = $this->hitungan->hitunganBabak($match, $babakSekarang);
-
-        $rounds = $match->rounds->sortBy('round')->values()->map(fn ($r) => [
-            'round' => $r->round,
-            'status' => $r->status->value,
-            'duration_ms' => $r->duration_ms,
-            'sisa_ms' => $r->sisaMs(),
-            'skor_merah' => $rekap['babak'][$r->round]['merah'] ?? 0,
-            'skor_biru' => $rekap['babak'][$r->round]['biru'] ?? 0,
-        ]);
-
-        $penalti = fn (Sudut $sudut) => $this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang);
-
-        /*
-         * Hitungan teknik babak ini, per sudut.
-         *
-         * Sebelumnya tidak ada satu pun panel yang menampilkannya, sementara
-         * akibatnya paling berat di seluruh sistem: hitungan ke-9 menjatuhkan
-         * Teguran I, ke-10 mengakhiri partai, dan hitungan beruntun ketiga
-         * dalam satu babak membuat lawannya menang teknik. Wasit yang tidak
-         * melihat angka ini menekan hitungan ketiga tanpa tahu bahwa
-         * tekanannya menghabisi partai -- dan setelah partai berhenti, tidak
-         * ada tempat untuk memeriksa hitungan yang sebenarnya sudah berapa.
-         */
-        $hitunganTeknik = fn (Sudut $sudut) => $this->hitungan->ringkasan($hitunganBabakIni, $sudut);
-
-        return [
-            'match' => [
-                'id' => $match->id,
-                'status' => $match->status,
-                'current_round' => $match->current_round,
-                'red' => $match->red ? [
-                    'registration_id' => $match->red->id,
-                    'athletes' => $match->red->athletes->pluck('name'),
-                    'contingent' => $match->red->contingent->name,
-                ] : null,
-                'blue' => $match->blue ? [
-                    'registration_id' => $match->blue->id,
-                    'athletes' => $match->blue->athletes->pluck('name'),
-                    'contingent' => $match->blue->contingent->name,
-                ] : null,
-                'winner_registration_id' => $match->winner_registration_id,
-                'win_reason' => $match->win_reason,
-                'ratified' => $match->disahkan(),
-            ],
-            'rounds' => $rounds,
-            'skor_total' => $rekap['total'],
-            'hukuman' => [
-                'merah' => $penalti(Sudut::Merah),
-                'biru' => $penalti(Sudut::Biru),
-            ],
-            'hitungan' => [
-                'merah' => $hitunganTeknik(Sudut::Merah),
-                'biru' => $hitunganTeknik(Sudut::Biru),
-                // Ambangnya ikut dikirim supaya panel menyatakan sisa tekanan
-                // yang tersedia, bukan memajang angka telanjang yang artinya
-                // hanya diketahui orang yang hafal Pasal 11.6.g.3.
-                'ambang_beruntun' => (int) config('scoring.tanding.hitungan_teknik.menang_teknik_setelah_hitungan_beruntun'),
-                'ambang_teguran' => (int) config('scoring.tanding.hitungan_teknik.teguran_pada_hitungan'),
-                'ambang_mutlak' => (int) config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan'),
-            ],
-            'tawaran_wmp' => $this->kalkulator->cekTawaranWmp($match, $rekap['total'])?->value,
-            'peraturan' => [
-                'jumlah_juri' => $peraturan->jumlah_juri_tanding,
-                'ambang_sepakat' => $peraturan->ambang_sepakat,
-                'window_konsensus_ms' => $peraturan->window_konsensus_ms,
-                'jumlah_babak' => $peraturan->babakUntuk($match->bracket->weightClass->golongan_usia)['jumlah'],
-            ],
-            'officials' => $match->officials->map(fn ($o) => [
-                'role' => $o->role, 'number' => $o->number, 'name' => $o->user->name, 'user_id' => $o->user_id,
-            ]),
-            'riwayat' => $this->riwayat($match),
-            'keberatan' => $this->keberatanArray($match),
-            'verifikasi' => $this->verifikasiArray($match, $untuk),
-        ];
-    }
-
-    /**
-     * Verifikasi juri yang sedang berjalan -- Pasal 13.
-     *
-     * # Kenapa disaring menurut siapa yang meminta
-     *
-     * Satu endpoint state melayani semua panel di gelanggang, panel juri
-     * termasuk. Kalau jawaban tiap juri ikut dikirim apa adanya, juri yang
-     * membuka panelnya akan melihat rekannya sudah menjawab "sudut merah",
-     * lalu tidak lagi menjawab apa yang dilihatnya sendiri.
-     *
-     * Maka: juri partai ini hanya menerima SIAPA yang sudah menjawab, tanpa
-     * jawabannya, selama pollingnya berjalan. Wasit, Ketua Pertandingan, dan
-     * Dewan Wasit Juri menerima jawabannya -- mereka memang harus melihat
-     * jawaban masuk satu per satu untuk tahu siapa yang masih ditunggu.
-     *
-     * Begitu polling ditutup, jawabannya terbuka untuk semua: tidak ada lagi
-     * juri yang bisa terpengaruh, dan berita acara memang memuatnya.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function verifikasiArray(SilatMatch $match, ?User $untuk): ?array
-    {
-        $verifikasi = JudgeVerification::query()
-            ->where('match_id', $match->id)
-            ->with(['answers.judge:id,name', 'peminta:id,name'])
-            ->latest('id')
-            ->first();
-
-        if ($verifikasi === null) {
-            return null;
-        }
-
-        $bolehLihatJawaban = ! $verifikasi->berjalan() || ! $this->juriPartaiIni($match, $untuk);
-
-        return [
-            'id' => $verifikasi->id,
-            'round' => $verifikasi->round,
-            'jenis' => $verifikasi->jenis->value,
-            'pertanyaan' => $verifikasi->jenis->pertanyaan(),
-            'pilihan_tidak_ada' => $verifikasi->jenis->pilihanTidakAda(),
-            'tingkat_pelanggaran' => $verifikasi->tingkat_pelanggaran?->value,
-            'tingkat_pelanggaran_label' => $verifikasi->tingkat_pelanggaran?->label(),
-            'status' => $verifikasi->status,
-            'berjalan' => $verifikasi->berjalan(),
-            'diminta_at' => $verifikasi->diminta_at?->toIso8601String(),
-            /*
-             * Pasal 13 menyebut verifikasi datang dari Ketua Pertandingan
-             * maupun Wasit. Panel juri menyebutkan yang mana -- juri yang
-             * ditanya berhak tahu siapa yang menghentikan pertandingan, dan
-             * dua jabatan itu punya bobot berbeda di gelanggang.
-             */
-            'diminta_oleh' => $verifikasi->peminta?->name,
-            'hasil' => $verifikasi->hasil?->value,
-            'hasil_label' => $verifikasi->hasil?->label(),
-            'sudah_diterapkan' => $verifikasi->sudahDiterapkan(),
-            /*
-             * Terisi berarti jawaban ini sudah dipakai wasit untuk menerbitkan
-             * jatuhan. Tanpa penanda itu, saran di panel wasit menggantung
-             * setelah nilainya terbit dan mengundang penekanan kedua untuk
-             * jatuhan yang sama.
-             */
-            'score_event_id' => $verifikasi->score_event_id,
-            'akibat' => $verifikasi->hasil ? $this->polling->akibat($verifikasi) : null,
-            'ambang' => $match->bracket->weightClass->tournament->peraturan()->ambang_sepakat,
-            'jumlah_juri' => $this->polling->jumlahJuri($verifikasi),
-            'hitungan' => $bolehLihatJawaban ? $this->polling->hitungan($verifikasi) : null,
-            'jawaban' => $verifikasi->answers->sortBy('judge_number')->values()->map(fn ($j) => [
-                'judge_user_id' => $j->judge_user_id,
-                'judge_number' => $j->judge_number,
-                'judge_name' => $j->judge?->name,
-                'sebutan' => $j->sebutan(),
-                // Yang disembunyikan cuma ini. Siapa yang sudah menjawab tetap
-                // terlihat -- itu tidak menggiring siapa pun.
-                'jawaban' => $bolehLihatJawaban ? $j->jawaban->value : null,
-                'jawaban_label' => $bolehLihatJawaban ? $j->jawaban->label() : null,
-                'server_ts' => $j->server_ts?->toIso8601String(),
-            ]),
-            'menunggu' => $this->polling->belumMenjawab($verifikasi)->map(fn ($o) => [
-                'judge_user_id' => $o->user_id,
-                'judge_number' => $o->number,
-                'sebutan' => $o->sebutan(),
-            ])->values(),
-        ];
-    }
-
-    /** Apakah pengguna ini juri yang ditugaskan di partai ini. */
-    private function juriPartaiIni(SilatMatch $match, ?User $untuk): bool
-    {
-        if ($untuk === null) {
-            return false;
-        }
-
-        return MatchOfficial::query()
-            ->where('match_id', $match->id)
-            ->where('user_id', $untuk->id)
-            ->where('role', MatchOfficial::ROLE_JURI)
-            ->exists();
-    }
-
-    /** @return array<string, mixed> */
-    private function keberatanArray(SilatMatch $match): array
-    {
-        $kartu = $match->protestCards()->get()->keyBy(fn ($k) => $k->corner->value);
-        $sisaKartu = fn (string $corner) => $kartu->has($corner)
-            ? $kartu[$corner]->sisaKartu()
-            : config('scoring.var.kartu_protes.tanding');
-
-        $varReviews = $match->varReviews()->with(['pemutus'])->latest('id')->limit(20)->get()->map(fn ($v) => [
-            'id' => $v->id,
-            'round' => $v->round,
-            'corner' => $v->corner->value,
-            'kejadian' => $v->kejadian,
-            'diajukan_at' => $v->diajukan_at->toIso8601String(),
-            'tenggat_at' => $v->tenggat_at->toIso8601String(),
-            'sisa_detik' => $v->sisaDetik(),
-            'lewat_tenggat' => $v->lewatTenggat(),
-            'keputusan' => $v->keputusan,
-            'catatan' => $v->catatan,
-        ]);
-
-        $protesManajer = $match->managerProtests()->latest('id')->get()->map(fn ($p) => [
-            'id' => $p->id,
-            'level' => $p->level,
-            'parent_id' => $p->parent_id,
-            'diajukan_at' => $p->diajukan_at->toIso8601String(),
-            'tenggat_keputusan_at' => $p->tenggat_keputusan_at->toIso8601String(),
-            'keputusan' => $p->keputusan,
-            'catatan' => $p->catatan,
-            'final' => $p->final(),
-        ]);
-
-        return [
-            'kartu' => ['merah' => $sisaKartu('red'), 'biru' => $sisaKartu('blue')],
-            'var_reviews' => $varReviews,
-            'protes_manajer' => $protesManajer,
-        ];
-    }
-
-    /**
-     * Nilai dan hukuman terbaru yang masih berlaku, dipakai panel dewan juri
-     * untuk membatalkan salah satunya. Digabung satu daftar terurut waktu
-     * supaya panel tidak perlu menyandingkan dua daftar terpisah sendiri.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function riwayat(SilatMatch $match): array
-    {
-        /*
-         * Sebutan aparat dipetakan sekali di sini, bukan di-query per baris.
-         * Panel dewan juri sanggup menampilkan 60 baris sekaligus; menanyakan
-         * nama tiap penekan satu per satu akan jadi puluhan query untuk satu
-         * halaman yang dibuka justru saat pertandingan sedang disengketakan.
-         */
-        $sebutan = ($match->relationLoaded('officials')
-            ? $match->officials
-            : $match->officials()->with('user:id,name')->get())
-            ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
-
-        /*
-         * Nilai dan hukuman yang lahir dari verifikasi juri tidak punya
-         * judge_inputs -- tidak ada juri yang menekan tombolnya. Tanpa
-         * penandaan ini, riwayat menampilkan jatuhan +3 yang seolah muncul
-         * sendiri tanpa satu pun penekan, dan itu justru baris yang paling
-         * dipersoalkan saat hasilnya digugat.
-         */
-        $dariVerifikasi = JudgeVerification::query()
-            ->where('match_id', $match->id)
-            ->where('status', JudgeVerification::SELESAI)
-            ->get(['id', 'score_event_id', 'penalty_id']);
-
-        $verifikasiNilai = $dariVerifikasi->whereNotNull('score_event_id')->pluck('id', 'score_event_id');
-        $verifikasiHukuman = $dariVerifikasi->whereNotNull('penalty_id')->pluck('id', 'penalty_id');
-
-        $nilai = $match->scoreEvents()->berlaku()->with('judgeInputs:id,score_event_id,judge_user_id')
-            ->latest('id')->limit(30)->get()->map(fn ($s) => [
-                'tipe' => 'nilai',
-                'id' => $s->id,
-                'round' => $s->round,
-                'corner' => $s->corner->value,
-                'label' => "{$s->point_type->label()} ({$s->value})",
-                // Angkanya berdiri sendiri di kolomnya, bukan hanya menempel di
-                // label: panel Dewan Wasit Juri membandingkan belasan baris ke
-                // bawah, dan angka yang rata kanan jauh lebih cepat dibaca.
-                'nilai' => '+'.$s->value,
-                'waktu' => $s->server_ts->toIso8601String(),
-                'verifikasi_id' => $verifikasiNilai[$s->id] ?? null,
-                // Urut supaya "Juri 1, Juri 3" tidak berganti-ganti urutan tiap resync.
-                /*
-                 * Nilai mutlak jatuhan tidak punya judge_inputs sama sekali --
-                 * tidak ada juri yang menekan tombolnya. Tanpa penandaan ini,
-                 * riwayat menampilkan +3 yang seolah muncul sendiri, dan itu
-                 * justru baris yang paling dipersoalkan saat hasilnya digugat.
-                 */
-                'oleh' => match (true) {
-                    $s->mutlak() => $sebutan[$s->issued_by] ?? 'Wasit',
-                    isset($verifikasiNilai[$s->id]) => 'Verifikasi juri',
-                    default => $s->judgeInputs
-                        ->map(fn ($i) => $sebutan[$i->judge_user_id] ?? null)
-                        ->filter()->unique()->sort()->values()->implode(', ') ?: null,
-                },
-            ]);
-
-        $hukuman = $match->penalties()->berlaku()->with('pencatat:id,name')
-            ->latest('id')->limit(30)->get()->map(fn ($p) => [
-                'tipe' => 'hukuman',
-                'id' => $p->id,
-                'round' => $p->round,
-                'corner' => $p->corner->value,
-                'label' => "{$p->tier->label()} ".($p->points !== null ? $p->points : '(DQ)'),
-                'nilai' => $p->points !== null ? (string) $p->points : 'DQ',
-                'waktu' => $p->created_at->toIso8601String(),
-                'verifikasi_id' => $verifikasiHukuman[$p->id] ?? null,
-                'oleh' => isset($verifikasiHukuman[$p->id])
-                    ? 'Verifikasi juri'
-                    : ($sebutan[$p->created_by] ?? $p->pencatat?->name),
-            ]);
-
-        return $nilai->concat($hukuman)->sortByDesc('waktu')->values()->all();
-    }
-
     /** JSON tipis untuk panel real-time, redirect+flash untuk fallback formulir biasa. */
     private function respond(Request $request, SilatMatch $match, string $tipe, string $pesan): RedirectResponse|JsonResponse
     {
@@ -1004,7 +764,27 @@ class PartaiScoringController extends Controller
     {
         try {
             return $aksi();
+        } catch (QueryException $e) {
+            /*
+             * Dua panel yang menekan aksi yang sama dalam sepersekian detik
+             * kalah di indeks unik, bukan di pemeriksaan PHP -- dan sebelum
+             * ini pengecualiannya diteruskan apa adanya, sehingga operator
+             * yang kalah cepat membaca nama tabel, nama indeks, dan seluruh
+             * perintah INSERT di layarnya. Datanya sendiri tetap aman; yang
+             * perlu diperbaiki hanya kalimat yang ia terima.
+             */
+            report($e);
+
+            throw ValidationException::withMessages([
+                'aksi' => 'Aksi ini baru saja dijalankan dari panel lain. Muat ulang panel untuk melihat keadaan terbaru.',
+            ]);
         } catch (RuntimeException $e) {
+            /*
+             * Urutannya penting: QueryException adalah turunan PDOException,
+             * yang turunan RuntimeException. Ditaruh setelah blok ini, ia
+             * tidak pernah tercapai dan pesan SQL mentahnya tetap sampai ke
+             * layar operator.
+             */
             throw ValidationException::withMessages(['aksi' => $e->getMessage()]);
         }
     }
@@ -1029,9 +809,82 @@ class PartaiScoringController extends Controller
         }
     }
 
+    /**
+     * Mengantar alamat per-partai yang masih beredar ke panel gelanggangnya.
+     *
+     * Tautan lama tidak pecah, tapi ia juga tidak boleh mendaratkan petugas di
+     * partai yang sudah lewat. Alamat per-partai basi begitu pengendali
+     * memindahkan jadwal; alamat gelanggang tidak pernah basi.
+     *
+     * Hanya berlaku untuk panel wasit dan juri. Dewan wasit juri dan keberatan
+     * memang harus bisa membuka partai TERTENTU -- termasuk yang sudah selesai
+     * -- untuk ditinjau, disahkan, dan dicetak berita acaranya.
+     *
+     * Partai yang belum dijadwalkan tetap dirender apa adanya: tidak ada
+     * gelanggang untuk diikuti.
+     */
+    private function alihkanKeGelanggang(Tournament $tournament, SilatMatch $match, string $panel): ?RedirectResponse
+    {
+        if ($match->arena_id === null) {
+            return null;
+        }
+
+        return redirect()->route("admin.turnamen.gelanggang.panel.{$panel}", [$tournament, $match->arena]);
+    }
+
     private function pastikanMilik(Tournament $tournament, SilatMatch $match): void
     {
         abort_unless($match->bracket->weightClass->tournament_id === $tournament->id, 404);
+    }
+
+    /**
+     * Hasil yang sudah disahkan tidak bisa diubah lagi -- baik angkanya
+     * maupun pemenangnya. Koreksi sesudah pengesahan jalurnya protes manajer
+     * (Pasal 15 ayat 4), bukan tombol di panel gelanggang.
+     */
+    private function pastikanBelumDisahkan(SilatMatch $match): void
+    {
+        if ($match->disahkan()) {
+            throw ValidationException::withMessages([
+                'match' => 'Hasil partai ini sudah disahkan, jadi nilai dan hukumannya tidak bisa diubah lagi. Koreksi hanya lewat protes manajer.',
+            ]);
+        }
+    }
+
+    /**
+     * Partai yang sudah diakhiri tidak menerima kejadian baru.
+     *
+     * Timer dan nilai juri sudah menolaknya sejak awal, tapi hukuman,
+     * jatuhan, dan hitungan wasit dulu tidak: satu tekanan tak sengaja di
+     * panel wasit setelah gong masih mengubah skor akhir partai yang
+     * pemenangnya sudah naik ke bagan. Pembatalan nilai tetap boleh --
+     * itu memang jalur koreksi sebelum pengesahan.
+     */
+    /**
+     * Wasit tidak boleh diam-diam menghukum babak berjalan saat susulan
+     * terbuka.
+     *
+     * Simetris dengan penjagaan di CatatInputJuri. Tanpa ini, juri menekan
+     * nilai ke babak 2 sementara wasit di sebelahnya menjatuhkan teguran ke
+     * babak 3 -- dua orang di gelanggang yang sama mencatat kejadian ke babak
+     * yang berbeda.
+     */
+    private function pastikanBabakMenerimaInput(SilatMatch $match, int $babak): void
+    {
+        if ($match->susulan_round !== null && $match->susulan_round !== $babak) {
+            throw ValidationException::withMessages([
+                'babak' => "Babak {$match->susulan_round} sedang dibuka untuk input susulan.",
+            ]);
+        }
+    }
+
+    private function pastikanBelumSelesai(SilatMatch $match): void
+    {
+        if ($match->selesai()) {
+            throw ValidationException::withMessages([
+                'match' => 'Partai ini sudah selesai — hukuman, jatuhan, dan hitungan tidak bisa ditambahkan lagi. Koreksi lewat pembatalan oleh Dewan Wasit Juri.',
+            ]);
+        }
     }
 
     /** Jumlah babak yang berlaku untuk golongan usia partai ini. */
@@ -1041,71 +894,5 @@ class PartaiScoringController extends Controller
 
         return (int) $kelas->tournament->peraturan()
             ->babakUntuk($kelas->golongan_usia)['jumlah'];
-    }
-
-    /**
-     * Wasit dan juri hanya berwenang atas partai yang ditugaskan kepada
-     * mereka. Izin peran saja tidak cukup: dua gelanggang berjalan
-     * bersamaan dengan aparat yang sama-sama punya izin menilai, dan
-     * aparat gelanggang sebelah tidak boleh ikut menilai atau menghukum
-     * di sini.
-     *
-     * Peran tingkat kejuaraan -- Dewan Wasit Juri, Ketua Pertandingan --
-     * sengaja tidak ikut aturan ini. Kewenangan mereka memang lintas
-     * gelanggang, jadi mereka tidak pernah muncul di match_officials.
-     * Yang diperiksa hanya peran yang memang ditugaskan per partai.
-     */
-    private function pastikanAparatPartai(SilatMatch $match, ?User $user): void
-    {
-        if ($user === null) {
-            abort(403);
-        }
-
-        $peranPerPartai = [
-            'juri' => MatchOfficial::ROLE_JURI,
-            'wasit' => MatchOfficial::ROLE_WASIT,
-        ];
-
-        /*
-         * Cukup ditugaskan dalam SALAH SATU kapasitas, bukan setiap kapasitas
-         * yang perannya izinkan. Satu akun boleh memegang wasit sekaligus
-         * juri; menuntut keduanya akan menolak wasit yang kebetulan juga
-         * berperan juri di partai yang justru ditugaskan kepadanya.
-         */
-        $kapasitas = array_values(array_intersect_key(
-            $peranPerPartai,
-            array_flip($user->getRoleNames()->all()),
-        ));
-
-        if ($kapasitas !== []) {
-            abort_unless(
-                MatchOfficial::query()
-                    ->where('match_id', $match->id)
-                    ->where('user_id', $user->id)
-                    ->whereIn('role', $kapasitas)
-                    ->exists(),
-                403,
-                'Anda tidak ditugaskan sebagai aparat pada partai ini.',
-            );
-        }
-
-        /*
-         * Operator terikat gelanggang, bukan partai: ia memegang satu
-         * gelanggang sepanjang hari, jadi penugasannya ikut berlaku untuk
-         * partai yang baru dijadwalkan ke sana kemudian.
-         *
-         * Partai yang belum punya gelanggang belum bisa dioperasikan
-         * siapa pun -- jadwalkan dulu, baru ada operatornya.
-         */
-        if ($user->hasRole('operator-it')) {
-            abort_unless(
-                $match->arena_id !== null && DB::table('arena_operators')
-                    ->where('arena_id', $match->arena_id)
-                    ->where('user_id', $user->id)
-                    ->exists(),
-                403,
-                'Anda bukan operator gelanggang tempat partai ini dimainkan.',
-            );
-        }
     }
 }

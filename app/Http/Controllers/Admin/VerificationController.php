@@ -250,6 +250,13 @@ class VerificationController extends Controller
      */
     private function pastikanLunas(Registration $registration): void
     {
+        // Panitia yang memungut biaya di luar sistem mematikan paksaan ini
+        // lewat config/pendaftaran.php. Tagihannya tetap terbit dan tetap bisa
+        // ditandai lunas -- yang dilepas hanya syaratnya, dengan sadar.
+        if (config('pendaftaran.lewati_pembayaran')) {
+            return;
+        }
+
         $invoice = $registration->contingent->invoice;
 
         if ($invoice?->lunas()) {
@@ -266,6 +273,10 @@ class VerificationController extends Controller
 
     private function pastikanBerkasLengkap(Registration $registration, Tournament $tournament): void
     {
+        if (config('pendaftaran.lewati_verifikasi')) {
+            return;
+        }
+
         $kurang = [];
 
         foreach ($registration->athletes as $athlete) {

@@ -42,6 +42,8 @@ flowchart TB
 
 **Kenapa satu mesin.** vMix Pro dan server Laravel berjalan di mesin yang sama (keputusan yang sudah dikonfirmasi di awal proyek). Konsekuensinya: PHP-FPM, MySQL, Reverb, dan lima Browser Input vMix berebut CPU yang sama dipakai encoder streaming. Alamat host, port Reverb, dan port aplikasi semuanya dibaca dari `.env` (NFR-09) supaya bisa dipindah ke mesin terpisah tanpa mengubah kode kalau ternyata berat.
 
+**Channel publiknya bersyarat.** `public-live.{arena}` hanya disiarkan selama `OVERLAY_ENABLED` atau `LIVE_SCORE_ENABLED` menyala (lihat `App\Support\Live\SaluranArena` dan bagian 4c di `docs/INSTALASI-LAN.md`). Saat keduanya mati, kelima event siaran hanya mendorong ke channel presence panel gelanggang -- satu dorongan per event, bukan dua.
+
 **Kenapa `/overlay/*` dan `/live/*` berlawanan arah.** Keduanya membaca channel WebSocket publik yang sama (`public-live.{arena}`) dan bentuk payload yang sama (`App\Support\Live\StatePartaiPublik`), tapi dijaga arah berlawanan:
 
 - `/overlay/*` dikunci `AllowLocalNetworkOnly` -- **hanya** boleh diakses dari LAN. vMix Browser Input tidak bisa login, jadi pembatasan jaringan adalah satu-satunya pengaman di sini, dan middleware ini secara sengaja tidak pernah lewat `auth`.

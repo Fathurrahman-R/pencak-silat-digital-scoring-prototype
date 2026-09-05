@@ -85,22 +85,35 @@ class KetuaPertandinganController extends Controller
     private function gelanggang(Tournament $tournament): Collection
     {
         return $tournament->arenas()->orderBy('name')->get()->map(function (Arena $arena) {
+            /*
+             * Pointer gelanggang lebih dulu, turunan status sebagai jaring
+             * pengaman -- pola yang sama dengan StatePartaiPublik. Panel ini
+             * memantau seluruh kejuaraan sekaligus, jadi gelanggang yang
+             * pointernya belum terisi tidak boleh tampil kosong seolah tidak
+             * ada yang berjalan di sana.
+             */
+            $muatan = [
+                /*
+                 * `tournament_id` wajib ikut dipilih. Tanpa kolom itu, relasi
+                 * `tournament` di bawahnya selalu null dan pemanggilan
+                 * peraturan() melempar galat -- pembatasan kolom pada eager
+                 * load memotong kunci asing yang justru dipakai relasi
+                 * berikutnya.
+                 */
+                'bracket.weightClass:id,tournament_id,name,jenis_kelamin,golongan_usia',
+                'bracket.weightClass.tournament',
+                'red.athletes:id,name', 'blue.athletes:id,name',
+                'officials.user:id,name', 'rounds',
+            ];
+
             $partai = SilatMatch::query()
+                ->when(
+                    $arena->active_match_id !== null,
+                    fn ($q) => $q->whereKey($arena->active_match_id),
+                    fn ($q) => $q->where('status', SilatMatch::STATUS_BERLANGSUNG),
+                )
                 ->where('arena_id', $arena->id)
-                ->where('status', SilatMatch::STATUS_BERLANGSUNG)
-                ->with([
-                    /*
-                     * `tournament_id` wajib ikut dipilih. Tanpa kolom itu,
-                     * relasi `tournament` di bawahnya selalu null dan
-                     * pemanggilan peraturan() melempar galat -- pembatasan
-                     * kolom pada eager load memotong kunci asing yang justru
-                     * dipakai relasi berikutnya.
-                     */
-                    'bracket.weightClass:id,tournament_id,name,jenis_kelamin,golongan_usia',
-                    'bracket.weightClass.tournament',
-                    'red.athletes:id,name', 'blue.athletes:id,name',
-                    'officials.user:id,name', 'rounds',
-                ])
+                ->with($muatan)
                 ->first();
 
             $jurus = JurusPerformance::query()

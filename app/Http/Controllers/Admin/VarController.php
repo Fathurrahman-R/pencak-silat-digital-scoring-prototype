@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AkibatProtes;
 use App\Enums\Sudut;
 use App\Events\Scoring\MatchStateChanged;
 use App\Http\Controllers\Controller;
@@ -112,9 +113,22 @@ class VarController extends Controller
         $data = $request->validate([
             'keputusan' => ['required', 'string', 'in:diterima,ditolak'],
             'catatan' => ['nullable', 'string', 'max:255'],
+            /*
+             * Wajib saat diterima -- Pasal 15 ayat 4 huruf c.e menyediakan tiga
+             * bentuk jawaban, dan tidak satu pun berbunyi "diterima tanpa
+             * akibat". Penegakan sesungguhnya ada di KeputusanProtesManajer;
+             * di sini hanya penyaringan nilainya.
+             */
+            'akibat' => ['nullable', Rule::enum(AkibatProtes::class)],
         ]);
 
-        $this->jalankan(fn () => ($this->putuskanManajer)($managerProtest, $data['keputusan'], $data['catatan'] ?? null, $request->user()));
+        $this->jalankan(fn () => ($this->putuskanManajer)(
+            $managerProtest,
+            $data['keputusan'],
+            $data['catatan'] ?? null,
+            $request->user(),
+            isset($data['akibat']) ? AkibatProtes::from($data['akibat']) : null,
+        ));
 
         $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
 

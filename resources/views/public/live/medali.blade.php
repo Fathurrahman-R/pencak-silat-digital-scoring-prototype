@@ -1,4 +1,4 @@
-<x-layouts.silat :title="'Perolehan Medali — '.$tournament->name" permukaan="publik">
+<x-layouts.silat :title="'Perolehan Medali — '.$tournament->name" permukaan="publik" :realtime="false">
     {{--
         Emoji 🥇🥈🥉 dibuang dari halaman ini.
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
+use App\Enums\AkibatProtes;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Athlete;
@@ -80,14 +81,18 @@ it('keputusan banding bersifat final', function () {
 
     expect($banding->final())->toBeFalse();
 
-    ($this->putuskan)($banding, ManagerProtest::DITERIMA, 'dikabulkan', $this->pemutusBanding);
+    /*
+     * Protes yang diterima wajib menyebut akibatnya -- Pasal 15 ayat 4 huruf
+     * c.e. Naskah tidak menyediakan pilihan "diterima tanpa akibat".
+     */
+    ($this->putuskan)($banding, ManagerProtest::DITERIMA, 'dikabulkan', $this->pemutusBanding, AkibatProtes::UbahHasil);
 
     expect($banding->fresh()->final())->toBeTrue();
 });
 
 it('menolak memutuskan protes yang sudah diputuskan', function () {
     $pertama = ($this->ajukan)->pertama($this->match, 'alasan');
-    ($this->putuskan)($pertama, ManagerProtest::DITERIMA, null, $this->ketuaPertandingan);
+    ($this->putuskan)($pertama, ManagerProtest::DITERIMA, null, $this->ketuaPertandingan, AkibatProtes::UbahHasil);
 
     expect(fn () => ($this->putuskan)($pertama, ManagerProtest::DITOLAK, null, $this->ketuaPertandingan))
         ->toThrow(RuntimeException::class);

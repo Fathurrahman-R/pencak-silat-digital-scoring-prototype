@@ -2,10 +2,10 @@
 
 namespace App\Support\Live;
 
-use App\Enums\JenisSerangan;
 use App\Enums\Sudut;
 use App\Models\Arena;
 use App\Models\SilatMatch;
+use App\Support\Scoring\SnapshotSkor;
 use App\Support\Scoring\TandingScoreCalculator;
 use App\Support\Scoring\TanggaHukuman;
 
@@ -25,6 +25,7 @@ class StatePartaiPublik
     public function __construct(
         private readonly TandingScoreCalculator $kalkulator,
         private readonly TanggaHukuman $tangga,
+        private readonly SnapshotSkor $snapshot,
     ) {}
 
     /** @return array<string, mixed> */
@@ -46,7 +47,15 @@ class StatePartaiPublik
          * tekanan tombol juri.
          */
         $hukumanBerlaku = $match->penalties()->berlaku()->get(['id', 'round', 'corner', 'tier']);
-        $rekap = $this->kalkulator->rekapSkor($match);
+
+        /*
+         * Skor dan rincian teknik dibaca dari snapshot partai. Halaman live
+         * publik menyusun state SETIAP gelanggang dalam satu permintaan, jadi
+         * tiga query agregasi di sini bukan tiga -- melainkan tiga dikali
+         * jumlah gelanggang, tiap kali ada penonton menyegarkan halaman.
+         */
+        $angka = $this->snapshot->baca($match);
+        $rekap = ['total' => $angka['total'], 'babak' => $angka['babak']];
 
         $penalti = fn (Sudut $sudut) => collect($this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang))
             ->only(['pembinaan', 'teguran', 'peringatan'])
@@ -55,25 +64,13 @@ class StatePartaiPublik
         /*
          * Berapa KALI tiap teknik terbit sepanjang partai, per sudut.
          *
-         * Dipakai papan hasil siaran, yang merinci dari mana angka akhirnya
-         * datang: "menang angka 21-14" tidak menjelaskan apa pun sampai
-         * penonton tahu 21 itu tersusun dari berapa pukulan, tendangan, dan
-         * jatuhan. Yang dihitung hanya nilai yang BERLAKU -- yang dibatalkan
-         * tidak ikut menyusun skornya, jadi ia juga tidak boleh muncul di
-         * rinciannya.
+         * Tetap angka TandingScoreCalculator, cuma tidak ditanyakan lagi:
+         * snapshot di atas sudah membawanya. Papan hasil di panel gelanggang
+         * merinci hal yang sama persis, dan dua kueri kembar di dua berkas
+         * adalah dua angka yang suatu saat akan berbeda tanpa ada yang
+         * menyadarinya.
          */
-        $terbit = $match->scoreEvents()->berlaku()
-            ->selectRaw('corner, point_type, count(*) as jumlah')
-            ->groupBy('corner', 'point_type')
-            ->get();
-
-        $teknik = fn (Sudut $sudut) => collect(JenisSerangan::cases())
-            ->mapWithKeys(fn (JenisSerangan $jenis) => [
-                $jenis->value => (int) $terbit
-                    ->firstWhere(fn ($baris) => $baris->corner === $sudut && $baris->point_type === $jenis)
-                    ?->jumlah,
-            ])
-            ->all();
+        $teknik = $angka['teknik'];
 
         $round = $match->rounds->firstWhere('round', $babakSekarang);
         $peraturan = $match->bracket->weightClass->tournament->peraturan();
@@ -127,10 +124,7 @@ class StatePartaiPublik
                 'merah' => $penalti(Sudut::Merah),
                 'biru' => $penalti(Sudut::Biru),
             ],
-            'teknik' => [
-                'merah' => $teknik(Sudut::Merah),
-                'biru' => $teknik(Sudut::Biru),
-            ],
+            'teknik' => $teknik,
             /*
              * Formasi juri, bukan identitasnya: berapa juri yang bertugas,
              * berapa yang harus sepakat, dan berapa lama jendela konsensusnya.
@@ -145,7 +139,20 @@ class StatePartaiPublik
         ];
     }
 
-    /** Partai yang sedang berlangsung di gelanggang ini, atau partai terakhir yang selesai kalau belum ada yang berlangsung. */
+    /**
+     * Partai yang sedang ditayangkan gelanggang ini.
+     *
+     * Pointer `arenas.active_match_id` lebih dulu -- itulah sumber kebenaran
+     * sejak pengendali gelanggang memegangnya. Turunan lama (berlangsung, lalu
+     * selesai terbaru) DIPERTAHANKAN sebagai jaring pengaman untuk dua hal:
+     * gelanggang yang belum pernah disentuh pengendali, dan pointer yang basi
+     * karena partainya dilepas dari jadwal.
+     *
+     * Jangan membuang cabang turunan itu sebagai "kode mati". Tanpa ia,
+     * gelanggang yang pointernya belum terisi menjawab `ada_partai: false` --
+     * overlay siaran kosong di tengah kejuaraan, tanpa satu pun pesan galat
+     * yang menjelaskan sebabnya.
+     */
     private function partaiRelevan(Arena $arena): ?SilatMatch
     {
         $muatan = [
@@ -155,6 +162,19 @@ class StatePartaiPublik
             // dan tiap pembacaan tanpa ini jadi perjalanan sendiri.
             'bracket.weightClass.tournament.ruleSetting', 'rounds',
         ];
+
+        if ($arena->active_match_id !== null) {
+            $ditunjuk = SilatMatch::whereKey($arena->active_match_id)
+                // Saringan gelanggang, bukan kueri berlebihan: partai bisa
+                // dilepas dari jadwal setelah pointer menunjuknya.
+                ->where('arena_id', $arena->id)
+                ->with($muatan)
+                ->first();
+
+            if ($ditunjuk !== null) {
+                return $ditunjuk;
+            }
+        }
 
         return SilatMatch::where('arena_id', $arena->id)
             ->where('status', SilatMatch::STATUS_BERLANGSUNG)

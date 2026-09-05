@@ -8,6 +8,39 @@
                      $jurusEvent->nama() => null,
                  ]">
     <div class="space-y-4">
+        @if ($jurusEvent->format->pakaiBagan())
+            @resource(rk('bagan', ResourceAction::Update))
+                {{--
+                    Bagan gugur -- Pasal 12.1.b.1: "Pertandingan menggunakan
+                    Sistem Gugur".
+
+                    Menyusun ulang menghapus bagan lama beserta seluruh
+                    battle-nya, jadi kalimatnya menyebut itu sebelum tombolnya
+                    ditekan, bukan sesudah.
+                --}}
+                <x-si.kartu judul="Bagan gugur">
+                    <p class="mb-3 text-sm text-ink-muted">
+                        Menyusun bagan dari {{ $jurusEvent->registrations_sah_count ?? $pesertaSah }} pendaftaran terverifikasi.
+                        Penampilan ronde pertama ikut dibuat. Sudut biru tampil lebih dulu (Pasal 12.1.d.7).
+                        @if ($battles->isNotEmpty())
+                            <strong class="text-danger">Bagan yang sudah ada akan dihapus dan disusun ulang.</strong>
+                        @endif
+                    </p>
+
+                    <form method="POST" action="{{ route('admin.turnamen.jurus.susun-bagan', [$tournament, $jurusEvent]) }}"
+                          class="flex items-center gap-2">
+                        @csrf
+                        <select name="acak" class="rounded-md border border-line bg-surface px-3 py-2 text-sm">
+                            <option value="1" selected>Undian acak</option>
+                            <option value="0">Urut pendaftaran</option>
+                        </select>
+                        <x-si.tombol tipe="submit" varian="utama" ukuran="kecil">
+                            {{ $battles->isEmpty() ? 'Susun bagan' : 'Susun ulang bagan' }}
+                        </x-si.tombol>
+                    </form>
+                </x-si.kartu>
+            @endresource
+        @else
         @resource(rk('penampilan-jurus', ResourceAction::Create))
             <x-si.kartu judul="Buat penampilan">
                 <p class="mb-3 text-sm text-ink-muted">
@@ -25,6 +58,67 @@
                 </form>
             </x-si.kartu>
         @endresource
+        @endif
+
+        @if ($battles->isNotEmpty())
+            {{--
+                Daftar battle, hanya untuk nomor berformat sistem gugur.
+
+                Tanpa ini panel perbandingan tidak punya pintu masuk sama
+                sekali: alamatnya menyebut id battle, dan tidak ada satu pun
+                halaman yang menyebutkannya.
+            --}}
+            <x-si.kartu judul="Battle">
+                <div class="divide-y divide-line">
+                    @foreach ($battles as $battle)
+                        <div class="flex flex-wrap items-center gap-3 py-3">
+                            <span class="w-20 shrink-0 font-mono text-xs text-ink-muted">
+                                {{ App\Support\Bagan\TahapBaganJurus::label(
+                                    App\Support\Bagan\TahapBaganJurus::untuk($battle->round, $battle->bracket->size),
+                                ) }}
+                            </span>
+
+                            <p class="min-w-[220px] flex-1 text-sm text-ink">
+                                {{ $battle->red?->athletes->pluck('name')->implode(', ') ?: '—' }}
+                                <span class="text-ink-muted">vs</span>
+                                {{ $battle->blue?->athletes->pluck('name')->implode(', ') ?: '—' }}
+                            </p>
+
+                            @if ($battle->winner_registration_id)
+                                <x-si.badge varian="sukses">Selesai</x-si.badge>
+                            @endif
+
+                            <x-si.tombol :tautan="route('admin.turnamen.jurus.battle', [$tournament, $battle])"
+                                         varian="kedua" ukuran="kecil">
+                                Perbandingan nilai
+                            </x-si.tombol>
+
+                            {{-- Ronde lanjutan baru punya dua nama setelah
+                                 pemenang ronde sebelumnya naik, jadi
+                                 penampilannya disiapkan saat itu -- bukan saat
+                                 bagan disusun. --}}
+                            @if ($battle->red_registration_id && $battle->blue_registration_id && $battle->performances->isEmpty())
+                                @resource(rk('penampilan-jurus', ResourceAction::Create))
+                                    <form method="POST" action="{{ route('admin.turnamen.jurus.battle.penampilan', [$tournament, $battle]) }}">
+                                        @csrf
+                                        <x-si.tombol tipe="submit" varian="kedua" ukuran="kecil">Buat penampilan</x-si.tombol>
+                                    </form>
+                                @endresource
+                            @endif
+
+                            @if (! $battle->winner_registration_id && $battle->performances->count() === 2)
+                                @resource(rk('hasil-jurus', ResourceAction::Approve))
+                                    <form method="POST" action="{{ route('admin.turnamen.jurus.battle.putuskan', [$tournament, $battle]) }}">
+                                        @csrf
+                                        <x-si.tombol tipe="submit" varian="utama" ukuran="kecil">Tetapkan pemenang</x-si.tombol>
+                                    </form>
+                                @endresource
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </x-si.kartu>
+        @endif
 
         <x-si.kartu judul="Peringkat sementara">
             @if ($peringkat->isEmpty())

@@ -27,6 +27,13 @@ final class AlasanMenang
         'cedera' => 'Menang (Cedera)',
         'wo' => 'Menang WO',
         'diskualifikasi' => 'Menang Diskualifikasi',
+        /*
+         * Dua sebab dari Pasal 11.6.e.2.c: kedua pesilat sama-sama tidak bisa
+         * bangkit. Yang menentukan bukan hitungannya, melainkan apakah sudah
+         * ada nilai yang tercatat.
+         */
+        'berat_badan_teringan' => 'Menang (Berat Badan Teringan)',
+        'nilai_terbanyak' => 'Menang (Nilai Terbanyak)',
     ];
 
     /** @return array<string, string> */

@@ -21,6 +21,8 @@ class JurusPerformance extends Model
 
     protected $fillable = [
         'jurus_event_id',
+        'jurus_battle_id',
+        'sudut',
         'registration_id',
         'tahap',
         'arena_id',
@@ -41,6 +43,12 @@ class JurusPerformance extends Model
             'didiskualifikasi' => 'boolean',
             'ratified_at' => 'datetime',
         ];
+    }
+
+    /** Battle tempat penampilan ini berdiri -- kosong untuk nomor berformat penampilan. */
+    public function battle(): BelongsTo
+    {
+        return $this->belongsTo(JurusBattle::class, 'jurus_battle_id');
     }
 
     public function jurusEvent(): BelongsTo

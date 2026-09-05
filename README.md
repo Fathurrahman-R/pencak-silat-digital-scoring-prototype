@@ -147,7 +147,7 @@ Status detail dan checklist tiap fase: [`docs/RENCANA.md`](docs/RENCANA.md).
 Broadcasting memakai `laravel/reverb`, bukan Pusher/Ably — gelanggang harus tetap berfungsi tanpa internet. Tiga kelompok channel:
 
 - `presence-arena.{id}` — private, dipakai panel operator/wasit/juri/dewan juri. Butuh login.
-- `public-live.{arena}` — public, dipakai live score publik DAN overlay vMix. Payloadnya sengaja tipis: tanpa identitas juri, tanpa input mentah.
+- `public-live.{arena}` — public, dipakai live score publik DAN overlay vMix. Payloadnya sengaja tipis: tanpa identitas juri, tanpa input mentah. Tidak disiarkan sama sekali kalau `OVERLAY_ENABLED` dan `LIVE_SCORE_ENABLED` sama-sama mati (bawaannya memang mati).
 - `/overlay/*` dan `/live/*` adalah dua kelompok rute terpisah yang **sama-sama membaca channel publik yang sama**, tapi dijaga arah berlawanan: `/overlay/*` dikunci `AllowLocalNetworkOnly` (harus dari LAN, tidak boleh lewat tunnel), `/live/*` justru dirancang untuk diteruskan tunnel ke internet (lihat `docs/TUNNELING.md`).
 
 ## Kategori Jurus: penyederhanaan yang disengaja

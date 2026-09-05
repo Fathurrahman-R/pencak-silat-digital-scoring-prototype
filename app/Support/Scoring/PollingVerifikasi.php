@@ -335,6 +335,19 @@ class PollingVerifikasi
                 ]);
             }
 
+            /*
+             * Statusnya diperiksa ulang DI DALAM kunci, bukan hanya
+             * `diterapkan_at`-nya. Verifikasi yang dibatalkan wasit sepersekian
+             * detik lebih dulu masih berstatus belum diterapkan, dan tanpa
+             * pemeriksaan ini penerapan tetap jalan lalu menstempel baris yang
+             * sudah dibatalkan.
+             */
+            if ($terkunci->status === JudgeVerification::DIBATALKAN) {
+                throw ValidationException::withMessages([
+                    'verifikasi' => 'Verifikasi ini sudah dibatalkan dari panel lain.',
+                ]);
+            }
+
             $sudut = $terkunci->hasil->sudut();
 
             /*
@@ -380,19 +393,34 @@ class PollingVerifikasi
      */
     public function batalkan(JudgeVerification $verifikasi, User $pembatal, ?string $alasan = null): JudgeVerification
     {
-        if (! $verifikasi->berjalan()) {
-            throw ValidationException::withMessages([
-                'verifikasi' => 'Verifikasi ini sudah ditutup.',
-            ]);
-        }
+        /*
+         * Dikunci seperti jalur terapkan().
+         *
+         * Sebelum ini pembatalan berjalan telanjang, tanpa transaksi maupun
+         * kunci, sementara penerapan memegang kunci baris. Ketua menekan
+         * "Terapkan" dan wasit menekan "Batalkan" pada detik yang sama:
+         * keduanya dijawab berhasil, dan barisnya berakhir dengan status
+         * "dibatalkan" tapi `hasil` dan `diterapkan_at` terisi -- berita
+         * acara lalu memuat hasil verifikasi yang secara resmi sudah
+         * dibatalkan. Yang menang harus satu, dan yang kalah harus tahu.
+         */
+        return DB::transaction(function () use ($verifikasi, $pembatal, $alasan) {
+            $terkunci = JudgeVerification::whereKey($verifikasi->id)->lockForUpdate()->first();
 
-        $verifikasi->forceFill([
-            'status' => JudgeVerification::DIBATALKAN,
-            'diterapkan_oleh' => $pembatal->id,
-            'catatan' => $alasan,
-        ])->save();
+            if ($terkunci === null || ! $terkunci->berjalan()) {
+                throw ValidationException::withMessages([
+                    'verifikasi' => 'Verifikasi ini sudah ditutup.',
+                ]);
+            }
 
-        return $verifikasi->fresh(['answers']);
+            $terkunci->forceFill([
+                'status' => JudgeVerification::DIBATALKAN,
+                'diterapkan_oleh' => $pembatal->id,
+                'catatan' => $alasan,
+            ])->save();
+
+            return $terkunci->fresh(['answers']);
+        });
     }
 
     private function namaPesilat(JudgeVerification $verifikasi, ?Sudut $sudut): string

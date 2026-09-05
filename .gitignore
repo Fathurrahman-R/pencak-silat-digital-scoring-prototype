@@ -28,3 +28,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /design-auth-demo.png
+
+# Disusun jalankan-server.ps1 dari nginx-digiscoring.conf: jalur proyek dan
+# daftar port kolam php-cgi berbeda di tiap mesin.
+/scripts/server/.nginx-jalan.conf
+/scripts/server/.php-cgi-pid.txt
+/scripts/server/.log

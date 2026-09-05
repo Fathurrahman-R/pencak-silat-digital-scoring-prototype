@@ -170,6 +170,20 @@ class SilatResourceSeeder extends Seeder
                 'locked' => true,
             ],
             [
+                'key' => 'kendali-gelanggang',
+                'label' => 'Kendali Gelanggang',
+                'group' => 'Pertandingan',
+                'description' => 'Menentukan partai yang sedang dimainkan gelanggang, mengendalikan timer dan perpindahan babak, dan membuka babak lama untuk input susulan.',
+                /*
+                 * Assign = menetapkan partai aktif gelanggang.
+                 * Manage = membuka dan menutup babak lama untuk susulan, wewenang
+                 *          terberat di gelanggang karena ia melonggarkan penjagaan
+                 *          babak yang sudah ditutup.
+                 */
+                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                'locked' => true,
+            ],
+            [
                 'key' => 'penilaian',
                 'label' => 'Penilaian Juri',
                 'group' => 'Pertandingan',

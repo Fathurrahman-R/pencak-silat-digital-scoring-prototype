@@ -19,12 +19,16 @@ class Arena extends Model
         'code',
         'sort_order',
         'is_active',
+        'active_match_id',
+        'active_match_set_at',
+        'active_match_set_by',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'active_match_set_at' => 'datetime',
         ];
     }
 
@@ -53,6 +57,52 @@ class Arena extends Model
     public function operators(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'arena_operators')->withTimestamps();
+    }
+
+    /**
+     * Partai yang sedang ditayangkan gelanggang ini.
+     *
+     * Satu-satunya sumber kebenarannya. Sebelum ada kolom ini, ia diturunkan
+     * dari `matches.status` -- yang berarti setiap panel ikut memutuskan
+     * partai mana yang terbuka, dan memindahkannya menuntut partai berjalan
+     * diakhiri lebih dulu.
+     *
+     * Ditulis HANYA oleh App\Support\Gelanggang\PointerPartaiAktif, sama
+     * seperti `current_round` yang hanya ditulis MatchTimer.
+     */
+    public function partaiAktif(): BelongsTo
+    {
+        return $this->belongsTo(SilatMatch::class, 'active_match_id');
+    }
+
+    public function penunjukPartaiAktif(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'active_match_set_by');
+    }
+
+    /**
+     * Pengendali yang memegang gelanggang ini.
+     *
+     * Terpisah dari operators(): sejak timer dan perpindahan jadwal pindah ke
+     * peran Pengendali Gelanggang, keduanya bukan orang yang sama lagi.
+     * Operator menjalankan papan tampilan dan perangkat siaran; pengendali
+     * memimpin jalannya partai.
+     */
+    public function pengendali(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'arena_pengendali')->withTimestamps();
+    }
+
+    /**
+     * Aparat yang bertugas di gelanggang ini sepanjang hari.
+     *
+     * Disalin ke `match_officials` saat pengendali menunjuk sebuah partai --
+     * lihat PointerPartaiAktif. Yang disimpan di sini penugasan hariannya;
+     * yang tercatat di sana siapa yang sungguh bertugas pada partai itu.
+     */
+    public function aparat(): HasMany
+    {
+        return $this->hasMany(ArenaOfficial::class);
     }
 
     public function scopeAktif(Builder $query): Builder

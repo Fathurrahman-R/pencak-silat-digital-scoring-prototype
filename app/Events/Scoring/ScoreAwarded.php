@@ -4,9 +4,9 @@ namespace App\Events\Scoring;
 
 use App\Models\ScoreEvent;
 use App\Support\Scoring\TandingScoreCalculator;
+use App\Support\Live\SaluranArena;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -26,16 +26,7 @@ class ScoreAwarded implements ShouldBroadcastNow
     /** @return array<int, Channel> */
     public function broadcastOn(): array
     {
-        $arenaId = $this->scoreEvent->match->arena_id;
-
-        if ($arenaId === null) {
-            return [];
-        }
-
-        return [
-            new PresenceChannel('arena.'.$arenaId),
-            new Channel('public-live.'.$arenaId),
-        ];
+        return SaluranArena::untuk($this->scoreEvent->match->arena_id);
     }
 
     public function broadcastAs(): string

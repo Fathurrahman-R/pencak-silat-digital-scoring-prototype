@@ -1,4 +1,4 @@
-<x-layouts.silat :title="$tournament->name" permukaan="publik">
+<x-layouts.silat :title="$tournament->name" permukaan="publik" :realtime="false">
     {{--
         Halaman kejuaraan publik: PINTU MASUK, bukan etalase.
 

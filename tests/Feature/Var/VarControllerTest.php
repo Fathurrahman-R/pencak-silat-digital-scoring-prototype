@@ -87,3 +87,93 @@ it('mengajukan dan memutuskan protes manajer tingkat pertama lewat HTTP', functi
 
     expect($protes->fresh()->keputusan)->toBe('ditolak');
 });
+
+/*
+ * Protes yang DITERIMA wajib menyebut akibatnya -- Pasal 15 ayat 4 huruf c.e.
+ *
+ * Servernya sudah menegakkannya sejak awal, tapi panel keberatan mengirim
+ * keputusan tanpa akibat: tombol "Terima" karena itu tidak pernah bisa
+ * berhasil, dan satu-satunya jalan menerima protes adalah lewat tinker.
+ */
+it('menerima protes manajer beserta akibatnya lewat HTTP', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$this->tournament, $this->match]), [
+            'catatan' => 'hasil dianggap keliru',
+        ])->assertOk();
+
+    $protes = ManagerProtest::firstOrFail();
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$this->tournament, $this->match, $protes]), [
+            'keputusan' => 'diterima', 'akibat' => 'babak_tambahan',
+        ])->assertOk();
+
+    expect($protes->fresh())
+        ->keputusan->toBe('diterima')
+        ->akibat->toBe(App\Enums\AkibatProtes::BabakTambahan);
+});
+
+it('menolak menerima protes manajer tanpa akibat lewat HTTP', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$this->tournament, $this->match]), [
+            'catatan' => 'hasil dianggap keliru',
+        ])->assertOk();
+
+    $protes = ManagerProtest::firstOrFail();
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$this->tournament, $this->match, $protes]), [
+            'keputusan' => 'diterima',
+        ])->assertStatus(422);
+
+    expect($protes->fresh()->keputusan)->toBeNull();
+});
+
+/*
+ * Tombol yang tidak bisa berhasil sama buruknya dengan tombol yang tidak ada.
+ * Panel harus menawarkan akibatnya SEBELUM tombol Terima ditekan.
+ */
+it('menawarkan pilihan akibat di panel keberatan', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->get(route('admin.turnamen.partai.keberatan', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertSee('Akibat bila diterima')
+        ->assertSee('babak_tambahan', false)
+        ->assertSee('ubah_hasil', false)
+        // Penampilan ulang hanya berarti untuk Jurus.
+        ->assertDontSee('penampilan_ulang', false);
+});
+
+/*
+ * Akibat harus SAMPAI ke panel, bukan berhenti di basis data. "Diterima" tanpa
+ * menyebut apa yang harus terjadi berikutnya adalah separuh keputusan bagi
+ * yang membacanya di gelanggang -- dan pengesahan hasil tertahan karenanya.
+ */
+it('menyertakan akibat protes di payload state partai', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$this->tournament, $this->match]), [
+            'catatan' => 'hasil dianggap keliru',
+        ])->assertOk();
+
+    $protes = ManagerProtest::firstOrFail();
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$this->tournament, $this->match, $protes]), [
+            'keputusan' => 'diterima', 'akibat' => 'babak_tambahan',
+        ])->assertOk();
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->get(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertJsonPath('keberatan.protes_manajer.0.akibat', 'babak_tambahan')
+        ->assertJsonPath('keberatan.protes_manajer.0.akibat_label', 'Menambah satu babak')
+        ->assertJsonPath('keberatan.protes_manajer.0.akibat_diterapkan', false);
+});
