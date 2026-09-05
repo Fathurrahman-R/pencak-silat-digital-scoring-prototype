@@ -101,7 +101,12 @@ it('menelusuri dua langkah untuk jawaban verifikasi juri', function () {
         'status' => JudgeVerification::BERJALAN,
     ]);
 
-    $jawaban = DB::table('judge_verification_answers')->insertGetId([
+    // Kunci dibangkitkan sendiri: penyisipan lewat query builder melewati
+    // model, jadi HasUlids tidak berjalan.
+    $jawaban = (string) Illuminate\Support\Str::ulid();
+
+    DB::table('judge_verification_answers')->insert([
+        'id' => $jawaban,
         'judge_verification_id' => $verifikasi->id,
         'judge_user_id' => \App\Models\User::factory()->create()->id,
         'judge_number' => 1, 'jawaban' => 'ya', 'server_ts' => now(),
