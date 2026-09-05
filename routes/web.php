@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SiaranController;
 use App\Http\Controllers\Admin\SinkronController;
+use App\Http\Middleware\CatatWaktuState;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
@@ -402,7 +403,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->prefix('{tournament}/gelanggang/{arena}/panel')
                 ->name('gelanggang.panel.')
                 ->group(function () {
-                    Route::get('/state', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::View));
+                    /*
+                     * Satu-satunya rute yang waktunya diukur.
+                     *
+                     * Lencana kesehatan gelanggang membaca persentil dari sini,
+                     * dan yang dicarinya gejala yang dirasakan operator: endpoint
+                     * inilah yang ditarik tiap panel terbuka, tiap ada siaran,
+                     * ditambah sekali tiap dua puluh detik selama babak berjalan.
+                     * Mengukur rute lain akan mencampurnya dengan halaman admin
+                     * yang tidak ada hubungannya, dan persentilnya berhenti
+                     * berarti.
+                     */
+                    Route::get('/state', 'state')->name('state')
+                        ->middleware(['resource:'.rk('partai', ResourceAction::View), CatatWaktuState::class]);
                     Route::get('/kendali', 'kendali')->name('kendali')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::View));
                     Route::get('/papan', 'papan')->name('papan')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));

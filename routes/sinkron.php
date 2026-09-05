@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\SinkronController;
+use App\Http\Controllers\ArsipController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,3 +19,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/identitas', [SinkronController::class, 'identitas'])->name('identitas');
 Route::get('/paket', [SinkronController::class, 'paket'])->name('paket');
+
+/*
+ * Arsip bukti. Hanya hidup di node global -- controller-nya membalas 404 di
+ * mesin gelanggang, supaya laptop yang salah dikonfigurasi tidak diam-diam
+ * menampung bukti di tempat yang tidak pernah dicari siapa pun saat
+ * dibutuhkan.
+ */
+Route::post('/arsip', [ArsipController::class, 'terima'])->name('arsip.terima');
+Route::get('/arsip/{match}/tanda-terima', [ArsipController::class, 'tandaTerima'])->name('arsip.tanda-terima');

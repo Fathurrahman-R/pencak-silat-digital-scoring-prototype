@@ -65,6 +65,7 @@ class SinkronController extends Controller
             ->all();
 
         return view('admin.sinkron.index', [
+            'kesehatan' => app(\App\Support\Pemantauan\KesehatanGelanggang::class)->periksa(),
             'node' => $this->kepemilikan->namaNode(),
             'peran' => (string) config('sinkron.peran'),
             'arena' => (string) config('sinkron.arena'),

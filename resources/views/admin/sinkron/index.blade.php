@@ -58,6 +58,36 @@
         }"
          class="flex flex-col gap-6">
 
+        {{-- Lencana kesehatan.
+
+             Tiga angka, masing-masing dengan TINDAKAN-nya, bukan cuma
+             nilainya. Lencana yang menampilkan "640 ms" tanpa menyebut apa
+             yang harus dilakukan menyerahkan penafsirannya ke orang yang
+             sedang mengurus pertandingan. --}}
+        @php
+            $warnaTingkat = [
+                'hijau' => 'border-success-line bg-success-soft',
+                'kuning' => 'border-warning-line bg-warning-soft',
+                'merah' => 'border-danger-line bg-danger-soft',
+            ];
+        @endphp
+
+        <x-si.kartu judul="Kesehatan gelanggang">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                @foreach ($kesehatan['metrik'] as $metrik)
+                    <div class="rounded-silat border p-4 {{ $warnaTingkat[$metrik['tingkat']] ?? $warnaTingkat['hijau'] }}">
+                        <p class="text-[12px] text-ink-secondary">{{ $metrik['nama'] }}</p>
+                        <p class="silat-angka mt-1 text-[22px] font-medium">
+                            {{ number_format($metrik['nilai']) }}{{ $metrik['satuan'] }}
+                        </p>
+                        @if ($metrik['tindakan'])
+                            <p class="mt-2 text-[12.5px] leading-[1.5]">{{ $metrik['tindakan'] }}</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </x-si.kartu>
+
         <x-si.kartu judul="Mesin ini">
             <dl class="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <div>

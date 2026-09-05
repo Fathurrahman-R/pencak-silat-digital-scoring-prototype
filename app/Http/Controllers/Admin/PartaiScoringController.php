@@ -17,6 +17,7 @@ use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Arsip\PendorongArsip;
 use App\Support\Panel\KonfigPanel;
 use App\Support\Panel\StatePartaiPanel;
 use App\Support\Scoring\CatatInputJuri;
@@ -62,6 +63,7 @@ class PartaiScoringController extends Controller
         private readonly HitunganTeknik $hitungan,
         private readonly CatatInputJuri $catatInput,
         private readonly TandingScoreCalculator $kalkulator,
+        private readonly PendorongArsip $arsip,
     ) {}
 
     /** Resync state penuh -- dipanggil tiap panel memuat ulang atau tersambung kembali. */
@@ -427,6 +429,23 @@ class PartaiScoringController extends Controller
         }
 
         $match->update(['ratified_at' => now(), 'ratified_by' => $request->user()->id]);
+
+        /*
+         * Bukti partai dikirim ke node global begitu hasilnya sah.
+         *
+         * Di sini, bukan lewat pekerja antrean: mesin gelanggang tidak
+         * menjalankan pekerja saat hari-H. Pengesahan terjadi sekali per
+         * partai dan bukan jalur panas seperti tekanan tombol juri, jadi satu
+         * perjalanan HTTP bertimeout pendek masih pantas -- dan imbalannya
+         * besar: riwayat penekanan tombol mendarat di node arsip dalam
+         * hitungan detik setelah gong terakhir, bukan menunggu ada yang ingat
+         * menekan tombol.
+         *
+         * Kegagalannya ditelan PendorongArsip dan cuma meninggalkan baris
+         * antrean. Hasil yang sudah diputuskan dewan juri tidak boleh batal
+         * karena satu laptop tidak menjawab.
+         */
+        $this->arsip->antrekan($match->fresh());
 
         $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
 

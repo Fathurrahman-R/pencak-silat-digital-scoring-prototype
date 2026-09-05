@@ -9,6 +9,7 @@ use App\Http\Middleware\HeaderKeamanan;
 use App\Http\Middleware\IngatTurnamenAktif;
 use App\Http\Middleware\SiaranAktif;
 use App\Http\Middleware\TokenSinkron;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -129,6 +130,32 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureUserIsActive::class,
             IngatTurnamenAktif::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        /*
+         * Penjadwal ini hanya berjalan kalau `php artisan schedule:work`
+         * dijalankan, dan di mesin gelanggang saat hari-H ia TIDAK dijalankan
+         * (lihat docs/INSTALASI-LAN.md). Isinya sengaja hal-hal yang boleh
+         * tertunda sampai ada yang menjalankannya: tidak ada satu pun di sini
+         * yang menjadi syarat pertandingan berjalan.
+         */
+        $schedule->command('silat:arsip --dorong')->everyTenMinutes()->withoutOverlapping();
+
+        /*
+         * Jaring pengaman, bukan jalur utama: arsip sudah didorong saat partai
+         * disahkan. Yang disapu di sini cuma yang gagal karena node global
+         * kebetulan mati waktu itu.
+         */
+        $schedule->command('model:prune')->daily();
+        $schedule->command('queue:prune-failed')->daily();
+        $schedule->command('cache:prune-stale-tags')->hourly();
+
+        /*
+         * Pemangkasan riwayat juri TIDAK dijadwalkan, dan itu disengaja.
+         * Ia menghapus bukti. Yang menekan tombolnya harus manusia yang tahu
+         * kejuaraannya sedang di titik mana -- bukan penjadwal yang berjalan
+         * pukul tiga pagi.
+         */
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

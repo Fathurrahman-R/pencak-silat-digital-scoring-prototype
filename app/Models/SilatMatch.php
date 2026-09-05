@@ -59,6 +59,7 @@ class SilatMatch extends Model implements Terbagankan
             'ratified_at' => 'datetime',
             'snapshot_skor' => 'array',
             'snapshot_pada' => 'datetime',
+            'judge_inputs_dipangkas_pada' => 'datetime',
         ];
     }
 

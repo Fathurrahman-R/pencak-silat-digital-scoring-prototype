@@ -209,6 +209,15 @@ class StatePartaiPanel
                 'role' => $o->role, 'number' => $o->number, 'name' => $o->user->name, 'user_id' => $o->user_id,
             ]),
             'riwayat' => $this->riwayat($match),
+            /*
+             * Rincian penekan tombol tiap nilai sudah pindah ke node arsip.
+             *
+             * Dinyatakan, bukan dibiarkan kosong. Riwayat tanpa penekan pada
+             * partai yang dipangkas terbaca sama persis dengan partai yang
+             * nilainya memang terbit tanpa satu pun juri menekan -- dan yang
+             * kedua itu keadaan yang serius. Panel harus bisa membedakannya.
+             */
+            'riwayat_dipangkas_pada' => $match->judge_inputs_dipangkas_pada?->toIso8601String(),
             'keberatan' => $this->keberatan($match),
             'verifikasi' => $this->verifikasi($match, $untuk),
         ];
