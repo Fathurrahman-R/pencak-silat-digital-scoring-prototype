@@ -75,6 +75,58 @@ class KonversiKunciUlid
         }
     }
 
+    /**
+     * Mengembalikan kunci tabel ke auto-increment.
+     *
+     * Nomor yang dihasilkannya BARU, bukan nomor yang dulu dipakai sebelum
+     * perpindahan -- nomor lama sudah hilang saat kolomnya dibuang, dan tidak
+     * ada tempat menyimpannya yang tidak ikut membebani tabel selamanya.
+     * Relasi antar baris tetap utuh karena penunjuknya dipetakan ulang
+     * bersamaan; yang berubah cuma angkanya.
+     *
+     * Gunanya membatalkan pemasangan yang belum jadi, bukan memulihkan
+     * kejuaraan yang sedang berjalan. Untuk yang kedua, cadangan basis data.
+     *
+     * @param  list<array{0: string, 1: string}>  $penunjuk
+     */
+    public static function keInteger(string $tabel, array $penunjuk = []): void
+    {
+        $fk = self::simpanDefinisiForeignKey($penunjuk);
+
+        DB::statement("ALTER TABLE `{$tabel}` ADD COLUMN `id_lama` BIGINT UNSIGNED NULL AFTER `id`");
+
+        $nomor = 0;
+        DB::table($tabel)->orderBy('id')->select('id')->chunk(500, function ($baris) use ($tabel, &$nomor) {
+            foreach ($baris as $satu) {
+                DB::table($tabel)->where('id', $satu->id)->update(['id_lama' => ++$nomor]);
+            }
+        });
+
+        foreach ($penunjuk as [$tabelPenunjuk, $kolom]) {
+            DB::statement("ALTER TABLE `{$tabelPenunjuk}` ADD COLUMN `{$kolom}_lama` BIGINT UNSIGNED NULL AFTER `{$kolom}`");
+            DB::statement(
+                "UPDATE `{$tabelPenunjuk}` p JOIN `{$tabel}` t ON p.`{$kolom}` = t.`id` SET p.`{$kolom}_lama` = t.`id_lama`"
+            );
+        }
+
+        foreach ($fk as [$tabelPenunjuk, $kolom, $nama]) {
+            self::lepasForeignKey($tabelPenunjuk, $nama);
+        }
+
+        DB::statement("ALTER TABLE `{$tabel}` DROP PRIMARY KEY");
+        DB::statement("ALTER TABLE `{$tabel}` DROP COLUMN `id`");
+        DB::statement("ALTER TABLE `{$tabel}` CHANGE `id_lama` `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY");
+
+        foreach ($penunjuk as [$tabelPenunjuk, $kolom]) {
+            DB::statement("ALTER TABLE `{$tabelPenunjuk}` DROP COLUMN `{$kolom}`");
+            DB::statement("ALTER TABLE `{$tabelPenunjuk}` CHANGE `{$kolom}_lama` `{$kolom}` BIGINT UNSIGNED NULL");
+        }
+
+        foreach ($fk as [$tabelPenunjuk, $kolom, $nama, $onDelete]) {
+            self::pasangForeignKey($tabelPenunjuk, $kolom, $tabel, $nama, $onDelete);
+        }
+    }
+
     private static function tambahKolomUlid(string $tabel): void
     {
         Schema::table($tabel, function (Blueprint $table) {

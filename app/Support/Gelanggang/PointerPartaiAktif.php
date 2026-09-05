@@ -12,6 +12,7 @@ use App\Support\Scoring\MatchTimer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -197,6 +198,13 @@ class PointerPartaiAktif
         $baris = ArenaOfficial::where('arena_id', $arena->id)
             ->get()
             ->map(fn (ArenaOfficial $aparat) => [
+                /*
+                 * Kunci dibangkitkan di sini, bukan diserahkan ke basis data.
+                 * Penyisipan massal lewat query builder melewati model, jadi
+                 * HasUlids tidak pernah dijalankan -- dan kolomnya bukan lagi
+                 * auto-increment yang bisa mengisi dirinya sendiri.
+                 */
+                'id' => (string) Str::ulid(),
                 'match_id' => $match->id,
                 'user_id' => $aparat->user_id,
                 'role' => $aparat->role,
