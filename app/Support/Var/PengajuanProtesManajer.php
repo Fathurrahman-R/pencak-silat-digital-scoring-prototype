@@ -35,7 +35,7 @@ class PengajuanProtesManajer
         return $this->buat($pertama->match, ManagerProtest::BANDING, $pertama->id, $catatan, 'banding');
     }
 
-    private function buat(SilatMatch $match, string $level, ?int $parentId, ?string $catatan, string $configKey): ManagerProtest
+    private function buat(SilatMatch $match, string $level, ?string $parentId, ?string $catatan, string $configKey): ManagerProtest
     {
         $diajukanAt = now();
         $tenggat = config("scoring.protes_manajer.{$configKey}");

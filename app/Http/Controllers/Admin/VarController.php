@@ -48,8 +48,8 @@ class VarController extends Controller
             'babak' => ['required', 'integer', 'min:1'],
             'corner' => ['required', Rule::enum(Sudut::class)],
             'kejadian' => ['required', 'string', 'max:255'],
-            'score_event_id' => ['nullable', 'integer', Rule::exists('score_events', 'id')->where('match_id', $match->id)],
-            'penalty_id' => ['nullable', 'integer', Rule::exists('penalties', 'id')->where('match_id', $match->id)],
+            'score_event_id' => ['nullable', 'string', Rule::exists('score_events', 'id')->where('match_id', $match->id)],
+            'penalty_id' => ['nullable', 'string', Rule::exists('penalties', 'id')->where('match_id', $match->id)],
         ]);
 
         $review = $this->jalankan(fn () => ($this->ajukanVar)(

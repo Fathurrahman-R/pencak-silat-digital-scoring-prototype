@@ -49,8 +49,8 @@ class VerifikasiJuriController extends Controller
             'babak' => ['required', 'integer', 'min:1'],
             'jenis' => ['required', Rule::enum(JenisVerifikasi::class)],
             'tingkat_pelanggaran' => ['nullable', Rule::enum(TingkatPelanggaran::class)],
-            'score_event_id' => ['nullable', 'integer', 'exists:score_events,id'],
-            'penalty_id' => ['nullable', 'integer', 'exists:penalties,id'],
+            'score_event_id' => ['nullable', 'string', 'exists:score_events,id'],
+            'penalty_id' => ['nullable', 'string', 'exists:penalties,id'],
         ]);
 
         /*
@@ -145,7 +145,7 @@ class VerifikasiJuriController extends Controller
      * @param  class-string<T>  $model
      * @return T|null
      */
-    private function milikPartai(string $model, ?int $id, SilatMatch $match)
+    private function milikPartai(string $model, ?string $id, SilatMatch $match)
     {
         if ($id === null) {
             return null;
