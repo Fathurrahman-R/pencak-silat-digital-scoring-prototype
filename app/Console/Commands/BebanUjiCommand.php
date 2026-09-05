@@ -118,6 +118,9 @@ class BebanUjiCommand extends Command
             $sisi = $sudut[array_rand($sudut)];
 
             $input[] = [
+                // Sama seperti score_events di bawah: penyisipan massal lewat
+                // query builder melewati model, jadi HasUlids tidak berjalan.
+                'id' => (string) Str::ulid(),
                 'match_id' => $matchId,
                 'round' => $babak,
                 'judge_user_id' => $juri[array_rand($juri)],
