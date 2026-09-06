@@ -29,4 +29,19 @@
     <div @class(['px-4.5', 'py-3' => $padat, 'py-4.5' => ! $padat])>
         {{ $slot }}
     </div>
+
+    {{--
+        Kaki kartu, sepadan dengan slot `footer` milik <x-si.tabel>.
+
+        Ditambahkan setelah ditemukan lewat pengujian: halaman Tagihan sudah
+        menaruh tombol "Kunci tagihan dan lanjut bayar" di <x-slot:footer>,
+        tapi kartu tidak pernah punya slot itu — Blade membuang isinya tanpa
+        satu pun galat. Akibatnya tombol yang mengunci tagihan tidak pernah
+        tampil untuk siapa pun, termasuk super-admin, dan rantai pra-acara
+        terputus di situ: pendaftaran kontingen baru tidak pernah bisa mencapai
+        Menunggu Pembayaran, apalagi Terverifikasi.
+    --}}
+    @isset($footer)
+        <div class="border-t border-line px-4.5 py-3">{{ $footer }}</div>
+    @endisset
 </div>

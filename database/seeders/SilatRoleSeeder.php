@@ -320,7 +320,18 @@ class SilatRoleSeeder extends Seeder
                     'kontingen' => $lihat,
                     'atlet' => $ubah,
                     'pendaftaran' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Delete],
-                    'invoice' => $lihat,
+                    /*
+                     * Update, bukan cuma View: MENGUNCI tagihan sendiri adalah
+                     * langkah official, dan panduan alur menaruhnya di
+                     * kursinya ("Tagihan → Kunci tagihan dan lanjut bayar").
+                     * Tanpa itu rantai pra-acara berhenti di draf tagihan.
+                     *
+                     * Approve sengaja TIDAK diberikan. Menandai lunas dijaga
+                     * `invoice.approve` dan tetap milik Sekretariat: kontingen
+                     * yang bisa menyatakan tagihannya sendiri lunas membuat
+                     * seluruh verifikasi kehilangan artinya.
+                     */
+                    'invoice' => [ResourceAction::View, ResourceAction::Update],
                     'jadwal' => $lihat,
                     'bagan' => $lihat,
                     'rekap' => $lihat,
