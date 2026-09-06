@@ -421,6 +421,14 @@ Alpine.data('partaiPanel', (cfg) => ({
             }
 
             if (segar.length > 0) {
+                /*
+                 * Denyutnya dinyalakan LEBIH DULU, bukan disandarkan pada
+                 * kejadian `online`. Panel yang dimuat ulang selagi jaringannya
+                 * masih putus tidak akan pernah menerima kejadian itu -- ia
+                 * memang tidak pernah "kembali" online dari sudut pandang tab
+                 * baru ini -- dan antreannya akan menganggur selamanya.
+                 */
+                this._denyutkanAntrean();
                 this.alirkanAntrean();
             }
         } catch (e) {
@@ -503,7 +511,13 @@ Alpine.data('partaiPanel', (cfg) => ({
 
         if (this.antrean.length === 0) {
             await this.muatUlang();
+
+            return;
         }
+
+        // Masih ada sisa: pastikan denyut coba-lagi memang menyala, apa pun
+        // jalan yang membawa kita ke sini.
+        this._denyutkanAntrean();
     },
 
     /**
