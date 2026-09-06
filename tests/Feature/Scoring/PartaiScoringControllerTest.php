@@ -386,3 +386,63 @@ it('menolak state partai yang bukan milik kejuaraan di alamat', function () {
         ->get(route('admin.turnamen.partai.state', [$turnamenLain, $this->match]))
         ->assertNotFound();
 });
+
+/*
+ * Waktu tekan menurut perangkat juri, dibawa setiap tekanan.
+ *
+ * Dipakai panel yang mengantre tekanan selama jaringannya putus: yang
+ * terkirim sesudah pulih tiba beberapa detik terlambat, dan tanpa kolom ini
+ * jejak auditnya berbohong tentang kapan serangan itu dinilai.
+ */
+it('menyimpan waktu tekan dari perangkat juri tanpa menggantikan waktu server', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $ditekan = now()->subSeconds(4);
+
+    $this->actingAs($this->juri1)
+        ->post(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
+            'babak' => 1, 'corner' => 'red', 'jenis' => 'pukulan',
+            'client_ts' => $ditekan->toIso8601String(),
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    $input = App\Models\JudgeInput::where('match_id', $this->match->id)->firstOrFail();
+
+    expect($input->client_ts->timestamp)->toBe($ditekan->timestamp)
+        ->and($input->server_ts->timestamp)->toBeGreaterThan($input->client_ts->timestamp);
+});
+
+/*
+ * Konsensus tetap dihitung dari waktu server. Jam perangkat juri tidak
+ * dipercaya: juri yang jamnya meleset -- atau disetel -- tidak boleh bisa
+ * menggeser nilainya ke momen yang menguntungkan.
+ */
+it('tidak memakai waktu tekan perangkat untuk menghitung konsensus', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $kirim = fn (User $juri, string $clientTs) => $this->actingAs($juri)
+        ->post(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
+            'babak' => 1, 'corner' => 'red', 'jenis' => 'pukulan', 'client_ts' => $clientTs,
+        ]);
+
+    // Dua juri menekan pada saat yang sama menurut server, tapi jam perangkat
+    // keduanya terpaut satu jam. Nilainya tetap terbit.
+    $kirim($this->juri1, now()->subHour()->toIso8601String())->assertSessionHas('success');
+    $kirim($this->juri2, now()->addHour()->toIso8601String())->assertSessionHas('success');
+
+    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(1);
+});
+
+it('menolak waktu tekan yang bukan tanggal', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $this->actingAs($this->juri1)
+        ->postJson(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
+            'babak' => 1, 'corner' => 'red', 'jenis' => 'pukulan', 'client_ts' => 'kemarin sore',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('client_ts');
+
+    expect(App\Models\JudgeInput::where('match_id', $this->match->id)->count())->toBe(0);
+});

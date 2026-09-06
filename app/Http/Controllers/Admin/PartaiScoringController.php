@@ -501,6 +501,20 @@ class PartaiScoringController extends Controller
                 Rule::enum(JenisSerangan::class),
                 Rule::notIn([JenisSerangan::Jatuhan->value]),
             ],
+            /*
+             * Kapan tombolnya BENAR-BENAR ditekan, menurut perangkat juri.
+             *
+             * Dipakai panel yang mengantre tekanan selama jaringannya putus:
+             * yang terkirim sesudah pulih tiba di server beberapa detik
+             * terlambat, dan tanpa kolom ini jejak auditnya berbohong tentang
+             * kapan serangan itu dinilai.
+             *
+             * Tidak pernah menggantikan `server_ts`. Konsensus tetap dihitung
+             * dari waktu server, karena jam perangkat juri tidak dipercaya --
+             * juri yang jamnya meleset (atau disetel) tidak boleh bisa
+             * menggeser nilai ke momen yang menguntungkan.
+             */
+            'client_ts' => ['sometimes', 'nullable', 'date'],
         ], [
             // Panel mengirim babak dari state, jadi kolom ini kosong justru
             // ketika partainya belum punya babak sama sekali. "Babak wajib
@@ -514,6 +528,7 @@ class PartaiScoringController extends Controller
             'babak' => 'Babak',
             'corner' => 'Sudut',
             'jenis' => 'Jenis serangan',
+            'client_ts' => 'Waktu tekan',
         ]);
 
         $input = ($this->catatInput)(
@@ -522,6 +537,7 @@ class PartaiScoringController extends Controller
             (int) $data['babak'],
             Sudut::from($data['corner']),
             JenisSerangan::from($data['jenis']),
+            $data['client_ts'] ?? null,
         );
 
         if ($input->ditolak()) {
