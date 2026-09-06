@@ -50,26 +50,30 @@ beforeEach(function () {
         return $user;
     };
 
+    $this->pengendali = $buatUser('pengendali-gelanggang');
+    // Operator IT masih dibuat: ia dipakai membuktikan wewenang timernya
+    // memang sudah dicabut, bukan sekadar berpindah tangan.
     $this->operator = $buatUser('operator-it');
     $this->pengawas = $buatUser('pengawas-wasit-juri');
     $this->ketua = $buatUser('ketua-pertandingan');
 
     /*
-     * Partai dimainkan di Gelanggang A, dan operator bawaan test ini memang
-     * operatornya. Gelanggang B beserta operatornya baru dibuat oleh test
+     * Partai dimainkan di Gelanggang A, dan pengendali bawaan test ini memang
+     * pengendalinya. Gelanggang B beserta pengendalinya baru dibuat oleh test
      * yang memerlukannya.
      */
     $this->gelanggangA = Arena::factory()->for($this->tournament)->create(['name' => 'Gelanggang A']);
+    $this->gelanggangA->pengendali()->attach($this->pengendali);
     $this->gelanggangA->operators()->attach($this->operator);
     $this->match->update(['arena_id' => $this->gelanggangA->id, 'order_in_arena' => 1]);
 
     $this->siapkanGelanggang = function () use ($buatUser) {
         $gelanggangB = Arena::factory()->for($this->tournament)->create(['name' => 'Gelanggang B']);
-        $operatorB = $buatUser('operator-it');
-        $gelanggangB->operators()->attach($operatorB);
+        $pengendaliB = $buatUser('pengendali-gelanggang');
+        $gelanggangB->pengendali()->attach($pengendaliB);
 
-        $this->gelanggangA->operator = $this->operator;
-        $gelanggangB->operator = $operatorB;
+        $this->gelanggangA->pengendali = $this->pengendali;
+        $gelanggangB->pengendali = $pengendaliB;
 
         return [$this->gelanggangA, $gelanggangB];
     };
@@ -92,7 +96,7 @@ beforeEach(function () {
     ]);
 
     $this->mulaiBabak = function () {
-        $this->actingAs($this->operator)->post(
+        $this->actingAs($this->pengendali)->post(
             route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]),
             ['babak' => 1],
         );
@@ -170,37 +174,37 @@ it('menolak hitungan teknik dari wasit yang tidak ditugaskan di partai ini', fun
 });
 
 /*
- * Operator terikat gelanggang, bukan partai. Satu operator duduk di satu
- * gelanggang sepanjang hari, jadi penugasannya diberikan sekali per
- * gelanggang dan berlaku untuk seluruh partai yang dimainkan di sana.
+ * Pengendali terikat gelanggang, bukan partai. Satu pengendali duduk di satu
+ * gelanggang sepanjang hari, jadi penugasannya diberikan sekali per gelanggang
+ * dan berlaku untuk seluruh partai yang dimainkan di sana.
  */
-it('menolak operator gelanggang lain memulai babak', function () {
+it('menolak pengendali gelanggang lain memulai babak', function () {
     [$gelanggangA, $gelanggangB] = ($this->siapkanGelanggang)();
 
-    $this->actingAs($gelanggangB->operator)
+    $this->actingAs($gelanggangB->pengendali)
         ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
         ->assertForbidden();
 
     expect($this->match->fresh()->status)->toBe(SilatMatch::STATUS_TERJADWAL);
 });
 
-it('mengizinkan operator gelanggang partai memulai babak', function () {
+it('mengizinkan pengendali gelanggang partai memulai babak', function () {
     [$gelanggangA] = ($this->siapkanGelanggang)();
 
-    $this->actingAs($gelanggangA->operator)
+    $this->actingAs($gelanggangA->pengendali)
         ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
         ->assertRedirect();
 
     expect($this->match->fresh()->status)->toBe(SilatMatch::STATUS_BERLANGSUNG);
 });
 
-it('menolak operator gelanggang lain mengakhiri partai', function () {
+it('menolak pengendali gelanggang lain mengakhiri partai', function () {
     [$gelanggangA, $gelanggangB] = ($this->siapkanGelanggang)();
 
-    $this->actingAs($gelanggangA->operator)
+    $this->actingAs($gelanggangA->pengendali)
         ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
-    $this->actingAs($gelanggangB->operator)
+    $this->actingAs($gelanggangB->pengendali)
         ->post(route('admin.turnamen.partai.akhiri', [$this->tournament, $this->match]), [
             'corner' => 'red', 'sebab' => 'mutlak',
         ])
@@ -261,4 +265,17 @@ it('tetap menolak pemegang dua peran yang tidak ditugaskan sama sekali', functio
         ->assertForbidden();
 
     expect($this->match->penalties()->count())->toBe(0);
+});
+
+/*
+ * Bukti bahwa wewenangnya benar-benar DICABUT, bukan sekadar berpindah tangan.
+ * Operator IT masih memegang gelanggang yang sama dan masih boleh membuka
+ * panelnya sebagai papan tampilan -- yang hilang cuma kendali jalannya partai.
+ */
+it('menolak Operator IT memulai babak di gelanggangnya sendiri', function () {
+    $this->actingAs($this->operator)
+        ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
+        ->assertForbidden();
+
+    expect($this->match->fresh()->status)->toBe(SilatMatch::STATUS_TERJADWAL);
 });

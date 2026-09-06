@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\JenisSerangan;
 use App\Enums\Sudut;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class JudgeInput extends Model
 {
     use HasFactory;
+
+    /*
+     * Kunci ULID, bukan auto-increment. Tiap gelanggang menjalankan basis
+     * datanya sendiri, dan node global menampung arsip bukti dari semuanya --
+     * empat penghitung yang sama-sama mulai dari satu akan bertabrakan di
+     * sana.
+     */
+    use HasUlids;
 
     /*
      * Format bawaan Eloquent ('Y-m-d H:i:s') memangkas milidetik saat

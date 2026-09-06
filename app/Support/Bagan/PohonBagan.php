@@ -48,7 +48,21 @@ class PohonBagan
     public function __invoke(Bracket $bracket): array
     {
         $slots = $bracket->slots->sortBy('position')->values();
-        $ukuran = max(2, $slots->count() ?: $bracket->size);
+
+        /*
+         * Ukuran bagan selalu pangkat dua, apa pun jumlah baris slot yang
+         * kebetulan ada.
+         *
+         * Sebelumnya jumlah slot dipakai apa adanya. Satu baris slot yang
+         * hilang -- pendaftaran terhapus, cascade ikut membawa slotnya --
+         * membuat ukuran jadi ganjil, dan perataan berpasangan ke babak
+         * berikutnya menemukan potongan berisi satu elemen lalu berhenti
+         * dengan galat. Yang jatuh bukan halaman panitia saja: halaman bagan
+         * penonton ikut mati. Geometri pohon tidak boleh bergantung pada
+         * kelengkapan data; kalau ada slot yang hilang, yang pantas terjadi
+         * adalah kotak kosong, bukan layar galat.
+         */
+        $ukuran = UrutanUnggulan::ukuranBagan(max(2, $slots->count() ?: $bracket->size));
         $jumlahBabak = (int) ceil(log($ukuran, 2));
 
         // Tengah tiap slot babak pertama, lalu rata-rata berpasangan ke atas.

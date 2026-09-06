@@ -47,8 +47,14 @@ it('menolak input saat babak belum pernah dimulai', function () {
 
     $input = ($this->catat)($this->match, $this->juri, 1, Sudut::Merah, JenisSerangan::Pukulan);
 
+    /*
+     * Alasannya kini membedakan "babaknya belum ada barisnya sama sekali" dari
+     * "barisnya ada tapi timernya berhenti". Keduanya dulu dijawab kalimat yang
+     * sama, dan yang membacanya di gelanggang tidak bisa tahu apakah wasit
+     * belum menekan Mulai atau baru saja menekan Jeda.
+     */
     expect($input->ditolak())->toBeTrue()
-        ->and($input->rejected_reason)->toContain('tidak berjalan');
+        ->and($input->rejected_reason)->toBe('Babak ini belum pernah dimulai.');
 
     Event::assertDispatched(JudgeInputReceived::class);
     Event::assertNotDispatched(ScoreAwarded::class);
@@ -141,7 +147,34 @@ it('menyiarkan input juri tanpa identitas juri sama sekali', function () {
         ->and($muatan)->not->toHaveKey('rejected_reason');
 });
 
-it('menyiarkan input juri ke channel publik dan privat sekaligus', function () {
+/*
+ * Indikator "juri menekan" di panel dan overlay memadamkan dirinya sendiri
+ * memakai angka ini. Kalau ia tidak ikut disiarkan, penerima terpaksa memakai
+ * angka bawaannya sendiri -- dan turnamen yang menyetel jendela konsensus
+ * berbeda akan menayangkan titik yang padam lebih cepat atau lebih lambat
+ * daripada saat server benar-benar membuang tekanannya.
+ */
+it('menyiarkan tenggat kedaluwarsa sesuai setelan peraturan turnamen', function () {
+    $this->tournament->peraturan()->update(['window_konsensus_ms' => 3500]);
+    $this->tournament->unsetRelation('ruleSetting');
+
+    MatchRound::create([
+        'match_id' => $this->match->id, 'round' => 1, 'duration_ms' => 120_000,
+        'status' => StatusBabak::Berjalan, 'started_at' => now(),
+    ]);
+
+    $input = ($this->catat)($this->match, $this->juri, 1, Sudut::Merah, JenisSerangan::Pukulan);
+
+    $muatan = (new JudgeInputReceived($input->fresh()))->broadcastWith();
+
+    expect($muatan['kedaluwarsa_ms'])->toBe(3500);
+});
+
+it('menyiarkan input juri ke channel publik dan privat sekaligus saat siaran menyala', function () {
+    // Dinyatakan di sini, bukan diwarisi diam-diam dari phpunit.xml: bawaan
+    // kedua saklar MATI, dan uji ini memang menguji keadaan menyala.
+    config(['overlay.enabled' => true, 'live.enabled' => true]);
+
     $arena = Arena::factory()->for($this->tournament)->create();
     $this->match->update(['arena_id' => $arena->id]);
 

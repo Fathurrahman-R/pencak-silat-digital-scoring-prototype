@@ -31,6 +31,13 @@ Path lain -- termasuk `/admin`, `/juri`, `/wasit`, `/operator`, `/overlay`,
 dan `/broadcasting/auth` -- dibalas 404 oleh proxy itu sendiri, sebelum
 permintaannya sempat menyentuh Laravel sama sekali.
 
+**Setel `LIVE_SCORE_ENABLED=true` sebelum membuka tunnel.** Bawaannya mati,
+dan selama mati `/live/gelanggang/{arena}` hanya merender halaman "live score
+sedang tidak ditayangkan" sementara channel `public-live.{arena}` tidak
+disiarkan sama sekali -- tunnelnya menyala, isinya tidak ada. Halaman
+turnamen, medali, dan bagan tetap tampil normal apa pun saklarnya. Lihat
+bagian 4c di `docs/INSTALASI-LAN.md`.
+
 ## Contoh Caddyfile
 
 ```

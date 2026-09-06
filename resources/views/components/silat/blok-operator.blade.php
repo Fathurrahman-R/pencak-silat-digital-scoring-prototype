@@ -89,7 +89,14 @@ $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan'];
                     @endforeach
                 </div>
 
-                <div class="flex items-center gap-2">
+                {{--
+                    Deretan petak hukuman lebih lebar daripada layar ponsel.
+                    Ia digulir di dalam wadahnya sendiri, bukan mendorong
+                    seluruh halaman jadi lebih lebar dari viewport: badan
+                    halaman yang ikut bergeser mendatar membuat tombol kendali
+                    di kolom bawah tidak lagi sejajar dengan apa yang terlihat.
+                --}}
+                <div class="flex max-w-full items-center gap-2 overflow-x-auto">
                     <!-- <p class="silat-angka mb-2 text-[10px] tracking-[.12em] {{ $redup }} uppercase">Hukuman</p> -->
 
                     @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)

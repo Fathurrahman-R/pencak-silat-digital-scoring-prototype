@@ -60,6 +60,19 @@
 
     <span class="flex items-baseline gap-1.5 landscape:gap-3">
         <span class="text-[13px] tracking-wide landscape:text-[18px]">{{ $label }}</span>
+
+        {{--
+            Nomor babak dicetak di dalam label tombolnya sendiri.
+            
+            Yang dilihat juri tepat sebelum jempolnya turun adalah babak yang
+            akan tercatat -- bukan keterangan di kepala panel yang matanya
+            sudah lama berhenti membacanya. Selama tidak ada susulan, ia diam
+            saja: penanda yang selalu tampil berhenti dibaca.
+        --}}
+        <span class="silat-angka text-[11px] font-semibold text-amber-300 landscape:text-[13px]"
+              x-show="susulanTerbuka" x-cloak
+              x-text="'B' + susulan?.round"></span>
+
         <span class="silat-angka text-[20px] font-medium landscape:text-[26px]">{{ $nilai }}</span>
     </span>
 </button>

@@ -43,9 +43,12 @@ it('memanggil setiap komponen si/* yang punya wujud sendiri', function () {
         'pohon-bagan',
 
         // Menempel di shell aplikasi, bukan di halaman. Galeri memakai layout
-        // docs yang memang tidak punya topbar, jadi ketiganya dijaga oleh
+        // docs yang memang tidak punya topbar, jadi keduanya dijaga oleh
         // AdminPagesTest lewat halaman admin sungguhan.
-        'lonceng',
+        //
+        // 'lonceng' pernah ada di daftar ini dengan alasan yang sama, padahal
+        // shell aplikasi tidak pernah memanggilnya -- komponennya sudah
+        // dihapus bersama sisa boilerplate lain.
         'jejak',
         'cari-menu',
     ];

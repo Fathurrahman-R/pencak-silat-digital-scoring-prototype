@@ -49,6 +49,16 @@ beforeEach(function () {
         ]);
     };
 
+    /** Nilai dengan jenis serangan tertentu -- $this->nilai selalu memakai pukulan. */
+    $this->teknik = function (Sudut $sudut, string $jenis, int $babak = 1) {
+        return ScoreEvent::create([
+            'match_id' => $this->match->id, 'round' => $babak, 'corner' => $sudut,
+            'point_type' => $jenis,
+            'value' => config("scoring.tanding.nilai.{$jenis}"),
+            'server_ts' => now(),
+        ]);
+    };
+
     $this->hukuman = function (Sudut $sudut, int $points, int $babak = 1) {
         return Penalty::create([
             'match_id' => $this->match->id, 'round' => $babak, 'corner' => $sudut,
@@ -80,6 +90,43 @@ it('memisahkan skor per babak dari skor total', function () {
     expect($this->kalkulator->skorBabak($this->match, Sudut::Merah, 1))->toBe(2)
         ->and($this->kalkulator->skorBabak($this->match, Sudut::Merah, 2))->toBe(3)
         ->and($this->kalkulator->skor($this->match, Sudut::Merah))->toBe(5);
+});
+
+/*
+ * Rincian ini sebelumnya cuma hidup di StatePartaiPublik, sehingga hanya
+ * overlay siaran yang bisa membacanya. Papan hasil di panel gelanggang harus
+ * memakai angka yang sama persis, bukan angka yang kebetulan mirip.
+ */
+it('menghitung berapa kali tiap teknik terbit, per sudut', function () {
+    ($this->teknik)(Sudut::Merah, 'pukulan');
+    ($this->teknik)(Sudut::Merah, 'pukulan');
+    ($this->teknik)(Sudut::Merah, 'tendangan');
+    ($this->teknik)(Sudut::Biru, 'jatuhan');
+
+    expect($this->kalkulator->rekapTeknik($this->match))->toBe([
+        'merah' => ['pukulan' => 2, 'tendangan' => 1, 'jatuhan' => 0],
+        'biru' => ['pukulan' => 0, 'tendangan' => 0, 'jatuhan' => 1],
+    ]);
+});
+
+/*
+ * Nilai yang dibatalkan tidak ikut menyusun skornya, jadi ia juga tidak boleh
+ * muncul di rinciannya -- kalau tidak, papan hasil akan menunjukkan tiga
+ * pukulan menyusun angka yang sebenarnya berasal dari dua.
+ */
+it('tidak menghitung teknik yang nilainya sudah dibatalkan', function () {
+    ($this->teknik)(Sudut::Merah, 'pukulan');
+    $dibatalkan = ($this->teknik)(Sudut::Merah, 'pukulan');
+    $dibatalkan->update(['voided_at' => now(), 'void_reason' => 'koreksi dewan juri']);
+
+    expect($this->kalkulator->rekapTeknik($this->match)['merah']['pukulan'])->toBe(1);
+});
+
+it('selalu menyebut ketiga teknik meski satu pun belum terbit', function () {
+    expect($this->kalkulator->rekapTeknik($this->match))->toBe([
+        'merah' => ['pukulan' => 0, 'tendangan' => 0, 'jatuhan' => 0],
+        'biru' => ['pukulan' => 0, 'tendangan' => 0, 'jatuhan' => 0],
+    ]);
 });
 
 it('menentukan menang angka murni saat skor berbeda', function () {

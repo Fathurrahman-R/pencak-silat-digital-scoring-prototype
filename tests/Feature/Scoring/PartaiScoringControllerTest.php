@@ -43,7 +43,13 @@ beforeEach(function () {
         return $user;
     };
 
-    $this->operator = ($this->buatUser)('operator-it');
+    /*
+     * Timer, pengakhiran partai, dan pergantian jadwal pindah dari Operator IT
+     * ke peran Pengendali Gelanggang. Yang menjalankan aksi-aksi itu di berkas
+     * ini karena itu pengendali, bukan operator -- operator turun jadi papan
+     * tampilan dan tidak lagi memimpin jalannya partai.
+     */
+    $this->pengendali = ($this->buatUser)('pengendali-gelanggang');
     $this->wasit = ($this->buatUser)('wasit');
     $this->juri1 = ($this->buatUser)('juri');
     $this->juri2 = ($this->buatUser)('juri');
@@ -56,11 +62,11 @@ beforeEach(function () {
      * dan ketua sengaja tidak ditugaskan: kewenangan mereka lintas
      * gelanggang, dan itu ikut teruji di sini.
      *
-     * Operator terikat gelanggang, bukan partai, jadi partainya perlu
+     * Pengendali terikat gelanggang, bukan partai, jadi partainya perlu
      * dijadwalkan ke sebuah gelanggang lebih dulu.
      */
     $gelanggang = Arena::factory()->for($this->tournament)->create();
-    $gelanggang->operators()->attach($this->operator);
+    $gelanggang->pengendali()->attach($this->pengendali);
     $this->match->update(['arena_id' => $gelanggang->id, 'order_in_arena' => 1]);
 
     MatchOfficial::create([
@@ -80,15 +86,15 @@ beforeEach(function () {
 });
 
 it('menampilkan state partai lewat resync', function () {
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->get(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
         ->assertOk()
         ->assertJsonPath('match.status', SilatMatch::STATUS_TERJADWAL)
         ->assertJsonPath('skor_total.merah', 0);
 });
 
-it('operator memulai babak lewat timer', function () {
-    $this->actingAs($this->operator)
+it('pengendali memulai babak lewat timer', function () {
+    $this->actingAs($this->pengendali)
         ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
         ->assertRedirect()
         ->assertSessionHas('success');
@@ -104,19 +110,19 @@ it('juri tidak boleh mengendalikan timer', function () {
 });
 
 it('menjeda dan melanjutkan babak yang sedang berjalan', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->post(route('admin.turnamen.partai.timer.jeda', [$this->tournament, $this->match]))
         ->assertRedirect()->assertSessionHas('success');
 
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->post(route('admin.turnamen.partai.timer.lanjut', [$this->tournament, $this->match]))
         ->assertRedirect()->assertSessionHas('success');
 });
 
 it('juri mengirim nilai dan skor terbit setelah dua juri sepakat', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
     $kirim = fn (User $juri) => $this->actingAs($juri)
         ->post(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
@@ -140,7 +146,7 @@ it('menolak nilai yang dikirim sebelum babak dimulai dan memberi peringatan buka
 });
 
 it('wasit menjatuhkan hukuman', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
     $this->actingAs($this->wasit)
         ->post(route('admin.turnamen.partai.hukuman', [$this->tournament, $this->match]), [
@@ -161,7 +167,7 @@ it('juri tidak boleh menjatuhkan hukuman', function () {
 });
 
 it('hitungan sampai sepuluh mengakhiri partai secara otomatis', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
     $this->actingAs($this->wasit)
         ->post(route('admin.turnamen.partai.hitungan', [$this->tournament, $this->match]), [
@@ -176,10 +182,68 @@ it('hitungan sampai sepuluh mengakhiri partai secara otomatis', function () {
         ->and($partai->winner_registration_id)->toBe($partai->red_registration_id);
 });
 
-it('operator mengakhiri partai secara manual dengan sebab WMP', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+/*
+ * Pasal 11.6.c huruf b: "Jika kedua Pesilat tidak segera bangkit, maka
+ * dilakukan hitungan teknik untuk keduanya."
+ *
+ * Bukan dua tekanan hitungan biasa. Jalur satu sudut menjatuhkan Teguran di
+ * hitungan ke-9 dan mengakhiri partai dengan pemenang di ke-10; keduanya
+ * keliru saat yang jatuh adalah kedua pesilat, karena naskah justru menyuruh
+ * menimbang berat badan atau menghitung nilai terbanyak.
+ */
+it('wasit mencatat hitungan serentak untuk kedua sudut tanpa mengakhiri partai', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
-    $this->actingAs($this->operator)
+    $this->actingAs($this->wasit)
+        ->post(route('admin.turnamen.partai.hitungan', [$this->tournament, $this->match]), [
+            'babak' => 1, 'hitungan' => 10, 'serentak' => true,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    $partai = $this->match->fresh();
+
+    expect($partai->technicalCounts()->count())->toBe(2)
+        ->and($partai->technicalCounts()->pluck('corner')->unique())->toHaveCount(2)
+        ->and($partai->status)->toBe(SilatMatch::STATUS_BERLANGSUNG)
+        ->and($partai->winner_registration_id)->toBeNull()
+        // Tidak ada Teguran: hitungan serentak tidak menghukum siapa pun.
+        ->and(Penalty::count())->toBe(0);
+});
+
+/*
+ * Tawaran penyelesaiannya harus SAMPAI ke panel. Selama `tawaran_serentak`
+ * tidak terbaca klien, keadaan ini terjadi tanpa ada yang memberi tahu
+ * siapa pun bahwa naskah menyediakan jalan keluarnya.
+ */
+it('menyertakan tawaran penyelesaian hitungan serentak di state', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $this->actingAs($this->wasit)
+        ->post(route('admin.turnamen.partai.hitungan', [$this->tournament, $this->match]), [
+            'babak' => 1, 'hitungan' => 10, 'serentak' => true,
+        ]);
+
+    $this->actingAs($this->pengendali)
+        ->get(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertJsonPath('tawaran_serentak.sebab', 'berat_badan_teringan');
+});
+
+it('menolak hitungan satu sudut tanpa menyebut sudutnya', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $this->actingAs($this->wasit)
+        ->post(route('admin.turnamen.partai.hitungan', [$this->tournament, $this->match]), [
+            'babak' => 1, 'hitungan' => 5,
+        ])
+        ->assertSessionHasErrors('corner');
+});
+
+it('pengendali mengakhiri partai secara manual dengan sebab WMP', function () {
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+
+    $this->actingAs($this->pengendali)
         ->post(route('admin.turnamen.partai.akhiri', [$this->tournament, $this->match]), [
             'corner' => 'red', 'sebab' => 'wmp',
         ])
@@ -201,8 +265,8 @@ it('wasit tidak boleh mengakhiri partai -- itu wewenang manage, bukan create huk
 });
 
 it('ketua pertandingan mengesahkan hasil partai yang sudah selesai', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.akhiri', [$this->tournament, $this->match]), ['corner' => 'red', 'sebab' => 'wmp']);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.akhiri', [$this->tournament, $this->match]), ['corner' => 'red', 'sebab' => 'wmp']);
 
     $this->actingAs($this->ketua)
         ->post(route('admin.turnamen.partai.sahkan', [$this->tournament, $this->match]))
@@ -221,7 +285,7 @@ it('menolak mengesahkan partai yang belum punya pemenang', function () {
 });
 
 it('pengawas membatalkan nilai yang sudah terbit tanpa menghapus riwayatnya', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
 
     $kirim = fn (User $juri) => $this->actingAs($juri)
         ->post(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
@@ -257,7 +321,7 @@ it('wasit tidak boleh membatalkan nilai -- itu wewenang dewan juri', function ()
 });
 
 it('menyertakan hitungan teguran dan setelan peraturan di state', function () {
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
         ->assertOk()
         ->assertJsonPath('hukuman.merah.teguran', 0)
@@ -266,26 +330,26 @@ it('menyertakan hitungan teguran dan setelan peraturan di state', function () {
 });
 
 it('membalas JSON tipis alih-alih redirect saat panel meminta JSON', function () {
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->postJson(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
         ->assertOk()
         ->assertJson(['tipe' => 'success']);
 });
 
 it('membalas galat validasi sebagai JSON saat panel meminta JSON', function () {
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->postJson(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), [])
         ->assertStatus(422)
         ->assertJsonValidationErrors('babak');
 });
 
 it('menyertakan riwayat nilai dan hukuman untuk panel dewan juri', function () {
-    $this->actingAs($this->operator)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
+    $this->actingAs($this->pengendali)->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1]);
     $this->actingAs($this->wasit)->post(route('admin.turnamen.partai.hukuman', [$this->tournament, $this->match]), [
         'babak' => 1, 'corner' => 'blue', 'tingkat' => 'berat',
     ]);
 
-    $response = $this->actingAs($this->operator)
+    $response = $this->actingAs($this->pengendali)
         ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
         ->assertOk();
 
@@ -305,7 +369,7 @@ it('tetap menyimpan aksi ke database walau server Reverb tidak terjangkau', func
     // server yang menyala di sana sehingga panggilannya betul-betul gagal.
     config(['broadcasting.default' => 'reverb']);
 
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->post(route('admin.turnamen.partai.timer.mulai', [$this->tournament, $this->match]), ['babak' => 1])
         ->assertRedirect()
         ->assertSessionHas('success');
@@ -318,7 +382,7 @@ it('menolak state partai yang bukan milik kejuaraan di alamat', function () {
     $turnamenLain = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($turnamenLain);
 
-    $this->actingAs($this->operator)
+    $this->actingAs($this->pengendali)
         ->get(route('admin.turnamen.partai.state', [$turnamenLain, $this->match]))
         ->assertNotFound();
 });

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Bagan\Contracts\Terbagankan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Bernama SilatMatch, bukan Match, karena `match` adalah kata kunci PHP sejak
  * 8.0 dan tidak bisa dipakai sebagai nama kelas. Nama tabelnya tetap `matches`.
  */
-class SilatMatch extends Model
+class SilatMatch extends Model implements Terbagankan
 {
     use HasFactory;
 
@@ -36,6 +37,10 @@ class SilatMatch extends Model
         'win_reason',
         'status',
         'current_round',
+        'susulan_round',
+        'susulan_dibuka_at',
+        'susulan_dibuka_oleh',
+        'susulan_jeda_otomatis',
         'ratified_at',
         'ratified_by',
         'arena_id',
@@ -47,8 +52,14 @@ class SilatMatch extends Model
         return [
             'round' => 'integer',
             'position' => 'integer',
+            'susulan_round' => 'integer',
+            'susulan_dibuka_at' => 'datetime',
+            'susulan_jeda_otomatis' => 'boolean',
             'current_round' => 'integer',
             'ratified_at' => 'datetime',
+            'snapshot_skor' => 'array',
+            'snapshot_pada' => 'datetime',
+            'judge_inputs_dipangkas_pada' => 'datetime',
         ];
     }
 
@@ -128,6 +139,33 @@ class SilatMatch extends Model
     }
 
     /** Babak scoring (1/2/3) yang sedang berjalan -- bukan babak bagan. */
+    /** Ada babak lama yang sedang dibuka untuk pencatatan susulan. */
+    public function susulanTerbuka(): bool
+    {
+        return $this->susulan_round !== null;
+    }
+
+    public function babakSusulan(): ?MatchRound
+    {
+        if ($this->susulan_round === null) {
+            return null;
+        }
+
+        return $this->rounds()->where('round', $this->susulan_round)->first();
+    }
+
+    /**
+     * Babak yang sedang jadi acuan tampilan dan ringkasan.
+     *
+     * Selama susulan terbuka, panel wasit harus melihat ringkasan hukuman
+     * BABAK ITU, bukan babak berjalan -- kalau tidak, ia mencatat teguran
+     * susulan sambil membaca hitungan milik babak yang sedang dijeda.
+     */
+    public function babakTampil(): int
+    {
+        return $this->susulan_round ?? $this->current_round ?? 1;
+    }
+
     public function babakAktif(): ?MatchRound
     {
         if ($this->current_round === null) {
@@ -178,6 +216,23 @@ class SilatMatch extends Model
     }
 
     /** Nomor partai berikutnya yang menampung pemenang partai ini. */
+    /**
+     * Bagan tempat partai ini berdiri -- pemenuhan kontrak Terbagankan.
+     *
+     * Namanya berbeda dari bracket() supaya relasi yang sudah dipakai puluhan
+     * tempat tidak perlu diganti nama demi antarmuka.
+     */
+    public function baganPartai(): BelongsTo
+    {
+        return $this->bracket();
+    }
+
+    /** Partai lain di bagan yang sama -- pemenuhan kontrak Terbagankan. */
+    public function sesamaBagan(): HasMany
+    {
+        return $this->bracket->matches();
+    }
+
     public function posisiBerikutnya(): int
     {
         return (int) ceil($this->position / 2);

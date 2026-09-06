@@ -53,7 +53,22 @@ return [
                 'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
             ],
             'client_options' => [
-                // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                /*
+                 * Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                 *
+                 * Seluruh event gelanggang memakai ShouldBroadcastNow, jadi
+                 * dorongannya terjadi DI DALAM permintaan juri, bukan di
+                 * pekerja antrean. Tanpa batas waktu, Reverb yang mati atau
+                 * tersendat menggantung tombol nilai sampai batas PHP-nya
+                 * sendiri -- juri menekan dan layarnya diam entah sampai kapan.
+                 *
+                 * Dua detik: lebih lama dari dorongan sehat (diukur 1,8 ms
+                 * lewat loopback) dengan jarak yang sangat lebar, tapi cukup
+                 * pendek untuk tidak terasa sebagai macet. Panel yang gagal
+                 * menerima siarannya menarik state sendiri sebagai cadangan.
+                 */
+                'timeout' => 2.0,
+                'connect_timeout' => 1.0,
             ],
         ],
 

@@ -134,7 +134,9 @@ it('mempertahankan cakupan dan jumlah kolom hukuman dari naskah', function () {
     $hukuman = $this->tournament->peraturan()->fresh()->hukuman;
 
     expect($hukuman['teguran']['pengurangan'])->toBe([1 => -2, 2 => -4])
-        ->and($hukuman['teguran']['cakupan'])->toBe('babak')
+        ->and($hukuman['teguran']['cakupan'])->toBe('partai')
+        ->and($hukuman['teguran']['naik_ke_peringatan_dalam_babak_pada'])->toBe(2)
+        ->and($hukuman['pembinaan']['cakupan'])->toBe('babak')
         ->and($hukuman['peringatan']['cakupan'])->toBe('partai')
         ->and($hukuman['peringatan']['jumlah_kolom'])->toBe(3)
         ->and($hukuman['peringatan']['tingkat_diskualifikasi'])->toBe(3)

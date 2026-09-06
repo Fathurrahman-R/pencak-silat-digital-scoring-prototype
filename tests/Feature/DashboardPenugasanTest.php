@@ -125,3 +125,21 @@ it('tetap menampilkan ringkasan untuk pengelola kejuaraan', function () {
         ->assertSee('Urutan kerja kejuaraan')
         ->assertDontSee('Partai saya');
 });
+
+/*
+ * Alamat per-partai basi begitu pengendali memindahkan jadwal: petugas yang
+ * menekan kartu lama mendarat di partai yang sudah lewat. Kartu karena itu
+ * menunjuk gelanggangnya, yang tidak pernah basi.
+ */
+it('menautkan ke panel gelanggang untuk partai yang sudah dijadwalkan', function () {
+    $gelanggang = App\Models\Arena::factory()->for($this->tournament)->create();
+    $this->match->update(['arena_id' => $gelanggang->id, 'order_in_arena' => 1]);
+
+    $juri = ($this->tugaskan)('juri', MatchOfficial::ROLE_JURI, 1);
+
+    $this->actingAs($juri)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $gelanggang]), false)
+        ->assertDontSee(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]), false);
+});

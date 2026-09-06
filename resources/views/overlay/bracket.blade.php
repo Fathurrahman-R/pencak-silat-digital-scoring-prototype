@@ -16,7 +16,7 @@
     apa adanya berarti membawa bidang itu serta.
 --}}
 
-<x-layouts.overlay title="Bagan">
+<x-layouts.overlay title="Bagan" :realtime="false">
     <div class="relative h-full w-full p-[64px]">
         @if (! $bracket)
             <p class="text-[18px] text-silat-teks-redup">

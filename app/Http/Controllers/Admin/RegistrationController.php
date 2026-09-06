@@ -6,9 +6,11 @@ use App\Enums\StatusPendaftaran;
 use App\Http\Controllers\Concerns\ScopesContingents;
 use App\Http\Controllers\Controller;
 use App\Models\Athlete;
+use App\Models\BracketSlot;
 use App\Models\Contingent;
 use App\Models\JurusEvent;
 use App\Models\Registration;
+use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\WeightClass;
 use App\Support\Pendaftaran\DaftarkanPeserta;
@@ -125,6 +127,27 @@ class RegistrationController extends Controller
 
         abort_unless($registration->status->bolehDisuntingKontingen(), 403);
 
+        /*
+         * Panitia yang memeriksa berkas di meja sekretariat mematikan gerbang
+         * ini lewat config/pendaftaran.php. Pendaftaran lalu langsung sah
+         * tanpa singgah di antrean pemeriksaan.
+         *
+         * `verified_by` sengaja dibiarkan kosong: tidak ada manusia yang
+         * memutuskannya, dan mengisinya dengan id penekan tombol berarti
+         * memalsukan jejak audit.
+         */
+        if (config('pendaftaran.lewati_verifikasi')) {
+            $registration->update([
+                'status' => StatusPendaftaran::Terverifikasi,
+                'submitted_at' => now(),
+                'verified_at' => now(),
+                'verified_by' => null,
+                'rejection_reason' => null,
+            ]);
+
+            return back()->with('success', 'Pendaftaran langsung disahkan — verifikasi berkas dimatikan di server ini.');
+        }
+
         $kurang = [];
 
         foreach ($registration->athletes as $athlete) {
@@ -159,9 +182,42 @@ class RegistrationController extends Controller
             403,
         );
 
+        $this->pastikanBelumMasukBagan($registration);
+
         $registration->delete();
 
         return back()->with('success', 'Pendaftaran dibatalkan.');
+    }
+
+    /**
+     * Pendaftaran yang sudah masuk bagan tidak boleh dihapus.
+     *
+     * Slot bagan mengikuti pendaftarannya dengan cascade, dan kolom peserta
+     * pada partai dikosongkan. Untuk pendaftaran yang sudah bertanding,
+     * akibatnya bukan sekadar satu baris hilang: partai yang berstatus
+     * selesai kehilangan pesertanya BESERTA pemenangnya, bagan menyusut jadi
+     * ganjil sehingga halaman bagan penonton berhenti dengan galat, dan
+     * medali kehilangan nama juaranya.
+     *
+     * Kalau seorang pesilat memang harus ditarik setelah bagan tersusun,
+     * jalurnya membuka kunci bagan dan menyusunnya ulang -- bukan menghapus
+     * pendaftaran dari belakang.
+     */
+    private function pastikanBelumMasukBagan(Registration $registration): void
+    {
+        $adaSlot = BracketSlot::where('registration_id', $registration->id)->exists();
+
+        $adaPartai = SilatMatch::query()
+            ->where('red_registration_id', $registration->id)
+            ->orWhere('blue_registration_id', $registration->id)
+            ->orWhere('winner_registration_id', $registration->id)
+            ->exists();
+
+        if ($adaSlot || $adaPartai) {
+            throw ValidationException::withMessages([
+                'pendaftaran' => 'Pendaftaran ini sudah masuk bagan, jadi tidak bisa dihapus. Buka kunci bagan kelas ini dan susun ulang bila pesilatnya memang ditarik.',
+            ]);
+        }
     }
 
     private function pastikanMilik(Contingent $contingent, Registration $registration): void

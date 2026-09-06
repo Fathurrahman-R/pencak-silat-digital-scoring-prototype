@@ -11,7 +11,7 @@
     Sudut membulat di mana-mana adalah tanda tangan keluaran yang disusun mesin,
     dan papan pengumuman memang tidak punya sudut membulat.
 --}}
-<x-layouts.silat title="Kejuaraan Pencak Silat">
+<x-layouts.silat title="Kejuaraan Pencak Silat" :realtime="false">
     <div class="min-h-screen bg-silat-latar text-silat-teks">
 
         {{-- Bar identitas sekecil mungkin: halaman ini bukan tentang aplikasinya --}}
@@ -119,7 +119,7 @@
                 <div class="min-w-0">
                     <div class="flex items-baseline justify-between border-b-2 border-silat-teks pb-2">
                         <span class="text-[11px] tracking-[.28em] uppercase">Perolehan medali</span>
-                        <a href="{{ route('live.medali', $berjalan) }}" class="text-[12px] text-silat-teks-redup">Seluruh kontingen</a>
+                        <a href="{{ route('live.turnamen.medali', $berjalan) }}" class="text-[12px] text-silat-teks-redup">Seluruh kontingen</a>
                     </div>
                     @foreach ($medali as $i => $baris)
                         <div class="flex items-baseline gap-4 border-b border-silat-garis py-3">

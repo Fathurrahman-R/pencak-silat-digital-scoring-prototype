@@ -2,6 +2,7 @@
 
 namespace App\Support\Scoring;
 
+use App\Enums\AkibatProtes;
 use App\Enums\StatusBabak;
 use App\Models\MatchRound;
 use App\Models\Registration;
@@ -24,6 +25,8 @@ class MatchTimer
         if ($match->selesai()) {
             throw new RuntimeException('Partai ini sudah selesai.');
         }
+
+        $this->pastikanTidakAdaSusulan($match);
 
         if ($babak > 1 && ! $this->babakSebelumnyaSelesai($match, $babak)) {
             throw new RuntimeException("Babak ".($babak - 1)." belum selesai.");
@@ -69,6 +72,8 @@ class MatchTimer
 
     public function lanjutkan(MatchRound $round): MatchRound
     {
+        $this->pastikanTidakAdaSusulan($round->match);
+
         if ($round->status !== StatusBabak::Jeda) {
             throw new RuntimeException('Babak ini tidak sedang jeda.');
         }
@@ -140,13 +145,63 @@ class MatchTimer
             ->exists();
     }
 
+    /**
+     * Apakah partai ini berhak atas satu babak tambahan.
+     *
+     * Dua jalan, keduanya dari naskah:
+     *   - seri yang tidak terpecah sampai tiga kriteria pertama (Pasal 11.6.g.1.b.3)
+     *   - protes manajer diterima dengan akibat babak tambahan (Pasal 15.4.c.e.2)
+     *
+     * Yang pertama sudah lama dikenal `pemecah_seri`; yang kedua baru.
+     */
+    private function babakTambahanDiizinkan(SilatMatch $match): bool
+    {
+        return $match->managerProtests()
+            ->where('keputusan', 'diterima')
+            ->where('akibat', AkibatProtes::BabakTambahan->value)
+            ->exists();
+    }
+
+    /**
+     * Jam babak berjalan tidak boleh hidup selagi babak lain dibuka untuk
+     * susulan.
+     *
+     * Kalau dibiarkan: waktu babak berjalan terus berkurang, sementara SELURUH
+     * input dikunci ke babak susulan -- CatatInputJuri menolak babak berjalan,
+     * dan guard hukuman melakukan hal yang sama. Yang tersisa adalah menit-menit
+     * pertandingan yang habis tanpa seorang pun bisa mencatat apa pun di
+     * dalamnya, dan waktu itu tidak bisa dikembalikan.
+     *
+     * Ditegakkan di sini, bukan cuma disembunyikan tombolnya: panel bukan
+     * satu-satunya jalan masuk ke endpoint timer.
+     *
+     * @throws RuntimeException
+     */
+    private function pastikanTidakAdaSusulan(SilatMatch $match): void
+    {
+        if ($match->susulan_round !== null) {
+            throw new RuntimeException(
+                "Babak {$match->susulan_round} sedang dibuka untuk input susulan — tutup dulu sebelum menjalankan babak.",
+            );
+        }
+    }
+
     private function durasiBabak(SilatMatch $match, int $babak): int
     {
         $golongan = $match->bracket->weightClass->golongan_usia;
         $peraturan = $match->bracket->weightClass->tournament->peraturan();
         $setelan = $peraturan->babakUntuk($golongan);
 
-        if ($babak > $setelan['jumlah']) {
+        /*
+         * Satu babak MELEBIHI jumlah golongan usia hanya dibuka lewat satu
+         * jalan: protes manajer yang diterima dengan akibat "menambah
+         * pertandingan 1 (satu) babak" (Pasal 15 ayat 4 huruf c.e.2).
+         *
+         * Batasnya tetap tegas -- satu babak, bukan berapa pun. Melonggarkan
+         * `jumlah` di setelan peraturan akan membuka babak tambahan untuk
+         * SELURUH partai, termasuk yang tidak pernah diprotes.
+         */
+        if ($babak > $setelan['jumlah'] + ($this->babakTambahanDiizinkan($match) ? 1 : 0)) {
             throw new RuntimeException(
                 "Golongan {$golongan->label()} hanya punya {$setelan['jumlah']} babak.",
             );

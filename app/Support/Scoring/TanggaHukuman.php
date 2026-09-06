@@ -22,13 +22,18 @@ use RuntimeException;
  * penghitung tersimpan -- selaras dengan pola "tidak menyimpan yang bisa
  * dihitung" yang dipakai golongan usia dan posisi bagan berikutnya.
  *
- * Pembinaan berlaku sepanjang partai tapi TERSETEL ULANG setiap kali ia
- * mendorong eskalasi ke Teguran -- naskah menyebut pembinaan "masih boleh
- * diberikan" lagi setelah Peringatan dijatuhkan, dan itu hanya masuk akal
- * kalau hitungannya memang mulai dari nol lagi setelah eskalasi terakhir.
- * Teguran dihitung per babak (cakupan `babak`), sehingga otomatis mulai
- * dari nol tiap babak baru. Peringatan berlaku sepanjang partai dan tidak
- * pernah mereset.
+ * Pembinaan dihitung PER BABAK: hitungannya kembali nol tiap babak baru, dan
+ * tidak pernah tersetel ulang oleh eskalasi. Setelah dua pembinaan dalam satu
+ * babak, setiap pelanggaran ringan berikutnya di babak itu naik jadi Teguran.
+ * Ini menyimpang dari naskah dengan sadar; alasannya ada di config/scoring.php.
+ *
+ * Teguran bertingkat sepanjang partai -- Teguran I lalu Teguran II, tidak
+ * mengulang dari I tiap babak. Ia naik jadi Peringatan I lewat DUA pemicu
+ * (Pasal 11.6.d.4.b.3): teguran ketiga sepanjang partai, atau pelanggaran
+ * berikutnya setelah dua teguran dalam babak yang sama. Mana pun yang tercapai
+ * lebih dulu.
+ *
+ * Peringatan berlaku sepanjang partai dan tidak pernah mereset.
  */
 class TanggaHukuman
 {
@@ -45,14 +50,27 @@ class TanggaHukuman
         ?string $catatan,
         User $pencatat,
     ): Penalty {
-        if ($this->sudahDiskualifikasi($match, $sudut)) {
-            throw new RuntimeException('Pesilat ini sudah didiskualifikasi.');
-        }
+        return DB::transaction(function () use ($match, $sudut, $babak, $tingkat, $catatan, $pencatat) {
+            $this->kunciPartai($match);
 
-        return DB::transaction(fn () => match ($tingkat) {
-            TingkatPelanggaran::Ringan => $this->tanganiRingan($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
-            TingkatPelanggaran::Sedang => $this->jatuhkanTeguran($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
-            TingkatPelanggaran::Berat => $this->jatuhkanPeringatan($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
+            /*
+             * Diperiksa DI DALAM kunci.
+             *
+             * Di luar kunci, dua pencatatan yang tiba bersamaan sama-sama
+             * melihat pesilat yang belum didiskualifikasi: yang pertama
+             * menjatuhkan Peringatan ketiga dan mengakhiri partai, yang kedua
+             * tetap lanjut dan menulis Peringatan keempat pada pesilat yang
+             * sudah gugur.
+             */
+            if ($this->sudahDiskualifikasi($match, $sudut)) {
+                throw new RuntimeException('Pesilat ini sudah didiskualifikasi.');
+            }
+
+            return match ($tingkat) {
+                TingkatPelanggaran::Ringan => $this->tanganiRingan($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
+                TingkatPelanggaran::Sedang => $this->jatuhkanTeguran($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
+                TingkatPelanggaran::Berat => $this->jatuhkanPeringatan($match, $sudut, $babak, $tingkat, $catatan, $pencatat),
+            };
         });
     }
 
@@ -64,7 +82,7 @@ class TanggaHukuman
         ?string $catatan,
         User $pencatat,
     ): Penalty {
-        $terpakai = $this->jumlahPembinaan($match, $sudut);
+        $terpakai = $this->jumlahPembinaan($match, $sudut, $babak);
         $ambang = config('scoring.tanding.hukuman.pembinaan.ambang_naik_ke_teguran');
 
         if ($terpakai < $ambang) {
@@ -93,12 +111,23 @@ class TanggaHukuman
         ?string $catatan,
         User $pencatat,
     ): Penalty {
-        $terpakai = $this->jumlahTeguran($match, $sudut, $babak);
-        $ambangNaik = config('scoring.tanding.hukuman.teguran.naik_ke_peringatan_pada');
-        $levelBaru = $terpakai + 1;
+        $hukuman = $this->hukumanBerlaku($match);
 
-        if ($levelBaru >= $ambangNaik) {
-            // Teguran ketiga tidak pernah tercatat sebagai teguran.
+        $sepanjangPartai = $this->hitungTeguran($hukuman, $sudut);
+        $babakIni = $this->hitungTeguran($hukuman, $sudut, $babak);
+
+        $levelBaru = $sepanjangPartai + 1;
+
+        /*
+         * Dua pemicu Peringatan I, mana pun yang tercapai lebih dulu:
+         * teguran ketiga sepanjang partai, atau pelanggaran berikutnya setelah
+         * dua teguran dalam babak yang sama.
+         */
+        $naikKarenaPartai = $levelBaru >= config('scoring.tanding.hukuman.teguran.naik_ke_peringatan_pada');
+        $naikKarenaBabak = $babakIni >= config('scoring.tanding.hukuman.teguran.naik_ke_peringatan_dalam_babak_pada');
+
+        if ($naikKarenaPartai || $naikKarenaBabak) {
+            // Teguran yang memicu eskalasi tidak pernah tercatat sebagai teguran.
             return $this->jatuhkanPeringatan($match, $sudut, $babak, $tingkat, $catatan, $pencatat);
         }
 
@@ -157,13 +186,34 @@ class TanggaHukuman
      */
     public function catatLangsungTeguran(SilatMatch $match, Sudut $sudut, int $babak, ?string $catatan, User $pencatat): Penalty
     {
-        if ($this->sudahDiskualifikasi($match, $sudut)) {
-            throw new RuntimeException('Pesilat ini sudah didiskualifikasi.');
-        }
+        return DB::transaction(function () use ($match, $sudut, $babak, $catatan, $pencatat) {
+            $this->kunciPartai($match);
 
-        return DB::transaction(
-            fn () => $this->jatuhkanTeguran($match, $sudut, $babak, TingkatPelanggaran::Sedang, $catatan, $pencatat),
-        );
+            if ($this->sudahDiskualifikasi($match, $sudut)) {
+                throw new RuntimeException('Pesilat ini sudah didiskualifikasi.');
+            }
+
+            return $this->jatuhkanTeguran($match, $sudut, $babak, TingkatPelanggaran::Sedang, $catatan, $pencatat);
+        });
+    }
+
+    /**
+     * Mengunci baris partai selama tangga hukuman dihitung.
+     *
+     * Tiap tahap dihitung ulang dari baris `penalties` yang sudah tercatat.
+     * Tanpa kunci, dua pencatatan yang tiba nyaris bersamaan -- wasit di
+     * tablet dan operator di panel mencatat kejadian yang sama -- membaca
+     * hitungan tangga yang persis sama dan menulis tahap kembar: dua Teguran
+     * pertama (masing-masing -1) alih-alih Teguran 1 lalu Teguran 2 (-2),
+     * dan eskalasi ke diskualifikasi tertunda satu pelanggaran.
+     *
+     * Kuncinya di baris partai, bukan di baris hukuman, karena yang harus
+     * berbaris adalah seluruh perhitungan tangga satu partai -- pola yang
+     * sama dipakai ConsensusEvaluator dan PollingVerifikasi.
+     */
+    private function kunciPartai(SilatMatch $match): void
+    {
+        SilatMatch::whereKey($match->id)->lockForUpdate()->first();
     }
 
     /**
@@ -185,24 +235,27 @@ class TanggaHukuman
         $peringatan = $this->hitungPeringatan($hukuman, $sudut);
 
         return [
-            'pembinaan' => $this->hitungPembinaan($hukuman, $sudut),
-            'teguran' => $this->hitungTeguran($hukuman, $sudut, $babak),
+            'pembinaan' => $this->hitungPembinaan($hukuman, $sudut, $babak),
+            // Tingkat teguran berjalan sepanjang partai, jadi petak yang
+            // menyala di panel juga tidak boleh padam saat babak berganti.
+            'teguran' => $this->hitungTeguran($hukuman, $sudut),
             'peringatan' => $peringatan,
             'diskualifikasi' => $peringatan >= config('scoring.tanding.hukuman.peringatan.tingkat_diskualifikasi'),
         ];
     }
 
-    /**
-     * Pembinaan yang masih berlaku sejak eskalasi terakhir -- direset begitu
-     * sebuah Teguran atau Peringatan tercatat untuk sudut ini.
-     */
-    public function jumlahPembinaan(SilatMatch $match, Sudut $sudut): int
+    /** Pembinaan yang tercatat pada babak ini -- kembali nol tiap babak baru. */
+    public function jumlahPembinaan(SilatMatch $match, Sudut $sudut, int $babak): int
     {
-        return $this->hitungPembinaan($this->hukumanBerlaku($match), $sudut);
+        return $this->hitungPembinaan($this->hukumanBerlaku($match), $sudut, $babak);
     }
 
-    /** Teguran yang tercatat pada babak ini -- tidak pernah lebih dari dua, sisanya jadi Peringatan. */
-    public function jumlahTeguran(SilatMatch $match, Sudut $sudut, int $babak): int
+    /**
+     * Teguran sudut ini. Tanpa `$babak` berarti sepanjang partai -- itulah
+     * tingkatnya (Teguran I, II). Dengan `$babak` berarti hitungan babak itu
+     * saja, yang dipakai pemicu kedua eskalasi ke Peringatan.
+     */
+    public function jumlahTeguran(SilatMatch $match, Sudut $sudut, ?int $babak = null): int
     {
         return $this->hitungTeguran($this->hukumanBerlaku($match), $sudut, $babak);
     }
@@ -233,26 +286,24 @@ class TanggaHukuman
     }
 
     /** @param  Collection<int, Penalty>  $hukuman */
-    private function hitungPembinaan(Collection $hukuman, Sudut $sudut): int
-    {
-        $sudutIni = $hukuman->where('corner', $sudut);
-
-        $eskalasiTerakhir = $sudutIni
-            ->whereIn('tier', [TingkatHukuman::Teguran, TingkatHukuman::Peringatan])
-            ->max('id');
-
-        return $sudutIni
-            ->where('tier', TingkatHukuman::Pembinaan)
-            ->when($eskalasiTerakhir, fn (Collection $c) => $c->where('id', '>', $eskalasiTerakhir))
-            ->count();
-    }
-
-    /** @param  Collection<int, Penalty>  $hukuman */
-    private function hitungTeguran(Collection $hukuman, Sudut $sudut, int $babak): int
+    private function hitungPembinaan(Collection $hukuman, Sudut $sudut, int $babak): int
     {
         return $hukuman
             ->where('corner', $sudut)
             ->where('round', $babak)
+            ->where('tier', TingkatHukuman::Pembinaan)
+            ->count();
+    }
+
+    /**
+     * @param  Collection<int, Penalty>  $hukuman
+     * @param  int|null  $babak  null berarti sepanjang partai
+     */
+    private function hitungTeguran(Collection $hukuman, Sudut $sudut, ?int $babak = null): int
+    {
+        return $hukuman
+            ->where('corner', $sudut)
+            ->when($babak !== null, fn (Collection $c) => $c->where('round', $babak))
             ->where('tier', TingkatHukuman::Teguran)
             ->count();
     }

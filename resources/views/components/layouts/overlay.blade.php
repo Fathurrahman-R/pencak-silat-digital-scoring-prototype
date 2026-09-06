@@ -1,5 +1,11 @@
 @props([
     'title' => null,
+
+    // Lihat catatan yang sama di components/layouts/silat.blade.php: bawaannya
+    // menyala, dan halaman yang tidak butuh menyatakannya sendiri. Di sini
+    // yang menyatakannya hanya bagan -- ia disegarkan manual, tidak pernah
+    // mendengarkan channel apa pun, dan justru paling lama dibiarkan terbuka.
+    'realtime' => true,
 ])
 
 {{--
@@ -27,6 +33,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @unless ($realtime)
+        <meta name="realtime" content="0">
+    @endunless
 
     <title>{{ $title ? $title.' — Overlay' : 'Overlay' }}</title>
 

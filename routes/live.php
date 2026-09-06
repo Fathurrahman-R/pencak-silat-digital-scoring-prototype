@@ -9,10 +9,22 @@ use Illuminate\Support\Facades\Route;
  * bisa saling tertukar oleh router: `/live/turnamen/9` tidak pernah bisa
  * dicoba dulu sebagai binding Arena bernomor "turnamen".
  */
+/*
+ * `live.gelanggang.state` TIDAK ada di sini. Ia didaftarkan sendiri di
+ * bootstrap/app.php tanpa grup 'web' -- tiap penonton menariknya ulang pada
+ * tiap siaran, dan sesi yang tidak pernah dipakai penonton anonim membebani
+ * setiap tarikannya. Batas throttle:live tetap terpasang di sana.
+ */
 Route::controller(LiveScoreController::class)->group(function () {
-    Route::get('/gelanggang/{arena}', 'gelanggang')->name('gelanggang');
-    Route::get('/gelanggang/{arena}/state', 'state')->name('gelanggang.state');
+    // Satu-satunya halaman live score yang memakai Echo, jadi satu-satunya
+    // yang ikut mati bersama LIVE_SCORE_ENABLED.
+    Route::get('/gelanggang/{arena}', 'gelanggang')->middleware('siaran:live')->name('gelanggang');
 
+    /*
+     * Tiga halaman berikut TIDAK ikut saklar: tidak satu pun memakai Echo,
+     * jadi tidak ada beban Reverb yang bisa dihemat dengan mematikannya --
+     * sementara penonton tetap butuh melihat hasil, medali, dan bagan.
+     */
     Route::get('/turnamen/{tournament}', 'turnamen')->name('turnamen');
     Route::get('/turnamen/{tournament}/medali', 'medali')->name('turnamen.medali');
     Route::get('/turnamen/{tournament}/bagan/{weightClass}', 'bagan')->name('turnamen.bagan');

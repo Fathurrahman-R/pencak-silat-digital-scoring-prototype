@@ -2,7 +2,8 @@
 
 namespace App\Support\Bagan;
 
-use App\Models\SilatMatch;
+use App\Support\Bagan\Contracts\Terbagankan;
+use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
 /**
@@ -15,10 +16,14 @@ use RuntimeException;
  *
  * Dipakai dua kali: saat bagan disusun untuk meluluskan bye, dan saat partai
  * sungguhan selesai.
+ *
+ * Bertipe Terbagankan, bukan SilatMatch: aritmetika ini persis sama untuk
+ * partai Tanding dan battle Jurus, dan menggandakannya berarti dua tempat yang
+ * harus diperbaiki saat undian bergeser -- yang kedua akan tertinggal.
  */
 class PromosiPemenang
 {
-    public function __invoke(SilatMatch $partai): ?SilatMatch
+    public function __invoke(Terbagankan&Model $partai): (Terbagankan&Model)|null
     {
         if ($partai->winner_registration_id === null) {
             throw new RuntimeException(
@@ -27,7 +32,7 @@ class PromosiPemenang
         }
 
         // Final tidak punya partai berikutnya, dan itu bukan kesalahan.
-        $berikutnya = $partai->bracket->matches()
+        $berikutnya = $partai->sesamaBagan()
             ->where('round', $partai->round + 1)
             ->where('position', $partai->posisiBerikutnya())
             ->first();

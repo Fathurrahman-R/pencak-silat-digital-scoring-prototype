@@ -2,19 +2,25 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\FormatJurus;
 use App\Http\Controllers\Controller;
+use App\Models\JurusBattle;
 use App\Models\JurusDeduction;
 use App\Models\JurusEvent;
 use App\Models\JurusPerformance;
 use App\Models\JurusScore;
 use App\Models\Tournament;
+use App\Support\Bagan\SusunBaganJurus;
 use App\Support\Jurus\JurusScoreCalculator;
 use App\Support\Jurus\JurusTimer;
+use App\Support\Jurus\PerbandinganBattle;
+use App\Support\Jurus\PutuskanBattle;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -55,6 +61,21 @@ class JurusScoringController extends Controller
             'jurusEvent' => $jurusEvent,
             'performances' => $performances,
             'peringkat' => $this->kalkulator->peringkat($performances),
+            /*
+             * Battle nomor ini, kalau formatnya memang sistem gugur.
+             *
+             * Nomor berformat penampilan mendapat koleksi kosong dan daftarnya
+             * tidak digambar sama sekali -- bukan daftar kosong berjudul
+             * "Battle", yang membuat panitia mengira ada yang belum tersusun.
+             */
+            'battles' => $jurusEvent->format->pakaiBagan()
+                ? $jurusEvent->bagan?->battles()
+                    ->with('red.athletes', 'blue.athletes', 'performances')
+                    ->orderBy('round')->orderBy('position')->get()
+                    ?? collect()
+                : collect(),
+            // Dipakai kalimat kartu bagan; withCount tidak ikut di query ini.
+            'pesertaSah' => app(SusunBaganJurus::class)->pesertaSah($jurusEvent)->count(),
         ]);
     }
 
@@ -88,6 +109,138 @@ class JurusScoringController extends Controller
             'performance' => $performance->load('jurusEvent', 'registration.athletes', 'registration.contingent'),
             'config' => $this->konfigPanel($tournament, $performance),
         ]);
+    }
+
+    /**
+     * Mengubah format sebuah nomor Jurus.
+     *
+     * Naskah 2025 hanya mengenal sistem gugur (Pasal 12.1.b.1), tapi kolomnya
+     * berbawaan `penampilan` supaya kejuaraan yang sudah tersusun tidak berubah
+     * bentuk di tengah jalan. Panitia yang memilihnya, bukan migrasi.
+     */
+    public function ubahFormat(Request $request, Tournament $tournament, JurusEvent $jurusEvent): RedirectResponse
+    {
+        $this->pastikanMilik($tournament, $jurusEvent);
+
+        $data = $request->validate(['format' => ['required', Rule::enum(FormatJurus::class)]]);
+        $format = FormatJurus::from($data['format']);
+
+        /*
+         * Nomor yang sudah punya penampilan tidak boleh berpindah format.
+         *
+         * Penampilan berformat lama tidak punya battle maupun sudut; membiarkan
+         * formatnya berubah berarti peringkat median dan bagan gugur
+         * memperebutkan baris yang sama, dan hasil yang sudah tercatat jadi
+         * tidak bisa dibaca oleh keduanya.
+         */
+        if ($format !== $jurusEvent->format && $jurusEvent->performances()->exists()) {
+            throw ValidationException::withMessages([
+                'format' => 'Nomor ini sudah punya penampilan. Hapus penampilannya lebih dulu sebelum mengubah format.',
+            ]);
+        }
+
+        $jurusEvent->update(['format' => $format]);
+
+        return back()->with('success', "Format {$jurusEvent->nama()} diubah jadi {$format->label()}.");
+    }
+
+    /**
+     * Menyusun bagan gugur satu nomor berformat battle.
+     *
+     * Penampilan untuk battle yang KEDUA sudutnya sudah terisi ikut dibuat di
+     * sini -- itu seluruh ronde pertama. Ronde berikutnya menyusul sendiri
+     * begitu pemenangnya naik, karena sebelum itu sudutnya memang belum ada
+     * orangnya.
+     */
+    public function susunBagan(Request $request, Tournament $tournament, JurusEvent $jurusEvent): RedirectResponse
+    {
+        $this->pastikanMilik($tournament, $jurusEvent);
+
+        $data = $request->validate(['acak' => ['sometimes', 'boolean']]);
+
+        $susun = app(SusunBaganJurus::class);
+
+        $bagan = $this->jalankan(fn () => $susun->untukNomor($jurusEvent, (bool) ($data['acak'] ?? true)));
+
+        $dibuat = 0;
+
+        foreach ($bagan->battles()->whereNotNull('red_registration_id')->whereNotNull('blue_registration_id')->get() as $battle) {
+            $dibuat += $susun->siapkanPenampilan($battle)->count();
+        }
+
+        return back()->with('success', "Bagan tersusun: {$bagan->size} tempat, {$dibuat} penampilan dibuat.");
+    }
+
+    /**
+     * Membuat dua penampilan untuk satu battle yang sudutnya sudah lengkap.
+     *
+     * Dipakai ronde lanjutan: begitu pemenang naik, battle berikutnya baru
+     * punya dua nama untuk ditampilkan.
+     */
+    public function siapkanPenampilanBattle(Tournament $tournament, JurusBattle $jurusBattle): RedirectResponse
+    {
+        $this->pastikanMilikBattle($tournament, $jurusBattle);
+
+        if ($jurusBattle->red_registration_id === null || $jurusBattle->blue_registration_id === null) {
+            throw ValidationException::withMessages([
+                'battle' => 'Battle ini belum punya dua sudut. Selesaikan dulu battle sebelumnya.',
+            ]);
+        }
+
+        $jumlah = app(SusunBaganJurus::class)->siapkanPenampilan($jurusBattle)->count();
+
+        return back()->with('success', "{$jumlah} penampilan disiapkan untuk battle {$jurusBattle->id}.");
+    }
+
+    /**
+     * Menetapkan pemenang battle dari skor akhir, lalu menaikkannya ke ronde
+     * berikutnya -- Pasal 12.1.f.
+     */
+    public function putuskanBattle(Tournament $tournament, JurusBattle $jurusBattle): RedirectResponse
+    {
+        $this->pastikanMilikBattle($tournament, $jurusBattle);
+
+        $this->jalankan(fn () => app(PutuskanBattle::class)($jurusBattle));
+
+        return back()->with('success', "Pemenang battle {$jurusBattle->id} ditetapkan.");
+    }
+
+    /**
+     * Perbandingan nilai kedua sudut satu battle -- yang dibaca sesudah
+     * pertandingan selesai.
+     *
+     * Skor akhir Jurus adalah median enam juri dikurangi pengurangan. "9.72
+     * lawan 9.70" tidak menjelaskan apa pun sampai pembacanya tahu apakah
+     * bedanya datang dari penilaian juri atau dari satu pengurangan 0.50 yang
+     * dijatuhkan Pengawas -- dan pelatih yang mengangkat kartu protes
+     * menanyakan persis itu.
+     */
+    public function battle(Tournament $tournament, JurusBattle $jurusBattle): View
+    {
+        $this->pastikanMilikBattle($tournament, $jurusBattle);
+
+        return view('jurus.battle', [
+            'tournament' => $tournament,
+            'battle' => $jurusBattle,
+            'config' => [
+                'state' => route('admin.turnamen.jurus.battle.state', [$tournament, $jurusBattle]),
+            ],
+        ]);
+    }
+
+    public function battleState(Tournament $tournament, JurusBattle $jurusBattle): JsonResponse
+    {
+        $this->pastikanMilikBattle($tournament, $jurusBattle);
+
+        return response()->json(app(PerbandinganBattle::class)($jurusBattle));
+    }
+
+    private function pastikanMilikBattle(Tournament $tournament, JurusBattle $battle): void
+    {
+        abort_unless(
+            $battle->bracket->jurusEvent->tournament_id === $tournament->id,
+            404,
+        );
     }
 
     public function juri(Request $request, Tournament $tournament, JurusPerformance $performance): View

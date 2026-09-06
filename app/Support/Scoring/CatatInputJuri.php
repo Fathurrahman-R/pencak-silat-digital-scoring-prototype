@@ -7,8 +7,11 @@ use App\Enums\Sudut;
 use App\Events\Scoring\JudgeInputReceived;
 use App\Events\Scoring\ScoreAwarded;
 use App\Models\JudgeInput;
+use App\Models\MatchRound;
 use App\Models\SilatMatch;
 use App\Models\User;
+use Closure;
+use Throwable;
 
 /**
  * Menerima satu tekanan tombol juri lewat HTTP dan menjalankannya lewat
@@ -32,10 +35,7 @@ class CatatInputJuri
         ?string $clientTs = null,
     ): JudgeInput {
         $babakDimaksud = $match->rounds()->where('round', $babak)->first();
-        $babakSaatIni = $match->current_round === $babak;
-        $berjalan = $babakDimaksud?->berjalan() ?? false;
-
-        $ditolak = ! ($babakSaatIni && $berjalan);
+        $ditolak = ! $this->diterima($match, $babak, $babakDimaksud);
 
         $input = JudgeInput::create([
             'match_id' => $match->id,
@@ -45,7 +45,7 @@ class CatatInputJuri
             'point_type' => $jenis,
             'server_ts' => now(),
             'client_ts' => $clientTs,
-            'rejected_reason' => $ditolak ? $this->alasanTolak($babakSaatIni, $berjalan) : null,
+            'rejected_reason' => $ditolak ? $this->alasanTolak($match, $babak, $babakDimaksud) : null,
         ]);
 
         /*
@@ -59,24 +59,77 @@ class CatatInputJuri
          */
         $input->setRelation('match', $match);
 
-        JudgeInputReceived::dispatch($input);
+        /*
+         * Konsensus dihitung LEBIH DULU, dan siarannya tidak boleh
+         * menggagalkan apa pun.
+         *
+         * Sebelum ini urutannya terbalik dan siarannya telanjang: saat server
+         * Reverb mati, dorongan `JudgeInputReceived` melempar sebelum
+         * evaluator sempat berjalan. Akibatnya tekanan juri dijawab 500,
+         * barisnya tersimpan tapi `score_event_id`-nya kosong selamanya, dan
+         * angka di papan berhenti bertambah walau ketiga juri terus menekan.
+         *
+         * Yang benar: nilai terbit dari basis data, siaran cuma jalan cepat
+         * untuk mendorongnya ke panel lain. Kalau jalan cepat itu tertutup,
+         * gelanggang tetap harus bisa mencatat skor -- panel menyusul lewat
+         * resync begitu tersambung kembali. Pola yang sama sudah dipakai
+         * seluruh aksi operator lewat siarkan() di PartaiScoringController.
+         */
+        $scoreEvent = $ditolak ? null : $this->evaluator->evaluasi($input);
 
-        if (! $ditolak) {
-            $scoreEvent = $this->evaluator->evaluasi($input);
+        $this->siarkan(fn () => JudgeInputReceived::dispatch($input));
 
-            if ($scoreEvent !== null) {
-                ScoreAwarded::dispatch($scoreEvent);
-            }
+        if ($scoreEvent !== null) {
+            $this->siarkan(fn () => ScoreAwarded::dispatch($scoreEvent));
         }
 
         return $input->refresh();
     }
 
-    private function alasanTolak(bool $babakSaatIni, bool $berjalan): string
+    private function siarkan(Closure $penyiar): void
+    {
+        try {
+            $penyiar();
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Apakah tekanan ini diterima.
+     *
+     * Selama satu babak dibuka untuk susulan, HANYA babak itu yang menerima
+     * input -- termasuk menolak babak berjalan. Babak berjalan memang sudah
+     * dijeda saat susulan dibuka, tapi penolakannya dinyatakan di sini, bukan
+     * disandarkan pada efek samping timer: pengendali bisa saja melanjutkannya
+     * lagi, dan aturan yang bergantung pada urutan tombol adalah aturan yang
+     * suatu saat dilanggar tanpa ada yang menyadarinya.
+     *
+     * Timer babak susulan tidak pernah jalan dan tidak perlu jalan. Syarat
+     * `berjalan()` karena itu DIGANTI seluruhnya oleh syarat "susulan terbuka
+     * untuk babak ini", bukan ditambahkan padanya.
+     */
+    private function diterima(SilatMatch $match, int $babak, ?MatchRound $round): bool
+    {
+        if ($round === null) {
+            return false;
+        }
+
+        if ($match->susulan_round !== null) {
+            return $match->susulan_round === $babak;
+        }
+
+        return $match->current_round === $babak && $round->berjalan();
+    }
+
+    private function alasanTolak(SilatMatch $match, int $babak, ?MatchRound $round): string
     {
         return match (true) {
-            ! $babakSaatIni => 'Babak ini bukan babak yang sedang berjalan.',
-            ! $berjalan => 'Timer babak sedang tidak berjalan.',
+            $round === null => 'Babak ini belum pernah dimulai.',
+            $match->susulan_round !== null && $match->susulan_round !== $babak
+                => "Babak {$match->susulan_round} sedang dibuka untuk input susulan — hanya babak itu yang menerima nilai.",
+            $match->current_round !== $babak => 'Babak ini bukan babak yang sedang berjalan.',
+            ! $round->berjalan() => 'Timer babak sedang tidak berjalan.',
             default => 'Ditolak.',
         };
     }

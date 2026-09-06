@@ -88,11 +88,27 @@ return [
                 // Tidak mengurangi nilai, dan berlaku akumulatif tanpa
                 // membedakan jenis pelanggaran.
                 'pengurangan' => 0,
-                'cakupan' => 'partai',
+
+                /*
+                 * MENYIMPANG DARI NASKAH -- keputusan penyelenggara.
+                 *
+                 * Pasal 11.6.d.4.a hanya menyebut pembinaan "berlaku secara
+                 * akumulatif", dan Pasal 11.6.d.4.c.1-2 menyebut pembinaan
+                 * masih boleh diberikan setelah Peringatan I maupun II. Naskah
+                 * tidak pernah menyebut hitungannya kembali ke nol saat babak
+                 * berganti.
+                 *
+                 * Penyelenggara memilih per babak: wasit di gelanggang
+                 * mengingat pembinaan dalam babak yang sedang berjalan, bukan
+                 * sepanjang partai, dan tangga yang tidak cocok dengan yang
+                 * diingat wasit lebih berbahaya daripada tangga yang sedikit
+                 * lebih longgar dari naskah.
+                 */
+                'cakupan' => 'babak',
                 'jumlah_kolom' => 2,
 
-                // Setelah dua pembinaan, pelanggaran ringan berikutnya naik
-                // menjadi Teguran.
+                // Setelah dua pembinaan dalam babak yang sama, pelanggaran
+                // ringan berikutnya di babak itu naik menjadi Teguran.
                 'ambang_naik_ke_teguran' => 2,
             ],
 
@@ -103,16 +119,25 @@ return [
                 ],
 
                 /*
-                 * Naskah menyebut "setelah Teguran kedua dalam babak
-                 * pertandingan yang sama", sehingga hitungan teguran
-                 * diperlakukan per babak.
+                 * Pasal 11.6.d.4.b.3 memberi DUA pemicu, bukan satu: "Pesilat
+                 * yang mendapat Teguran ketiga kali langsung diberikan
+                 * Peringatan I atau setelah Teguran kedua dalam babak
+                 * pertandingan yang sama."
+                 *
+                 * Tingkat teguran karena itu berjalan sepanjang partai —
+                 * Teguran I lalu Teguran II, tidak mengulang dari I tiap babak
+                 * baru — sementara pemicu keduanya dihitung per babak.
                  */
-                'cakupan' => 'babak',
+                'cakupan' => 'partai',
                 'jumlah_kolom' => 2,
 
-                // Teguran ketiga tidak pernah terjadi sebagai teguran — ia
-                // langsung menjadi Peringatan I.
+                // Teguran ketiga sepanjang partai tidak pernah terjadi sebagai
+                // teguran — ia langsung menjadi Peringatan I.
                 'naik_ke_peringatan_pada' => 3,
+
+                // Pemicu kedua: dua teguran dalam babak yang sama membuat
+                // pelanggaran berikutnya di babak itu langsung Peringatan I.
+                'naik_ke_peringatan_dalam_babak_pada' => 2,
             ],
 
             'peringatan' => [

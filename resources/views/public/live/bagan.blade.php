@@ -1,4 +1,4 @@
-<x-layouts.silat permukaan="publik" :title="'Bagan — '.$weightClass->name">
+<x-layouts.silat permukaan="publik" :realtime="false" :title="'Bagan — '.$weightClass->name">
     {{--
         Bagan publik memakai POHON yang sama persis dengan bagan panitia
         (<x-si.pohon-bagan>, koordinatnya dari App\Support\Bagan\PohonBagan),

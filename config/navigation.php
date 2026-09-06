@@ -109,6 +109,9 @@ return [
                 'butuh_turnamen' => true,
                 'resource' => rk('pendaftaran', ResourceAction::View),
                 'active' => 'admin/turnamen/*/verifikasi*',
+                // Tidak ada antrean untuk diperiksa saat pendaftaran langsung
+                // disahkan. Rutenya tetap hidup untuk pendaftaran lama.
+                'sembunyi_bila' => 'pendaftaran.lewati_verifikasi',
             ],
             [
                 'label' => 'Timbang badan',

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\KetuaPertandinganController;
+use App\Http\Controllers\Admin\PanelGelanggangController;
 use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RegistrationController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SiaranController;
+use App\Http\Controllers\Admin\SinkronController;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
@@ -30,6 +32,7 @@ use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\BerandaController;
+use App\Http\Middleware\CatatWaktuState;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', BerandaController::class)->name('home');
@@ -79,6 +82,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |
     */
     Route::prefix('admin')->name('admin.')->group(function () {
+        /*
+         * Sinkron gelanggang TIDAK berada di bawah {tournament}.
+         *
+         * Yang diaturnya adalah sifat MESIN ini -- gelanggang mana yang
+         * dipegangnya, laptop mana tetangganya, sudah sampai mana
+         * pertukarannya -- dan itu tidak berubah saat panitia berpindah
+         * kejuaraan. Menaruhnya di bawah turnamen akan menyarankan bahwa tiap
+         * kejuaraan punya daftar peer sendiri, yang tidak benar dan akan
+         * dijalankan orang sebagai kalau benar.
+         *
+         * Rute yang dipanggil PEER ada di routes/sinkron.php, dijaga token,
+         * bukan di sini. Yang ini dipanggil operator yang sudah login.
+         */
+        Route::controller(SinkronController::class)->prefix('sinkron')->name('sinkron.')->group(function () {
+            Route::get('/', 'index')->name('index')
+                ->middleware('resource:'.rk('sinkron-gelanggang', ResourceAction::View));
+            Route::post('/tarik', 'tarik')->name('tarik')
+                ->middleware('resource:'.rk('sinkron-gelanggang', ResourceAction::Update));
+        });
+
         Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
             Route::get('/', 'index')->name('index')->middleware('resource:'.rk('users', ResourceAction::View));
             Route::get('/create', 'create')->name('create')->middleware('resource:'.rk('users', ResourceAction::Create));
@@ -268,6 +291,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('gelanggang', ResourceAction::Create));
                     Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::post('/{arena}/operator', 'simpanOperator')->name('operator')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
+                    Route::post('/{arena}/pengendali', 'simpanPengendali')->name('pengendali')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
                 });
 
@@ -362,6 +386,78 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 });
 
             /*
+             * Panel yang mengikuti GELANGGANG, bukan satu partai.
+             *
+             * Rute per-partai di atas tidak dihapus: dewan wasit juri tetap
+             * harus bisa membuka partai lama yang sudah selesai untuk ditinjau
+             * dan disahkan, dan berita acaranya dicetak dari sana.
+             *
+             * Aksi mutasi sengaja TIDAK diduplikasi di sini. Timer, nilai,
+             * hukuman, hitungan, verifikasi, dan VAR tetap memakai rute
+             * per-partai; klien memperoleh alamatnya dari payload state dan
+             * menghitungnya ulang tiap kali partai aktif berganti. Dua salinan
+             * otorisasi untuk aksi yang sama adalah cara paling murah membuat
+             * lubang izin.
+             */
+            Route::controller(PanelGelanggangController::class)
+                ->prefix('{tournament}/gelanggang/{arena}/panel')
+                ->name('gelanggang.panel.')
+                ->group(function () {
+                    /*
+                     * Satu-satunya rute yang waktunya diukur.
+                     *
+                     * Lencana kesehatan gelanggang membaca persentil dari sini,
+                     * dan yang dicarinya gejala yang dirasakan operator: endpoint
+                     * inilah yang ditarik tiap panel terbuka, tiap ada siaran,
+                     * ditambah sekali tiap dua puluh detik selama babak berjalan.
+                     * Mengukur rute lain akan mencampurnya dengan halaman admin
+                     * yang tidak ada hubungannya, dan persentilnya berhenti
+                     * berarti.
+                     */
+                    Route::get('/state', 'state')->name('state')
+                        ->middleware(['resource:'.rk('partai', ResourceAction::View), CatatWaktuState::class]);
+                    Route::get('/kendali', 'kendali')->name('kendali')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::View));
+                    Route::get('/papan', 'papan')->name('papan')->middleware('resource:'.rk('partai', ResourceAction::View));
+                    Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
+                    Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
+                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
+
+                    /*
+                     * Wasit Komisi Protes tidak punya panel lain: panel
+                     * keberatan ITULAH panelnya, dan alamatnya per gelanggang
+                     * supaya ikut berpindah partai tanpa disentuh.
+                     */
+                    Route::get('/komisi-protes', 'komisiProtes')->name('komisi-protes')->middleware('resource:'.rk('var', ResourceAction::View));
+
+                    /*
+                     * Panel gelanggang Ketua Pertandingan. Dijaga `partai`
+                     * Manage seperti ringkasan lintas gelanggangnya: isinya
+                     * memuat protes dan VAR, jadi izin melihat partai saja
+                     * tidak cukup untuk membenarkan membukanya.
+                     */
+                    Route::get('/ketua', 'ketua')->name('ketua')->middleware('resource:'.rk('partai', ResourceAction::Manage));
+
+                    /*
+                     * Manifest PWA per gelanggang, per peran. Dijaga izin
+                     * paling longgar di antara panel-panel di atas: manifest
+                     * tidak memuat data pertandingan apa pun, hanya alamat
+                     * dan nama ikon.
+                     */
+                    Route::get('/{peran}/manifest.webmanifest', 'manifest')->name('manifest')->middleware('resource:'.rk('partai', ResourceAction::View));
+
+                    Route::post('/partai-aktif', 'pilihPartai')->name('partai-aktif')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Assign));
+
+                    /*
+                     * Membuka babak lama melonggarkan penjagaan babak yang
+                     * sudah ditutup -- wewenang terberat di gelanggang, jadi
+                     * dijaga Manage, bukan Update yang dipegang siapa pun yang
+                     * boleh menekan timer.
+                     */
+                    Route::post('/babak-susulan', 'bukaBabak')->name('babak-susulan.buka')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Manage));
+                    Route::delete('/babak-susulan', 'tutupBabak')->name('babak-susulan.tutup')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Manage));
+                });
+
+            /*
              * Panel Ketua Pertandingan -- Pasal 13.4.
              *
              * Dijaga resource `partai` Manage, bukan `verifikasi-juri`: panel
@@ -428,6 +524,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/', 'daftarNomor')->name('nomor')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
                     Route::get('/{jurusEvent}', 'index')->name('index')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
                     Route::post('/{jurusEvent}/buat-penampilan', 'generate')->name('generate')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Create));
+
+                    /*
+                     * Format nomor dan bagan gugurnya -- Pasal 12.1.b.1.
+                     *
+                     * Format dijaga `nomor-jurus.update` (ia mengubah bentuk
+                     * pertandingan, bukan menjalankannya), bagan dijaga
+                     * `bagan.update` seperti bagan Tanding.
+                     */
+                    Route::post('/{jurusEvent}/format', 'ubahFormat')->name('format')->middleware('resource:'.rk('nomor-jurus', ResourceAction::Update));
+                    Route::post('/{jurusEvent}/susun-bagan', 'susunBagan')->name('susun-bagan')->middleware('resource:'.rk('bagan', ResourceAction::Update));
+
+                    /*
+                     * Perbandingan kedua sudut satu battle -- Pasal 12.1.f.
+                     *
+                     * Berdiri di luar prefix `penampilan/{performance}` dengan
+                     * sengaja: yang ditanyakan bukan satu penampilan, melainkan
+                     * hubungan antara dua penampilan yang bertemu.
+                     */
+                    Route::get('/battle/{jurusBattle}', 'battle')->name('battle')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::get('/battle/{jurusBattle}/state', 'battleState')->name('battle.state')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::post('/battle/{jurusBattle}/penampilan', 'siapkanPenampilanBattle')->name('battle.penampilan')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Create));
+                    Route::post('/battle/{jurusBattle}/putuskan', 'putuskanBattle')->name('battle.putuskan')->middleware('resource:'.rk('hasil-jurus', ResourceAction::Approve));
 
                     Route::prefix('penampilan/{performance}')->name('penampilan.')->group(function () {
                         Route::get('/', 'state')->name('state')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));

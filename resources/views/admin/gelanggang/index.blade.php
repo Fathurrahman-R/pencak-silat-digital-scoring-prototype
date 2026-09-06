@@ -36,8 +36,18 @@
                              terlihat sebelum hari-H. --}}
                         <p class="truncate text-xs text-ink-muted">
                             Urutan {{ $arena->sort_order }} ·
+                            {{-- Pengendali disebut lebih dulu: gelanggang tanpa
+                                 operator masih bisa bertanding tanpa papan
+                                 tampilan, gelanggang tanpa pengendali tidak
+                                 bisa memulai babak sama sekali. --}}
+                            @if ($arena->pengendali->isEmpty())
+                                <span class="text-danger">belum ada pengendali</span>
+                            @else
+                                Pengendali: {{ $arena->pengendali->pluck('name')->implode(', ') }}
+                            @endif
+                            ·
                             @if ($arena->operators->isEmpty())
-                                <span class="text-danger">belum ada operator</span>
+                                <span class="text-ink-muted">belum ada operator</span>
                             @else
                                 Operator: {{ $arena->operators->pluck('name')->implode(', ') }}
                             @endif
@@ -81,6 +91,40 @@
                             </x-si.modal>
 
                             <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
+                                         x-on:click="$dispatch('modal-open', 'gelanggang-pengendali-{{ $arena->id }}')">
+                                Pengendali
+                            </x-si.tombol>
+
+                            <x-si.modal :id="'gelanggang-pengendali-'.$arena->id"
+                                        :judul="'Pengendali '.$arena->name" ukuran="kecil">
+                                <form method="POST" action="{{ route('admin.turnamen.gelanggang.pengendali', [$tournament, $arena]) }}"
+                                      id="pengendali-gelanggang-{{ $arena->id }}" class="space-y-1">
+                                    @csrf
+
+                                    <p class="pb-2 text-sm text-ink-muted">
+                                        Pengendali memegang timer, perpindahan babak, dan pergantian jadwal
+                                        gelanggang ini. Juri, wasit, dan dewan wasit juri mengikuti partai yang
+                                        dipilihnya tanpa harus berpindah alamat sendiri.
+                                    </p>
+
+                                    @forelse ($calonPengendali as $calon)
+                                        <x-si.centang name="pengendali_id[]" :value="$calon->id" :label="$calon->name"
+                                                      :dicentang="$arena->pengendali->contains($calon->id)"
+                                                      :id="'pengendali-'.$arena->id.'-'.$calon->id" />
+                                    @empty
+                                        <x-si.kosong judul="Belum ada akun Pengendali Gelanggang"
+                                                     syarat="Buat penggunanya lebih dulu di menu Sistem, lalu beri peran Pengendali Gelanggang." />
+                                    @endforelse
+                                </form>
+
+                                <x-slot:footer>
+                                    <x-si.tombol varian="kedua" tipe="button"
+                                                 x-on:click="$dispatch('modal-close', 'gelanggang-pengendali-{{ $arena->id }}')">Batal</x-si.tombol>
+                                    <x-si.tombol tipe="submit" form="pengendali-gelanggang-{{ $arena->id }}">Simpan</x-si.tombol>
+                                </x-slot:footer>
+                            </x-si.modal>
+
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
                                          x-on:click="$dispatch('modal-open', 'gelanggang-operator-{{ $arena->id }}')">
                                 Operator
                             </x-si.tombol>
@@ -92,9 +136,10 @@
                                     @csrf
 
                                     <p class="pb-2 text-sm text-ink-muted">
-                                        Operator hanya bisa menjalankan timer dan mengakhiri partai di gelanggang
-                                        yang ditugaskan kepadanya. Penugasan ini berlaku sepanjang kejuaraan,
-                                        termasuk untuk partai yang dijadwalkan kemudian.
+                                        Operator menjalankan papan tampilan gelanggang dan perangkat siarannya.
+                                        Timer dan jalannya partai dipegang Pengendali Gelanggang, bukan peran ini.
+                                        Penugasan berlaku sepanjang kejuaraan, termasuk untuk partai yang
+                                        dijadwalkan kemudian.
                                     </p>
 
                                     @forelse ($calonOperator as $calon)

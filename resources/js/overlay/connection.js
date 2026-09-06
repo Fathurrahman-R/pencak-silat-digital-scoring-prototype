@@ -61,18 +61,42 @@ Alpine.data('overlayLive', (cfg) => ({
     _tickAt: 0,
     _rafId: null,
     _kilatTimeout: null,
-    // Berkunci `${sisi}-${teknik}` -- lihat _padaInputJuri.
+    // Berkunci `${sisi}-${teknik}-${nomor}` -- lihat _padaInputJuri.
     _waktuIndikator: {},
+    // Berkunci `${sisi}-${teknik}`, naik tiap kali tekniknya dipadamkan --
+    // membatalkan nyala susulan yang sudah tidak berlaku. Lihat _padaInputJuri.
+    _generasiIndikator: {},
+    // Partai + babak yang sedang diwakili isi indikatorTeknik.
+    _indikatorUntuk: null,
     _sedangMenarik: false,
     _perluTarikLagi: false,
+    _tenggatSegarkan: null,
+    _denyutId: null,
 
     async init() {
         await this.muatUlang();
         this._pasangEcho();
+
+        /*
+         * Denyut sinkron 20 detik.
+         *
+         * Jam overlay diinterpolasi lokal dari acuan siaran terakhir, dan
+         * grafis vMix menyala berjam-jam tanpa pernah dimuat ulang. Satu
+         * siaran yang hilang di jaringan gelanggang cukup untuk membuat
+         * acuannya basi, dan sejak itu jam di layar penonton terus berjalan
+         * dari angka yang keliru tanpa pernah mengoreksi diri. Tarikan
+         * berkala ini yang mengembalikannya -- beban satu permintaan per 20
+         * detik per grafis, dan endpoint state-nya sendiri sudah di-cache
+         * satu detik di server.
+         */
+        this._denyutId = setInterval(() => this.muatUlang(), 20000);
     },
 
     destroy() {
         this._hentikanInterpolasi();
+        clearInterval(this._denyutId);
+        clearTimeout(this._tenggatSegarkan);
+        this._bersihkanIndikator();
     },
 
     get tampilWaktu() {
@@ -120,7 +144,28 @@ Alpine.data('overlayLive', (cfg) => ({
         }
     },
 
+    /**
+     * Tarikan yang dipicu SIARAN, ditunda sesaat supaya letupan jadi satu.
+     *
+     * Penggabungan di muatUlang() hanya menangkap siaran yang datang selagi
+     * tarikan berjalan; yang datang di sela-selanya masih melahirkan tarikan
+     * sendiri-sendiri. Tenggang pendek ini menyatukan mereka tanpa terlihat di
+     * siaran: skor dan indikator sudah dipasang dari muatan siarannya sendiri.
+     */
+    _jadwalkanMuatUlang() {
+        clearTimeout(this._tenggatSegarkan);
+        this._tenggatSegarkan = setTimeout(() => this.muatUlang(), 150);
+    },
+
     _terapkan(data) {
+        const penanda = `${data.match?.id}-${data.babak_label}`;
+
+        if (this._indikatorUntuk !== null && this._indikatorUntuk !== penanda) {
+            this._bersihkanIndikator();
+        }
+
+        this._indikatorUntuk = penanda;
+
         this.adaPartai = data.ada_partai;
 
         if (!data.ada_partai) {
@@ -226,29 +271,64 @@ Alpine.data('overlayLive', (cfg) => ({
         const sisi = e.corner === 'red' ? 'merah' : 'biru';
         const teknik = e.point_type;
 
-        if (!this.indikatorTeknik[sisi]?.[teknik] || this.indikatorTeknik[sisi][teknik].includes(e.judge_number)) {
+        if (!this.indikatorTeknik[sisi]?.[teknik]) {
             return;
         }
 
-        this.indikatorTeknik[sisi] = {
-            ...this.indikatorTeknik[sisi],
-            [teknik]: [...this.indikatorTeknik[sisi][teknik], e.judge_number],
+        /*
+         * Tekanan ulang oleh juri yang SAMA tidak diabaikan: titiknya padam
+         * sekejap lalu menyala lagi. Penonton yang melihat serangan kedua
+         * mendarat berhak melihat bahwa juri itu menekan lagi, bukan layar
+         * yang diam karena nomornya sudah tercatat.
+         */
+        const sudahAda = this.indikatorTeknik[sisi][teknik].includes(e.judge_number);
+
+        if (sudahAda) {
+            this._setIndikator(sisi, teknik, this.indikatorTeknik[sisi][teknik].filter((n) => n !== e.judge_number));
+        }
+
+        /*
+         * Nyala susulan dibatalkan kalau tekniknya keburu dipadamkan: selama
+         * jeda 80 milidetik itu nilainya bisa terbit, dan titik yang sudah
+         * dinyatakan selesai tidak boleh menyala lagi di siaran.
+         */
+        const kunciPadam = `${sisi}-${teknik}`;
+        const generasi = this._generasiIndikator[kunciPadam] ?? 0;
+
+        const nyalakan = () => {
+            if ((this._generasiIndikator[kunciPadam] ?? 0) !== generasi) {
+                return;
+            }
+
+            this._setIndikator(sisi, teknik, [...this.indikatorTeknik[sisi][teknik], e.judge_number]);
         };
+
+        if (sudahAda) {
+            setTimeout(nyalakan, 80);
+        } else {
+            nyalakan();
+        }
 
         /*
          * Dibersihkan sendiri sesudah jendela konsensus lewat. Tanpa ini,
          * indikator yang tidak pernah mencapai ambang akan menetap di siaran
          * sepanjang partai dan terbaca sebagai nilai yang tertunda.
          *
-         * Tenggatnya per SUDUT DAN TEKNIK: tiap teknik punya jendela
-         * konsensusnya sendiri, jadi tekanan tendangan tidak boleh mengulang
-         * tenggat pukulan, dan tenggat yang jatuh tidak boleh memadamkan
-         * teknik lain yang jendelanya masih terbuka.
+         * Tenggatnya per JURI, bukan per sudut+teknik. Jendela konsensus
+         * berjalan sejak tekanan masing-masing juri: dengan satu tenggat per
+         * teknik, tekanan juri berikutnya memperpanjang titik juri sebelumnya
+         * melewati jendelanya sendiri, dan siaran menayangkan tekanan yang
+         * sudah dibuang server sebagai tekanan yang masih ditunggu.
+         *
+         * Panjangnya dibawa siaran (`kedaluwarsa_ms`) karena jendela konsensus
+         * bisa ditimpa per turnamen.
          */
-        this._batalkanPadam(sisi, teknik);
-        this._waktuIndikator[`${sisi}-${teknik}`] = setTimeout(
-            () => this._padamkanIndikator(sisi, teknik),
-            (this.peraturan.window_konsensus_ms ?? 2000) + 500,
+        const tenggat = (e.kedaluwarsa_ms ?? this.peraturan.window_konsensus_ms ?? 2000) + 250;
+
+        this._batalkanPadam(sisi, teknik, e.judge_number);
+        this._waktuIndikator[`${sisi}-${teknik}-${e.judge_number}`] = setTimeout(
+            () => this._padamkanSatu(sisi, teknik, e.judge_number),
+            tenggat,
         );
     },
 
@@ -259,7 +339,7 @@ Alpine.data('overlayLive', (cfg) => ({
      * menunggu juri kedua -- penonton melihat papan bersih dan mengira tidak
      * ada yang sedang ditunggu, padahal jendelanya masih terbuka.
      */
-    _bersihkanIndikator(corner, teknik) {
+    _tandaiIndikatorSelesai(corner, teknik) {
         const sisi = corner === 'red' ? 'merah' : 'biru';
 
         if (teknik) {
@@ -271,13 +351,45 @@ Alpine.data('overlayLive', (cfg) => ({
         Object.keys(this.indikatorTeknik[sisi]).forEach((t) => this._padamkanIndikator(sisi, t));
     },
 
+    /** Seluruh juri untuk satu teknik padam sekaligus -- dipakai saat nilainya terbit. */
     _padamkanIndikator(sisi, teknik) {
-        this._batalkanPadam(sisi, teknik);
-        this.indikatorTeknik[sisi] = { ...this.indikatorTeknik[sisi], [teknik]: [] };
+        (this.indikatorTeknik[sisi][teknik] ?? []).forEach((n) => this._batalkanPadam(sisi, teknik, n));
+
+        const kunci = `${sisi}-${teknik}`;
+        this._generasiIndikator[kunci] = (this._generasiIndikator[kunci] ?? 0) + 1;
+
+        this._setIndikator(sisi, teknik, []);
     },
 
-    _batalkanPadam(sisi, teknik) {
-        clearTimeout(this._waktuIndikator[`${sisi}-${teknik}`]);
+    /** Satu juri saja yang padam -- jendela konsensus JURI ITU yang tutup. */
+    _padamkanSatu(sisi, teknik, nomor) {
+        this._batalkanPadam(sisi, teknik, nomor);
+        this._setIndikator(sisi, teknik, (this.indikatorTeknik[sisi][teknik] ?? []).filter((n) => n !== nomor));
+    },
+
+    // Objek sudutnya diganti utuh, bukan disunting di tempat: Alpine hanya
+    // melacak perubahan yang lewat penetapan properti.
+    _setIndikator(sisi, teknik, daftar) {
+        this.indikatorTeknik[sisi] = { ...this.indikatorTeknik[sisi], [teknik]: daftar };
+    },
+
+    _batalkanPadam(sisi, teknik, nomor) {
+        clearTimeout(this._waktuIndikator[`${sisi}-${teknik}-${nomor}`]);
+        delete this._waktuIndikator[`${sisi}-${teknik}-${nomor}`];
+    },
+
+    /**
+     * Seluruh titik dikosongkan saat partai atau babaknya berganti -- tekanan
+     * dari babak sebelumnya tidak menunggu apa pun lagi, dan tidak ada siaran
+     * yang akan datang untuk memadamkannya.
+     */
+    _bersihkanIndikator() {
+        Object.keys(this._waktuIndikator).forEach((k) => clearTimeout(this._waktuIndikator[k]));
+        this._waktuIndikator = {};
+
+        Object.keys(this.indikatorTeknik).forEach((sisi) => {
+            Object.keys(this.indikatorTeknik[sisi]).forEach((t) => this._padamkanIndikator(sisi, t));
+        });
     },
 
     _pasangEcho() {
@@ -285,7 +397,7 @@ Alpine.data('overlayLive', (cfg) => ({
             return;
         }
 
-        const segarkan = () => this.muatUlang();
+        const segarkan = () => this._jadwalkanMuatUlang();
         const channel = window.Echo.channel(`public-live.${this.cfg.arenaId}`);
 
         channel
@@ -300,7 +412,7 @@ Alpine.data('overlayLive', (cfg) => ({
             .listen('.partai.berubah', segarkan)
             .listen('.skor.terbit', (e) => {
                 this._kilatkan(e.corner);
-                this._bersihkanIndikator(e.corner, e.point_type);
+                this._tandaiIndikatorSelesai(e.corner, e.point_type);
 
                 // Angka dari muatan siarannya sendiri: di siaran, papan yang
                 // diam dua ratus milidetik sesudah nilai terbit terlihat

@@ -85,10 +85,11 @@ Alpine.data('tableSelection', (ids = []) => ({
 window.Alpine = Alpine;
 Alpine.start();
 
-/**
- * Echo exposes an expressive API for subscribing to channels and listening
- * for events that are broadcast by Laravel. Echo and event broadcasting
- * allow your team to quickly build robust real-time web applications.
+/*
+ * Bundel admin TIDAK memuat Echo.
+ *
+ * Impor './echo' di sini adalah sisa scaffolding Laravel: tidak satu pun
+ * halaman admin memanggil window.Echo, tapi setiap halaman admin yang dibuka
+ * panitia membuka satu koneksi WebSocket ke Reverb dan menahannya selama tab
+ * itu hidup. Realtime gelanggang hidup di bundel silat, bukan di sini.
  */
-
-import './echo';

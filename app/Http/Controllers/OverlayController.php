@@ -11,6 +11,7 @@ use App\Support\Live\StatePartaiPublik;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Overlay siaran vMix -- lima halaman tanpa elemen interaktif, dipasang
@@ -28,9 +29,24 @@ class OverlayController extends Controller
         private readonly PohonBagan $pohon,
     ) {}
 
+    /**
+     * Di-cache satu detik, sama seperti live score publik.
+     *
+     * Satu gelanggang ditonton oleh lima Web Browser Input vMix sekaligus
+     * (scorebug, dua kartu atlet, breakdown, hasil), dan semuanya menarik
+     * ulang pada siaran yang sama. Tanpa cache, satu nilai terbit berarti
+     * lima kali perhitungan state yang identik, tepat pada saat server sedang
+     * melayani tekanan tombol juri berikutnya.
+     *
+     * Yang paling terlihat di siaran tidak ikut tertunda satu detik: angka
+     * skor dan indikator juri dipasang dari muatan siarannya sendiri (lihat
+     * resources/js/overlay/connection.js), bukan dari tarikan ini.
+     */
     public function state(Arena $arena): JsonResponse
     {
-        return response()->json(($this->state)($arena));
+        $data = Cache::remember("overlay-state-arena-{$arena->id}", 1, fn () => ($this->state)($arena));
+
+        return response()->json($data);
     }
 
     public function scorebug(Arena $arena): View

@@ -571,7 +571,7 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 | T4.3 | `ConsensusEvaluator` — window, ambang, juri distinct, dedup, penguncian transaksi | ✅ TDD, 8 test, menemukan bug presisi milidetik Eloquent |
 | T4.4 | Event & channel broadcast (private per gelanggang, public untuk live) | ✅ 5 event `ShouldBroadcastNow`, `ArenaChannelAuthorizer` |
 | T4.5 | PWA juri: papan tombol, manifest, service worker, wake lock, indikator koneksi | ✅ `silat.juri`, manifest per partai, `public/sw.js`, wake lock — dicoba nyata dengan `reverb:start` sungguhan |
-| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ✅ `silat.operator`, verifikasi browser nyata |
+| T4.6 | Panel operator gelanggang: pilih partai, kendali timer, catat hukuman | ✅ `silat.papan` (dulu `silat.operator`), verifikasi browser nyata |
 | T4.7 | Panel wasit: binaan/teguran/peringatan, hentikan pertandingan | ✅ `silat.wasit` — "hentikan" berarti jeda timer (partai.update); mengakhiri partai tetap wewenang operator/ketua (partai.manage) |
 | T4.8 | `TandingScoreCalculator` — skor per babak, hukuman, penentuan pemenang | ✅ |
 | T4.9 | Panel dewan juri: verifikasi, koreksi bernotulen, pengesahan hasil | ✅ `silat.dewan-juri` — riwayat nilai/hukuman + pembatalan beralasan + sahkan |
@@ -787,7 +787,7 @@ Prinsip yang dipegang: **`judge_inputs` tidak pernah diubah atau dihapus.** Kore
 - [x] Umpan balik instan saat tombol ditekan (`active:` CSS, tanpa menunggu balasan server)
 - [x] Wake lock — hidup di factory `partaiPanel` sendiri (`_kunciLayar()`), otomatis untuk keempat panel gelanggang
 - [x] Indikator koneksi; putus → tombol nonaktif + indikator merah — store Alpine `koneksi` + badge "Tersambung"/"Terputus" di keempat panel, dicoba nyata dengan `reverb:start` sungguhan
-- [x] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk — `silat.operator`, verifikasi klik nyata di browser (mulai/jeda/reset/selesaikan babak/akhiri)
+- [x] Panel operator: pilih partai aktif, kendali timer, papan skor besar, daftar nilai masuk — `silat.papan` (dulu `silat.operator`), verifikasi klik nyata di browser (mulai/jeda/reset/selesaikan babak/akhiri)
 - [x] Panel wasit: pembinaan, Teguran I/II, Peringatan I/II/III, hitungan teknik, hentikan pertandingan — `silat.wasit`, verifikasi klik nyata (hukuman ringan/sedang/berat, hitungan)
 - [x] Sanksi menyimpan sebab: tingkat pelanggaran + keterangan wasit (`violation_level`, `note`)
 - [x] Peringatan (`penalties.tier=peringatan`) berlaku sepanjang partai, tidak pernah reset antar babak

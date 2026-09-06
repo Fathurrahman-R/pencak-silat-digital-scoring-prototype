@@ -3,7 +3,9 @@
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Models\Arena;
 use App\Models\Bracket;
+use App\Models\MatchOfficial;
 use App\Models\Contingent;
 use App\Models\Penalty;
 use App\Models\Registration;
@@ -27,16 +29,53 @@ beforeEach(function () {
         ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
     $bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
 
+    $this->arena = Arena::factory()->for($this->tournament)->create();
+
     $this->match = SilatMatch::create([
+        'arena_id' => $this->arena->id,
         'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
         'red_registration_id' => Registration::factory()->for($kontingen)->terverifikasi()->create(['weight_class_id' => $kelas->id])->id,
         'blue_registration_id' => Registration::factory()->for($kontingen)->terverifikasi()->create(['weight_class_id' => $kelas->id])->id,
         'status' => SilatMatch::STATUS_TERJADWAL,
     ]);
 
+    /*
+     * Peran saja tidak cukup untuk membuka panel partai: wasit dan juri harus
+     * ditugaskan ke partainya, dan operator harus memegang gelanggangnya.
+     * Penugasan itu dipasang di sini supaya tiap uji di bawah menguji apa yang
+     * memang ingin diujinya -- tampilan panel -- bukan mengulang penyiapan
+     * penugasan yang sama enam belas kali.
+     *
+     * Penolakan bagi yang TIDAK ditugaskan diuji terpisah di AparatPartaiTest.
+     */
+    /*
+     * Panel wasit dan juri sekarang dibuka lewat alamat GELANGGANG, dan isinya
+     * mengikuti partai yang ditunjuk pengendali. Pointer karena itu perlu
+     * ditetapkan sebelum panelnya diuji -- tanpa itu yang tampil layar tunggu,
+     * bukan papan tombolnya.
+     */
+    $this->arena->forceFill(['active_match_id' => $this->match->id])->save();
+
     $this->buatUser = function (string $peran) {
         $user = User::factory()->create();
         $user->syncRoles([$peran]);
+
+        match ($peran) {
+            'wasit' => MatchOfficial::create([
+                'match_id' => $this->match->id,
+                'user_id' => $user->id,
+                'role' => MatchOfficial::ROLE_WASIT,
+                'number' => 1,
+            ]),
+            'juri' => MatchOfficial::create([
+                'match_id' => $this->match->id,
+                'user_id' => $user->id,
+                'role' => MatchOfficial::ROLE_JURI,
+                'number' => $this->match->officials()->where('role', MatchOfficial::ROLE_JURI)->count() + 1,
+            ]),
+            'operator-it' => $this->arena->operators()->syncWithoutDetaching([$user->id]),
+            default => null,
+        };
 
         return $user;
     };
@@ -49,16 +88,25 @@ it('menampilkan panel operator dan menyisipkan konfigurasi alamat aksi', functio
      * Eyebrow "OPERATOR GELANGGANG" yang dulu ada di kepala panel dibuang
      * pada rombak Digital Scoring -- kepala kolom kanan sekarang menyebut
      * gelanggang dan nomor partainya langsung, penanda yang lebih berguna
-     * daripada label peran yang statis. Sama seperti panel wasit di bawah:
-     * eyebrow hanya hiasan, jadi yang diuji adalah identitas partai yang
-     * sesungguhnya dirender.
+     * daripada label peran yang statis.
+     *
+     * Nomornya TIDAK lagi dicetak Blade: sejak panel mengikuti gelanggang, ia
+     * datang dari blok `identitas` di payload state, kalau tidak kepala panel
+     * membeku menyebut partai yang sudah ditinggalkan sementara isinya sudah
+     * berganti. Yang diuji karena itu bindingnya, dan nomor partainya diuji di
+     * tempat ia sekarang benar-benar lahir -- endpoint state.
      */
     $this->actingAs($operator)
         ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
         ->assertOk()
-        ->assertSee('Partai '.$this->match->id)
+        ->assertSee('identitas.partai', false)
         ->assertSee('partaiPanel', false)
         ->assertSee('timerMulai', false);
+
+    $this->actingAs($operator)
+        ->get(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertJsonPath('identitas.partai', $this->match->id);
 });
 
 it('menampilkan panel wasit', function () {
@@ -72,7 +120,7 @@ it('menampilkan panel wasit', function () {
      * tidak boleh hilang, sedangkan eyebrow hanya hiasan.
      */
     $this->actingAs($wasit)
-        ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.wasit', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('Pembinaan')
         ->assertSee('Teguran')
@@ -88,8 +136,16 @@ it('menampilkan panel dewan juri', function () {
         // Sebutan badan ini disatukan jadi 'Dewan Wasit Juri', mengikuti label
         // role di SilatRoleSeeder dan blok tanda tangan berita acara.
         ->assertSee('DEWAN WASIT JURI')
-        // Jatuhan bukan wewenang dewan: ia diterbitkan wasit di gelanggang.
-        ->assertDontSee('Jatuhan');
+        /*
+         * Jatuhan bukan wewenang dewan: ia diterbitkan wasit di gelanggang.
+         *
+         * Yang diperiksa PEMANGGIL AKSINYA, bukan kata "Jatuhan" -- alasan
+         * yang sama dengan uji panel wasit di bawah. Sejak papan hasil
+         * dipasang di panel ini, kata itu memang muncul sebagai label baris
+         * rincian: "berapa jatuhan yang menyusun skor akhir" adalah bacaan,
+         * bukan kendali, dan justru itu yang dibutuhkan peninjau.
+         */
+        ->assertDontSee('terbitkanJatuhan(sudut)', false);
 });
 
 it('memasang kendali jatuhan di panel wasit', function () {
@@ -107,7 +163,7 @@ it('memasang kendali jatuhan di panel wasit', function () {
     $wasit = ($this->buatUser)('wasit');
 
     $this->actingAs($wasit)
-        ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.wasit', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('terbitkanJatuhan(sudut)', false)
         // Sarannya ikut: wasit yang sempat bertanya ke juri membacanya di sini.
@@ -137,7 +193,7 @@ it('menampilkan riwayat hitungan di panel wasit', function () {
     $wasit = ($this->buatUser)('wasit');
 
     $this->actingAs($wasit)
-        ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.wasit', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('hitunganTeknik[kunciSisi].beruntun', false)
         ->assertSee('Belum pernah dihitung babak ini.');
@@ -171,7 +227,7 @@ it('tidak lagi memasang tombol jatuhan di panel juri', function () {
     $juri = ($this->buatUser)('juri');
 
     $halaman = $this->actingAs($juri)
-        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]))
         ->assertOk();
 
     $halaman->assertSee('Pukulan')
@@ -201,7 +257,7 @@ it('menolak juri membuka panel wasit', function () {
     $juri = ($this->buatUser)('juri');
 
     $this->actingAs($juri)
-        ->get(route('admin.turnamen.partai.wasit', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.wasit', [$this->tournament, $this->arena]))
         ->assertForbidden();
 });
 
@@ -209,29 +265,29 @@ it('menampilkan panel juri lengkap dengan tautan manifest PWA', function () {
     $juri = ($this->buatUser)('juri');
 
     $this->actingAs($juri)
-        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('partaiPanel', false)
         ->assertSee('rel="manifest"', false)
-        ->assertSee(route('admin.turnamen.partai.juri.manifest', [$this->tournament, $this->match]), false);
+        ->assertSee(route('admin.turnamen.gelanggang.panel.manifest', [$this->tournament, $this->arena, 'juri']), false);
 });
 
 it('menolak wasit membuka panel juri -- itu bukan resource penilaian.create miliknya', function () {
     $wasit = ($this->buatUser)('wasit');
 
     $this->actingAs($wasit)
-        ->get(route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]))
         ->assertForbidden();
 });
 
-it('menyajikan manifest PWA per partai dengan start_url menunjuk balik ke partai itu', function () {
+it('menyajikan manifest PWA per gelanggang dengan start_url yang tidak pernah basi', function () {
     $juri = ($this->buatUser)('juri');
 
     $this->actingAs($juri)
-        ->get(route('admin.turnamen.partai.juri.manifest', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.manifest', [$this->tournament, $this->arena, 'juri']))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/manifest+json')
-        ->assertJsonPath('start_url', route('admin.turnamen.partai.juri', [$this->tournament, $this->match]))
+        ->assertJsonPath('start_url', route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]))
         ->assertJsonPath('display', 'fullscreen');
 });
 
@@ -304,4 +360,48 @@ it('menolak membatalkan hukuman setelah hasil partai disahkan', function () {
         ->assertSessionHasErrors('match');
 
     expect($hukuman->fresh()->voided_at)->toBeNull();
+});
+
+/*
+ * Rincian skor sampai sekarang cuma hidup di overlay siaran dan berita acara
+ * PDF. Petugas gelanggang yang ingin tahu dari mana angka akhirnya datang
+ * harus membuka vMix atau mencetak berkas -- di tengah kejuaraan, keduanya
+ * bukan jawaban.
+ */
+it('memasang papan hasil di panel operator', function () {
+    $operator = ($this->buatUser)('operator-it');
+
+    $this->actingAs($operator)
+        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertSee('Skor per babak')
+        ->assertSee('Rincian')
+        ->assertSee('Poin akhir');
+});
+
+/** Peninjau butuh rincian angka SEBELUM menekan sahkan, bukan sesudah. */
+it('memasang papan hasil di panel dewan wasit juri', function () {
+    $dewan = ($this->buatUser)('pengawas-wasit-juri');
+
+    $this->actingAs($dewan)
+        ->get(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertSee('Skor per babak')
+        ->assertSee('Poin akhir');
+});
+
+it('mengirim rincian teknik kedua sudut di payload state panel', function () {
+    $operator = ($this->buatUser)('operator-it');
+
+    ScoreEvent::create([
+        'match_id' => $this->match->id, 'round' => 1, 'corner' => 'red',
+        'point_type' => 'tendangan', 'value' => 2, 'server_ts' => now(),
+    ]);
+
+    $this->actingAs($operator)
+        ->getJson(route('admin.turnamen.partai.state', [$this->tournament, $this->match]))
+        ->assertOk()
+        ->assertJsonPath('teknik.merah.tendangan', 1)
+        ->assertJsonPath('teknik.merah.pukulan', 0)
+        ->assertJsonPath('teknik.biru.jatuhan', 0);
 });

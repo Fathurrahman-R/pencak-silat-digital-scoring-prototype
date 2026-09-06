@@ -1,7 +1,8 @@
 {{--
     Panel sisi kanan layar masuk dan daftar.
 
-    Menggantikan <x-auth.trust-panel> bawaan boilerplate, yang memuat kutipan
+    Menggantikan komponen trust-panel bawaan boilerplate (sudah dihapus),
+    yang memuat kutipan
     bernama orang beserta jabatan dan perusahaan, plus angka "2.400+ tim
     keuangan · Rp 4,1T tagihan diproses · 99,9% uptime". Ketiganya karangan.
     Selain tidak ada hubungannya dengan pencak silat, testimoni dan metrik yang
