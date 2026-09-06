@@ -12,9 +12,11 @@ use App\Models\Registration;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Models\User;
 use App\Support\Sinkron\Kepemilikan;
 use App\Support\Sinkron\PetaSinkron;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /*
  * Kepemilikan baris -- aturan yang menggantikan resolusi konflik.
@@ -97,18 +99,18 @@ it('menelusuri dua langkah untuk jawaban verifikasi juri', function () {
 
     $verifikasi = JudgeVerification::create([
         'match_id' => $partaiB->id, 'round' => 1, 'jenis' => 'jatuhan',
-        'diminta_oleh' => \App\Models\User::factory()->create()->id, 'diminta_at' => now(),
+        'diminta_oleh' => User::factory()->create()->id, 'diminta_at' => now(),
         'status' => JudgeVerification::BERJALAN,
     ]);
 
     // Kunci dibangkitkan sendiri: penyisipan lewat query builder melewati
     // model, jadi HasUlids tidak berjalan.
-    $jawaban = (string) Illuminate\Support\Str::ulid();
+    $jawaban = (string) Str::ulid();
 
     DB::table('judge_verification_answers')->insert([
         'id' => $jawaban,
         'judge_verification_id' => $verifikasi->id,
-        'judge_user_id' => \App\Models\User::factory()->create()->id,
+        'judge_user_id' => User::factory()->create()->id,
         'judge_number' => 1, 'jawaban' => 'ya', 'server_ts' => now(),
         'created_at' => now(), 'updated_at' => now(),
     ]);
@@ -168,9 +170,10 @@ it('mengenali node yang memegang lebih dari satu gelanggang', function () {
     expect(($this->sebagai)('gelanggang', 'A,B')->milikNodeIni('matches', $baris))->toBeTrue();
 });
 
-it('mengeluarkan judge_inputs dari daftar sinkron tapi memasukkannya ke arsip', function () {
+it('mengeluarkan judge_inputs dari daftar sinkron', function () {
+    // Jalannya lewat paket arsip, bukan sinkron peer-to-peer. Daftar tabel
+    // arsipnya tinggal di PaketArsip dan diuji di ArsipBuktiTest.
     expect(PetaSinkron::disinkronkan('judge_inputs'))->toBeFalse()
-        ->and(PetaSinkron::tabelArsip())->toContain('judge_inputs')
         ->and(PetaSinkron::disinkronkan('score_events'))->toBeTrue();
 });
 

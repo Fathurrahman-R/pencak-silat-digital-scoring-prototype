@@ -3,6 +3,7 @@
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Enums\ResourceAction;
 use App\Models\Arena;
 use App\Models\ArenaOfficial;
 use App\Models\Athlete;
@@ -214,9 +215,9 @@ it('membuang cache izin supaya peran baru langsung berlaku', function () {
     $this->arena->operators()->attach($operator->id);
 
     // Panaskan cache izin dengan peta yang belum mengenal peran baru.
-    expect($operator->can(rk('kendali-gelanggang', App\Enums\ResourceAction::View)))->toBeFalse();
+    expect($operator->can(rk('kendali-gelanggang', ResourceAction::View)))->toBeFalse();
 
     $this->artisan('silat:pindah-pengendali')->assertSuccessful();
 
-    expect($operator->fresh()->can(rk('kendali-gelanggang', App\Enums\ResourceAction::View)))->toBeTrue();
+    expect($operator->fresh()->can(rk('kendali-gelanggang', ResourceAction::View)))->toBeTrue();
 });

@@ -202,19 +202,4 @@ class PetaSinkron
     {
         return in_array($tabel, self::urutanTerapkan(), true);
     }
-
-    /**
-     * Tabel yang ikut paket ARSIP satu partai -- rantai bukti lengkapnya.
-     *
-     * Berbeda dari daftar sinkron dalam satu hal yang menentukan: judge_inputs
-     * ADA di sini. Justru barisan penekanan tombol mentah itulah yang
-     * ditanyakan saat hasil partai digugat sesudahnya, dan paket arsip adalah
-     * satu-satunya salinannya di luar laptop gelanggang tempat ia lahir.
-     *
-     * @return list<string>
-     */
-    public static function tabelArsip(): array
-    {
-        return array_merge(['judge_inputs'], array_keys(self::LOKAL));
-    }
 }

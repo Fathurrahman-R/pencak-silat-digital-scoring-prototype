@@ -56,23 +56,63 @@ gelanggang cuma memperbaruinya.
 > lama hanya basis data yang sudah berisi riwayat. Jangan menjalankan migrasi
 > ini di sela pertandingan.
 
+## Token sinkron
+
+Token di sini adalah **rahasia yang kamu buat sendiri** — bukan dari layanan
+mana pun, bukan API key, bukan token bawaan Laravel. Ia berfungsi seperti kata
+sandi antar-laptop: satu-satunya cara endpoint sinkron tahu bahwa yang mengetuk
+memang salah satu mesin kejuaraan, bukan perangkat lain di LAN yang sama.
+
+Buat sekali, sebelum memasang laptop pertama:
+
+```bash
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
+
+Jangan memakai kata yang mudah ditebak. LAN gelanggang juga dipakai perangkat
+penonton dan panitia, dan endpoint ini menyajikan seluruh riwayat pertandingan.
+
+Token dipakai dua arah, dan keduanya harus cocok:
+
+| Setelan | Artinya |
+|---|---|
+| `SINKRON_TOKEN` di laptop X | Token yang **harus dibawa** siapa pun yang menarik data **dari** X |
+| Bagian ketiga tiap entri `SINKRON_PEER` | Token **milik peer itu**, dibawa laptop ini saat menarik **darinya** |
+
+Artinya token pada entri peer `global` harus sama persis dengan
+`SINKRON_TOKEN` yang dipasang di laptop global. Paling sederhana: pakai **satu
+token yang sama di kelima laptop**, sehingga tidak ada yang perlu dicocokkan
+satu per satu. Contoh di bawah memakai cara itu.
+
 ## Menyetel tiap laptop
 
+Ganti `RAHASIA` dengan token yang barusan dibuat — nilai yang **sama** di semua
+laptop — dan sesuaikan alamat IP dengan yang dicetak `jalankan-server.ps1` di
+tiap mesin.
+
 ```dotenv
-# Node gelanggang A
+# Node gelanggang A  (192.168.1.11)
 SINKRON_PERAN=gelanggang
 SINKRON_NODE=gelanggang-a
 SINKRON_ARENA=A
-SINKRON_TOKEN=<token yang sama di semua laptop>
-SINKRON_PEER="global|http://192.168.1.10:8000|<token>,gelanggang-b|http://192.168.1.12:8000|<token>"
+SINKRON_TOKEN=RAHASIA
+SINKRON_PEER="global|http://192.168.1.10:8000|RAHASIA,gelanggang-b|http://192.168.1.12:8000|RAHASIA"
 
-# Node global
+# Node global  (192.168.1.10)
 SINKRON_PERAN=global
 SINKRON_NODE=global
 SINKRON_ARENA=
-SINKRON_TOKEN=<token yang sama>
-SINKRON_PEER="gelanggang-a|http://192.168.1.11:8000|<token>,..."
+SINKRON_TOKEN=RAHASIA
+SINKRON_PEER="gelanggang-a|http://192.168.1.11:8000|RAHASIA,gelanggang-b|http://192.168.1.12:8000|RAHASIA"
 ```
+
+Tiap laptop gelanggang cukup mengenal **node global** sebagai peer; mengenal
+gelanggang lain hanya perlu kalau baganmu memang lintas gelanggang dan kamu
+ingin menarik hasilnya langsung tanpa lewat node global.
+
+Nama peer `global` bukan sekadar label: pendorong arsip mencarinya dengan nama
+itu (atau entri yang `peran`-nya `global`) untuk tahu ke mana bukti partai
+dikirim.
 
 **Token kosong berarti endpoint sinkron MATI, bukan terbuka.** Laptop yang
 belum dikonfigurasi tidak menyajikan isi basis datanya ke jaringan gelanggang

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Pemantauan\KesehatanGelanggang;
+use App\Support\Sinkron\CatatanKeluar;
 use App\Support\Sinkron\Kepemilikan;
 use App\Support\Sinkron\PembungkusPaket;
 use App\Support\Sinkron\PenarikPeer;
@@ -31,6 +33,7 @@ class SinkronController extends Controller
         private readonly Kepemilikan $kepemilikan,
         private readonly PembungkusPaket $pembungkus,
         private readonly PenarikPeer $penarik,
+        private readonly CatatanKeluar $catatan,
     ) {}
 
     /**
@@ -44,7 +47,7 @@ class SinkronController extends Controller
      */
     public function index(): View
     {
-        $milikSendiri = (int) (DB::table('sinkron_keluar')->max('id') ?? 0);
+        $milikSendiri = $this->catatan->kursorTerakhir();
 
         $kursor = DB::table('sinkron_kursor')->get()->keyBy('peer');
 
@@ -65,7 +68,7 @@ class SinkronController extends Controller
             ->all();
 
         return view('admin.sinkron.index', [
-            'kesehatan' => app(\App\Support\Pemantauan\KesehatanGelanggang::class)->periksa(),
+            'kesehatan' => app(KesehatanGelanggang::class)->periksa(),
             'node' => $this->kepemilikan->namaNode(),
             'peran' => (string) config('sinkron.peran'),
             'arena' => (string) config('sinkron.arena'),
@@ -92,7 +95,7 @@ class SinkronController extends Controller
                 'trim',
                 explode(',', (string) config('sinkron.arena')),
             ))),
-            'kursor' => (int) (DB::table('sinkron_keluar')->max('id') ?? 0),
+            'kursor' => $this->catatan->kursorTerakhir(),
         ]);
     }
 

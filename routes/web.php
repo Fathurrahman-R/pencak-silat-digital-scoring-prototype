@@ -21,7 +21,6 @@ use App\Http\Controllers\Admin\ResourceMappingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SiaranController;
 use App\Http\Controllers\Admin\SinkronController;
-use App\Http\Middleware\CatatWaktuState;
 use App\Http\Controllers\Admin\TournamentController;
 use App\Http\Controllers\Admin\TournamentRuleController;
 use App\Http\Controllers\Admin\TreasuryController;
@@ -33,6 +32,7 @@ use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\BerandaController;
+use App\Http\Middleware\CatatWaktuState;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', BerandaController::class)->name('home');

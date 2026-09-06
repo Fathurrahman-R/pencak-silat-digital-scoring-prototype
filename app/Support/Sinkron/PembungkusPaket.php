@@ -2,6 +2,7 @@
 
 namespace App\Support\Sinkron;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -69,7 +70,7 @@ class PembungkusPaket
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, object>  $catatan
+     * @param  Collection<int, object>  $catatan
      * @return list<array{tabel: string, id: string, aksi: string, data?: array<string, mixed>}>
      */
     private function susunBaris($catatan): array

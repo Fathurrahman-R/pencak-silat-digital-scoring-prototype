@@ -8,7 +8,6 @@ use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
 use App\Models\Registration;
-use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;

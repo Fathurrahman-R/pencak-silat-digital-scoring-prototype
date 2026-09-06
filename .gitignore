@@ -3,6 +3,9 @@
 .env
 .env.backup
 .env.production
+# Cadangan yang dibuat siapkan-gelanggang.ps1 tiap kali .env ditulis ulang.
+# Isinya sama rahasianya dengan .env itu sendiri.
+.env.cadangan-*
 .phpactor.json
 .phpunit.result.cache
 /.codex
