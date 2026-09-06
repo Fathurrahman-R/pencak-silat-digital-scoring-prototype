@@ -44,6 +44,48 @@ class ConsensusEvaluator
             $batasBawah = $input->server_ts->clone()->subMilliseconds($peraturan->window_konsensus_ms)->format('Y-m-d H:i:s.v');
             $batasAtas = $input->server_ts->format('Y-m-d H:i:s.v');
 
+            /*
+             * Juri yang menekan SESUDAH nilainya terbit tetap ikut tercatat.
+             *
+             * Konsensus terbit saat juri kedua menekan. Juri ketiga menekan
+             * belasan milidetik kemudian, tapi dua input pertama sudah terikat
+             * ke nilai itu, jadi ia berdiri sendirian di bawah ambang dan
+             * tersimpan tanpa `score_event_id`. Nilainya benar -- tetap satu,
+             * tidak dobel -- tapi riwayat Dewan Wasit Juri menuliskan "Juri 1,
+             * Juri 2" untuk serangan yang sebenarnya disepakati bertiga.
+             *
+             * Diikat, bukan diterbitkan ulang: yang bertambah cuma namanya di
+             * jejak audit, angkanya tidak bergerak sama sekali.
+             */
+            $sudahTerbit = ScoreEvent::query()
+                ->where('match_id', $input->match_id)
+                ->where('round', $input->round)
+                ->where('corner', $input->corner)
+                ->where('point_type', $input->point_type)
+                ->whereNull('voided_at')
+                ->whereBetween('server_ts', [$batasBawah, $batasAtas])
+                ->latest('server_ts')
+                ->first();
+
+            if ($sudahTerbit !== null) {
+                /*
+                 * Kecuali juri itu memang sudah tercatat di sana. Juri yang
+                 * menekan dua kali beruntun sedang menegaskan tekanannya
+                 * sendiri, bukan menambah suara -- tekanan keduanya tetap
+                 * berdiri lepas seperti sebelumnya.
+                 */
+                $sudahIkut = JudgeInput::query()
+                    ->where('score_event_id', $sudahTerbit->id)
+                    ->where('judge_user_id', $input->judge_user_id)
+                    ->exists();
+
+                if (! $sudahIkut) {
+                    $input->forceFill(['score_event_id' => $sudahTerbit->id])->save();
+                }
+
+                return null;
+            }
+
             $kandidat = JudgeInput::query()
                 ->where('match_id', $input->match_id)
                 ->where('round', $input->round)

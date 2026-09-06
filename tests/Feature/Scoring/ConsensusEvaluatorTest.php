@@ -177,3 +177,73 @@ it('tetap menghasilkan satu score_event walau dua input tiba nyaris bersamaan', 
     expect(collect([$hasilA, $hasilB])->filter())->toHaveCount(1)
         ->and(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(1);
 });
+
+/*
+ * Juri ketiga menekan SESUDAH nilainya terbit.
+ *
+ * Ditemukan di pengujian lapangan: tiga juri menekan dalam rentang 48 ms,
+ * tepat satu nilai terbit -- benar -- tapi masukan juri ketiga tersimpan tanpa
+ * `score_event_id`, karena dua input pertama sudah terikat dan ia berdiri
+ * sendirian di bawah ambang. Riwayat Dewan Wasit Juri lalu menuliskan "Juri 1,
+ * Juri 2" untuk serangan yang sebenarnya disepakati bertiga.
+ */
+it('mengikat juri ketiga ke nilai yang sudah terbit, tanpa menerbitkan nilai kedua', function () {
+    $t0 = now();
+
+    $a = ($this->input)(0, Sudut::Merah, JenisSerangan::Pukulan, $t0);
+    expect($this->evaluator->evaluasi($a))->toBeNull();
+
+    $b = ($this->input)(1, Sudut::Merah, JenisSerangan::Pukulan, $t0->clone()->addMilliseconds(40));
+    $nilai = $this->evaluator->evaluasi($b);
+    expect($nilai)->not->toBeNull();
+
+    $c = ($this->input)(2, Sudut::Merah, JenisSerangan::Pukulan, $t0->clone()->addMilliseconds(80));
+    expect($this->evaluator->evaluasi($c))->toBeNull();
+
+    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(1);
+    expect($c->fresh()->score_event_id)->toBe($nilai->id);
+    expect(JudgeInput::where('score_event_id', $nilai->id)->count())->toBe(3);
+});
+
+/*
+ * Yang menekan dua kali beruntun sedang menegaskan tekanannya sendiri, bukan
+ * menambah suara. Tekanan keduanya tetap berdiri lepas -- kalau ia ikut
+ * diikat, satu juri terhitung dua kali di jejak audit.
+ */
+it('tidak mengikat tekanan kedua dari juri yang sudah tercatat pada nilai itu', function () {
+    $t0 = now();
+
+    $a = ($this->input)(0, Sudut::Merah, JenisSerangan::Tendangan, $t0);
+    $this->evaluator->evaluasi($a);
+
+    $b = ($this->input)(1, Sudut::Merah, JenisSerangan::Tendangan, $t0->clone()->addMilliseconds(50));
+    $nilai = $this->evaluator->evaluasi($b);
+    expect($nilai)->not->toBeNull();
+
+    $ulang = ($this->input)(0, Sudut::Merah, JenisSerangan::Tendangan, $t0->clone()->addMilliseconds(400));
+    expect($this->evaluator->evaluasi($ulang))->toBeNull();
+
+    expect($ulang->fresh()->score_event_id)->toBeNull();
+    expect(ScoreEvent::where('match_id', $this->match->id)->count())->toBe(1);
+    expect(JudgeInput::where('score_event_id', $nilai->id)->count())->toBe(2);
+});
+
+/*
+ * Nilai yang sudah dibatalkan Dewan Wasit Juri tidak boleh menyerap tekanan
+ * baru: kalau juri menekan lagi sesudah pembatalan, ia sedang memulai
+ * konsensus baru, bukan menghidupkan yang sudah dicoret.
+ */
+it('mengabaikan nilai yang sudah dibatalkan saat mengikat tekanan susulan', function () {
+    $t0 = now();
+
+    $a = ($this->input)(0, Sudut::Biru, JenisSerangan::Pukulan, $t0);
+    $this->evaluator->evaluasi($a);
+    $b = ($this->input)(1, Sudut::Biru, JenisSerangan::Pukulan, $t0->clone()->addMilliseconds(30));
+    $nilai = $this->evaluator->evaluasi($b);
+
+    $nilai->update(['voided_at' => now()]);
+
+    $c = ($this->input)(2, Sudut::Biru, JenisSerangan::Pukulan, $t0->clone()->addMilliseconds(60));
+    expect($this->evaluator->evaluasi($c))->toBeNull();
+    expect($c->fresh()->score_event_id)->toBeNull();
+});
