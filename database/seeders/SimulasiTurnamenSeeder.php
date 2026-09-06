@@ -166,6 +166,15 @@ class SimulasiTurnamenSeeder extends Seeder
             'sekretariat' => ['Dewi Lestari', 'sekretariat'],
             'operator' => ['Fajar Nugroho', 'operator-it'],
             'operator2' => ['Yudi Hartono', 'operator-it'],
+
+            /*
+             * Kursi sendiri, bukan operator yang merangkap. Timer dan
+             * pergantian jadwal sudah pindah dari Operator IT ke peran ini
+             * (SilatRoleSeeder), jadi simulasi yang menggabungkan keduanya
+             * melatih pembagian tugas yang tidak akan dipakai di hari-H.
+             */
+            'pengendali1' => ['Iwan Setiawan', 'pengendali-gelanggang'],
+            'pengendali2' => ['Nur Hidayat', 'pengendali-gelanggang'],
             'wasit1' => ['Bambang Sutrisno', 'wasit'],
             'wasit2' => ['Rudi Hermawan', 'wasit'],
         ];
@@ -247,6 +256,7 @@ class SimulasiTurnamenSeeder extends Seeder
     private function buatGelanggang(): void
     {
         $operator = ['A' => $this->akun['operator'], 'B' => $this->akun['operator2']];
+        $pengendali = ['A' => $this->akun['pengendali1'], 'B' => $this->akun['pengendali2']];
 
         foreach ([['Gelanggang A', 'A'], ['Gelanggang B', 'B']] as $urutan => [$nama, $kode]) {
             $arena = Arena::create([
@@ -258,6 +268,16 @@ class SimulasiTurnamenSeeder extends Seeder
             ]);
 
             $arena->operators()->attach($operator[$kode]);
+
+            /*
+             * Dua tabel penugasan yang berbeda, dan yang ini tidak boleh
+             * dilewatkan: gelanggang tanpa pengendali tidak bisa memulai babak
+             * sama sekali. Migrasi arena_pengendali menyalinnya dari
+             * arena_operators, tapi hanya atas data yang sudah ada saat migrasi
+             * berjalan -- pemasangan baru menjalankannya di atas tabel kosong,
+             * jadi tidak ada yang menambal kelalaian di sini.
+             */
+            $arena->pengendali()->attach($pengendali[$kode]);
         }
     }
 

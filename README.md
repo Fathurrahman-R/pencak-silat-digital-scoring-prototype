@@ -88,7 +88,7 @@ Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) 
 php artisan silat:simulasi
 ```
 
-Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, sepuluh kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Operator IT dan menekan Mulai babak.
+Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, sepuluh kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Pengendali Gelanggang dan menekan Mulai babak.
 
 Yang sengaja **tidak** dikerjakan: menjalankan partai, memasukkan nilai juri, dan mengesahkan hasil — justru itu yang mau diuji manual.
 
@@ -105,11 +105,12 @@ Sepuluh peserta jatuh ke bagan 16, dan bagan di aplikasi ini mengisi tempat rapa
 
 Nomor Jurus tidak diikutkan supaya jumlah pesilatnya bulat 100 dan tiap kelas benar-benar berisi sepuluh — mesin penilaian Jurus dijaga test suite, bukan data simulasi ini.
 
-Dua gelanggang (A dan B) masing-masing punya operatornya sendiri, sehingga dua partai bisa dijalankan bersamaan. Window konsensus juri dilebarkan jadi 5 detik (bawaan 2 detik) supaya satu penguji bisa berpindah antar tab atau antar HP tanpa kehabisan waktu.
+Dua gelanggang (A dan B) masing-masing punya pengendali dan operatornya sendiri, sehingga dua partai bisa dijalankan bersamaan. Window konsensus juri mengikuti bawaan 2 detik: seeder ini pernah melebarkannya jadi 5 detik, dan kelonggaran itu dicabut karena membuat layar simulasi berperilaku berbeda dari kejuaraan sungguhan — termasuk berapa lama indikator juri menyala. Ia tetap bisa diubah per kejuaraan lewat Setelan peraturan.
 
 | Akun | Peran |
 |---|---|
-| `operator@silat.test`, `operator2@silat.test` | Operator IT (Gelanggang A dan B: panel gelanggang, timer) |
+| `pengendali1@silat.test`, `pengendali2@silat.test` | Pengendali Gelanggang (Gelanggang A dan B: memilih partai aktif, timer, mengakhiri partai) |
+| `operator@silat.test`, `operator2@silat.test` | Operator IT (Gelanggang A dan B: papan tampilan dan perangkat siaran — **tidak** memegang timer) |
 | `wasit1@silat.test`, `wasit2@silat.test` | Wasit |
 | `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B) |
 | `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR, putusan protes) |
