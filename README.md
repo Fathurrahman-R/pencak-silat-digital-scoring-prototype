@@ -80,7 +80,7 @@ Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`
 
 Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat. Tapi untuk uji coba, seluruh akun itu sudah disiapkan seeder simulasi di bawah.
 
-Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — IP statis, `php.ini`, firewall, empat proses hari-H — ikuti [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
+Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — arsitektur jaringan, `php.ini`, firewall, dan dua proses hari-H — ikuti [`docs/PANDUAN-SISTEM.md`](docs/PANDUAN-SISTEM.md); rinciannya di [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
 
 ### Kejuaraan siap-uji untuk simulasi manual
 
@@ -157,6 +157,13 @@ Nilai juri Jurus (`jurus_scores`) memakai upsert per juri, **bukan** log immutab
 ---
 
 ## Dokumen lain
+
+**Dua pintu masuk utama:**
+
+- [`docs/PANDUAN-SISTEM.md`](docs/PANDUAN-SISTEM.md) — **panduan final menyiapkan sistem**, dari nol sampai gong pertama: arsitektur LAN, daftar kebutuhan, pemasangan, konfigurasi, multi-gelanggang, vMix, tunnel, daftar periksa, dan tabel gejala→tindakan
+- [`docs/REPOWIKI.md`](docs/REPOWIKI.md) — **peta kode untuk developer**: invarian, lapisan, alur satu nilai Tanding, RBAC, rute, perangkap pengujian
+
+**Rincian:**
 
 - [`docs/RENCANA.md`](docs/RENCANA.md) — PRD lengkap, task list per epic, checklist per fase
 - [`docs/ARSITEKTUR.md`](docs/ARSITEKTUR.md) — diagram arsitektur dan alur data

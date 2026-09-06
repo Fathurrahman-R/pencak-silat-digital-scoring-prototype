@@ -16,7 +16,7 @@
 
 ## Pagi hari-H: nyalakan sistem
 
-1. Nyalakan empat proses server (lihat `docs/INSTALASI-LAN.md` §6): `serve`, `reverb:start`, `queue:listen`, dan proxy tunnel kalau live score publik dipakai.
+1. Nyalakan **dua** proses server (lihat [`PANDUAN-SISTEM.md`](PANDUAN-SISTEM.md) §5): `.\scripts\server\jalankan-server.ps1` dan `php artisan reverb:start --host=0.0.0.0 --port=8080`, masing-masing di jendela PowerShell sendiri. Tambah proxy tunnel hanya kalau live score publik dipakai. **Bukan** `php artisan serve` — ia melayani satu permintaan pada satu waktu. **Bukan** `queue:listen` — tidak ada pekerjaan antrean di aplikasi ini.
 2. **Operator IT** tiap gelanggang membuka panel Operator di laptop gelanggangnya masing-masing (`/admin/turnamen/{id}/partai/{match}/operator` untuk partai pertama).
 3. Juri dan wasit login di HP masing-masing. **Yang bertugas di satu gelanggang mendarat langsung di panelnya** — tidak lewat dashboard sama sekali. Yang memegang dua gelanggang tetap melihat dashboard, karena sistem tidak punya dasar memilih salah satunya. Tambahkan panelnya ke layar utama (PWA): alamatnya per GELANGGANG, jadi ikonnya tidak pernah basi saat jadwal berganti.
 
