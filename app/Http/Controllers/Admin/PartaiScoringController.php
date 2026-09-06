@@ -307,6 +307,12 @@ class PartaiScoringController extends Controller
         $data = $request->validate([
             'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
         ], [
             'babak' => 'Babak',
@@ -496,6 +502,12 @@ class PartaiScoringController extends Controller
                 Rule::notIn([JenisSerangan::Jatuhan->value]),
             ],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
             'jenis.not_in' => 'Jatuhan tidak dinilai juri — nilainya diterbitkan Dewan Wasit Juri.',
         ], [
@@ -566,6 +578,12 @@ class PartaiScoringController extends Controller
                 Rule::exists('judge_verifications', 'id')->where('match_id', $match->id),
             ],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
         ], [
             'babak' => 'Babak',
