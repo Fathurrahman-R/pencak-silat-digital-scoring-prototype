@@ -150,7 +150,12 @@
                              ditekan sambil mengawasi matras, bukan layar. --}}
                         <button type="button" x-show="babakUntukDimulai !== null && ! susulanTerbuka" x-on:click="mulaiBabak()"
                                 class="h-[var(--silat-sentuh-min)] rounded-silat bg-silat-aksi text-[16px] font-semibold text-silat-aksi-teks">
-                            <span x-text="(babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak ' : 'Mulai babak ') + babakUntukDimulai"></span>
+                            {{-- Angka babak dirangkai hanya kalau memang ada. Pada babak terakhir
+                                 `babakUntukDimulai` bernilai null, dan tombol yang tersembunyi ini
+                                 tetap berlabel "Mulai babak null" di dalam DOM. --}}
+                            <span x-text="babakUntukDimulai === null
+                                ? 'Mulai babak'
+                                : (babakAktif?.status === 'belum_mulai' ? 'Mulai ulang babak ' : 'Mulai babak ') + babakUntukDimulai"></span>
                         </button>
                         <button type="button" x-show="babakAktif?.status === 'jeda' && ! susulanTerbuka" x-on:click="lanjutkan()"
                                 class="h-[var(--silat-sentuh-min)] rounded-silat bg-silat-aksi text-[16px] font-semibold text-silat-aksi-teks">Lanjutkan</button>
@@ -158,8 +163,21 @@
                                 class="h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali text-[16px] font-semibold text-silat-teks-kedua">Jeda</button>
                         <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="selesaikanBabak()"
                                 class="h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali text-[16px] font-semibold text-silat-teks-kedua">Selesaikan babak</button>
+                        {{--
+                            Reset babak dan Akhiri partai dulu hanya berdiri di
+                            Panel Papan, padahal panduan operasional menaruh
+                            keduanya di tangan Pengendali Gelanggang -- yang
+                            bekerja dari layar ini. Pengendali yang perlu
+                            mengakhiri partai terpaksa membuka panel lain di
+                            tengah gelanggang.
+                        --}}
+                        <button type="button" x-show="babakAktif?.status === 'berjalan' || babakAktif?.status === 'jeda'" x-on:click="resetBabak()"
+                                class="h-13 rounded-silat border border-silat-tepi-kendali text-[14.5px] font-medium text-silat-teks-redup">Reset babak</button>
                     </div>
                 @endresource
+
+                <x-silat.akhiri-partai />
+
 
                 @resource(rk('kendali-gelanggang', ResourceAction::Manage))
                     {{--
