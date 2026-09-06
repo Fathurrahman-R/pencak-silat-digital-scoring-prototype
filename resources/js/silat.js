@@ -97,6 +97,32 @@ function pantauKoneksi() {
     pusher.connection.bind('state_change', ({ current }) => {
         Alpine.store('koneksi').tandai(petakan[current] ?? 'menyambung');
     });
+
+    /*
+     * WebSocket bukan pendeteksi putus yang cepat.
+     *
+     * Diukur di lapangan: WiFi HP juri dicabut, dan delapan detik kemudian
+     * panel masih bertuliskan "tersambung" -- Pusher baru menyadarinya setelah
+     * ping-nya sendiri kedaluwarsa. Selama jendela itu tombol nilai tetap
+     * tampak hidup, ditekan, dan tekanannya hilang.
+     *
+     * Peramban sudah tahu jauh lebih cepat. Kejadian `offline` dipakai apa
+     * adanya: tombol nilai mematikan dirinya sendiri begitu status jadi
+     * "putus", jadi juri melihatnya sebelum ia menekan, bukan sesudah.
+     */
+    const kabar = () => {
+        if (! navigator.onLine) {
+            Alpine.store('koneksi').tandai('putus');
+
+            return;
+        }
+
+        Alpine.store('koneksi').tandai(petakan[pusher.connection.state] ?? 'menyambung');
+    };
+
+    window.addEventListener('offline', kabar);
+    window.addEventListener('online', kabar);
+    kabar();
 }
 
 /**
@@ -555,7 +581,13 @@ Alpine.data('partaiPanel', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+
+            this.galat = 'Tidak bisa menghubungi server. Yang barusan ditekan TIDAK tercatat — periksa jaringan, lalu ulangi.';
 
             return false;
         }
@@ -1472,7 +1504,13 @@ Alpine.data('panelKetua', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+
+            this.galat = 'Tidak bisa menghubungi server. Yang barusan ditekan TIDAK tercatat — periksa jaringan, lalu ulangi.';
 
             return false;
         }
@@ -1646,7 +1684,13 @@ Alpine.data('jurusPanel', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+
+            this.galat = 'Tidak bisa menghubungi server. Yang barusan ditekan TIDAK tercatat — periksa jaringan, lalu ulangi.';
 
             return false;
         }
