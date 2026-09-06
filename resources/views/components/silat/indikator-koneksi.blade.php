@@ -38,9 +38,12 @@
         saya sudah sampai". Panel yang tidak punya antrean (papan, overlay,
         halaman live) tidak pernah memunculkannya.
     --}}
-    <span x-show="typeof antreanTertahan !== 'undefined' && antreanTertahan > 0" x-cloak
+    {{-- `$data.` bukan nama telanjang: panel live dan overlay memakai komponen
+         Alpine lain yang tidak punya antrean, dan menyebut namanya begitu saja
+         melempar ReferenceError di sana -- `typeof` pun tidak menolongnya. --}}
+    <span x-show="($data.antreanTertahan ?? 0) > 0" x-cloak
           class="flex items-center gap-2 rounded-silat border border-silat-tepi-petak px-3 py-2">
-        <span class="silat-angka text-[13px] font-semibold text-silat-teks" x-text="antreanTertahan"></span>
+        <span class="silat-angka text-[13px] font-semibold text-silat-teks" x-text="$data.antreanTertahan"></span>
         <span class="text-[12px] text-silat-teks-kedua">tekanan ditahan, dikirim sendiri</span>
     </span>
 </div>

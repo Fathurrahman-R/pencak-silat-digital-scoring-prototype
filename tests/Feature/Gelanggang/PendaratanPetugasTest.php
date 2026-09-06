@@ -216,3 +216,47 @@ it('tidak mengalihkan petugas yang partainya sedang ditayangkan gelanggang lain'
 
     $this->actingAs($this->juri)->get(route('dashboard'))->assertOk();
 });
+
+/*
+ * Panel juri dan wasit dijaga penugasan PER PARTAI, sementara pendaratan ini
+ * membaca penugasan per gelanggang. Kedua tabel bisa berbeda -- aparat
+ * gelanggang disalin ke partai hanya saat pengendali menunjuknya, dan
+ * penyalinan itu tidak menimpa aparat yang sudah ditugaskan khusus. Terjadi di
+ * lapangan: `wasit2` didaratkan di panel wasit Gelanggang B, lalu disambut
+ * "Anda tidak ditugaskan sebagai aparat pada partai ini".
+ */
+it('tidak mendaratkan petugas di panel yang partainya bukan tugasnya', function () {
+    ArenaOfficial::create([
+        'arena_id' => $this->arena->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $partai = ($this->buatPartai)($this->arena, SilatMatch::STATUS_BERLANGSUNG);
+    $this->arena->update(['active_match_id' => $partai->id]);
+
+    MatchOfficial::create([
+        'match_id' => $partai->id, 'user_id' => User::factory()->create()->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $this->actingAs($this->juri)->get(route('dashboard'))->assertOk();
+});
+
+it('tetap mendaratkan petugas yang memang aparat partai yang sedang tayang', function () {
+    ArenaOfficial::create([
+        'arena_id' => $this->arena->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $partai = ($this->buatPartai)($this->arena, SilatMatch::STATUS_BERLANGSUNG);
+    $this->arena->update(['active_match_id' => $partai->id]);
+
+    MatchOfficial::create([
+        'match_id' => $partai->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $this->actingAs($this->juri)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]));
+});

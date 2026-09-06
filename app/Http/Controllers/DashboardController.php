@@ -138,6 +138,36 @@ class DashboardController extends Controller
             return null;
         }
 
+        /*
+         * Jangan daratkan orang di panel yang akan membalas 403.
+         *
+         * Panel juri dan wasit dijaga penugasan PER PARTAI, sementara
+         * pendaratan ini membaca penugasan per gelanggang. Kedua tabel bisa
+         * berbeda: aparat gelanggang disalin ke partai hanya saat pengendali
+         * menunjuknya, dan penyalinan itu sengaja tidak menimpa aparat yang
+         * sudah ditugaskan khusus untuk partai tersebut. Wasit yang memegang
+         * Gelanggang B karena itu bisa mendarat di panel wasit yang partai
+         * aktifnya dipegang orang lain -- dan yang dilihatnya adalah halaman
+         * "Anda tidak ditugaskan sebagai aparat pada partai ini", bukan
+         * tombolnya.
+         *
+         * Dashboard jauh lebih berguna daripada 403: dari sana ia melihat
+         * kartu partai yang memang miliknya.
+         */
+        $dijagaPartai = in_array($satu->role, [MatchOfficial::ROLE_JURI, MatchOfficial::ROLE_WASIT], true);
+        $partaiTayang = $satu->arena->active_match_id;
+
+        if ($dijagaPartai && $partaiTayang !== null) {
+            $ikutBertugas = MatchOfficial::query()
+                ->where('user_id', auth()->id())
+                ->where('match_id', $partaiTayang)
+                ->exists();
+
+            if (! $ikutBertugas) {
+                return null;
+            }
+        }
+
         return redirect()->route(
             "admin.turnamen.gelanggang.panel.{$panel[$satu->role]}",
             [$turnamen, $satu->arena],
