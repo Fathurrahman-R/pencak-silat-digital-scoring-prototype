@@ -15,6 +15,7 @@ it('punya halaman berbahasa Indonesia untuk tiap kode galat', function (string $
     ['403', 'Akses ditolak'],
     ['404', 'Halaman tidak ditemukan'],
     ['419', 'Sesi kedaluwarsa'],
+    ['405', 'Alamat ini tidak dibuka lewat peramban'],
     ['429', 'Terlalu banyak percobaan'],
     ['500', 'Terjadi kesalahan'],
 ]);
