@@ -142,7 +142,18 @@ class SilatRoleSeeder extends Seeder
                     'partai' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => [ResourceAction::View, ResourceAction::Create],
-                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update],
+                    /*
+                     * Termasuk MENGESAHKAN dan MENCETAK berita acara.
+                     *
+                     * Sebelumnya hanya View dan Update, jadi Dewan Wasit Juri
+                     * bisa membatalkan nilai keliru tapi tidak bisa
+                     * mengesahkan hasil yang sudah dibereskannya sendiri, dan
+                     * berita acaranya membalas 403 -- padahal panduan
+                     * operasional menaruh kedua pekerjaan itu di kursinya.
+                     * Pengesahan tertahan di Ketua Pertandingan, yang di
+                     * lapangan sedang mengurus gelanggang lain.
+                     */
+                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
                     // Melihat saja: hasil verifikasi masuk bahan evaluasi
                     // penilaian juri, tapi memintanya adalah wewenang Wasit
                     // dan Ketua Pertandingan.
