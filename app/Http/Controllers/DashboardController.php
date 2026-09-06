@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ResourceAction;
+use App\Models\Arena;
 use App\Models\ArenaOfficial;
 use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
@@ -94,7 +95,48 @@ class DashboardController extends Controller
             return null;
         }
 
+        /*
+         * Penugasan per PARTAI ikut dihitung, bukan hanya per gelanggang.
+         *
+         * Kedua tabel bisa berbeda pendapat: `arena_officials` menempatkan
+         * seorang juri di Gelanggang A sepanjang hari, sementara
+         * `match_officials` masih memegangnya sebagai aparat pada satu partai
+         * di Gelanggang B -- sisa penugasan lama, atau penambalan menit
+         * terakhir yang tidak ikut tercatat di tingkat gelanggang.
+         *
+         * Selama hanya `arena_officials` yang dibaca, juri itu didaratkan
+         * diam-diam di Gelanggang A padahal ia dipanggil ke B, dan nilainya
+         * masuk ke partai yang salah tanpa satu pun isyarat di layarnya.
+         *
+         * Yang dihitung hanya partai yang SEDANG hidup: berstatus berlangsung,
+         * atau sedang ditayangkan gelanggangnya. Seluruh partai terjadwal ikut
+         * dihitung berarti hampir setiap juri terlempar ke dashboard sepanjang
+         * hari -- bagan besar menyebar nama yang sama ke dua gelanggang untuk
+         * partai yang baru dimainkan sore nanti, dan itu bukan kebingungan
+         * yang perlu dijawab sekarang.
+         */
         $satu = $tugas->first();
+
+        $sedangTayang = Arena::query()
+            ->where('tournament_id', $turnamen->id)
+            ->whereNotNull('active_match_id')
+            ->pluck('active_match_id');
+
+        $gelanggangHidup = MatchOfficial::query()
+            ->where('user_id', auth()->id())
+            ->whereHas('match', fn ($q) => $q
+                ->whereNotNull('arena_id')
+                ->where(fn ($w) => $w
+                    ->where('status', SilatMatch::STATUS_BERLANGSUNG)
+                    ->orWhereIn('id', $sedangTayang))
+                ->whereHas('arena', fn ($a) => $a->where('tournament_id', $turnamen->id)))
+            ->with('match:id,arena_id')
+            ->get()
+            ->pluck('match.arena_id');
+
+        if ($gelanggangHidup->push($satu->arena_id)->unique()->count() > 1) {
+            return null;
+        }
 
         return redirect()->route(
             "admin.turnamen.gelanggang.panel.{$panel[$satu->role]}",

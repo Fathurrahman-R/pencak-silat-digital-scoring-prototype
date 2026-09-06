@@ -1,9 +1,16 @@
 <?php
 
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
+use App\Enums\GolonganUsia;
+use App\Enums\JenisKelamin;
 use App\Models\Arena;
 use App\Models\ArenaOfficial;
+use App\Models\Athlete;
+use App\Models\Bracket;
+use App\Models\Contingent;
 use App\Models\MatchOfficial;
+use App\Models\Registration;
+use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use Database\Seeders\ResourceSeeder;
@@ -28,6 +35,26 @@ beforeEach(function () {
 
     $this->juri = User::factory()->create();
     $this->juri->syncRoles(['juri']);
+
+    $kelas = $this->tournament->weightClasses()
+        ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
+    $kontingen = Contingent::factory()->for($this->tournament)->create();
+    $bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 4]);
+    $posisi = 0;
+
+    $this->buatPartai = function (Arena $arena, string $status) use ($kelas, $kontingen, $bracket, &$posisi) {
+        $daftar = fn () => tap(
+            Registration::factory()->for($kontingen)->terverifikasi()->create(['weight_class_id' => $kelas->id]),
+            fn ($r) => $r->athletes()->attach(Athlete::factory()->for($kontingen)->create()),
+        );
+
+        return SilatMatch::create([
+            'bracket_id' => $bracket->id, 'round' => 1, 'position' => ++$posisi,
+            'red_registration_id' => $daftar()->id, 'blue_registration_id' => $daftar()->id,
+            'status' => $status,
+            'arena_id' => $arena->id, 'order_in_arena' => $posisi,
+        ]);
+    };
 });
 
 it('mendaratkan juri satu gelanggang langsung di panelnya', function () {
@@ -113,4 +140,79 @@ it('membiarkan petugas gelanggang membuka dashboard lewat ?dashboard=1', functio
     ]);
 
     $this->actingAs($this->juri)->get(route('dashboard', ['dashboard' => 1]))->assertOk();
+});
+
+/*
+ * Dua tabel penugasan bisa berbeda pendapat.
+ *
+ * `arena_officials` menempatkan seorang juri di satu gelanggang sepanjang
+ * hari, sementara `match_officials` masih memegangnya sebagai aparat pada
+ * partai yang SEDANG berjalan di gelanggang lain. Terjadi di lapangan:
+ * `juri2`, `juri3`, dan `wasit1` tercatat di partai dua gelanggang sekaligus,
+ * dan ketiganya didaratkan diam-diam di Gelanggang A padahal dipanggil ke B.
+ */
+it('tidak mengalihkan petugas yang partai hidupnya ada di gelanggang lain', function () {
+    $kedua = Arena::factory()->for($this->tournament)->create();
+
+    ArenaOfficial::create([
+        'arena_id' => $this->arena->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $partai = ($this->buatPartai)($kedua, SilatMatch::STATUS_BERLANGSUNG);
+    MatchOfficial::create([
+        'match_id' => $partai->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $this->actingAs($this->juri)->get(route('dashboard'))->assertOk();
+});
+
+/*
+ * Partai TERJADWAL di gelanggang lain tidak memblokir apa pun. Bagan besar
+ * menyebar nama yang sama ke dua gelanggang untuk partai yang baru dimainkan
+ * sore nanti; kalau itu ikut dihitung, hampir setiap juri terlempar ke
+ * dashboard sepanjang hari dan pendaratan langsung kehilangan gunanya.
+ */
+it('tetap mendaratkan petugas yang partai gelanggang lainnya belum dimainkan', function () {
+    $kedua = Arena::factory()->for($this->tournament)->create();
+
+    ArenaOfficial::create([
+        'arena_id' => $this->arena->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $partai = ($this->buatPartai)($kedua, SilatMatch::STATUS_TERJADWAL);
+    MatchOfficial::create([
+        'match_id' => $partai->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $this->actingAs($this->juri)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]));
+});
+
+/*
+ * Partai yang sedang DITAYANGKAN gelanggang lain ikut dihitung sekalipun
+ * statusnya belum berlangsung: begitu pengendali menayangkannya, panel juri
+ * di gelanggang itu sudah berpindah ke sana.
+ */
+it('tidak mengalihkan petugas yang partainya sedang ditayangkan gelanggang lain', function () {
+    $kedua = Arena::factory()->for($this->tournament)->create();
+
+    ArenaOfficial::create([
+        'arena_id' => $this->arena->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $partai = ($this->buatPartai)($kedua, SilatMatch::STATUS_TERJADWAL);
+    $kedua->update(['active_match_id' => $partai->id]);
+
+    MatchOfficial::create([
+        'match_id' => $partai->id, 'user_id' => $this->juri->id,
+        'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
+    ]);
+
+    $this->actingAs($this->juri)->get(route('dashboard'))->assertOk();
 });
