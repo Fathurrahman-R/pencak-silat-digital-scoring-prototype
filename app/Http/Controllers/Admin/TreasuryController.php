@@ -42,8 +42,15 @@ class TreasuryController extends Controller
      * memakai aturan bawaan akan mengosongkan halaman kerjanya sendiri.
      *
      * Jadi keduanya diterima. Sekretaris masuk lewat hak ubah kontingen,
-     * bendahara lewat hak ubah tagihan. Yang tersisa di luar keduanya adalah
+     * bendahara lewat hak MENANDAI LUNAS. Yang tersisa di luar keduanya adalah
      * official kontingen, yang memang hanya boleh melihat tagihannya sendiri.
+     *
+     * Penandanya `Approve`, bukan `Update`. Mengunci tagihan (`Update`) adalah
+     * langkah official atas tagihannya sendiri -- panduan alur menaruhnya di
+     * kursinya, dan begitu wewenang itu diberikan, memakai `Update` sebagai
+     * penanda panitia diam-diam membuka nomor invoice dan nominal seluruh
+     * kontingen pesaing kepadanya. Menandai lunas tidak pernah jadi wewenang
+     * official, jadi ia penanda yang benar untuk "orang keuangan".
      */
     protected function bolehLihatSemuaKontingen(): bool
     {
@@ -54,7 +61,7 @@ class TreasuryController extends Controller
         }
 
         return $pengguna->can(rk('kontingen', ResourceAction::Update))
-            || $pengguna->can(rk('invoice', ResourceAction::Update));
+            || $pengguna->can(rk('invoice', ResourceAction::Approve));
     }
 
     public function __construct(
