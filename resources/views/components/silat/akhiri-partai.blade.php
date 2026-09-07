@@ -77,7 +77,13 @@
                                             : 'border border-silat-tepi-kendali text-silat-teks-kedua'"
                                         class="flex h-14 items-center gap-2.5 rounded-silat px-3.5 text-left text-[15px] font-medium">
                                     <span class="{{ $titik }} size-2.5 shrink-0 rounded-full"></span>
-                                    <span class="truncate" x-text="(match.{{ $kunci }}?.athletes ?? []).join(', ') || 'Sudut {{ $nama }}'"></span>
+                                    {{-- `match?.` bukan `match.`: dialog ini ikut dirender di panel
+                                         kendali, yang memang dibuka pada gelanggang yang belum
+                                         dipilihkan partai. Alpine tetap mengevaluasi isi x-show
+                                         yang bernilai salah, jadi tanda tanyanya bukan kehati-
+                                         hatian berlebih -- tanpa itu tiap pembukaan gelanggang
+                                         kosong melempar TypeError. --}}
+                                    <span class="truncate" x-text="(match?.{{ $kunci }}?.athletes ?? []).join(', ') || 'Sudut {{ $nama }}'"></span>
                                     <span class="silat-angka ml-auto text-[17px]" x-text="skorTotal.{{ $kunciSkor }}"></span>
                                 </button>
                             @endforeach

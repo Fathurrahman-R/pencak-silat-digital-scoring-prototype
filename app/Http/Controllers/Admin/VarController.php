@@ -62,6 +62,18 @@ class VarController extends Controller
             isset($data['penalty_id']) ? Penalty::find($data['penalty_id']) : null,
         ));
 
+        /*
+         * Pengajuannya ikut disiarkan, bukan cuma keputusannya.
+         *
+         * Yang paling butuh tahu ada protes berjalan justru panel LAIN: Ketua
+         * Pertandingan melihat tenggat lima menit berjalan, Dewan Wasit Juri
+         * menahan pengesahan, dan operator tahu kenapa gelanggang berhenti.
+         * Sebelum baris ini, mereka baru mengetahuinya setelah memuat ulang
+         * halaman dengan tangan -- protes yang tenggatnya sudah separuh habis
+         * terbaca sebagai gelanggang yang tenang.
+         */
+        $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
+
         return $this->respond($request, $match, 'success', "Protes VAR diajukan, tenggat {$review->tenggat_at->format('H:i:s')}.");
     }
 
@@ -90,6 +102,8 @@ class VarController extends Controller
 
         $this->jalankan(fn () => $this->ajukanManajer->pertama($match, $data['catatan'] ?? null));
 
+        $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
+
         return $this->respond($request, $match, 'success', 'Protes manajer tingkat pertama diajukan.');
     }
 
@@ -101,6 +115,8 @@ class VarController extends Controller
         $data = $request->validate(['catatan' => ['nullable', 'string', 'max:255']]);
 
         $this->jalankan(fn () => $this->ajukanManajer->banding($managerProtest, $data['catatan'] ?? null));
+
+        $this->siarkan(fn () => MatchStateChanged::dispatch($match->fresh()));
 
         return $this->respond($request, $match, 'success', 'Banding diajukan — keputusannya bersifat final.');
     }

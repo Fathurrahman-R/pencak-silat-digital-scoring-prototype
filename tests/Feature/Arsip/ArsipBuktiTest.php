@@ -4,6 +4,7 @@ use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Arena;
+use App\Models\ArenaTayang;
 use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
@@ -286,7 +287,10 @@ it('memangkas dan menandai partai setelah node global mengonfirmasi', function (
  * terpenuhi. Riwayatnya sedang dibaca panel di gelanggang saat itu juga.
  */
 it('tidak memangkas partai yang sedang ditayangkan gelanggang', function () {
-    $this->arena->forceFill(['active_match_id' => $this->match->id])->save();
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $this->match->id, 'disetel_pada' => now()],
+    );
 
     DB::table('arsip_keluar')->insert([
         'match_id' => (string) $this->match->id, 'status' => PendorongArsip::DITERIMA,
