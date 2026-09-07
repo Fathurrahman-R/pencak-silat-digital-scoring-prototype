@@ -64,7 +64,7 @@ Ganti `<ip-server>` dengan alamat yang dicetak skrip.
 | Siapa | Alamat | Catatan |
 |---|---|---|
 | Juri, wasit, dewan juri, ketua | `http://<ip-server>:8000` | Login, lalu **beranda langsung menampilkan kartu partai tugasnya** — tinggal ditekan |
-| Operator gelanggang | `http://<ip-server>:8000` | Login, lalu menu **Jadwal** → pilih partai → panel operator |
+| Pengendali gelanggang | `http://<ip-server>:8000` | Login, lalu menu **Pertandingan → Gelanggang → Panel Kendali**. Dari sana ia menayangkan partai, menjalankan timer, memindahkan babak, dan mengakhiri partai |
 | vMix (Web Browser Input) | `.../overlay/scorebug/1`<br>`.../overlay/breakdown/1`<br>`.../overlay/athlete/1/red`<br>`.../overlay/athlete/1/blue`<br>`.../overlay/result/1` | Angka terakhir = nomor gelanggang (1 = A, 2 = B). Tanpa login; dibatasi jaringan lokal |
 | Penonton | `.../live/turnamen/1`<br>`.../live/gelanggang/1` | Tanpa login |
 
@@ -94,16 +94,16 @@ Kata sandi seluruhnya `password`.
 
 ## 5. Partai yang dipakai
 
-| Gelanggang | Partai | Kelas | Merah vs Biru |
-|---|---|---|---|
-| A | **17** | Kelas B | Rizky Pratama vs Arif Prakoso |
-| B | **6** | Kelas A | Gilang Pratama vs Arif Budiman |
+**Jangan mengandalkan nomor partai yang tertulis di dokumen.** Nomornya berubah setiap kali kejuaraan simulasi disemai ulang, dan lembar ini pernah menunjuk partai yang sudah tidak ada sama sekali — petugas yang mengikutinya pagi hari-H mencari partai yang tidak pernah ada.
 
-Keduanya masih berstatus **terjadwal** dan belum tersentuh. Aparatnya sudah ditugaskan sesuai tabel akun di atas.
+Yang benar: buka **Panel Kendali** gelanggang masing-masing. Antreannya mencantumkan seluruh partai gelanggang itu lengkap dengan nomor, kelas, nama kedua pesilat, dan statusnya. Ambil partai pertama yang berstatus **terjadwal**, tekan **Tayangkan**, lalu **Mulai babak 1**.
 
-**Hindari partai 10** — ia berisi nilai-nilai dari pengujian pengembangan (skor 42–37) dan babak 1-nya berstatus berjalan sejak lama. Kalau terlanjur dibuka, tekan **Reset babak** di panel operator.
+Beberapa hal yang berlaku apa pun nomornya:
 
-Gelanggang A punya 18 partai terjadwal lain kalau simulasinya berlanjut. Jendela konsensus juri **2 detik** — sama dengan setelan pertandingan sungguhan.
+- Partai yang berstatus **berlangsung** tidak bisa ditinggalkan begitu saja. Panel menolak dengan "Partai yang sedang berjalan belum diakhiri." Akhiri dulu lewat **Akhiri partai**, atau pindah paksa kalau memang perlu.
+- Partai yang sudah dipakai menguji berisi nilai dan hukuman lama. Kalau terlanjur dibuka, tekan **Reset babak** — tersedia di Panel Kendali maupun Panel Papan.
+- Jendela konsensus juri **2 detik**, sama dengan setelan pertandingan sungguhan.
+- Aparat ditugaskan per gelanggang lewat **Gelanggang → Aparat**. Petugas yang tercatat di dua gelanggang sekaligus sengaja berhenti di dashboard, bukan didaratkan di salah satunya — sistem tidak punya dasar memilih.
 
 ---
 
@@ -177,7 +177,11 @@ CACHE_STORE=file
 DESIGN_SYSTEM_ENABLED=false
 VITE_REVERB_HOST=        # sengaja kosong: peramban memakai alamat yang dibukanya sendiri
 APP_URL=http://192.168.1.18:8000
+OVERLAY_ENABLED=true     # tanpa ini seluruh overlay vMix membalas halaman "dimatikan"
+LIVE_SCORE_ENABLED=true  # tanpa ini live score gelanggang untuk penonton mati
 ```
+
+**Dua baris terakhir bawaannya MATI, dan diamnya total.** Overlay vMix hanya menampilkan halaman "Overlay siaran dimatikan" dan `overlay/state` membalas 503 — tidak ada satu pun isyarat di sisi server bahwa ada yang salah. Sekali lagi: baru ketahuan saat vMix sudah dipasang dan orang sudah berkumpul. Periksa keduanya dengan membuka satu alamat overlay dari peramban sebelum berangkat.
 
 `APP_URL` hanya dipakai untuk tautan yang dibuat **di luar** permintaan (mis. surel reset sandi). Halaman yang dibuka peramban memakai alamat permintaannya sendiri, jadi IP yang tertinggal di sini tidak memutus siapa pun.
 

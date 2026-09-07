@@ -168,7 +168,7 @@
         </div>
 
         <footer class="mt-10 flex items-center justify-center gap-3 text-center text-[12px] text-silat-teks-samar">
-            <x-silat.indikator-koneksi />
+            <x-silat.indikator-koneksi :latensi="false" />
             <span>Skor tampil realtime dari gelanggang, dan menyambung ulang otomatis bila koneksi terputus.</span>
         </footer>
     </div>

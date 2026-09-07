@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ModeBagan;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Tournament;
@@ -13,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Validation\Rule;
 use RuntimeException;
 
 /**
@@ -80,12 +82,25 @@ class BracketController extends Controller
         ]);
     }
 
-    public function susun(Tournament $tournament, WeightClass $weightClass): RedirectResponse
+    public function susun(Request $request, Tournament $tournament, WeightClass $weightClass): RedirectResponse
     {
         $this->pastikanMilik($tournament, $weightClass);
 
+        /*
+         * Mode dipilih saat menyusun, bukan disimpan sebagai setelan
+         * kejuaraan: satu kejuaraan lazim memakai pemasalan untuk usia dini
+         * dan gugur untuk dewasa, di hari yang sama. Bawaannya gugur --
+         * bentuk yang dikenal pembaca bagan -- jadi tombol lama yang tidak
+         * mengirim apa pun tetap menghasilkan bagan yang sama seperti dulu.
+         */
+        $data = $request->validate([
+            'mode' => ['sometimes', Rule::enum(ModeBagan::class)],
+        ], attributes: ['mode' => 'Mode bagan']);
+
+        $mode = ModeBagan::tryFrom($data['mode'] ?? '') ?? ModeBagan::Gugur;
+
         try {
-            $this->generator->untukKelas($weightClass);
+            $this->generator->untukKelas($weightClass, mode: $mode);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }

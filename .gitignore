@@ -37,3 +37,11 @@ Thumbs.db
 /scripts/server/.nginx-jalan.conf
 /scripts/server/.php-cgi-pid.txt
 /scripts/server/.log
+
+# Graf pengetahuan hasil /graphify: turunan, bisa dibangun ulang kapan saja
+# (`graphify . --wiki`), dan 434 berkas wiki-nya membanjiri diff.
+/graphify-out
+
+# Setelan Claude Code per mesin: hook graphify memuat jalur absolut interpreter
+# Python, yang berbeda di tiap laptop.
+/.claude/settings.local.json

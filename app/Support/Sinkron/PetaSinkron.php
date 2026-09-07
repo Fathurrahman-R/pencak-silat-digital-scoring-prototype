@@ -2,6 +2,50 @@
 
 namespace App\Support\Sinkron;
 
+use App\Models\AdopsiJadwal;
+use App\Models\Arena;
+use App\Models\ArenaOfficial;
+use App\Models\ArenaTayang;
+use App\Models\Athlete;
+use App\Models\Bracket;
+use App\Models\BracketSlot;
+use App\Models\Contingent;
+use App\Models\FeeSchedule;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\JudgeVerification;
+use App\Models\JudgeVerificationAnswer;
+use App\Models\JurusBattle;
+use App\Models\JurusBracket;
+use App\Models\JurusBracketSlot;
+use App\Models\JurusDeduction;
+use App\Models\JurusEvent;
+use App\Models\JurusPerformance;
+use App\Models\JurusScore;
+use App\Models\ManagerProtest;
+use App\Models\ManualPayment;
+use App\Models\MatchOfficial;
+use App\Models\MatchRound;
+use App\Models\MatchRoundReopen;
+use App\Models\Penalty;
+use App\Models\Permission;
+use App\Models\ProtestCard;
+use App\Models\Registration;
+use App\Models\RegistrationDocument;
+use App\Models\ResourcePermission;
+use App\Models\Role;
+use App\Models\ScoreEvent;
+use App\Models\SerahJadwal;
+use App\Models\SilatMatch;
+use App\Models\TechnicalCount;
+use App\Models\Tournament;
+use App\Models\TournamentRuleSetting;
+use App\Models\User;
+use App\Models\VarReview;
+use App\Models\WeightClass;
+use App\Models\WeightIn;
+use Illuminate\Database\Eloquent\Model;
+
 /**
  * Siapa yang berhak menulis apa, dan lewat mana sebuah baris terhubung ke
  * gelanggangnya.
@@ -108,6 +152,30 @@ class PetaSinkron
      * @var array<string, list<array{0: string, 1: string}>>
      */
     public const LOKAL = [
+        /*
+         * Rantai KOSONG: `arena_id` ada di baris ini sendiri, tidak perlu
+         * dilompati ke tabel lain lebih dulu.
+         *
+         * Inilah tabel yang membuat pointer tayang berhenti jadi kolom di
+         * `arenas` -- tabel GLOBAL yang penerapan paketnya menimpa seluruh
+         * kolom, dan karena itu ikut menghapus partai aktif gelanggang yang
+         * sedang bertanding tiap kali node global menyunting gelanggang apa
+         * pun. Lihat migrasi `buat_tabel_arena_tayang`.
+         */
+        'arena_tayang' => [],
+
+        /*
+         * Serah-terima jadwal antar gelanggang, dua setengah-catatan.
+         *
+         * `serah_jadwal.arena_id` adalah gelanggang PELEPAS dan
+         * `adopsi_jadwal.arena_id` gelanggang PENGADOPSI -- masing-masing
+         * ditulis pemiliknya sendiri, jadi tidak ada satu baris pun yang
+         * pernah ditulis dua node. Itulah yang membuat pemindahan antar
+         * gelanggang tidak melanggar aturan satu penulis.
+         */
+        'serah_jadwal' => [],
+        'adopsi_jadwal' => [],
+
         'score_events' => [['matches', 'match_id']],
         'penalties' => [['matches', 'match_id']],
         'technical_counts' => [['matches', 'match_id']],
@@ -137,54 +205,57 @@ class PetaSinkron
      * global sebelum hari-H, dan ia ikut terbawa pada penarikan penuh pertama.
      * Yang belum tertangani adalah perubahan pivot SETELAH penarikan pertama.
      *
-     * @var array<string, class-string<\Illuminate\Database\Eloquent\Model>>
+     * @var array<string, class-string<Model>>
      */
     public const MODEL = [
         // Global
-        'users' => \App\Models\User::class,
-        'roles' => \App\Models\Role::class,
-        'permissions' => \App\Models\Permission::class,
+        'users' => User::class,
+        'roles' => Role::class,
+        'permissions' => Permission::class,
         'resources' => \App\Models\Resource::class,
-        'resource_permissions' => \App\Models\ResourcePermission::class,
-        'tournaments' => \App\Models\Tournament::class,
-        'tournament_rule_settings' => \App\Models\TournamentRuleSetting::class,
-        'arenas' => \App\Models\Arena::class,
-        'arena_officials' => \App\Models\ArenaOfficial::class,
-        'weight_classes' => \App\Models\WeightClass::class,
-        'jurus_events' => \App\Models\JurusEvent::class,
-        'contingents' => \App\Models\Contingent::class,
-        'athletes' => \App\Models\Athlete::class,
-        'registrations' => \App\Models\Registration::class,
-        'registration_documents' => \App\Models\RegistrationDocument::class,
-        'weight_ins' => \App\Models\WeightIn::class,
-        'fee_schedules' => \App\Models\FeeSchedule::class,
-        'invoices' => \App\Models\Invoice::class,
-        'invoice_items' => \App\Models\InvoiceItem::class,
-        'manual_payments' => \App\Models\ManualPayment::class,
-        'brackets' => \App\Models\Bracket::class,
-        'bracket_slots' => \App\Models\BracketSlot::class,
-        'jurus_brackets' => \App\Models\JurusBracket::class,
-        'jurus_bracket_slots' => \App\Models\JurusBracketSlot::class,
+        'resource_permissions' => ResourcePermission::class,
+        'tournaments' => Tournament::class,
+        'tournament_rule_settings' => TournamentRuleSetting::class,
+        'arenas' => Arena::class,
+        'arena_tayang' => ArenaTayang::class,
+        'serah_jadwal' => SerahJadwal::class,
+        'adopsi_jadwal' => AdopsiJadwal::class,
+        'arena_officials' => ArenaOfficial::class,
+        'weight_classes' => WeightClass::class,
+        'jurus_events' => JurusEvent::class,
+        'contingents' => Contingent::class,
+        'athletes' => Athlete::class,
+        'registrations' => Registration::class,
+        'registration_documents' => RegistrationDocument::class,
+        'weight_ins' => WeightIn::class,
+        'fee_schedules' => FeeSchedule::class,
+        'invoices' => Invoice::class,
+        'invoice_items' => InvoiceItem::class,
+        'manual_payments' => ManualPayment::class,
+        'brackets' => Bracket::class,
+        'bracket_slots' => BracketSlot::class,
+        'jurus_brackets' => JurusBracket::class,
+        'jurus_bracket_slots' => JurusBracketSlot::class,
 
         // Penghubung
-        'matches' => \App\Models\SilatMatch::class,
-        'jurus_performances' => \App\Models\JurusPerformance::class,
-        'jurus_battles' => \App\Models\JurusBattle::class,
+        'matches' => SilatMatch::class,
+        'jurus_performances' => JurusPerformance::class,
+        'jurus_battles' => JurusBattle::class,
 
         // Lokal
-        'score_events' => \App\Models\ScoreEvent::class,
-        'penalties' => \App\Models\Penalty::class,
-        'technical_counts' => \App\Models\TechnicalCount::class,
-        'match_rounds' => \App\Models\MatchRound::class,
-        'match_round_reopens' => \App\Models\MatchRoundReopen::class,
-        'match_officials' => \App\Models\MatchOfficial::class,
-        'protest_cards' => \App\Models\ProtestCard::class,
-        'var_reviews' => \App\Models\VarReview::class,
-        'manager_protests' => \App\Models\ManagerProtest::class,
-        'judge_verifications' => \App\Models\JudgeVerification::class,
-        'judge_verification_answers' => \App\Models\JudgeVerificationAnswer::class,
-        'jurus_scores' => \App\Models\JurusScore::class,
-        'jurus_deductions' => \App\Models\JurusDeduction::class,
+        'score_events' => ScoreEvent::class,
+        'penalties' => Penalty::class,
+        'technical_counts' => TechnicalCount::class,
+        'match_rounds' => MatchRound::class,
+        'match_round_reopens' => MatchRoundReopen::class,
+        'match_officials' => MatchOfficial::class,
+        'protest_cards' => ProtestCard::class,
+        'var_reviews' => VarReview::class,
+        'manager_protests' => ManagerProtest::class,
+        'judge_verifications' => JudgeVerification::class,
+        'judge_verification_answers' => JudgeVerificationAnswer::class,
+        'jurus_scores' => JurusScore::class,
+        'jurus_deductions' => JurusDeduction::class,
     ];
 
     /**

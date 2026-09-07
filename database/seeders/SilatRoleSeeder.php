@@ -142,7 +142,18 @@ class SilatRoleSeeder extends Seeder
                     'partai' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => [ResourceAction::View, ResourceAction::Create],
-                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update],
+                    /*
+                     * Termasuk MENGESAHKAN dan MENCETAK berita acara.
+                     *
+                     * Sebelumnya hanya View dan Update, jadi Dewan Wasit Juri
+                     * bisa membatalkan nilai keliru tapi tidak bisa
+                     * mengesahkan hasil yang sudah dibereskannya sendiri, dan
+                     * berita acaranya membalas 403 -- padahal panduan
+                     * operasional menaruh kedua pekerjaan itu di kursinya.
+                     * Pengesahan tertahan di Ketua Pertandingan, yang di
+                     * lapangan sedang mengurus gelanggang lain.
+                     */
+                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
                     // Melihat saja: hasil verifikasi masuk bahan evaluasi
                     // penilaian juri, tapi memintanya adalah wewenang Wasit
                     // dan Ketua Pertandingan.
@@ -217,6 +228,21 @@ class SilatRoleSeeder extends Seeder
                      */
                     'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
+                    /*
+                     * Kategori Jurus juga dikendalikan dari gelanggang: sejak
+                     * panel Jurus punya alamat per gelanggang, pengendali yang
+                     * menentukan penampilan mana yang sedang ditayangkan.
+                     *
+                     * Ditemukan lewat blackbox testing bahwa ia bisa MEMINDAHKAN
+                     * penampilan (dijaga `kendali-gelanggang.assign`) tapi tidak
+                     * bisa MEMBUKA panelnya (dijaga `penampilan-jurus.view`) --
+                     * peran yang memutuskan tanpa boleh melihat apa yang sedang
+                     * diputuskannya.
+                     *
+                     * Hanya melihat: menilai tetap urusan juri, pengurangan 0.50
+                     * urusan Dewan Wasit Juri, pengesahan urusan Ketua.
+                     */
+                    'penampilan-jurus' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Print],
@@ -309,7 +335,18 @@ class SilatRoleSeeder extends Seeder
                     'kontingen' => $lihat,
                     'atlet' => $ubah,
                     'pendaftaran' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Delete],
-                    'invoice' => $lihat,
+                    /*
+                     * Update, bukan cuma View: MENGUNCI tagihan sendiri adalah
+                     * langkah official, dan panduan alur menaruhnya di
+                     * kursinya ("Tagihan → Kunci tagihan dan lanjut bayar").
+                     * Tanpa itu rantai pra-acara berhenti di draf tagihan.
+                     *
+                     * Approve sengaja TIDAK diberikan. Menandai lunas dijaga
+                     * `invoice.approve` dan tetap milik Sekretariat: kontingen
+                     * yang bisa menyatakan tagihannya sendiri lunas membuat
+                     * seluruh verifikasi kehilangan artinya.
+                     */
+                    'invoice' => [ResourceAction::View, ResourceAction::Update],
                     'jadwal' => $lihat,
                     'bagan' => $lihat,
                     'rekap' => $lihat,

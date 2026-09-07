@@ -79,6 +79,15 @@
 
     --g-hidup: #4ade80;            /* sistem tersambung: 11.29 / 10.64 */
 
+    /* Jaringan gelanggang yang sudah buruk. Sengaja BUKAN --sudut-merah:
+       merah sudut adalah identitas pesilat dan tidak pernah dipakai untuk
+       arti lain, sementara titik ini duduk di panel yang separuh layarnya
+       memang merah. Ronanya diangkat jauh ke atas #d42027 supaya terbaca
+       sebagai saudara --g-hidup, bukan sebagai sudut. Satu-satunya
+       pengecualian atas BRIEF §2.2, dan hanya untuk titik status non-teks.
+       7.39 di latar, 6.58 di panel, 4.02 di bidang merah, 5.11 di biru. */
+    --g-awas: #fb7185;
+
     /* -----------------------------------------------------------------------
        Tipografi. Dua huruf saja di seluruh aplikasi; tidak ada huruf display.
        Keduanya di-bundle lewat npm — gelanggang sering tanpa internet, dan

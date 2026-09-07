@@ -5,7 +5,10 @@ namespace App\Support\Gelanggang;
 use App\Events\Gelanggang\PartaiAktifBerubah;
 use App\Models\Arena;
 use App\Models\ArenaOfficial;
+use App\Models\ArenaTayang;
+use App\Models\JurusPerformance;
 use App\Models\MatchOfficial;
+use App\Models\SerahJadwal;
 use App\Models\SilatMatch;
 use App\Models\User;
 use App\Support\Bagan\KesiapanHulu;
@@ -17,7 +20,11 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * Satu-satunya penulis `arenas.active_match_id`.
+ * Satu-satunya penulis `arena_tayang`.
+ *
+ * Namanya `PointerTayang`, bukan lagi `PointerPartaiAktif`: satu gelanggang
+ * menayangkan partai Tanding ATAU penampilan Jurus, dan keduanya melewati
+ * kelas ini. Nama lamanya menyebut separuh pekerjaannya.
  *
  * Pola kepemilikannya sama dengan MatchTimer atas `current_round`: satu kelas
  * memegang satu invariant, sehingga pertanyaan "apa yang bisa mengubah ini"
@@ -26,14 +33,14 @@ use RuntimeException;
  * Pointer ini ORTOGONAL dengan `matches.status`, dan itu disengaja:
  *
  *   `matches.status`          daur hidup satu partai (MatchTimer yang menulis)
- *   `arenas.active_match_id`  apa yang sedang ditayangkan gelanggang (kelas ini)
+ *   `arena_tayang`             apa yang sedang ditayangkan gelanggang (kelas ini)
  *
  * Karena itu mengakhiri partai TIDAK memajukan pointer. Partai yang sudah
  * selesai tetap ditunjuk sampai pengendali memindahkannya -- itulah yang
  * membuat papan hasil siaran bertahan di layar alih-alih berkedip hilang
  * beberapa detik setelah gong terakhir.
  */
-class PointerPartaiAktif
+class PointerTayang
 {
     public function __construct(
         private readonly MatchTimer $timer,
@@ -52,8 +59,29 @@ class PointerPartaiAktif
     public function tunjuk(Arena $arena, SilatMatch $match, User $oleh, bool $paksa = false): Arena
     {
         if ($match->arena_id !== $arena->id) {
+            /*
+             * Dua sebab penolakan yang berbeda, dua kalimat yang berbeda.
+             *
+             * Partai yang sedang DITAWARKAN ke gelanggang ini bukan kekeliruan
+             * alamat: pengendali melihatnya di daftar "ditawarkan dari
+             * gelanggang lain", lalu menekan Tayangkan tanpa menekan Ambil
+             * lebih dulu. Menjawabnya "tidak dijadwalkan di sini" menyuruhnya
+             * mencari kesalahan yang tidak ada, sementara yang kurang cuma
+             * satu tombol yang ada di layar yang sama.
+             */
+            $penawaran = app(SerahTerimaJadwal::class)
+                ->penawaranMenggantung(SerahJadwal::TANDING, $match->id);
+
+            if ($penawaran !== null && $penawaran->ke_arena_id === $arena->id) {
+                throw new RuntimeException(
+                    "Partai ini masih ditawarkan dari {$penawaran->arena->name}. Tekan Ambil lebih dulu, baru bisa ditayangkan di sini.",
+                );
+            }
+
             throw new RuntimeException('Partai ini tidak dijadwalkan di gelanggang ini.');
         }
+
+        $this->pastikanBelumDilepas(SerahJadwal::TANDING, $match->id, 'Partai');
 
         $this->pastikanHuluSudahSampai($match, $paksa);
 
@@ -68,11 +96,7 @@ class PointerPartaiAktif
         }
 
         DB::transaction(function () use ($arena, $match, $oleh) {
-            $arena->forceFill([
-                'active_match_id' => $match->id,
-                'active_match_set_at' => now(),
-                'active_match_set_by' => $oleh->id,
-            ])->save();
+            $this->tulisTayang($arena, ArenaTayang::TANDING, $match->id, $oleh);
 
             $this->salinAparatGelanggang($arena, $match);
         });
@@ -82,26 +106,160 @@ class PointerPartaiAktif
         return $arena;
     }
 
-    /** Mengosongkan gelanggang -- tidak ada partai yang sedang ditayangkan. */
-    public function kosongkan(Arena $arena, User $oleh): Arena
+    /**
+     * Mengosongkan gelanggang -- tidak ada partai yang sedang ditayangkan.
+     *
+     * @param  bool  $paksa  mengosongkan meski partai yang ditunjuk belum
+     *                       diakhiri. Jalan yang sama dengan tunjuk(): partai
+     *                       yang ditinggalkan hanya dijeda, tidak diselesaikan.
+     *                       Tanpa ini, gelanggang yang partainya ditinggal
+     *                       berjalan -- perangkat pengendali mati, partai batal
+     *                       di tengah -- tidak punya satu jalan pun untuk
+     *                       dikosongkan.
+     */
+    public function kosongkan(Arena $arena, User $oleh, bool $paksa = false): Arena
     {
         $sebelumnya = $this->partaiAktif($arena);
 
+        /*
+         * Gelanggang yang sedang menayangkan penampilan Jurus juga harus bisa
+         * dikosongkan. Sebelum pointer menampung dua jenis, cabang ini keluar
+         * lebih awal begitu `partaiAktif` kosong -- dan gelanggang Jurus tidak
+         * punya satu jalan pun untuk dikosongkan, termasuk saat penampilannya
+         * batal dimainkan.
+         *
+         * Penampilan tidak punya babak berjalan yang harus dijeda seperti
+         * partai Tanding, jadi tidak ada yang perlu dijaga sebelum dilepas.
+         */
         if ($sebelumnya === null) {
+            if ($arena->tayang?->menayangkanJurus()) {
+                $this->tulisTayang($arena, null, null, $oleh);
+                $this->umumkan($arena->refresh(), null, null);
+            }
+
             return $arena;
         }
 
-        $this->pastikanBolehDitinggalkan($sebelumnya, paksa: false);
+        $this->pastikanBolehDitinggalkan($sebelumnya, $paksa);
 
-        $arena->forceFill([
-            'active_match_id' => null,
-            'active_match_set_at' => now(),
-            'active_match_set_by' => $oleh->id,
-        ])->save();
+        $this->tulisTayang($arena, null, null, $oleh);
 
         $this->umumkan($arena->refresh(), null, $sebelumnya);
 
         return $arena;
+    }
+
+    /**
+     * Menunjuk penampilan Jurus yang ditayangkan gelanggang.
+     *
+     * Jalur yang sama persis dengan tunjuk() untuk Tanding, dan itu memang
+     * intinya: sebelum ini panel Jurus beralamat per PENAMPILAN, sehingga tiap
+     * pergantian nomor menuntut setiap juri membuka alamat baru sendiri-
+     * sendiri di HP-nya. Alasan yang sama yang dulu memindahkan panel Tanding
+     * ke alamat gelanggang berlaku utuh di sini.
+     *
+     * Satu gelanggang menayangkan SATU hal: menunjuk penampilan otomatis
+     * melepas partai Tanding yang sedang ditunjuk -- lewat penjagaan yang
+     * sama, jadi partai yang babaknya masih berjalan tetap tidak bisa
+     * ditinggalkan tanpa `$paksa`.
+     *
+     * @throws RuntimeException
+     */
+    public function tunjukPenampilan(Arena $arena, JurusPerformance $performance, User $oleh, bool $paksa = false): Arena
+    {
+        if ($performance->arena_id !== $arena->id) {
+            throw new RuntimeException('Penampilan ini tidak dijadwalkan di gelanggang ini.');
+        }
+
+        $this->pastikanBelumDilepas(SerahJadwal::JURUS, $performance->id, 'Penampilan');
+
+        $partaiSebelumnya = $this->partaiAktif($arena);
+
+        if ($partaiSebelumnya !== null) {
+            $this->pastikanBolehDitinggalkan($partaiSebelumnya, $paksa);
+        }
+
+        DB::transaction(function () use ($arena, $performance, $oleh) {
+            $this->tulisTayang($arena, ArenaTayang::JURUS, $performance->id, $oleh);
+        });
+
+        $this->umumkan($arena->refresh(), null, $partaiSebelumnya);
+
+        return $arena;
+    }
+
+    /**
+     * Baris yang sedang ditawarkan ke gelanggang lain tidak boleh ditayangkan.
+     *
+     * Melepas sudah mengosongkan pointer kalau baris itu sedang tayang, tapi
+     * tanpa penjagaan ini pengendali bisa menunjuknya LAGI semenit kemudian --
+     * dan ditemukan begitu di peramban: Gelanggang A menayangkan partai yang
+     * sudah ia tawarkan ke B, tanpa satu pun pesan. Dua gelanggang lalu
+     * sama-sama menganggap partai itu miliknya, persis keadaan yang seluruh
+     * rancangan serah-terima ini dibuat untuk mencegah.
+     *
+     * Jalan keluarnya disebutkan di pesannya: tarik kembali penawarannya.
+     *
+     * @throws RuntimeException
+     */
+    private function pastikanBelumDilepas(string $jenis, int $barisId, string $sebutan): void
+    {
+        $penawaran = app(SerahTerimaJadwal::class)->penawaranMenggantung($jenis, $barisId);
+
+        if ($penawaran === null) {
+            return;
+        }
+
+        throw new RuntimeException(
+            "{$sebutan} ini sedang ditawarkan ke {$penawaran->tujuan->name} dan belum diambil. Batalkan penawarannya dulu kalau mau ditayangkan di sini.",
+        );
+    }
+
+    /**
+     * Penampilan Jurus yang ditunjuk gelanggang ini, kalau masih sah.
+     *
+     * Saringan `arena_id` dengan alasan yang sama seperti partaiAktif():
+     * penampilan bisa dilepas dari jadwal setelah pointer menunjuknya, dan
+     * pointer basi akan menayangkan penampilan milik gelanggang lain.
+     */
+    public function penampilanAktif(Arena $arena): ?JurusPerformance
+    {
+        $tayang = $arena->tayang;
+
+        if ($tayang === null || ! $tayang->menayangkanJurus()) {
+            return null;
+        }
+
+        return JurusPerformance::whereKey($tayang->tayang_id)
+            ->where('arena_id', $arena->id)
+            ->first();
+    }
+
+    /**
+     * Penampilan berikutnya di antrean gelanggang, menurut urutan tayangnya.
+     *
+     * Yang sudah selesai dilewati, sama seperti antrean Tanding: pengendali
+     * mencari yang berikutnya dimainkan, bukan membaca ulang yang sudah lewat.
+     */
+    public function penampilanBerikutnya(Arena $arena): ?JurusPerformance
+    {
+        $sekarang = $arena->tayang?->menayangkanJurus() ? (int) $arena->tayang->tayang_id : null;
+
+        return $this->antreanJurus($arena)
+            ->first(fn (JurusPerformance $satu) => $satu->id !== $sekarang && ! $satu->selesai());
+    }
+
+    /**
+     * Antrean penampilan Jurus gelanggang ini, urut tayang.
+     *
+     * @return Collection<int, JurusPerformance>
+     */
+    public function antreanJurus(Arena $arena): Collection
+    {
+        return JurusPerformance::query()
+            ->diGelanggang($arena)
+            ->with(['jurusEvent', 'registration.athletes', 'registration.contingent'])
+            ->get();
     }
 
     /**
@@ -166,8 +324,34 @@ class PointerPartaiAktif
      * yang belum diakhiri: kadang panitia memang sudah tahu hasilnya dari
      * gelanggang sebelah dan tidak bisa menunggu jaringan.
      *
-     * @throws RuntimeException
+     * @throws PenolakanDapatDipaksa
      */
+    /**
+     * Satu-satunya tempat `arena_tayang` ditulis.
+     *
+     * updateOrCreate, bukan update: barisnya baru lahir saat pengendali
+     * pertama kali memilih sesuatu di gelanggang itu. Mengosongkan pointer
+     * TIDAK menghapus barisnya -- `disetel_oleh` harus tetap menyimpan siapa
+     * yang mengosongkannya, karena "kosongkan gelanggang" juga sebuah
+     * keputusan yang bisa ditanyakan kemudian.
+     */
+    private function tulisTayang(Arena $arena, ?string $jenis, ?int $id, User $oleh): void
+    {
+        ArenaTayang::updateOrCreate(
+            ['arena_id' => $arena->id],
+            [
+                'tayang_type' => $jenis,
+                'tayang_id' => $id,
+                'disetel_pada' => now(),
+                'disetel_oleh' => $oleh->id,
+            ],
+        );
+
+        // Relasi yang sudah termuat di objek ini basi begitu barisnya ditulis;
+        // pemanggil berikutnya membaca `active_match_id` lewat relasi itu.
+        $arena->unsetRelation('tayang');
+    }
+
     private function pastikanHuluSudahSampai(SilatMatch $match, bool $paksa): void
     {
         if ($paksa) {
@@ -180,14 +364,14 @@ class PointerPartaiAktif
             return;
         }
 
-        throw new RuntimeException(
+        throw new PenolakanDapatDipaksa(
             'Hasil dari '.implode(' dan ', $menunggu).' belum sampai ke gelanggang ini. '
             .'Tarik sinkron dulu lewat menu Sinkron Gelanggang, atau pindah paksa kalau hasilnya sudah pasti.',
         );
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PenolakanDapatDipaksa
      */
     private function pastikanBolehDitinggalkan(SilatMatch $partai, bool $paksa): void
     {
@@ -196,7 +380,7 @@ class PointerPartaiAktif
         }
 
         if (! $paksa) {
-            throw new RuntimeException(
+            throw new PenolakanDapatDipaksa(
                 'Partai yang sedang berjalan belum diakhiri. Akhiri dulu, atau pindah paksa.',
             );
         }

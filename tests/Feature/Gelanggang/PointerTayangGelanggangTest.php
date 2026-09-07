@@ -5,6 +5,7 @@ use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Events\Gelanggang\PartaiAktifBerubah;
 use App\Models\Arena;
+use App\Models\ArenaTayang;
 use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
@@ -14,7 +15,8 @@ use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Bagan\KesiapanHulu;
 use App\Support\Bagan\PenjadwalPartai;
-use App\Support\Gelanggang\PointerPartaiAktif;
+use App\Support\Gelanggang\PenolakanDapatDipaksa;
+use App\Support\Gelanggang\PointerTayang;
 use App\Support\Live\StatePartaiPublik;
 use App\Support\Scoring\MatchTimer;
 use Illuminate\Support\Facades\Event;
@@ -39,7 +41,7 @@ beforeEach(function () {
     $this->bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 4]);
 
     $this->pengendali = User::factory()->create();
-    $this->pointer = new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class));
+    $this->pointer = new PointerTayang(new MatchTimer, app(KesiapanHulu::class));
 
     $this->buatPartai = function (int $posisi, array $ganti = []) use ($kelas) {
         $daftar = fn () => tap(
@@ -135,7 +137,10 @@ it('menunjuk partai berikutnya yang belum selesai', function () {
     $pertama = ($this->buatPartai)(1, ['status' => SilatMatch::STATUS_SELESAI]);
     $kedua = ($this->buatPartai)(2);
 
-    $this->arena->forceFill(['active_match_id' => $pertama->id])->save();
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $pertama->id, 'disetel_pada' => now()],
+    );
 
     expect($this->pointer->berikutnya($this->arena->fresh())?->id)->toBe($kedua->id);
 });
@@ -168,7 +173,10 @@ it('membaca pointer lebih dulu di state publik', function () {
     $berjalan = ($this->buatPartai)(1, ['status' => SilatMatch::STATUS_BERLANGSUNG, 'current_round' => 1]);
     $ditunjuk = ($this->buatPartai)(2);
 
-    $this->arena->forceFill(['active_match_id' => $ditunjuk->id])->save();
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $ditunjuk->id, 'disetel_pada' => now()],
+    );
 
     $state = app(StatePartaiPublik::class)($this->arena->fresh());
 
@@ -196,4 +204,50 @@ it('menolak melepas partai yang sedang ditayangkan gelanggang', function () {
 
     expect(fn () => (new PenjadwalPartai)->lepas($partai->fresh()))
         ->toThrow(RuntimeException::class, 'sedang ditayangkan');
+});
+
+/*
+ * Mengosongkan gelanggang tidak boleh jadi jalan buntu.
+ *
+ * Pesan penolakannya sendiri menawarkan "pindah paksa", tapi sampai sekarang
+ * hanya tunjuk() yang menerima $paksa -- gelanggang yang partainya ditinggal
+ * berjalan (perangkat pengendali mati, partai batal di tengah) tidak punya
+ * satu jalan pun untuk dikosongkan.
+ */
+it('mengosongkan gelanggang paksa meski partai belum diakhiri', function () {
+    $partai = ($this->buatPartai)(1);
+
+    $this->pointer->tunjuk($this->arena, $partai, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($partai, 1);
+
+    $this->pointer->kosongkan($this->arena->fresh(), $this->pengendali, paksa: true);
+
+    expect($this->arena->fresh()->active_match_id)->toBeNull()
+        ->and($partai->fresh()->status)->toBe(SilatMatch::STATUS_BERLANGSUNG);
+});
+
+it('menolak mengosongkan gelanggang tanpa paksa saat partai masih berjalan', function () {
+    $partai = ($this->buatPartai)(1);
+
+    $this->pointer->tunjuk($this->arena, $partai, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($partai, 1);
+
+    expect(fn () => $this->pointer->kosongkan($this->arena->fresh(), $this->pengendali))
+        ->toThrow(RuntimeException::class, 'belum diakhiri');
+});
+
+/*
+ * Penolakan yang bisa ditembus paksa dibedakan JENISNYA, bukan cuma
+ * kalimatnya. Panel harus bisa memutuskan apakah tombol "pindah paksa" pantas
+ * ditawarkan tanpa mencocokkan teks pesan.
+ */
+it('menandai penolakan yang bisa ditembus paksa dengan jenis pengecualian sendiri', function () {
+    $berjalan = ($this->buatPartai)(1);
+    $berikutnya = ($this->buatPartai)(2);
+
+    $this->pointer->tunjuk($this->arena, $berjalan, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($berjalan, 1);
+
+    expect(fn () => $this->pointer->tunjuk($this->arena->fresh(), $berikutnya, $this->pengendali))
+        ->toThrow(PenolakanDapatDipaksa::class);
 });

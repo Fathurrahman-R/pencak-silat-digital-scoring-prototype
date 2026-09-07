@@ -115,8 +115,14 @@ class Kepemilikan
     {
         $rantai = PetaSinkron::LOKAL[$tabel] ?? [];
 
+        /*
+         * Rantai kosong berarti barisnya menyebut gelanggangnya sendiri --
+         * tidak ada yang perlu dilompati. Sebelum ini, tabel semacam itu harus
+         * menuliskan rantai palsu ke `arenas` yang tidak menuju ke mana-mana,
+         * dan pembacanya harus menebak apa maksudnya.
+         */
         if ($rantai === []) {
-            return null;
+            return $this->kodeArenaDariId($baris['arena_id'] ?? null);
         }
 
         // Langkah pertama berangkat dari baris yang sedang ditanyakan;

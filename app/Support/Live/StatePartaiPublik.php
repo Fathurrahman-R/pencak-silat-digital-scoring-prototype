@@ -142,7 +142,7 @@ class StatePartaiPublik
     /**
      * Partai yang sedang ditayangkan gelanggang ini.
      *
-     * Pointer `arenas.active_match_id` lebih dulu -- itulah sumber kebenaran
+     * Pointer `arena_tayang` lebih dulu -- itulah sumber kebenaran
      * sejak pengendali gelanggang memegangnya. Turunan lama (berlangsung, lalu
      * selesai terbaru) DIPERTAHANKAN sebagai jaring pengaman untuk dua hal:
      * gelanggang yang belum pernah disentuh pengendali, dan pointer yang basi

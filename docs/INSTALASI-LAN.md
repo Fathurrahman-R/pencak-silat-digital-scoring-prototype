@@ -209,6 +209,8 @@ php artisan optimize
 
 Satu perintah yang menyatukan cache konfigurasi, rute, tampilan, dan event. Tanpa itu, tiap permintaan membaca ulang `.env`, menyusun ulang seluruh daftar rute, dan memeriksa apakah tiap berkas Blade sudah dikompilasi.
 
+> **Sesudah ini, rangkaian uji menolak berjalan sampai cachenya dibuang.** Itu disengaja. Konfigurasi yang di-cache membuat `phpunit.xml` mati total: Laravel membaca `bootstrap/cache/config.php` dan tidak pernah lagi melihat `<env>` mana pun -- termasuk nama database uji. Uji lalu menunjuk database yang terpanggang ke dalam cache, yaitu database SUNGGUHAN, dan `RefreshDatabase` mengosongkannya tanpa satu pun peringatan. Mau menguji lagi: `php artisan optimize:clear` dulu (**bukan** `config:clear`, yang meninggalkan cache rute dan menghabiskan memori PHP di tengah rangkaian uji), lalu `php artisan optimize` lagi sesudah selesai.
+
 Pasangannya di `.env`:
 
 ```env

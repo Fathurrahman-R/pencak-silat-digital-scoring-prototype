@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Tournament;
+use Database\Seeders\KejuaraanSkalaSeeder;
 use Database\Seeders\SimulasiTurnamenSeeder;
 use Illuminate\Console\Command;
 
@@ -18,16 +19,45 @@ use Illuminate\Console\Command;
 class SimulasiCommand extends Command
 {
     protected $signature = 'silat:simulasi
-                            {--reset : Hapus kejuaraan simulasi yang ada lebih dulu}';
+                            {--skala=kecil : kecil (100 pesilat, 5 kelas), sedang (semua kelas, 2 gelanggang), besar (semua kelas, 3 gelanggang)}
+                            {--tanpa-bagan : Berhenti sesudah pendaftaran lunas dan sah, tanpa menyusun bagan dan jadwal}
+                            {--reset : Hapus kejuaraan dengan skala yang sama lebih dulu}';
 
-    protected $description = 'Menyiapkan kejuaraan siap-uji untuk simulasi manual';
+    protected $description = 'Menyiapkan kejuaraan siap-uji: kecil untuk menelusuri satu partai, sedang dan besar untuk menguji sistem seukuran kejuaraan sungguhan';
 
     public function handle(): int
     {
-        $lama = Tournament::withTrashed()->where('slug', SimulasiTurnamenSeeder::SLUG)->first();
+        $skala = (string) $this->option('skala');
+
+        if (! in_array($skala, ['kecil', 'sedang', 'besar'], strict: true)) {
+            $this->error("Skala tidak dikenal: {$skala}. Pilih kecil, sedang, atau besar.");
+
+            return self::FAILURE;
+        }
+
+        /*
+         * Tiap skala punya slugnya sendiri, jadi ketiganya boleh berdiri
+         * bersamaan di satu basis data: panitia bisa berlatih pada data besar
+         * tanpa membuang kejuaraan kecil yang sedang dipakai menelusuri satu
+         * partai.
+         */
+        $slug = match ($skala) {
+            'kecil' => SimulasiTurnamenSeeder::SLUG,
+            'sedang' => KejuaraanSkalaSeeder::SLUG_SEDANG,
+            'besar' => KejuaraanSkalaSeeder::SLUG_BESAR,
+        };
+
+        if ($skala === 'kecil' && $this->option('tanpa-bagan')) {
+            $this->error('--tanpa-bagan hanya berlaku untuk skala sedang dan besar.');
+            $this->line('Skala kecil memang disiapkan untuk menelusuri partai yang sudah terjadwal.');
+
+            return self::FAILURE;
+        }
+
+        $lama = Tournament::withTrashed()->where('slug', $slug)->first();
 
         if ($lama !== null && ! $this->option('reset')) {
-            $this->warn("Kejuaraan simulasi #{$lama->id} sudah ada.");
+            $this->warn("Kejuaraan skala {$skala} #{$lama->id} sudah ada.");
             $this->line('Jalankan ulang dengan --reset untuk membuangnya dan menyusun data yang bersih.');
 
             return self::FAILURE;
@@ -46,7 +76,20 @@ class SimulasiCommand extends Command
             $this->info("Kejuaraan simulasi #{$lama->id} dihapus.");
         }
 
-        $this->call('db:seed', ['--class' => SimulasiTurnamenSeeder::class, '--force' => true]);
+        if ($skala === 'kecil') {
+            $this->call('db:seed', ['--class' => SimulasiTurnamenSeeder::class, '--force' => true]);
+
+            return self::SUCCESS;
+        }
+
+        /*
+         * Dijalankan langsung, bukan lewat `db:seed --class`: skala dan saklar
+         * bagannya adalah parameter, dan db:seed tidak punya jalan untuk
+         * meneruskannya.
+         */
+        $seeder = app(KejuaraanSkalaSeeder::class);
+        $seeder->setCommand($this);
+        $seeder->skala($skala)->tanpaBagan((bool) $this->option('tanpa-bagan'))->run();
 
         return self::SUCCESS;
     }

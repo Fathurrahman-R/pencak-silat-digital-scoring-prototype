@@ -92,7 +92,7 @@ class PenjadwalPartai
     private function pastikanTidakSedangDitayangkan(SilatMatch $match): void
     {
         $ditayangkan = Arena::whereKey($match->arena_id)
-            ->where('active_match_id', $match->id)
+            ->menayangkanPartai($match->id)
             ->exists();
 
         if ($ditayangkan) {

@@ -16,7 +16,7 @@
 
 ## Pagi hari-H: nyalakan sistem
 
-1. Nyalakan empat proses server (lihat `docs/INSTALASI-LAN.md` §6): `serve`, `reverb:start`, `queue:listen`, dan proxy tunnel kalau live score publik dipakai.
+1. Nyalakan **dua** proses server (lihat [`PANDUAN-SISTEM.md`](PANDUAN-SISTEM.md) §5): `.\scripts\server\jalankan-server.ps1` dan `php artisan reverb:start --host=0.0.0.0 --port=8080`, masing-masing di jendela PowerShell sendiri. Tambah proxy tunnel hanya kalau live score publik dipakai. **Bukan** `php artisan serve` — ia melayani satu permintaan pada satu waktu. **Bukan** `queue:listen` — tidak ada pekerjaan antrean di aplikasi ini.
 2. **Operator IT** tiap gelanggang membuka panel Operator di laptop gelanggangnya masing-masing (`/admin/turnamen/{id}/partai/{match}/operator` untuk partai pertama).
 3. Juri dan wasit login di HP masing-masing. **Yang bertugas di satu gelanggang mendarat langsung di panelnya** — tidak lewat dashboard sama sekali. Yang memegang dua gelanggang tetap melihat dashboard, karena sistem tidak punya dasar memilih salah satunya. Tambahkan panelnya ke layar utama (PWA): alamatnya per GELANGGANG, jadi ikonnya tidak pernah basi saat jadwal berganti.
 
@@ -32,6 +32,7 @@
 | Menilai serangan yang masuk | Juri 1–3 | PWA Juri |
 | Mencatat nilai/hukuman yang terlewat di babak lalu | **Pengendali Gelanggang** | Panel Kendali → "Catat susulan babak N" |
 | Mengakhiri partai (KO, WMP, mutlak, dst.) | **Pengendali Gelanggang** | Panel Kendali |
+| Meninggalkan partai yang terlanjur dimulai dan tidak jadi dimainkan | **Pengendali Gelanggang** | Panel Kendali → pilih partai lain (atau "Kosongkan gelanggang"), lalu tombol **Pindah paksa** yang muncul di pesan penolakan |
 | Menayangkan skor di gelanggang | Operator IT | Papan tampilan (`/gelanggang/{arena}/panel/papan`) |
 | Meninjau riwayat, membatalkan nilai/hukuman keliru, **mengesahkan hasil** | Dewan Juri | Panel Dewan Juri |
 | Mencetak berita acara | Ketua Pertandingan / Dewan Juri | Tombol "Berita acara (PDF)" di Panel Dewan Juri |
@@ -48,7 +49,9 @@
 | Mencatat pengurangan 0.50, menetapkan diskualifikasi | Pengawas/Dewan Wasit Juri | Panel Operator Jurus (bagian Pengurangan) |
 | **Mengesahkan skor akhir** | Ketua Pertandingan | Panel Operator Jurus |
 
-Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi.
+Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi. Pengesahan juga menuntut penampilannya sudah **selesai**: timernya dijalankan lalu dihentikan.
+
+Panel Jurus mengikuti siaran, sama seperti panel Tanding: nilai juri, timer, pengurangan, dan pengesahan muncul di panel lain dalam hitungan detik tanpa memuat ulang halaman. Halaman perbandingan battle ikut bergerak, jadi yang menekan "Tetapkan pemenang" tidak pernah membaca satu sisi yang basi. Kalau penanda koneksi di pojok panel menyala **Terputus**, yang terlihat di layar sedang berhenti diperbarui -- periksa jaringan gelanggang sebelum mengambil keputusan dari angkanya.
 
 ## Protes VAR dan Protes Manajer
 

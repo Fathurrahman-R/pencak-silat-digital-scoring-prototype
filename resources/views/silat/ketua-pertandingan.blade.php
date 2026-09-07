@@ -34,7 +34,13 @@
         <p x-show="pesan && ! galat" x-text="pesan" x-cloak
            class="shrink-0 rounded-silat bg-silat-panel px-3 py-1.5 text-center text-[13px] text-silat-teks-redup"></p>
 
-        <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_380px]">
+        {{-- `min-w-0` pada kedua kolom, bukan hiasan: lebar minimum bawaan
+             item grid adalah lebar min-content isinya, dan di layar 375px isi
+             kolom kanan (deret pasal dan label huruf besar berjarak) memaksa
+             traknya melebar sampai 454px -- seluruh halaman ikut tergulir ke
+             samping di HP, satu-satunya perangkat yang dipegang Ketua
+             Pertandingan saat berjalan di antara gelanggang. --}}
+        <div class="grid min-h-0 flex-1 gap-4 *:min-w-0 lg:grid-cols-[1fr_380px]">
 
             {{-- ============ GELANGGANG ============ --}}
             <div class="flex flex-col gap-3">
@@ -100,7 +106,12 @@
                                     <a x-show="papan.tanding.verifikasi" x-cloak
                                        x-bind:href="alamat(cfg.partaiWasit, papan.tanding.id)"
                                        class="flex min-h-[44px] items-center gap-3 rounded-silat border border-silat-tepi-kendali px-4 text-[14px] text-silat-teks">
-                                        <span x-text="'Verifikasi berjalan · ' + papan.tanding.verifikasi.terjawab + '/' + papan.tanding.verifikasi.jumlah_juri"></span>
+                                        {{-- Dibaca lewat `?.` walau tautannya sendiri x-show: Alpine
+                                             tetap menghitung ekspresi di dalam elemen yang sedang
+                                             disembunyikan, dan gelanggang yang belum punya verifikasi
+                                             -- keadaan normal sepanjang hampir seluruh partai --
+                                             melempar TypeError tiap panel ini dimuat. --}}
+                                        <span x-text="'Verifikasi berjalan · ' + (papan.tanding.verifikasi?.terjawab ?? 0) + '/' + (papan.tanding.verifikasi?.jumlah_juri ?? 0)"></span>
                                         <span class="text-silat-teks-redup">Lihat jawaban juri</span>
                                     </a>
 

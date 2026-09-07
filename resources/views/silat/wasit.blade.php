@@ -94,11 +94,18 @@
                     bukan hanya di panel operator. Ia duduk tepat di sebelah
                     timer supaya jelas apa yang dihentikan.
                 --}}
+                {{--
+                    Kotaknya tetap 30px supaya barisan header tidak pecah, tapi
+                    daerah SENTUHNYA 44px lewat lapisan tak terlihat di dalam
+                    tombol. Terukur pada 375px: dua tombol ini satu-satunya di
+                    seluruh panel gelanggang yang di bawah ambang sentuh, dan
+                    keduanya justru ditekan sambil mata mengawasi matras.
+                --}}
                 @resource(rk('partai', ResourceAction::Update))
                     <button type="button" x-show="babakAktif?.status === 'berjalan'" x-on:click="jeda()"
-                            class="h-[30px] rounded-silat-kecil border border-silat-tepi-petak px-[11px] text-[12.5px] text-silat-teks-kedua">Hentikan</button>
+                            class="relative h-[30px] rounded-silat-kecil border border-silat-tepi-petak px-[11px] text-[12.5px] text-silat-teks-kedua after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-['']">Hentikan</button>
                     <button type="button" x-show="babakAktif?.status === 'jeda'" x-on:click="lanjutkan()"
-                            class="h-[30px] rounded-silat-kecil bg-silat-aksi px-[11px] text-[12.5px] font-medium text-silat-aksi-teks">Lanjutkan</button>
+                            class="relative h-[30px] rounded-silat-kecil bg-silat-aksi px-[11px] text-[12.5px] font-medium text-silat-aksi-teks after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-['']">Lanjutkan</button>
                 @endresource
 
                 {{--

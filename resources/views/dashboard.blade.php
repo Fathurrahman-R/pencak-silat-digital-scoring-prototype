@@ -35,8 +35,38 @@
         </x-si.kartu>
     @endif
 
+    {{--
+        Pengendali Gelanggang dan Operator IT sengaja tidak dialihkan otomatis
+        ke panelnya — pekerjaan mereka mengurus perpindahan, dan itu butuh layar
+        yang memandang lebih dari satu partai. Tapi keduanya juga tidak muncul
+        di "Partai saya" di bawah, yang hanya membaca penugasan per PARTAI.
+        Tanpa kartu ini, satu-satunya jalan ke panelnya adalah mengetik alamat.
+    --}}
+    @if ($gelanggangSaya !== [])
+        <x-si.kartu judul="Gelanggang yang kamu pegang"
+                    keterangan="Alamatnya per gelanggang, jadi tidak pernah basi saat jadwal berganti."
+                    class="mb-4">
+            <div class="divide-y divide-line">
+                @foreach ($gelanggangSaya as $satu)
+                    <div class="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm text-ink">{{ $satu['nama'] }}</p>
+                            <p class="truncate text-xs2 text-ink-muted">{{ $satu['sebutan'] }}</p>
+                        </div>
+
+                        <x-si.tombol tautan="{{ $satu['url'] }}" varian="utama">
+                            {{ $satu['aksi'] }}
+                        </x-si.tombol>
+                    </div>
+                @endforeach
+            </div>
+        </x-si.kartu>
+    @endif
+
     @if ($penugasan !== [])
-        <x-si.kartu judul="Partai saya" keterangan="Partai tempat Anda ditugaskan" class="mb-4">
+        <x-si.kartu judul="Partai saya"
+                    keterangan="{{ $penugasanSisa > 0 ? 'Partai terdekat; ' . $penugasanSisa . ' partai lain menyusul di jadwal' : 'Partai tempat Anda ditugaskan' }}"
+                    class="mb-4">
             <div class="divide-y divide-line">
                 @foreach ($penugasan as $tugas)
                     <a href="{{ $tugas['url'] }}"

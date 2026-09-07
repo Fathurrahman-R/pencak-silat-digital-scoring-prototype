@@ -13,7 +13,7 @@ use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Bagan\KesiapanHulu;
-use App\Support\Gelanggang\PointerPartaiAktif;
+use App\Support\Gelanggang\PointerTayang;
 use App\Support\Scoring\BabakSusulan;
 use App\Support\Scoring\MatchTimer;
 use Database\Seeders\ResourceSeeder;
@@ -64,7 +64,7 @@ beforeEach(function () {
     $this->pengendali->syncRoles(['pengendali-gelanggang']);
     $this->arena->pengendali()->attach($this->pengendali->id);
 
-    $this->pointer = new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class));
+    $this->pointer = new PointerTayang(new MatchTimer, app(KesiapanHulu::class));
 });
 
 it('membuka panel kendali gelanggang', function () {
@@ -262,6 +262,38 @@ it('mengantar alamat juri per-partai ke panel gelanggangnya', function () {
 });
 
 /*
+ * Papan tampilan mengikuti gelanggang, bukan satu partai.
+ *
+ * Ia dipasang di layar besar di pinggir matras dan tidak pernah disentuh
+ * seharian; begitu pengendali memindahkan jadwal, papan yang masih memajang
+ * partai sebelumnya adalah papan yang MENYESATKAN penonton dan official --
+ * dan tidak ada satu orang pun yang berdiri di dekatnya untuk memuat ulang.
+ * Alamat per-partai karena itu diantar ke alamat gelanggangnya, sama seperti
+ * panel juri dan wasit.
+ */
+it('mengantar alamat papan per-partai ke panel gelanggangnya', function () {
+    $operator = User::factory()->create();
+    $operator->syncRoles(['operator-it']);
+
+    /*
+     * Operator terikat GELANGGANG, bukan partai -- baris match_officials saja
+     * tidak cukup, dan penjagaannya menolak dengan 403 sebelum pengalihan
+     * sempat terjadi. Penugasan gelanggangnya yang membuat kasus ini benar-
+     * benar menguji pengalihan, bukan penolakan.
+     */
+    $this->arena->operators()->attach($operator->id);
+
+    MatchOfficial::create([
+        'match_id' => $this->match->id, 'user_id' => $operator->id,
+        'role' => MatchOfficial::ROLE_WASIT, 'number' => null,
+    ]);
+
+    $this->actingAs($operator)
+        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->assertRedirect(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]));
+});
+
+/*
  * Dewan wasit juri TIDAK dialihkan: tugasnya justru meninjau partai tertentu,
  * termasuk yang sudah selesai, lalu mencetak berita acaranya.
  */
@@ -450,4 +482,86 @@ it('menyajikan manifest PWA untuk komisi protes dan ketua pertandingan', functio
             ->assertJsonPath('start_url', route("admin.turnamen.gelanggang.panel.{$peran}", [$this->tournament, $this->arena]))
             ->assertJsonPath('short_name', $pendek.' '.$this->arena->code);
     }
+});
+
+/*
+ * Penolakan yang menawarkan "pindah paksa" harus bisa dikenali panel tanpa
+ * membaca kalimatnya. Kunci `dapat_dipaksa` itulah yang menyalakan tombol
+ * paksa di panel kendali; tanpa penanda ini, pesan galatnya menyuruh
+ * pengendali melakukan sesuatu yang tidak disediakan layarnya.
+ */
+it('menandai penolakan yang bisa ditembus paksa di galat validasi', function () {
+    $berikutnya = ($this->buatPartai)(2);
+
+    $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($this->match, 1);
+
+    $this->actingAs($this->pengendali)
+        ->postJson(route('admin.turnamen.gelanggang.panel.partai-aktif', [$this->tournament, $this->arena]), [
+            'match_id' => $berikutnya->id,
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['aksi', 'dapat_dipaksa']);
+});
+
+it('mengosongkan gelanggang paksa lewat panel kendali', function () {
+    $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($this->match, 1);
+
+    $this->actingAs($this->pengendali)
+        ->postJson(route('admin.turnamen.gelanggang.panel.partai-aktif', [$this->tournament, $this->arena]), [
+            'match_id' => null,
+            'paksa' => true,
+        ])
+        ->assertOk();
+
+    expect($this->arena->fresh()->active_match_id)->toBeNull();
+});
+
+it('menolak mengosongkan gelanggang tanpa paksa saat partai masih berjalan', function () {
+    $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
+    (new MatchTimer)->mulaiBabak($this->match, 1);
+
+    $this->actingAs($this->pengendali)
+        ->postJson(route('admin.turnamen.gelanggang.panel.partai-aktif', [$this->tournament, $this->arena]), [
+            'match_id' => null,
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['aksi', 'dapat_dipaksa']);
+
+    expect($this->arena->fresh()->active_match_id)->toBe($this->match->id);
+});
+
+/*
+ * Panel kendali harus MENYEDIAKAN jalan paksa itu, bukan cuma menyebutnya di
+ * pesan galat.
+ */
+it('menyediakan tombol pindah paksa di panel kendali', function () {
+    $this->actingAs($this->pengendali)
+        ->get(route('admin.turnamen.gelanggang.panel.kendali', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertSee('paksaTertunda', false);
+});
+
+/*
+ * Layar tunggu menjanjikan panel yang terbuka sendiri begitu partai
+ * ditetapkan. Siaran `gelanggang.partai` memang tiba, tapi markup panelnya
+ * tidak ada di layar itu -- satu-satunya cara menepati janjinya adalah memuat
+ * ulang halaman, dan penandanyalah yang memberi tahu klien kapan.
+ */
+it('menandai layar tunggu supaya panel memuat ulang saat partai ditetapkan', function () {
+    $juri = User::factory()->create();
+    $juri->syncRoles(['juri']);
+
+    $this->actingAs($juri)
+        ->get(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertSee('Menunggu pengendali memilih partai')
+        /*
+         * Penandanya dicari dalam bentuk yang benar-benar dicetak @js():
+         * JSON di dalam JSON.parse(), dengan setiap tanda kutip ditulis
+         * sebagai escape unicode. `chr(92)` dipakai supaya garis miring
+         * terbaliknya tidak perlu ikut di-escape di berkas ini.
+         */
+        ->assertSee(str_replace('"', chr(92).'u0022', '"menunggu":true'), false);
 });

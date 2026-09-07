@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\FormatJurus;
+use App\Events\Jurus\PenampilanJurusBerubah;
 use App\Http\Controllers\Controller;
 use App\Models\JurusBattle;
 use App\Models\JurusDeduction;
@@ -15,6 +16,7 @@ use App\Support\Jurus\JurusScoreCalculator;
 use App\Support\Jurus\JurusTimer;
 use App\Support\Jurus\PerbandinganBattle;
 use App\Support\Jurus\PutuskanBattle;
+use App\Support\Jurus\StatePenampilan;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -187,9 +189,11 @@ class JurusScoringController extends Controller
             ]);
         }
 
-        $jumlah = app(SusunBaganJurus::class)->siapkanPenampilan($jurusBattle)->count();
+        $penampilan = app(SusunBaganJurus::class)->siapkanPenampilan($jurusBattle);
 
-        return back()->with('success', "{$jumlah} penampilan disiapkan untuk battle {$jurusBattle->id}.");
+        $this->siarkanBattle($jurusBattle, 'penampilan');
+
+        return back()->with('success', "{$penampilan->count()} penampilan disiapkan untuk battle {$jurusBattle->id}.");
     }
 
     /**
@@ -201,6 +205,8 @@ class JurusScoringController extends Controller
         $this->pastikanMilikBattle($tournament, $jurusBattle);
 
         $this->jalankan(fn () => app(PutuskanBattle::class)($jurusBattle));
+
+        $this->siarkanBattle($jurusBattle, 'keputusan');
 
         return back()->with('success', "Pemenang battle {$jurusBattle->id} ditetapkan.");
     }
@@ -223,6 +229,9 @@ class JurusScoringController extends Controller
             'tournament' => $tournament,
             'battle' => $jurusBattle,
             'config' => [
+                // Channel siaran halaman ini. Tiap penampilan battle menyiarkan
+                // ke sini juga, jadi satu langganan cukup untuk kedua sudut.
+                'battleId' => $jurusBattle->id,
                 'state' => route('admin.turnamen.jurus.battle.state', [$tournament, $jurusBattle]),
             ],
         ]);
@@ -257,39 +266,18 @@ class JurusScoringController extends Controller
     public function state(Tournament $tournament, JurusPerformance $performance): JsonResponse
     {
         $this->pastikanMilikPerforma($tournament, $performance);
-        $performance->load(['scores.juri', 'deductions.pencatat', 'registration.athletes', 'registration.contingent']);
 
-        return response()->json([
-            'performance' => [
-                'id' => $performance->id,
-                'status' => $performance->status,
-                'started_at' => optional($performance->started_at)->toIso8601String(),
-                'duration_ms' => $performance->duration_ms,
-                'didiskualifikasi' => $performance->didiskualifikasi,
-                'ratified' => $performance->disahkan(),
-            ],
-            'peserta' => [
-                'nama' => $performance->registration->athletes->pluck('name')->implode(', '),
-                'kontingen' => $performance->registration->contingent->name,
-            ],
-            'skor' => [
-                'median' => $this->kalkulator->median($performance),
-                'total_pengurangan' => $this->kalkulator->totalPengurangan($performance),
-                'akhir' => $this->kalkulator->skorAkhir($performance),
-            ],
-            'nilai_juri' => $performance->scores->map(fn ($s) => [
-                'judge_user_id' => $s->judge_user_id, 'nama' => $s->juri->name, 'value' => (float) $s->value,
-            ]),
-            'pengurangan' => $performance->deductions->where('voided_at', null)->values()->map(fn ($d) => [
-                'id' => $d->id, 'tier' => $d->tier, 'alasan' => $d->alasan, 'jumlah' => (float) $d->jumlah, 'pencatat' => $d->pencatat?->name,
-            ]),
-        ]);
+        // Muatannya tinggal di App\Support\Jurus\StatePenampilan: panel Jurus
+        // per gelanggang menjawab pertanyaan yang sama lewat alamat lain, dan
+        // dua salinan muatan adalah dua salinan yang bisa berbeda diam-diam.
+        return response()->json(app(StatePenampilan::class)($performance));
     }
 
     public function mulaiTimer(Request $request, Tournament $tournament, JurusPerformance $performance): RedirectResponse|JsonResponse
     {
         $this->pastikanMilikPerforma($tournament, $performance);
         $this->jalankan(fn () => $this->timer->mulai($performance));
+        $this->siarkan($performance, 'timer');
 
         return $this->respond($request, 'success', 'Penampilan dimulai.');
     }
@@ -298,6 +286,7 @@ class JurusScoringController extends Controller
     {
         $this->pastikanMilikPerforma($tournament, $performance);
         $this->jalankan(fn () => $this->timer->berhenti($performance));
+        $this->siarkan($performance, 'timer');
 
         return $this->respond($request, 'success', 'Penampilan diselesaikan.');
     }
@@ -336,6 +325,8 @@ class JurusScoringController extends Controller
             ['value' => $data['value']],
         );
 
+        $this->siarkan($performance, 'nilai');
+
         return $this->respond($request, 'success', 'Nilai tersimpan.');
     }
 
@@ -350,6 +341,8 @@ class JurusScoringController extends Controller
             'alasan' => $data['alasan'], 'jumlah' => config('scoring.jurus.pengurangan.juri'),
             'created_by' => $request->user()->id,
         ]);
+
+        $this->siarkan($performance, 'pengurangan');
 
         return $this->respond($request, 'success', 'Pengurangan 0.01 dicatat.');
     }
@@ -366,6 +359,8 @@ class JurusScoringController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
+        $this->siarkan($performance, 'pengurangan');
+
         return $this->respond($request, 'success', 'Pengurangan 0.50 dicatat.');
     }
 
@@ -378,6 +373,8 @@ class JurusScoringController extends Controller
 
         $deduction->update(['voided_at' => now(), 'voided_by' => $request->user()->id, 'void_reason' => $data['alasan']]);
 
+        $this->siarkan($performance, 'pengurangan');
+
         return $this->respond($request, 'warning', 'Pengurangan dibatalkan.');
     }
 
@@ -386,6 +383,7 @@ class JurusScoringController extends Controller
     {
         $this->pastikanMilikPerforma($tournament, $performance);
         $performance->update(['didiskualifikasi' => true]);
+        $this->siarkan($performance, 'diskualifikasi');
 
         return $this->respond($request, 'warning', 'Penampilan didiskualifikasi.');
     }
@@ -422,6 +420,8 @@ class JurusScoringController extends Controller
 
         $performance->update(['ratified_at' => now(), 'ratified_by' => $request->user()->id]);
 
+        $this->siarkan($performance, 'sahkan');
+
         return $this->respond($request, 'success', 'Skor penampilan disahkan.');
     }
 
@@ -430,6 +430,13 @@ class JurusScoringController extends Controller
     {
         return [
             'performanceId' => $performance->id,
+            /*
+             * Channel battle ikut dikirim supaya panel penampilan yang berdiri
+             * di dalam battle mendengar perubahan LAWANNYA juga -- itulah yang
+             * membuat papan perbandingan dan tombol "Tetapkan pemenang" tidak
+             * pernah membaca satu sisi yang basi.
+             */
+            'battleId' => $performance->jurus_battle_id,
             'state' => route('admin.turnamen.jurus.penampilan.state', [$tournament, $performance]),
             'mulai' => route('admin.turnamen.jurus.penampilan.timer.mulai', [$tournament, $performance]),
             'berhenti' => route('admin.turnamen.jurus.penampilan.timer.berhenti', [$tournament, $performance]),
@@ -440,6 +447,36 @@ class JurusScoringController extends Controller
             'diskualifikasi' => route('admin.turnamen.jurus.penampilan.diskualifikasi', [$tournament, $performance]),
             'sahkan' => route('admin.turnamen.jurus.penampilan.sahkan', [$tournament, $performance]),
         ];
+    }
+
+    /**
+     * Menerbitkan siaran perubahan satu penampilan.
+     *
+     * Dipanggil SESUDAH perubahannya tersimpan, dan sengaja di controller,
+     * bukan di dalam JurusTimer atau model: penerbitannya mengikuti aksi
+     * petugas yang berhasil, bukan tiap penulisan kolom. Penampilan dibaca
+     * ulang dari basis data supaya `jurus_battle_id` yang baru saja berubah
+     * (mis. saat penampilan battle disiapkan) ikut menentukan channel-nya.
+     */
+    private function siarkan(JurusPerformance $performance, string $sebab): void
+    {
+        PenampilanJurusBerubah::dispatch($performance->fresh(), $sebab);
+    }
+
+    /**
+     * Menyiarkan perubahan satu battle lewat kedua penampilannya.
+     *
+     * Battle tidak punya event sendiri: yang berubah selalu bisa dibaca dari
+     * penampilan, dan halaman perbandingan sudah mendengarkan channel battle
+     * yang ikut dibawa tiap penampilan. Battle tanpa penampilan -- bye, atau
+     * ronde yang sudutnya belum lengkap -- tidak menyiarkan apa pun, dan
+     * memang tidak ada yang menunggunya.
+     */
+    private function siarkanBattle(JurusBattle $battle, string $sebab): void
+    {
+        foreach ($battle->performances()->get() as $penampilan) {
+            PenampilanJurusBerubah::dispatch($penampilan, $sebab);
+        }
     }
 
     private function respond(Request $request, string $tipe, string $pesan): RedirectResponse|JsonResponse

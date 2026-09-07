@@ -311,7 +311,18 @@ it('tetap menampilkan seluruh tagihan kepada sekretariat', function () {
  * kontingen -- peran bentukan panitia lewat panel Role, misalnya -- akan
  * mendapat halaman kosong kalau penyaring kontingen dipasang di sini.
  */
-it('tetap menampilkan seluruh tagihan kepada pemegang izin tagihan tanpa hak ubah kontingen', function () {
+/*
+ * Penandanya `Approve`, bukan `Update`.
+ *
+ * Mengunci tagihan (`Update`) adalah langkah official atas tagihannya sendiri
+ * -- panduan alur menaruhnya di kursinya. Sejak wewenang itu diberikan,
+ * `Update` tidak lagi memisahkan orang keuangan dari official, dan memakainya
+ * sebagai penanda diam-diam membuka nomor invoice serta nominal seluruh
+ * kontingen pesaing kepada official. Menandai lunas tidak pernah jadi wewenang
+ * official, jadi itulah penanda yang benar. Maksud uji ini tidak berubah:
+ * orang keuangan tanpa hak ubah kontingen tetap melihat semuanya.
+ */
+it('tetap menampilkan seluruh tagihan kepada pemegang izin pelunasan tanpa hak ubah kontingen', function () {
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Satu');
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
 
@@ -319,6 +330,7 @@ it('tetap menampilkan seluruh tagihan kepada pemegang izin tagihan tanpa hak uba
     $penagih->givePermissionTo([
         rk('invoice', ResourceAction::View),
         rk('invoice', ResourceAction::Update),
+        rk('invoice', ResourceAction::Approve),
         rk('kontingen', ResourceAction::View),
     ]);
 
@@ -327,4 +339,30 @@ it('tetap menampilkan seluruh tagihan kepada pemegang izin tagihan tanpa hak uba
         ->assertOk()
         ->assertSee('Kontingen Satu')
         ->assertSee('Kontingen Dua');
+});
+
+/*
+ * Penjaga yang paling mudah runtuh saat wewenang bergeser.
+ *
+ * Official kontingen sekarang memegang `invoice.update` supaya bisa mengunci
+ * tagihannya sendiri. Kalau suatu saat penanda "boleh lihat semua" kembali
+ * memakai `Update`, uji ini yang jatuh lebih dulu -- bukan panitia yang
+ * menemukan nominal kontingen pesaing terbaca di layar orang lain.
+ */
+it('menjaga official kontingen tetap terkurung pada tagihannya sendiri meski boleh mengunci', function () {
+    $milikSendiri = kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Sendiri');
+    kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Pesaing');
+
+    $official = User::factory()->create();
+    $official->syncRoles(['official-kontingen']);
+    $milikSendiri->update(['user_id' => $official->id]);
+
+    expect($official->can(rk('invoice', ResourceAction::Update)))->toBeTrue()
+        ->and($official->can(rk('invoice', ResourceAction::Approve)))->toBeFalse();
+
+    $this->actingAs($official)
+        ->get("/admin/turnamen/{$this->tournament->id}/bendahara")
+        ->assertOk()
+        ->assertSee('Kontingen Sendiri')
+        ->assertDontSee('Kontingen Pesaing');
 });

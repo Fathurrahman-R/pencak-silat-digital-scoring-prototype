@@ -59,6 +59,15 @@ it('menyusun kejuaraan simulasi lengkap dengan dua gelanggang beroperator', func
     });
 
     /*
+     * Operator dan pengendali dua kursi berbeda sejak timer pindah tangan
+     * (SilatRoleSeeder, peran operator-it). Gelanggang yang cuma punya
+     * operator tidak bisa memulai babak sama sekali.
+     */
+    $gelanggang->each(function (Arena $arena) {
+        expect($arena->pengendali()->count())->toBe(1, "{$arena->name} tidak punya pengendali");
+    });
+
+    /*
      * Jendela konsensus mengikuti bawaan, tidak dilebarkan seeder. Data
      * simulasi yang diam-diam bermain dengan setelan waktu membuat layar
      * gelanggang berperilaku berbeda dari kejuaraan sungguhan -- termasuk
@@ -74,6 +83,8 @@ it('membuat akun untuk tiap peran gelanggang dengan kata sandi bawaan', function
         'ketua@silat.test' => 'ketua-pertandingan',
         'operator@silat.test' => 'operator-it',
         'operator2@silat.test' => 'operator-it',
+        'pengendali1@silat.test' => 'pengendali-gelanggang',
+        'pengendali2@silat.test' => 'pengendali-gelanggang',
         'wasit1@silat.test' => 'wasit',
         'juri1@silat.test' => 'juri',
         'juri6@silat.test' => 'juri',
@@ -92,6 +103,33 @@ it('membuat akun untuk tiap peran gelanggang dengan kata sandi bawaan', function
             // Tanpa email_verified_at seluruh panel membalas 403.
             ->and($user->email_verified_at)->not->toBeNull()
             ->and(Hash::check('password', $user->password))->toBeTrue();
+    }
+});
+
+/*
+ * Gelanggang tanpa pengendali tidak bisa memulai babak sama sekali, dan itu
+ * kegagalan yang baru terlihat saat orang sudah berkumpul: seluruh halaman
+ * lain terbuka normal. Migrasi arena_pengendali menyalin dari arena_operators,
+ * tapi hanya atas data yang sudah ada saat ia berjalan -- pemasangan baru
+ * menjalankannya di atas tabel kosong, jadi simulasi harus mengisinya sendiri.
+ */
+it('menugaskan pengendali di tiap gelanggang, terpisah dari operatornya', function () {
+    $gelanggang = Arena::where('tournament_id', $this->tournament->id)->get();
+
+    expect($gelanggang)->not->toBeEmpty();
+
+    foreach ($gelanggang as $arena) {
+        $pengendali = $arena->pengendali;
+
+        expect($pengendali)->toHaveCount(1, "{$arena->name} tidak punya pengendali");
+
+        $orang = $pengendali->first();
+
+        expect($orang->hasRole('pengendali-gelanggang'))
+            ->toBeTrue("pengendali {$arena->name} tidak memegang perannya")
+            // Kursi yang berbeda memang orang yang berbeda -- itu yang
+            // membuat simulasi melatih pembagian tugas yang sesungguhnya.
+            ->and($arena->operators->pluck('id'))->not->toContain($orang->id);
     }
 });
 

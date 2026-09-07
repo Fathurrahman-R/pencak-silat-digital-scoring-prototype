@@ -169,6 +169,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/', 'store')->name('store')->middleware('resource:'.rk('turnamen', ResourceAction::Create));
             Route::get('/export', 'export')->name('export')->middleware('resource:'.rk('turnamen', ResourceAction::Export));
             Route::get('/{tournament}/panel', 'panel')->name('panel')->middleware('resource:'.rk('turnamen', ResourceAction::View));
+            /*
+             * Alamat kejuaraan telanjang dibawa ke panelnya. Berdiri SESUDAH
+             * `/create` dan `/export` supaya keduanya tetap cocok lebih dulu;
+             * tanpa urutan itu, kata "create" akan diterima sebagai nomor
+             * kejuaraan dan halaman pembuatan kejuaraan hilang.
+             */
+            Route::get('/{tournament}', 'show')->name('show')->middleware('resource:'.rk('turnamen', ResourceAction::View));
             Route::post('/{tournament}/buka', 'buka')->name('buka')->middleware('resource:'.rk('turnamen', ResourceAction::View));
             Route::get('/{tournament}/edit', 'edit')->name('edit')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
             Route::put('/{tournament}', 'update')->name('update')->middleware('resource:'.rk('turnamen', ResourceAction::Update));
@@ -355,8 +362,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/operator', 'operator')->name('operator')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
-                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
-                    Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
+                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));                    Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/juri/manifest.webmanifest', 'manifest')->name('juri.manifest')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/berita-acara', 'beritaAcara')->name('berita-acara')->middleware('resource:'.rk('hasil-partai', ResourceAction::Print));
@@ -421,6 +427,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
+
+
+                    /*
+                     * Panel Jurus beralamat GELANGGANG, sejajar dengan panel
+                     * Tanding di atas.
+                     *
+                     * Alamat per penampilan tetap hidup (lihat grup
+                     * `jurus.penampilan.*`): nomor Jurus yang belum dijadwalkan
+                     * ke gelanggang mana pun tidak punya alamat gelanggang
+                     * untuk diikuti, dan itu keadaan normal di kejuaraan kecil
+                     * yang menjalankan Jurus tanpa membaginya ke matras.
+                     */
+                    Route::get('/jurus-juri', 'jurusJuri')->name('jurus-juri')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::get('/jurus-operator', 'jurusOperator')->name('jurus-operator')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::get('/jurus-state', 'jurusState')->name('jurus-state')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    Route::post('/penampilan-aktif', 'pilihPenampilan')->name('penampilan-aktif')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Assign));
+
+                    /*
+                     * Serah-terima jadwal antar gelanggang, dari panel kendali
+                     * yang sama -- pengendali tidak keluar ke layar lain.
+                     *
+                     * Assign, bukan Manage: memindahkan jadwal setara dengan
+                     * menunjuk partai aktif, bukan dengan membuka babak yang
+                     * sudah ditutup.
+                     */
+                    Route::post('/lepas', 'lepasKeGelanggang')->name('lepas')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Assign));
+                    Route::post('/lepas/{serah}/batal', 'batalkanLepas')->name('lepas.batal')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Assign));
+                    Route::post('/lepas/{serah}/ambil', 'ambilLepasan')->name('lepas.ambil')->middleware('resource:'.rk('kendali-gelanggang', ResourceAction::Assign));
 
                     /*
                      * Wasit Komisi Protes tidak punya panel lain: panel

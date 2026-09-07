@@ -1,8 +1,10 @@
 <?php
 
 use App\Actions\Turnamen\SusunMasterDataTurnamen;
+use App\Enums\AkibatProtes;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
+use App\Events\Scoring\MatchStateChanged;
 use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
@@ -16,6 +18,7 @@ use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
+use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
     $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
@@ -112,7 +115,7 @@ it('menerima protes manajer beserta akibatnya lewat HTTP', function () {
 
     expect($protes->fresh())
         ->keputusan->toBe('diterima')
-        ->akibat->toBe(App\Enums\AkibatProtes::BabakTambahan);
+        ->akibat->toBe(AkibatProtes::BabakTambahan);
 });
 
 it('menolak menerima protes manajer tanpa akibat lewat HTTP', function () {
@@ -176,4 +179,63 @@ it('menyertakan akibat protes di payload state partai', function () {
         ->assertJsonPath('keberatan.protes_manajer.0.akibat', 'babak_tambahan')
         ->assertJsonPath('keberatan.protes_manajer.0.akibat_label', 'Menambah satu babak')
         ->assertJsonPath('keberatan.protes_manajer.0.akibat_diterapkan', false);
+});
+
+/*
+ * Protes yang DIAJUKAN harus tersiar, bukan cuma protes yang sudah diputus.
+ *
+ * Sampai uji lapangan hari ini, hanya keputusan yang menyiarkan
+ * MatchStateChanged. Akibatnya: Komisi mengangkat protes VAR lengkap dengan
+ * hitung mundur lima menit, dan panel Ketua Pertandingan -- yang justru harus
+ * melihat tenggat itu berjalan -- tetap menulis "Belum ada protes VAR" sampai
+ * halamannya dimuat ulang dengan tangan. Hal yang sama berlaku untuk protes
+ * manajer dan bandingnya.
+ */
+it('menyiarkan perubahan partai begitu protes VAR diajukan', function () {
+    Event::fake([MatchStateChanged::class]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.var.ajukan', [$this->tournament, $this->match]), [
+            'babak' => 1, 'corner' => 'red', 'kejadian' => 'jatuhan tidak dihitung',
+        ])->assertOk();
+
+    Event::assertDispatched(MatchStateChanged::class);
+});
+
+it('menyiarkan perubahan partai begitu protes manajer diajukan', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    Event::fake([MatchStateChanged::class]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$this->tournament, $this->match]), [
+            'catatan' => 'hasil dianggap keliru',
+        ])->assertOk();
+
+    Event::assertDispatched(MatchStateChanged::class);
+});
+
+it('menyiarkan perubahan partai begitu banding diajukan', function () {
+    $this->match->update(['status' => SilatMatch::STATUS_SELESAI]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.ajukan', [$this->tournament, $this->match]), [
+            'catatan' => 'hasil dianggap keliru',
+        ])->assertOk();
+
+    $protes = ManagerProtest::firstOrFail();
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.putuskan', [$this->tournament, $this->match, $protes]), [
+            'keputusan' => 'ditolak', 'catatan' => 'bukti tidak cukup',
+        ])->assertOk();
+
+    Event::fake([MatchStateChanged::class]);
+
+    $this->actingAs($this->ketuaPertandingan)
+        ->postJson(route('admin.turnamen.partai.keberatan.protes-manajer.banding', [$this->tournament, $this->match, $protes]), [
+            'catatan' => 'naik banding',
+        ])->assertOk();
+
+    Event::assertDispatched(MatchStateChanged::class);
 });

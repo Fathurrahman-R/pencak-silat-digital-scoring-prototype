@@ -71,10 +71,14 @@ class PartaiScoringController extends Controller
         return response()->json(app(StatePartaiPanel::class)($match, $request->user()));
     }
 
-    public function operator(Tournament $tournament, SilatMatch $match): View
+    public function operator(Tournament $tournament, SilatMatch $match): View|RedirectResponse
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, request()->user());
+
+        if ($alihkan = $this->alihkanKeGelanggang($tournament, $match, 'papan')) {
+            return $alihkan;
+        }
 
         return view('silat.papan', [
             'tournament' => $tournament,
@@ -307,6 +311,12 @@ class PartaiScoringController extends Controller
         $data = $request->validate([
             'babak' => ['required', 'integer', 'min:1', 'max:'.$jumlahBabak],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
         ], [
             'babak' => 'Babak',
@@ -495,13 +505,34 @@ class PartaiScoringController extends Controller
                 Rule::enum(JenisSerangan::class),
                 Rule::notIn([JenisSerangan::Jatuhan->value]),
             ],
+            /*
+             * Kapan tombolnya BENAR-BENAR ditekan, menurut perangkat juri.
+             *
+             * Dipakai panel yang mengantre tekanan selama jaringannya putus:
+             * yang terkirim sesudah pulih tiba di server beberapa detik
+             * terlambat, dan tanpa kolom ini jejak auditnya berbohong tentang
+             * kapan serangan itu dinilai.
+             *
+             * Tidak pernah menggantikan `server_ts`. Konsensus tetap dihitung
+             * dari waktu server, karena jam perangkat juri tidak dipercaya --
+             * juri yang jamnya meleset (atau disetel) tidak boleh bisa
+             * menggeser nilai ke momen yang menguntungkan.
+             */
+            'client_ts' => ['sometimes', 'nullable', 'date'],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
             'jenis.not_in' => 'Jatuhan tidak dinilai juri — nilainya diterbitkan Dewan Wasit Juri.',
         ], [
             'babak' => 'Babak',
             'corner' => 'Sudut',
             'jenis' => 'Jenis serangan',
+            'client_ts' => 'Waktu tekan',
         ]);
 
         $input = ($this->catatInput)(
@@ -510,6 +541,7 @@ class PartaiScoringController extends Controller
             (int) $data['babak'],
             Sudut::from($data['corner']),
             JenisSerangan::from($data['jenis']),
+            $data['client_ts'] ?? null,
         );
 
         if ($input->ditolak()) {
@@ -566,6 +598,12 @@ class PartaiScoringController extends Controller
                 Rule::exists('judge_verifications', 'id')->where('match_id', $match->id),
             ],
         ], [
+            // Panel mengirim babak dari state, jadi kolom ini kosong justru
+            // ketika partainya belum punya babak sama sekali. "Babak wajib
+            // diisi." benar secara validasi tapi menyesatkan di gelanggang:
+            // yang menekan tidak mengisi apa pun, dan yang perlu diketahuinya
+            // adalah siapa yang harus bergerak berikutnya.
+            'babak.required' => 'Babak belum dimulai. Pengendali gelanggang perlu memulai babak sebelum ini bisa dicatat.',
             'babak.max' => "Partai ini hanya punya {$jumlahBabak} babak.",
         ], [
             'babak' => 'Babak',
@@ -837,7 +875,13 @@ class PartaiScoringController extends Controller
      * partai yang sudah lewat. Alamat per-partai basi begitu pengendali
      * memindahkan jadwal; alamat gelanggang tidak pernah basi.
      *
-     * Hanya berlaku untuk panel wasit dan juri. Dewan wasit juri dan keberatan
+     * Berlaku untuk panel wasit, juri, dan papan tampilan. Papan justru yang
+     * paling menuntutnya: ia dipasang di layar besar di pinggir matras dan
+     * tidak disentuh seharian, jadi papan yang tertinggal di partai
+     * sebelumnya akan memajang nama yang keliru ke seluruh gelanggang tanpa
+     * ada satu orang pun di dekatnya yang memuat ulang.
+     *
+     * Dewan wasit juri dan keberatan
      * memang harus bisa membuka partai TERTENTU -- termasuk yang sudah selesai
      * -- untuk ditinjau, disahkan, dan dicetak berita acaranya.
      *

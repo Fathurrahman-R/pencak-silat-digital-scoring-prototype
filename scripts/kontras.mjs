@@ -115,6 +115,7 @@ const T = {
     gAksi: '#e8e8ea',
     gAksiTeks: '#111114',
     gHidup: '#4ade80',
+    gAwas: '#fb7185',
     gEmas: '#c9a227',
 
     // Sudut pesilat — terkunci, sama di seluruh permukaan
@@ -179,6 +180,7 @@ const PASANGAN = [
     ['TERANG · info di kertas', T.kInfo, T.kKertas],
     ['TERANG · emas di kertas', T.kEmas, T.kKertas],
     ['TERANG · titik hidup di kertas (non-teks)', T.kHidup, T.kKertas],
+    ['TERANG · titik awas di kertas (non-teks)', '#be123c', T.kKertas],
 
     // Bagan dan papan publik: bidang sudut penuh, teks putih.
     ['TERANG · putih di bidang merah', '#ffffff', T.gMerahDalam],
@@ -216,6 +218,15 @@ const PASANGAN = [
     ['GELAP · penyaring aktif: teks di bidangnya', T.gAksiTeks, T.gAksi],
     ['GELAP · hijau hidup di latar', T.gHidup, T.gLatar],
     ['GELAP · hijau hidup di panel', T.gHidup, T.gPanel],
+
+    // Titik mutu jaringan. Non-teks: yang dibaca warnanya, angkanya
+    // sendiri memakai warna teks netral. Diukur juga di atas kedua bidang
+    // sudut, karena penanda sambungan duduk di header panel yang bisa
+    // berlatar merah maupun biru.
+    ['GELAP · titik awas di latar (non-teks)', T.gAwas, T.gLatar],
+    ['GELAP · titik awas di panel (non-teks)', T.gAwas, T.gPanel],
+    ['GELAP · titik awas di bidang merah (non-teks)', T.gAwas, T.gMerahDalam],
+    ['GELAP · titik awas di bidang biru (non-teks)', T.gAwas, T.gBiruDalam],
     ['GELAP · emas di latar', T.gEmas, T.gLatar],
     ['GELAP · emas di panel', T.gEmas, T.gPanel],
 
@@ -243,6 +254,13 @@ const PASANGAN = [
     ['MATI · tepi petak di bidang merah (non-teks)', T.gTepiPetak, T.gMerahDalam],
     ['MATI · tepi petak di bidang biru (non-teks)', T.gTepiPetak, T.gBiruDalam],
     ['MATI · tepi petak di kertas (non-teks)', T.gTepiPetak, T.kKertas],
+
+    // Petak hukuman pindah ke DALAM batang sudut yang terang, bukan lagi di
+    // bidang dalam yang gelap. Tepi petak biasa (#8a8a90) cuma 1,53 di sana --
+    // deretnya hilang. Yang dipakai token teks sudut, dan dua baris ini yang
+    // menjaganya tetap begitu.
+    ['MATI · tepi petak di batang merah (non-teks)', T.gTeksMerahKedua, T.gMerah],
+    ['MATI · tepi petak di batang biru (non-teks)', T.gTeksBiruKedua, T.gBiru],
 ];
 
 let gagal = 0;

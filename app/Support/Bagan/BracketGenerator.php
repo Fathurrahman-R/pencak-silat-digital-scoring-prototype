@@ -2,6 +2,7 @@
 
 namespace App\Support\Bagan;
 
+use App\Enums\ModeBagan;
 use App\Enums\StatusPendaftaran;
 use App\Models\Bracket;
 use App\Models\Registration;
@@ -25,7 +26,7 @@ use RuntimeException;
  */
 class BracketGenerator
 {
-    public function untukKelas(WeightClass $kelas, bool $acak = true): Bracket
+    public function untukKelas(WeightClass $kelas, bool $acak = true, ModeBagan $mode = ModeBagan::Gugur): Bracket
     {
         $peserta = $this->pesertaSah($kelas);
 
@@ -43,18 +44,30 @@ class BracketGenerator
             );
         }
 
-        $ukuran = UrutanUnggulan::ukuranBagan($peserta->count());
-        $urutan = $acak ? $peserta->shuffle() : $peserta;
+        /*
+         * Ukuran bagan adalah satu-satunya tempat kedua mode berpisah di
+         * tingkat data: gugur dibulatkan ke pangkat dua, pemasalan memakai
+         * jumlah peserta apa adanya. Sisanya -- penyusunan partai, promosi
+         * pemenang, penggambaran pohon -- berjalan dengan aritmetika yang
+         * sama, dan itu memang yang dituju: satu jalur kode yang dipakai
+         * kedua mode tidak bisa menyimpang diam-diam di salah satunya.
+         */
+        $ukuran = $mode === ModeBagan::Pemasalan
+            ? $peserta->count()
+            : UrutanUnggulan::ukuranBagan($peserta->count());
 
-        return DB::transaction(function () use ($kelas, $lama, $ukuran, $urutan) {
+        $urutan = $acak ? $peserta->shuffle()->values() : $peserta->values();
+
+        return DB::transaction(function () use ($kelas, $lama, $ukuran, $urutan, $mode) {
             $lama?->delete();
 
             $bracket = Bracket::create([
                 'weight_class_id' => $kelas->id,
                 'size' => $ukuran,
+                'mode' => $mode,
             ]);
 
-            $this->isiTempat($bracket, $urutan);
+            $this->isiTempat($bracket, $urutan, $mode);
             $this->susunPartai($bracket);
 
             return $bracket->refresh();
@@ -151,9 +164,19 @@ class BracketGenerator
      *
      * @param  Collection<int, Registration>  $peserta
      */
-    private function isiTempat(Bracket $bracket, Collection $peserta): void
+    private function isiTempat(Bracket $bracket, Collection $peserta, ModeBagan $mode): void
     {
-        $urutanTempat = UrutanUnggulan::untuk($bracket->size);
+        /*
+         * Pemasalan tidak punya tempat kosong untuk disebar, jadi tidak ada
+         * yang perlu disusun ulang: peserta ke-n menempati tempat ke-n, persis
+         * urutan undian. Menyusunnya dengan urutan unggulan justru menyesatkan
+         * -- susunan itu ada untuk MENYEBAR bye, dan di sini tidak ada bye
+         * yang perlu disebar.
+         */
+        $urutanTempat = $mode === ModeBagan::Pemasalan
+            ? range(1, $bracket->size)
+            : UrutanUnggulan::untuk($bracket->size);
+
         $baris = [];
 
         foreach ($urutanTempat as $tempat => $nomorUnggulan) {
@@ -175,11 +198,24 @@ class BracketGenerator
      */
     private function susunPartai(Bracket $bracket): void
     {
-        $jumlahBabak = (int) log($bracket->size, 2);
+        /*
+         * Jumlah partai tiap babak dihitung berjenjang dari jumlah TEMPAT
+         * babak itu, bukan dari ukuran bagan dibagi pangkat dua.
+         *
+         * Untuk bagan pangkat dua keduanya menghasilkan angka yang sama persis
+         * (16 tempat: 8, 4, 2, 1). Bedanya baru terlihat pada pemasalan
+         * berjumlah ganjil -- 9 tempat menghasilkan 5, 3, 2, 1, dan partai
+         * terakhir tiap babak ganjil itulah tempat peserta terakhir
+         * melenggang.
+         */
+        $tempatBabak = $bracket->size;
+        $babak = 0;
         $baris = [];
 
-        for ($babak = 1; $babak <= $jumlahBabak; $babak++) {
-            $jumlahPartai = $bracket->size / (2 ** $babak);
+        while ($tempatBabak > 1) {
+            $babak++;
+            $jumlahPartai = (int) ceil($tempatBabak / 2);
+            $tempatBabak = $jumlahPartai;
 
             for ($nomor = 1; $nomor <= $jumlahPartai; $nomor++) {
                 $baris[] = [
@@ -203,9 +239,16 @@ class BracketGenerator
                 ->where('position', $indeks + 1)
                 ->firstOrFail();
 
+            /*
+             * Potongan berisi satu tempat -- hanya mungkin pada pemasalan
+             * berjumlah ganjil -- mengisi sudut merah saja. Memakai
+             * first()/last() apa adanya akan menaruh orang yang SAMA di kedua
+             * sudut, dan partai itu akan terbaca sebagai pertandingan
+             * sungguhan melawan diri sendiri.
+             */
             $partai->update([
                 'red_registration_id' => $pasangan->first()->registration_id,
-                'blue_registration_id' => $pasangan->last()->registration_id,
+                'blue_registration_id' => $pasangan->count() > 1 ? $pasangan->last()->registration_id : null,
             ]);
         }
 

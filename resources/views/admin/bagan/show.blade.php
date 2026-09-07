@@ -1,6 +1,9 @@
 @php use App\Enums\ResourceAction; @endphp
 
-<x-layouts.admin heading="Bagan {{ $weightClass->name }}"
+{{-- Judulnya dirangkai sebagai EKSPRESI, bukan lewat {{ }} di dalam nilai
+     atribut: yang begitu di-escape dua kali, dan kelas bernama "Kelas <45"
+     -- ada belasan di naskah -- tampil sebagai "Kelas &lt;45" di layar. --}}
+<x-layouts.admin :heading="'Bagan '.$weightClass->name"
                  :description="$tournament->name"
                  :breadcrumb="[
                      'Kejuaraan' => route('admin.turnamen.index'),
@@ -151,8 +154,20 @@
                     <x-si.tombol varian="kedua" tipe="button"
                                  x-on:click="$dispatch('modal-close', 'susun-ulang')">Tidak jadi</x-si.tombol>
 
-                    <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $weightClass]) }}">
+                    {{-- Mode ikut dipilih di sini: susun ulang adalah satu-satunya
+                         kesempatan mengubahnya, karena bagan yang sudah berdiri
+                         tidak bisa berpindah bentuk tanpa mengacak undian. --}}
+                    <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $weightClass]) }}"
+                          class="flex items-center gap-2">
                         @csrf
+                        <select name="mode" aria-label="Mode bagan"
+                                class="h-10 rounded-[var(--radius)] border border-line bg-surface px-2.5 text-[13px] text-ink">
+                            @foreach (App\Enums\ModeBagan::cases() as $mode)
+                                <option value="{{ $mode->value }}"
+                                        @selected(($bracket?->mode ?? App\Enums\ModeBagan::Gugur) === $mode)>{{ $mode->label() }}</option>
+                            @endforeach
+                        </select>
+
                         <x-si.tombol tipe="submit">Acak ulang undian</x-si.tombol>
                     </form>
                 </x-slot:footer>

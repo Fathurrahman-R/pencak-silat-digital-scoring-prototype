@@ -80,7 +80,7 @@ Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`
 
 Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat. Tapi untuk uji coba, seluruh akun itu sudah disiapkan seeder simulasi di bawah.
 
-Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — IP statis, `php.ini`, firewall, empat proses hari-H — ikuti [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
+Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — arsitektur jaringan, `php.ini`, firewall, dan dua proses hari-H — ikuti [`docs/PANDUAN-SISTEM.md`](docs/PANDUAN-SISTEM.md); rinciannya di [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
 
 ### Kejuaraan siap-uji untuk simulasi manual
 
@@ -88,7 +88,7 @@ Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) 
 php artisan silat:simulasi
 ```
 
-Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, sepuluh kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Operator IT dan menekan Mulai babak.
+Menyusun satu kejuaraan yang seluruh tahap pra-acaranya sudah selesai — akun tiap peran, tarif, sepuluh kontingen beserta atlet dan berkasnya, tagihan lunas, pendaftaran terverifikasi, timbang badan, bagan terkunci, jadwal, dan penugasan aparat. Tinggal masuk sebagai Pengendali Gelanggang dan menekan Mulai babak.
 
 Yang sengaja **tidak** dikerjakan: menjalankan partai, memasukkan nilai juri, dan mengesahkan hasil — justru itu yang mau diuji manual.
 
@@ -105,11 +105,12 @@ Sepuluh peserta jatuh ke bagan 16, dan bagan di aplikasi ini mengisi tempat rapa
 
 Nomor Jurus tidak diikutkan supaya jumlah pesilatnya bulat 100 dan tiap kelas benar-benar berisi sepuluh — mesin penilaian Jurus dijaga test suite, bukan data simulasi ini.
 
-Dua gelanggang (A dan B) masing-masing punya operatornya sendiri, sehingga dua partai bisa dijalankan bersamaan. Window konsensus juri dilebarkan jadi 5 detik (bawaan 2 detik) supaya satu penguji bisa berpindah antar tab atau antar HP tanpa kehabisan waktu.
+Dua gelanggang (A dan B) masing-masing punya pengendali dan operatornya sendiri, sehingga dua partai bisa dijalankan bersamaan. Window konsensus juri mengikuti bawaan 2 detik: seeder ini pernah melebarkannya jadi 5 detik, dan kelonggaran itu dicabut karena membuat layar simulasi berperilaku berbeda dari kejuaraan sungguhan — termasuk berapa lama indikator juri menyala. Ia tetap bisa diubah per kejuaraan lewat Setelan peraturan.
 
 | Akun | Peran |
 |---|---|
-| `operator@silat.test`, `operator2@silat.test` | Operator IT (Gelanggang A dan B: panel gelanggang, timer) |
+| `pengendali1@silat.test`, `pengendali2@silat.test` | Pengendali Gelanggang (Gelanggang A dan B: memilih partai aktif, timer, mengakhiri partai) |
+| `operator@silat.test`, `operator2@silat.test` | Operator IT (Gelanggang A dan B: papan tampilan dan perangkat siaran — **tidak** memegang timer) |
 | `wasit1@silat.test`, `wasit2@silat.test` | Wasit |
 | `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B) |
 | `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR, putusan protes) |
@@ -120,6 +121,43 @@ Dua gelanggang (A dan B) masing-masing punya operatornya sendiri, sehingga dua p
 Kata sandi seluruhnya `password`. Ulangi dari bersih dengan `php artisan silat:simulasi --reset` — kejuaraan simulasi lama beserta seluruh peserta, tagihan, bagan, dan hasilnya dihapus permanen lebih dulu.
 
 Langkah ujinya per tahap ada di [`docs/PANDUAN-WORKFLOW.md`](docs/PANDUAN-WORKFLOW.md).
+
+### Kejuaraan berskala penuh
+
+Kejuaraan siap-uji di atas berukuran seratus pesilat pada lima kelas — pas untuk menelusuri satu partai dengan tangan, dan terlalu kecil untuk menemukan apa pun yang hanya muncul pada data sebesar kejuaraan sungguhan. Dua skala berikut mengisi **seluruh 174 kelas tanding dan seluruh 64 nomor Jurus**:
+
+```bash
+php artisan silat:simulasi --skala=sedang    # ±550 pesilat, 2 gelanggang
+php artisan silat:simulasi --skala=besar     # ±2.700 pesilat, 3 gelanggang
+```
+
+| Skala | Kontingen | Atlet | Pendaftaran | Partai | Gelanggang | Waktu susun |
+|---|---|---|---|---|---|---|
+| `sedang` | 6 | ±556 | ±476 | ±174 | 2 | ±26 detik |
+| `besar` | 12 | ±2.712 | ±2.472 | ±2.388 | 3 | ±78 detik |
+
+Ketiga skala punya slug sendiri, jadi ketiganya boleh berdiri bersamaan di satu basis data — berlatih pada data besar tidak membuang kejuaraan kecil yang sedang dipakai. Akunnya sama persis dengan tabel di atas (`juri1@silat.test`, dan seterusnya), ditambah `operator3@silat.test`, `wasit3@silat.test`, dan `juri7@silat.test`–`juri9@silat.test` untuk gelanggang ketiga.
+
+Nomor Jurus ikut terisi, termasuk ganda (2 pesilat) dan regu (3 pesilat), dan bagan gugurnya sudah tersusun beserta penampilan ronde pertama — jadi panel juri Jurus punya sesuatu untuk dinilai tanpa satu langkah manual pun.
+
+```bash
+php artisan silat:simulasi --skala=besar --tanpa-bagan
+```
+
+Berhenti sesudah pendaftaran sah dan lunas, sebelum satu pun bagan berdiri. Dipakai saat yang dilatih justru penyusunan bagannya sendiri: memilih mode, mengundi ulang, menukar tempat, mengunci.
+
+Yang **tidak** dikerjakan kedua skala ini, berbeda dari simulasi kecil: berkas peserta tidak ditulis ke disk. Untuk menguji unduhan berkas di panel verifikasi, pakai `--skala=kecil`.
+
+### Dua mode penyusunan bagan Tanding
+
+| Mode | Ukuran bagan | Babak pertama |
+|---|---|---|
+| **Gugur** | dibulatkan ke pangkat dua (8, 16, 32…) | tempat sisa jadi bye, disebar merata oleh susunan unggulan baku |
+| **Pemasalan** | seukuran jumlah peserta, tanpa dibulatkan | seluruh peserta bertanding; kalau ganjil, peserta di tempat terakhir melenggang |
+
+Mode dipilih per kelas saat menyusun bagan — satu kejuaraan lazim memakai pemasalan untuk usia dini dan gugur untuk dewasa di hari yang sama, dan seeder berskala penuh memang menyusunnya begitu.
+
+Keduanya sama-sama sistem gugur dan sama-sama menghabiskan partai sebanyak peserta dikurangi satu. Yang perlu diketahui panitia sebelum memilih pemasalan: pada jumlah peserta ganjil, tempat terakhir bisa melenggang lebih dari sekali — sembilan peserta berarti satu orang melenggang tiga kali lalu bertanding sekali di final. Yang menahannya hanya undian acak, jadi pemasalan paling cocok untuk jumlah peserta genap.
 
 ---
 
@@ -157,6 +195,13 @@ Nilai juri Jurus (`jurus_scores`) memakai upsert per juri, **bukan** log immutab
 ---
 
 ## Dokumen lain
+
+**Dua pintu masuk utama:**
+
+- [`docs/PANDUAN-SISTEM.md`](docs/PANDUAN-SISTEM.md) — **panduan final menyiapkan sistem**, dari nol sampai gong pertama: arsitektur LAN, daftar kebutuhan, pemasangan, konfigurasi, multi-gelanggang, vMix, tunnel, daftar periksa, dan tabel gejala→tindakan
+- [`docs/REPOWIKI.md`](docs/REPOWIKI.md) — **peta kode untuk developer**: invarian, lapisan, alur satu nilai Tanding, RBAC, rute, perangkap pengujian
+
+**Rincian:**
 
 - [`docs/RENCANA.md`](docs/RENCANA.md) — PRD lengkap, task list per epic, checklist per fase
 - [`docs/ARSITEKTUR.md`](docs/ARSITEKTUR.md) — diagram arsitektur dan alur data

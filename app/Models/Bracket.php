@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ModeBagan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ class Bracket extends Model
     protected $fillable = [
         'weight_class_id',
         'size',
+        'mode',
         'locked_at',
         'locked_by',
     ];
@@ -22,6 +24,7 @@ class Bracket extends Model
     {
         return [
             'size' => 'integer',
+            'mode' => ModeBagan::class,
             'locked_at' => 'datetime',
         ];
     }
@@ -51,10 +54,18 @@ class Bracket extends Model
         return $this->locked_at !== null;
     }
 
-    /** Berapa babak dari babak pertama sampai final. */
+    /**
+     * Berapa babak dari babak pertama sampai final.
+     *
+     * Dibulatkan KE ATAS, bukan log2 apa adanya. Bagan gugur berukuran pangkat
+     * dua tidak terpengaruh -- log2(16) tetap 4 -- tapi bagan pemasalan
+     * berukuran 10 butuh empat babak (5 partai, 3, 2, 1), dan log2(10) yang
+     * dipotong jadi 3 akan menghilangkan finalnya dari seluruh permukaan yang
+     * menggambar bagan.
+     */
     public function jumlahBabak(): int
     {
-        return (int) log($this->size, 2);
+        return (int) ceil(log(max(2, $this->size), 2));
     }
 
     /**

@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 
 import { siapkanEcho } from './echo';
+import { pantauLatensi } from './latensi';
 import './overlay/connection';
 
 /**
@@ -39,8 +40,41 @@ if (document.querySelector('meta[name="realtime"][content="0"]') === null) {
 Alpine.store('koneksi', {
     status: 'menyambung',
 
+    /*
+     * Latensi pulang-pergi ke Reverb. `latensiMs` adalah sampel terakhir --
+     * angka yang dibaca petugas. `latensiAcuanMs` adalah median beberapa
+     * sampel terakhir, dan HANYA itu yang menentukan warna: satu lonjakan
+     * tunggal tidak boleh membuat titiknya berkedip ganti warna.
+     *
+     * Keduanya null selama belum ada ukuran (halaman tanpa Echo, sambungan
+     * belum jadi, atau tab yang baru kembali dari sembunyi).
+     */
+    latensiMs: null,
+    latensiAcuanMs: null,
+
     get tersambung() {
         return this.status === 'tersambung';
+    },
+
+    /*
+     * Ambangnya mengikuti config/pemantauan.php, tempat lencana kesehatan
+     * gelanggang menaruh batas kuningnya di 500 ms. Di bawah 150 ms adalah
+     * angka yang terukur sehat di LAN gelanggang.
+     *
+     * Mengembalikan null, bukan 'buruk', saat belum ada ukuran: belum tahu
+     * bukan kabar buruk, dan menampilkannya sebagai kabar buruk akan
+     * membuat setiap panel yang baru dibuka berkedip merah sesaat.
+     */
+    get mutu() {
+        if (this.latensiAcuanMs === null) {
+            return null;
+        }
+
+        if (this.latensiAcuanMs < 150) {
+            return 'lancar';
+        }
+
+        return this.latensiAcuanMs <= 500 ? 'lambat' : 'buruk';
     },
 
     tandai(status) {
@@ -74,7 +108,16 @@ function pesanGagal(status, body) {
         return 'Server gelanggang sedang bermasalah. Coba lagi; kalau berulang, panggil operator IT.';
     }
 
-    return body.errors ? Object.values(body.errors).flat().join(' ') : (body.message ?? 'Gagal.');
+    if (body.errors) {
+        // `dapat_dipaksa` adalah penanda untuk panel, bukan kalimat untuk
+        // dibaca petugas -- menggabungkannya ke pesan hanya mengulang hal yang
+        // sama dua kali di satu baris galat.
+        const { dapat_dipaksa: _penanda, ...sisa } = body.errors;
+
+        return Object.values(sisa).flat().join(' ');
+    }
+
+    return body.message ?? 'Gagal.';
 }
 
 function pantauKoneksi() {
@@ -97,6 +140,32 @@ function pantauKoneksi() {
     pusher.connection.bind('state_change', ({ current }) => {
         Alpine.store('koneksi').tandai(petakan[current] ?? 'menyambung');
     });
+
+    /*
+     * WebSocket bukan pendeteksi putus yang cepat.
+     *
+     * Diukur di lapangan: WiFi HP juri dicabut, dan delapan detik kemudian
+     * panel masih bertuliskan "tersambung" -- Pusher baru menyadarinya setelah
+     * ping-nya sendiri kedaluwarsa. Selama jendela itu tombol nilai tetap
+     * tampak hidup, ditekan, dan tekanannya hilang.
+     *
+     * Peramban sudah tahu jauh lebih cepat. Kejadian `offline` dipakai apa
+     * adanya: tombol nilai mematikan dirinya sendiri begitu status jadi
+     * "putus", jadi juri melihatnya sebelum ia menekan, bukan sesudah.
+     */
+    const kabar = () => {
+        if (! navigator.onLine) {
+            Alpine.store('koneksi').tandai('putus');
+
+            return;
+        }
+
+        Alpine.store('koneksi').tandai(petakan[pusher.connection.state] ?? 'menyambung');
+    };
+
+    window.addEventListener('offline', kabar);
+    window.addEventListener('online', kabar);
+    kabar();
 }
 
 /**
@@ -173,6 +242,24 @@ Alpine.data('silatTimer', (awalMs = 0) => ({
 Alpine.data('partaiPanel', (cfg) => ({
     cfg,
     memuat: true,
+
+    /*
+     * Tekanan juri yang belum sampai ke server karena jaringan perangkat ini
+     * sedang putus. Lihat alirkanAntrean().
+     */
+    antrean: [],
+    _mengalirkan: false,
+    _denyutAntrean: null,
+    _gagalJaringan: false,
+
+    /*
+     * Kunci galat validasi dari permintaan terakhir, dan sasaran perpindahan
+     * yang menunggu ditegaskan ulang oleh pengendali. Lihat pilihPartai().
+     */
+    _galatKunci: [],
+    _mendarat: false,
+    paksaTertunda: null,
+
     match: { id: cfg.matchId, status: 'terjadwal', current_round: null, red: null, blue: null, winner_registration_id: null, win_reason: null, ratified: false },
     rounds: [],
     skorTotal: { merah: 0, biru: 0 },
@@ -242,6 +329,16 @@ Alpine.data('partaiPanel', (cfg) => ({
     peraturan: { jumlah_juri: 3, ambang_sepakat: 2, window_konsensus_ms: 2000, jumlah_babak: 3, durasi_babak_ms: 0 },
     officials: [],
     riwayat: [],
+
+    /*
+     * Lajur tekanan juri mentah -- null berarti panel ini tidak berhak
+     * melihatnya, bukan berarti tidak ada tekanan. Bedanya dipakai layar:
+     * daftar kosong menyatakan "belum ada yang menekan", null tidak
+     * menggambar bloknya sama sekali.
+     */
+    tekanan: null,
+    riwayatDipangkasPada: null,
+
     keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
     verifikasi: null,
     pesan: null,
@@ -322,6 +419,9 @@ Alpine.data('partaiPanel', (cfg) => ({
                 this.muatUlang();
             }
         });
+
+        this._muatAntrean();
+        window.addEventListener('online', () => this.alirkanAntrean());
     },
 
     destroy() {
@@ -329,7 +429,156 @@ Alpine.data('partaiPanel', (cfg) => ({
         this._hentikanDenyutSinkron();
         clearTimeout(this._tenggatSegarkan);
         clearTimeout(this._tenggatCadangan);
+        clearInterval(this._denyutAntrean);
         this._bersihkanIndikator();
+    },
+
+    /*
+     * ANTREAN TEKANAN SAAT JARINGAN PUTUS.
+     *
+     * WiFi venue berkedip sepersekian detik justru saat serangan datang.
+     * Sebelum ini tekanan yang jatuh di celah itu hilang: pesannya muncul,
+     * lalu juri kembali menonton matras dan tidak pernah tahu nilainya tidak
+     * pernah sampai.
+     *
+     * Yang diantre cuma tekanan juri. Aksi operator dan wasit sengaja TIDAK
+     * ikut: mengulang "Selesaikan babak" atau "Akhiri partai" beberapa detik
+     * kemudian, saat keadaan gelanggang sudah berubah, jauh lebih berbahaya
+     * daripada kehilangannya.
+     *
+     * Antreannya bertahan di localStorage supaya tab yang dimuat ulang -- atau
+     * HP yang layarnya mati lalu dinyalakan lagi -- tidak ikut membuangnya.
+     */
+    get antreanTertahan() {
+        return this.antrean.length;
+    },
+
+    _kunciAntrean() {
+        return 'silat-antrean-nilai-' + this.cfg.matchId;
+    },
+
+    _muatAntrean() {
+        try {
+            const isi = JSON.parse(localStorage.getItem(this._kunciAntrean()) ?? '[]');
+
+            /*
+             * Yang sudah terlalu tua dibuang, tidak dikirim diam-diam.
+             *
+             * Tekanan berumur belasan menit hampir pasti milik babak yang
+             * sudah selesai. Server memang akan menolaknya dengan alasan yang
+             * benar, tapi barisnya tetap masuk jejak audit sebagai tekanan
+             * yang seolah baru terjadi -- dan yang membacanya nanti tidak
+             * punya cara tahu itu gema dari tab kemarin.
+             */
+            const batas = Date.now() - 5 * 60 * 1000;
+            const segar = isi.filter((t) => Date.parse(t.client_ts) >= batas);
+
+            this.antrean = segar;
+            this._simpanAntrean();
+
+            if (isi.length > segar.length) {
+                this.galat = (isi.length - segar.length) + ' tekanan yang tertahan terlalu lama dibuang — '
+                    + 'catat lewat Dewan Wasit Juri kalau memang ada nilai yang terlewat.';
+            }
+
+            if (segar.length > 0) {
+                /*
+                 * Denyutnya dinyalakan LEBIH DULU, bukan disandarkan pada
+                 * kejadian `online`. Panel yang dimuat ulang selagi jaringannya
+                 * masih putus tidak akan pernah menerima kejadian itu -- ia
+                 * memang tidak pernah "kembali" online dari sudut pandang tab
+                 * baru ini -- dan antreannya akan menganggur selamanya.
+                 */
+                this._denyutkanAntrean();
+                this.alirkanAntrean();
+            }
+        } catch (e) {
+            this.antrean = [];
+        }
+    },
+
+    _simpanAntrean() {
+        try {
+            localStorage.setItem(this._kunciAntrean(), JSON.stringify(this.antrean));
+        } catch (e) {
+            // Penyimpanan penuh atau ditolak. Antreannya tetap hidup di memori
+            // selama tab ini terbuka; tidak ada alasan menggagalkan tekanan
+            // yang sedang ditangani hanya karena cadangannya tidak bisa
+            // ditulis.
+        }
+    },
+
+    _antrekan(tekan) {
+        this.antrean.push(tekan);
+        this._simpanAntrean();
+        this._denyutkanAntrean();
+    },
+
+    /*
+     * Dicoba lagi tiap lima detik selama antreannya belum kosong. Kejadian
+     * `online` saja tidak cukup: jaringan bisa kembali tanpa peramban
+     * mengabarkannya (WiFi tetap tersambung, gerbangnya yang sempat hilang).
+     */
+    _denyutkanAntrean() {
+        if (this._denyutAntrean) {
+            return;
+        }
+
+        this._denyutAntrean = setInterval(() => {
+            if (this.antrean.length === 0) {
+                clearInterval(this._denyutAntrean);
+                this._denyutAntrean = null;
+
+                return;
+            }
+
+            this.alirkanAntrean();
+        }, 5000);
+    },
+
+    /**
+     * Mengalirkan antrean, satu per satu dan berurutan.
+     *
+     * Berurutan karena urutan tekanan adalah urutan kejadian di matras, dan
+     * satu per satu karena tekanan berikutnya tidak berguna dikirim kalau
+     * yang pertama saja belum sampai.
+     *
+     * Yang DITOLAK server ikut dibuang dari antrean, bukan dicoba lagi
+     * selamanya: babak yang sudah lewat tidak akan pernah menerimanya, dan
+     * penolakannya sendiri sudah tercatat di jejak audit lengkap dengan
+     * waktu tekan aslinya.
+     */
+    async alirkanAntrean() {
+        if (this._mengalirkan || this.antrean.length === 0) {
+            return;
+        }
+
+        this._mengalirkan = true;
+
+        try {
+            while (this.antrean.length > 0) {
+                const berhasil = await this.kirim(this.cfg.nilai, this.antrean[0], { segarkan: false });
+
+                if (! berhasil && this._gagalJaringan) {
+                    break;
+                }
+
+                this.antrean.shift();
+                this._simpanAntrean();
+            }
+        } finally {
+            this._mengalirkan = false;
+        }
+
+        if (this.antrean.length === 0) {
+            await this.muatUlang();
+
+            return;
+        }
+
+        // Masih ada sisa: pastikan denyut coba-lagi memang menyala, apa pun
+        // jalan yang membawa kita ke sini.
+        this._denyutkanAntrean();
     },
 
     /**
@@ -367,6 +616,27 @@ Alpine.data('partaiPanel', (cfg) => ({
      */
     get babakInput() {
         return this.susulan?.round ?? this.match.current_round;
+    },
+
+    /**
+     * Apakah tekanan tombol nilai akan DITERIMA kalau dikirim sekarang.
+     *
+     * Cerminan CatatInputJuri::diterima() di sisi layar, dan hanya itu
+     * gunanya: server tetap yang memutuskan. Tanpa ini tombol nilai tampak
+     * hidup sepanjang babak yang sudah diselesaikan atau masih dijeda, dan
+     * juri baru tahu tekanannya ditolak sesudah menekan -- di gelanggang yang
+     * berisik, umpan balik yang datang terlambat itu terbaca sebagai jaringan
+     * yang lambat, bukan sebagai tekanan yang memang tidak dihitung.
+     *
+     * Babak susulan sengaja melewati syarat timer, sama seperti di server:
+     * timernya memang tidak pernah jalan.
+     */
+    get babakMenerimaNilai() {
+        if (this.susulanTerbuka) {
+            return true;
+        }
+
+        return this.babakAktif?.status === 'berjalan';
     },
 
     /** Dipakai tampilan jam -- MM:SS dari sisaMsTampil, yang diinterpolasi lokal antara dua siaran timer. */
@@ -527,6 +797,17 @@ Alpine.data('partaiPanel', (cfg) => ({
      */
     async kirim(url, data = {}, { segarkan = true, metode = 'POST' } = {}) {
         this.galat = null;
+        this._gagalJaringan = false;
+
+        /*
+         * Tawaran paksa milik SATU penolakan, bukan milik panel.
+         *
+         * Dibersihkan di sini, di jalan yang dilalui semua aksi: tanpa itu
+         * tombol paksa dari penolakan perpindahan tadi masih berdiri di
+         * samping pesan galat aksi lain yang sama sekali tidak berhubungan --
+         * dan menekannya memindahkan gelanggang yang tidak diminta siapa pun.
+         */
+        this.paksaTertunda = null;
 
         try {
             const res = await fetch(url, {
@@ -544,9 +825,17 @@ Alpine.data('partaiPanel', (cfg) => ({
             if (!res.ok) {
                 this.galat = pesanGagal(res.status, body);
 
+                /*
+                 * Kunci galatnya ikut disimpan, bukan cuma kalimatnya:
+                 * pemanggil yang perlu tahu apakah penolakan ini masih bisa
+                 * ditembus paksa membaca penandanya, bukan mencocokkan teks.
+                 */
+                this._galatKunci = Object.keys(body.errors ?? {});
+
                 return false;
             }
 
+            this._galatKunci = [];
             this.pesan = body.pesan ?? null;
 
             if (segarkan) {
@@ -555,7 +844,14 @@ Alpine.data('partaiPanel', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+            this._gagalJaringan = true;
+
+            this.galat = 'Tidak bisa menghubungi server. Periksa jaringan perangkat ini.';
 
             return false;
         }
@@ -568,12 +864,74 @@ Alpine.data('partaiPanel', (cfg) => ({
      * berjalan" datang dari server, bukan disimpulkan di sini -- klien tidak
      * pernah memutuskan sendiri apa yang boleh ditinggalkan.
      */
-    pilihPartai(matchId, paksa = false) {
+    async pilihPartai(matchId, paksa = false) {
         if (! this.cfg.pilihPartai) {
             return;
         }
 
-        return this.kirim(this.cfg.pilihPartai, { match_id: matchId, paksa }, { segarkan: true });
+        const berhasil = await this.kirim(this.cfg.pilihPartai, { match_id: matchId, paksa }, { segarkan: true });
+
+        /*
+         * Penolakan yang bisa ditembus paksa menawarkan jalannya di layar.
+         *
+         * Sebelum ini pesannya menyuruh pengendali "pindah paksa" sementara
+         * tidak satu pun tombol di panel mengirimkannya -- jalan buntu, persis
+         * di keadaan yang paling butuh jalan keluar: partai ditinggal berjalan
+         * karena perangkat pengendalinya mati.
+         *
+         * Sasarannya disimpan, bukan dihitung ulang saat tombol ditekan:
+         * `null` berarti mengosongkan gelanggang, dan itu sasaran yang sah.
+         */
+        if (! berhasil && (this._galatKunci ?? []).includes('dapat_dipaksa')) {
+            this.paksaTertunda = { matchId };
+        }
+
+        return berhasil;
+    },
+
+    /**
+     * Melepas satu partai atau penampilan ke gelanggang lain.
+     *
+     * Yang dikirim BARIS-nya, bukan pointer: pemindahan jadwal berbeda dari
+     * pemindahan tayangan. Partai yang dilepas berhenti ditayangkan di sini
+     * sebagai akibat, bukan sebagai perintah terpisah -- server yang
+     * memutuskannya, supaya klien tidak pernah memegang setengah keadaan.
+     */
+    lepasKeGelanggang(barisId, keArenaId, jenis = 'tanding', alasan = null) {
+        if (! this.panel?.serah?.lepas) {
+            return;
+        }
+
+        return this.kirim(this.panel.serah.lepas, {
+            ke_arena_id: keArenaId,
+            jenis,
+            baris_id: barisId,
+            alasan,
+        }, { segarkan: true });
+    },
+
+    /** Menarik kembali penawaran yang belum diambil gelanggang tujuan. */
+    batalkanLepas(serahId) {
+        if (! this.panel?.serah?.batal) {
+            return;
+        }
+
+        return this.kirim(this.panel.serah.batal.replace('__ID__', serahId), {}, { segarkan: true });
+    },
+
+    /**
+     * Mengambil baris yang ditawarkan gelanggang lain.
+     *
+     * Sesudah ini barulah ia masuk antrean gelanggang ini dan boleh
+     * ditayangkan. Urutan itu yang membuat penulisannya sah di sinkron: adopsi
+     * tercatat lebih dulu, kepemilikan berpindah sesudahnya.
+     */
+    ambilLepasan(serahId) {
+        if (! this.panel?.serah?.ambil) {
+            return;
+        }
+
+        return this.kirim(this.panel.serah.ambil.replace('__ID__', serahId), {}, { segarkan: true });
     },
 
     bukaSusulan(babak) {
@@ -740,11 +1098,29 @@ Alpine.data('partaiPanel', (cfg) => ({
      */
     async kirimNilai(corner, jenis) {
         const dikirimAt = Date.now();
-        const hasil = await this.kirim(
-            this.cfg.nilai,
-            { babak: this.babakInput, corner, jenis },
-            { segarkan: false },
-        );
+
+        /*
+         * `client_ts` ikut dibawa pada SETIAP tekanan, bukan hanya yang
+         * diantre. Nilainya sama-sama berguna saat jaringan sehat: jejak audit
+         * jadi menyimpan kapan tombolnya ditekan, bukan cuma kapan
+         * permintaannya kebetulan sampai. Server tetap menghitung konsensus
+         * dari waktunya sendiri.
+         */
+        const tekan = { babak: this.babakInput, corner, jenis, client_ts: new Date().toISOString() };
+
+        const hasil = await this.kirim(this.cfg.nilai, tekan, { segarkan: false });
+
+        /*
+         * Ditahan, bukan dibuang. Tombolnya sendiri sudah mati begitu status
+         * koneksi berubah jadi putus, jadi yang sampai ke sini adalah tekanan
+         * yang jatuh tepat di celah sebelum peramban menyadarinya.
+         */
+        if (! hasil && this._gagalJaringan) {
+            this._antrekan(tekan);
+            this.galat = 'Jaringan putus — tekanan ini ditahan dan dikirim sendiri begitu tersambung lagi.';
+
+            return false;
+        }
 
         if (hasil) {
             clearTimeout(this._tenggatCadangan);
@@ -885,6 +1261,30 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     _terapkan(data) {
         const idBaru = data.match?.id ?? null;
+
+        /*
+         * Layar tunggu tidak bisa menggambar partai; ia harus memuat ulang.
+         *
+         * Halaman ini dikirim server untuk gelanggang yang belum dipilihkan
+         * partai, dan isinya cuma satu kalimat -- tidak ada satu pun elemen
+         * panel di dalamnya. Menyerap state baru di sini hanya mengubah angka
+         * yang tidak digambar siapa pun: layarnya tetap menyuruh menunggu
+         * meski partainya sudah ditayangkan, dan juri baru tahu setelah ada
+         * yang menyuruhnya memuat ulang di tengah partai.
+         *
+         * Muat ulang hanya sekali per pendaratan: `_mendarat` menjaga siaran
+         * kedua yang tiba sebelum halaman berganti tidak menyalakan pemuatan
+         * kedua.
+         */
+        if (this.cfg.menunggu && idBaru !== null) {
+            if (! this._mendarat) {
+                this._mendarat = true;
+                window.location.reload();
+            }
+
+            return;
+        }
+
         const gantiPartai = this.match?.id != null && idBaru !== this.match.id;
 
         if (gantiPartai) {
@@ -900,9 +1300,25 @@ Alpine.data('partaiPanel', (cfg) => ({
         this._indikatorUntuk = penanda;
 
         this.match = data.match;
-        this.rounds = data.rounds;
-        this.skorTotal = data.skor_total;
-        this.hukuman = data.hukuman;
+
+        /*
+         * Muatan state gelanggang KOSONG cuma berisi `match: null` dan blok
+         * panel -- tidak ada rounds, skor_total, maupun hukuman di dalamnya.
+         *
+         * Menyerapnya apa adanya membuat ketiganya jadi `undefined`, dan
+         * panel kendali (satu-satunya panel yang memang dirender di gelanggang
+         * kosong) menghitung `skorTotal.merah` di dialog "Akhiri partai" yang
+         * selalu ada di DOM. Alpine mengevaluasi ekspresi di dalam x-show yang
+         * bernilai salah, jadi tiap pembukaan gelanggang kosong melempar
+         * TypeError -- termasuk lewat getter `selisih` yang dibaca panel
+         * operator. Nilai awalnya dipasang balik, bukan dibiarkan hilang.
+         */
+        this.rounds = data.rounds ?? [];
+        this.skorTotal = data.skor_total ?? { merah: 0, biru: 0 };
+        this.hukuman = data.hukuman ?? {
+            merah: { pembinaan: 0, teguran: 0, peringatan: 0, diskualifikasi: false },
+            biru: { pembinaan: 0, teguran: 0, peringatan: 0, diskualifikasi: false },
+        };
         this.teknik = data.teknik ?? this.teknik;
         this.susulan = data.susulan ?? null;
         this.identitas = data.identitas ?? this.identitas;
@@ -931,6 +1347,8 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.peraturan = data.peraturan;
         this.officials = data.officials;
         this.riwayat = data.riwayat;
+        this.tekanan = data.tekanan ?? null;
+        this.riwayatDipangkasPada = data.riwayat_dipangkas_pada ?? null;
         this.keberatan = data.keberatan;
         this.verifikasi = data.verifikasi;
 
@@ -962,6 +1380,8 @@ Alpine.data('partaiPanel', (cfg) => ({
         // Riwayat dan keberatan menunjuk id milik partai lama; tombol
         // batalkan di panel dewan juri akan mengirim id yang keliru.
         this.riwayat = [];
+        this.tekanan = null;
+        this.riwayatDipangkasPada = null;
         this.keberatan = { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] };
 
         // Tarikan susulan partai lama yang masih dijadwalkan akan menimpa
@@ -1472,7 +1892,14 @@ Alpine.data('panelKetua', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+            this._gagalJaringan = true;
+
+            this.galat = 'Tidak bisa menghubungi server. Periksa jaringan perangkat ini.';
 
             return false;
         }
@@ -1515,8 +1942,30 @@ Alpine.data('perbandinganBattle', (cfg) => ({
     biru: null,
     selisih: null,
 
+    _saluran: null,
+
     init() {
         this.muat();
+
+        /*
+         * Ikut mendengarkan siaran, dengan alasan yang sama seperti
+         * jurusPanel. Halaman ini semula dianggap dibaca SESUDAH battle
+         * selesai, tapi di sinilah tombol "Tetapkan pemenang" berdiri -- dan
+         * yang menekannya membandingkan dua angka yang, tanpa ini, berhenti
+         * bergerak sejak halaman dibuka. Satu channel cukup: tiap penampilan
+         * battle menyiarkan ke channel battle-nya juga.
+         */
+        if (window.Echo && this.cfg.battleId) {
+            this._saluran = `jurus.battle.${this.cfg.battleId}`;
+            window.Echo.private(this._saluran).listen('.jurus.penampilan', () => this.muat());
+        }
+    },
+
+    destroy() {
+        if (this._saluran) {
+            window.Echo?.leave(this._saluran);
+            this._saluran = null;
+        }
     },
 
     async muat() {
@@ -1562,6 +2011,10 @@ Alpine.data('jurusPanel', (cfg) => ({
     pesan: null,
     galat: null,
     _rafId: null,
+    _saluran: [],
+    _pusher: null,
+    _padaSambung: null,
+    _sedangMenarik: false,
 
     // Khusus panel juri (silat.jurus-juri) -- kosong dan tidak dipakai di
     // panel operator, tapi hidup di sini (bukan disebar dari luar) supaya
@@ -1571,10 +2024,67 @@ Alpine.data('jurusPanel', (cfg) => ({
 
     async init() {
         await this.muatUlang();
+        this._pasangEcho();
     },
 
     destroy() {
         this._hentikanStopwatch();
+        this._lepasEcho();
+    },
+
+    /**
+     * Panel Jurus mengikuti siaran, sama seperti panel Tanding.
+     *
+     * Sebelum ini Jurus adalah satu-satunya modul tanpa siaran: juri mengirim
+     * nilai dan panel operator tetap menulis "Belum ada juri yang mengirim
+     * nilai" sampai ada yang menekan muat ulang; pengurangan pengawas tidak
+     * pernah sampai ke layar operator sama sekali. Operator yang menunggu
+     * angka yang tidak akan datang adalah cara paling mudah menghentikan satu
+     * nomor Jurus.
+     *
+     * Tarikan penuh tiap siaran, bukan tambal parsial dari muatannya. Satu
+     * penampilan dinilai sekali oleh tiap juri -- tidak ada tekanan beruntun
+     * seperti tombol nilai Tanding, jadi tidak ada yang dibayar dengan
+     * menarik state utuh, dan endpoint state tetap satu-satunya tempat aturan
+     * median dan pengurangan dihitung.
+     *
+     * Sambungan yang PULIH ikut menarik ulang: siaran yang lewat selama
+     * WebSocket putus tidak pernah terulang sendiri, dan panel yang kembali
+     * tersambung dengan angka lama terlihat persis seperti panel yang sehat.
+     */
+    _pasangEcho() {
+        if (! window.Echo || ! this.cfg.performanceId) {
+            return;
+        }
+
+        const segarkan = () => this.muatUlang({ diam: true });
+
+        this._saluran = [`jurus.penampilan.${this.cfg.performanceId}`];
+
+        if (this.cfg.battleId) {
+            this._saluran.push(`jurus.battle.${this.cfg.battleId}`);
+        }
+
+        for (const nama of this._saluran) {
+            window.Echo.private(nama).listen('.jurus.penampilan', segarkan);
+        }
+
+        this._pusher = window.Echo.connector?.pusher;
+        this._padaSambung = segarkan;
+        this._pusher?.connection?.bind('connected', this._padaSambung);
+    },
+
+    _lepasEcho() {
+        for (const nama of this._saluran ?? []) {
+            window.Echo?.leave(nama);
+        }
+
+        this._saluran = [];
+
+        if (this._padaSambung) {
+            this._pusher?.connection?.unbind('connected', this._padaSambung);
+            this._padaSambung = null;
+        }
     },
 
     /** Nilai yang sudah dikirim juri yang sedang login, atau null bila belum. */
@@ -1590,11 +2100,40 @@ Alpine.data('jurusPanel', (cfg) => ({
         return `${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
     },
 
-    async muatUlang() {
-        const res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+    /**
+     * @param  {{diam?: boolean}} opsi  `diam` untuk tarikan denyut: kegagalan
+     *   tidak menulis pesan galat, dan tidak menghapus pesan yang sedang
+     *   dibaca petugas. Penolakan "Nilai juri belum lengkap" yang hilang
+     *   sendiri dua detik kemudian membuat ketua menekan Sahkan berulang kali
+     *   tanpa pernah membaca sebabnya.
+     */
+    async muatUlang({ diam = false } = {}) {
+        // Satu tarikan pada satu waktu: denyut dua detik tidak boleh menumpuk
+        // di atas tarikan yang masih berjalan saat jaringan gelanggang lambat.
+        if (this._sedangMenarik) {
+            return;
+        }
+
+        this._sedangMenarik = true;
+
+        let res;
+
+        try {
+            res = await fetch(this.cfg.state, { headers: { Accept: 'application/json' } });
+        } catch (e) {
+            if (! diam) {
+                this.galat = 'Gagal memuat state penampilan.';
+            }
+
+            return;
+        } finally {
+            this._sedangMenarik = false;
+        }
 
         if (!res.ok) {
-            this.galat = 'Gagal memuat state penampilan.';
+            if (! diam) {
+                this.galat = 'Gagal memuat state penampilan.';
+            }
 
             return;
         }
@@ -1646,7 +2185,14 @@ Alpine.data('jurusPanel', (cfg) => ({
 
             return true;
         } catch (e) {
-            this.galat = 'Tidak bisa menghubungi server.';
+            // Permintaan yang tidak sampai adalah bukti paling awal bahwa
+            // jaringan perangkat ini sedang mati -- lebih awal daripada
+            // WebSocket menyadarinya. Statusnya ikut ditandai supaya tombol
+            // nilai berhenti menerima tekanan yang tidak akan pernah sampai.
+            Alpine.store('koneksi').tandai('putus');
+            this._gagalJaringan = true;
+
+            this.galat = 'Tidak bisa menghubungi server. Periksa jaringan perangkat ini.';
 
             return false;
         }
@@ -1710,3 +2256,4 @@ Alpine.data('jurusPanel', (cfg) => ({
 window.Alpine = Alpine;
 Alpine.start();
 pantauKoneksi();
+pantauLatensi(Alpine);
