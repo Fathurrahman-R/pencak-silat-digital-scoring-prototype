@@ -5,6 +5,7 @@ use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Arena;
 use App\Models\ArenaOfficial;
+use App\Models\ArenaTayang;
 use App\Models\Athlete;
 use App\Models\Bracket;
 use App\Models\Contingent;
@@ -207,7 +208,10 @@ it('tidak mengalihkan petugas yang partainya sedang ditayangkan gelanggang lain'
     ]);
 
     $partai = ($this->buatPartai)($kedua, SilatMatch::STATUS_TERJADWAL);
-    $kedua->update(['active_match_id' => $partai->id]);
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $kedua->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $partai->id, 'disetel_pada' => now()],
+    );
 
     MatchOfficial::create([
         'match_id' => $partai->id, 'user_id' => $this->juri->id,
@@ -232,7 +236,10 @@ it('tidak mendaratkan petugas di panel yang partainya bukan tugasnya', function 
     ]);
 
     $partai = ($this->buatPartai)($this->arena, SilatMatch::STATUS_BERLANGSUNG);
-    $this->arena->update(['active_match_id' => $partai->id]);
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $partai->id, 'disetel_pada' => now()],
+    );
 
     MatchOfficial::create([
         'match_id' => $partai->id, 'user_id' => User::factory()->create()->id,
@@ -249,7 +256,10 @@ it('tetap mendaratkan petugas yang memang aparat partai yang sedang tayang', fun
     ]);
 
     $partai = ($this->buatPartai)($this->arena, SilatMatch::STATUS_BERLANGSUNG);
-    $this->arena->update(['active_match_id' => $partai->id]);
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $partai->id, 'disetel_pada' => now()],
+    );
 
     MatchOfficial::create([
         'match_id' => $partai->id, 'user_id' => $this->juri->id,
@@ -259,4 +269,77 @@ it('tetap mendaratkan petugas yang memang aparat partai yang sedang tayang', fun
     $this->actingAs($this->juri)
         ->get(route('dashboard'))
         ->assertRedirect(route('admin.turnamen.gelanggang.panel.juri', [$this->tournament, $this->arena]));
+});
+
+/*
+ * Pengendali Gelanggang dan Operator IT sengaja tidak dialihkan (lihat blok di
+ * atas) -- tapi selama ini mereka juga tidak diberi tautan apa pun. Nama rute
+ * panel kendali tidak pernah dirujuk satu kali pun di luar definisinya, dan
+ * kartu penugasan di dashboard hanya menyusun alamat juri/wasit dari
+ * `match_officials`, tabel yang tidak pernah menyebut kedua peran ini.
+ *
+ * Hasilnya: keduanya mendarat di dashboard tanpa satu pun jalan ke panelnya,
+ * dan satu-satunya cara masuk adalah mengetik alamat.
+ */
+it('menautkan pengendali ke panel kendali gelanggang yang dipegangnya', function () {
+    $pengendali = User::factory()->create();
+    $pengendali->syncRoles(['pengendali-gelanggang']);
+    $this->arena->pengendali()->attach($pengendali);
+
+    $this->actingAs($pengendali)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee($this->arena->name)
+        ->assertSee(route('admin.turnamen.gelanggang.panel.kendali', [$this->tournament, $this->arena]), false);
+});
+
+it('menautkan operator ke papan tampilan gelanggang yang dipegangnya', function () {
+    $operator = User::factory()->create();
+    $operator->syncRoles(['operator-it']);
+    $this->arena->operators()->attach($operator);
+
+    $this->actingAs($operator)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]), false);
+});
+
+/*
+ * Justru inilah alasan keduanya tidak dialihkan: yang memegang dua gelanggang
+ * butuh melihat keduanya sekaligus. Kartunya harus menyebut semuanya, bukan
+ * memilih satu.
+ */
+it('menyebut seluruh gelanggang yang dipegang pengendali, bukan salah satunya', function () {
+    $kedua = Arena::factory()->for($this->tournament)->create();
+
+    $pengendali = User::factory()->create();
+    $pengendali->syncRoles(['pengendali-gelanggang']);
+    $this->arena->pengendali()->attach($pengendali);
+    $kedua->pengendali()->attach($pengendali);
+
+    $this->actingAs($pengendali)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee(route('admin.turnamen.gelanggang.panel.kendali', [$this->tournament, $this->arena]), false)
+        ->assertSee(route('admin.turnamen.gelanggang.panel.kendali', [$this->tournament, $kedua]), false);
+});
+
+/* Gelanggang yang dinonaktifkan tidak lagi dipakai; menautkannya menyesatkan. */
+it('tidak menautkan gelanggang yang sudah dinonaktifkan', function () {
+    $pengendali = User::factory()->create();
+    $pengendali->syncRoles(['pengendali-gelanggang']);
+    $this->arena->pengendali()->attach($pengendali);
+    $this->arena->update(['is_active' => false]);
+
+    $this->actingAs($pengendali)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee(route('admin.turnamen.gelanggang.panel.kendali', [$this->tournament, $this->arena]), false);
+});
+
+it('tidak menampilkan kartu gelanggang bagi yang tidak memegang satu pun', function () {
+    $this->actingAs($this->juri)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Gelanggang yang kamu pegang');
 });

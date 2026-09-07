@@ -16,6 +16,12 @@ use Illuminate\Http\RedirectResponse;
 
 class DashboardController extends Controller
 {
+    /**
+     * Kartu partai yang ditampilkan sekaligus. Aparat mencari partai
+     * berikutnya di sini, bukan membaca seluruh jadwalnya.
+     */
+    public const MAKS_PENUGASAN = 12;
+
     public function __construct(
         private readonly NavigationBuilder $navigasi,
         private readonly PekerjaanMenunggu $pekerjaan,
@@ -29,16 +35,34 @@ class DashboardController extends Controller
             return $alihkan;
         }
 
+        $ringkasan = resource_allows(rk('turnamen', ResourceAction::View));
+        $penugasan = $this->penugasanSaya($turnamen);
+
+        /*
+         * Ringkasan kejuaraan dihitung HANYA kalau memang akan dirender.
+         *
+         * Ketiganya -- pekerjaan yang menunggu, antrean gelanggang, hasil
+         * terakhir -- dipakai di dalam satu blok @if ($tampilkanRingkasan) di
+         * view, tapi sebelumnya dihitung untuk semua orang. Juri dan wasit
+         * membayar ketiganya pada tiap pembukaan beranda dan tidak pernah
+         * melihat satu pun barisnya; diukur di dataset besar, itu bagian
+         * terbesar dari 683 ms yang tersisa sesudah kartu partai dipangkas.
+         *
+         * Merekalah yang membuka halaman ini paling sering, dari HP, lewat
+         * WiFi venue.
+         */
         return view('dashboard', [
             'turnamen' => $turnamen,
-            'penugasan' => $this->penugasanSaya(),
+            'penugasan' => $penugasan['daftar'],
+            'penugasanSisa' => $penugasan['sisa'],
             // Ringkasan kejuaraan hanya berarti bagi yang mengurusnya. Wasit dan
             // juri tidak punya urusan dengan jumlah pendaftaran, dan
             // menampilkannya membuat halaman depan mereka terasa salah alamat.
-            'tampilkanRingkasan' => resource_allows(rk('turnamen', ResourceAction::View)),
-            'pekerjaan' => $this->pekerjaan->untuk($turnamen),
-            'antrean' => $turnamen ? $this->antreanGelanggang($turnamen) : [],
-            'hasilTerakhir' => $turnamen ? $this->hasilTerakhir($turnamen) : [],
+            'tampilkanRingkasan' => $ringkasan,
+            'pekerjaan' => $ringkasan ? $this->pekerjaan->untuk($turnamen) : [],
+            'gelanggangSaya' => $turnamen ? $this->gelanggangSaya($turnamen) : [],
+            'antrean' => $ringkasan && $turnamen ? $this->antreanGelanggang($turnamen) : [],
+            'hasilTerakhir' => $ringkasan && $turnamen ? $this->hasilTerakhir($turnamen) : [],
         ]);
     }
 
@@ -117,10 +141,7 @@ class DashboardController extends Controller
          */
         $satu = $tugas->first();
 
-        $sedangTayang = Arena::query()
-            ->where('tournament_id', $turnamen->id)
-            ->whereNotNull('active_match_id')
-            ->pluck('active_match_id');
+        $sedangTayang = collect(Arena::partaiYangSedangTayang($turnamen->id));
 
         $gelanggangHidup = MatchOfficial::query()
             ->where('user_id', auth()->id())
@@ -251,11 +272,95 @@ class DashboardController extends Controller
      *
      * @return array<int, array<string, mixed>>
      */
-    private function penugasanSaya(): array
+    /**
+     * Gelanggang yang dipegang orang ini, beserta pintu ke panelnya.
+     *
+     * Pengendali Gelanggang dan Operator IT sengaja TIDAK dialihkan otomatis
+     * (lihat alihkanKePanelGelanggang) karena pekerjaan mereka mengurus
+     * perpindahan dan butuh layar yang memandang lebih dari satu partai.
+     * Tanpa tautan di sini, konsekuensinya bukan "melihat dashboard dulu"
+     * melainkan tidak punya jalan sama sekali: nama rute panel kendali tidak
+     * dirujuk di mana pun, dan kartu "Partai saya" hanya menyusun alamat
+     * juri/wasit dari `match_officials` -- tabel yang tidak pernah menyebut
+     * kedua peran ini. Panel yang tidak punya pintu masuk sama saja tidak ada.
+     *
+     * Alamatnya per GELANGGANG, bukan per partai, dengan alasan yang sama
+     * seperti kartu "Partai saya": alamat partai basi begitu jadwal berpindah.
+     *
+     * @return array<int, array{nama: string, sebutan: string, aksi: string, url: string}>
+     */
+    private function gelanggangSaya(Tournament $turnamen): array
     {
-        $penugasan = MatchOfficial::query()
+        $kursi = [
+            ['pengendali', 'Pengendali Gelanggang', 'kendali', 'Buka panel kendali'],
+            ['operators', 'Operator IT', 'papan', 'Buka papan tampilan'],
+        ];
+
+        $daftar = [];
+
+        foreach ($kursi as [$relasi, $sebutan, $rute, $aksi]) {
+            $gelanggang = Arena::query()
+                ->where('tournament_id', $turnamen->id)
+                ->aktif()
+                ->whereHas($relasi, fn ($q) => $q->whereKey(auth()->id()))
+                ->orderBy('sort_order')
+                ->get();
+
+            foreach ($gelanggang as $arena) {
+                $daftar[] = [
+                    'nama' => $arena->name,
+                    'sebutan' => $sebutan,
+                    'aksi' => $aksi,
+                    'url' => route("admin.turnamen.gelanggang.panel.{$rute}", [$turnamen, $arena]),
+                ];
+            }
+        }
+
+        return $daftar;
+    }
+
+    /**
+     * Penugasan yang ditampilkan sebagai kartu, beserta sisa yang tidak muat.
+     *
+     * Dua batas, dan keduanya lahir dari pengukuran di basis data lapangan.
+     *
+     * KEJUARAAN AKTIF saja. Sebelumnya kartu ini membaca seluruh penugasan yang
+     * belum selesai, lintas kejuaraan -- satu akun juri di mesin lapangan
+     * memegang 388 penugasan yang tersebar di tiga kejuaraan sekaligus, dan
+     * yang dua di antaranya bukan kejuaraan yang sedang dibukanya. Sisa
+     * dashboard sudah lama terikat kejuaraan aktif; kartu ini tertinggal.
+     *
+     * JUMLAHNYA DIBATASI. Bahkan sesudah disaring, kejuaraan besar meninggalkan
+     * 282 penugasan untuk satu juri -- beranda 822 KB yang butuh 1,08 detik,
+     * dan yang membukanya juri dari HP lewat WiFi venue. Aparat tidak sedang
+     * membaca seluruh jadwalnya di sini; ia mencari partai berikutnya.
+     *
+     * Sisanya DISEBUT, tidak dihilangkan diam-diam: aparat yang tahu ia
+     * dijadwalkan lebih banyak tidak boleh menyimpulkan jadwalnya berkurang.
+     *
+     * @return array{daftar: array<int, array<string, mixed>>, sisa: int}
+     */
+    private function penugasanSaya(?Tournament $turnamen): array
+    {
+        if ($turnamen === null) {
+            return ['daftar' => [], 'sisa' => 0];
+        }
+
+        $dasar = MatchOfficial::query()
             ->where('user_id', auth()->id())
-            ->whereHas('match', fn ($query) => $query->where('status', '!=', SilatMatch::STATUS_SELESAI))
+            ->whereHas('match', fn ($query) => $query
+                ->where('status', '!=', SilatMatch::STATUS_SELESAI)
+                ->whereHas('bracket.weightClass', fn ($kelas) => $kelas->where('tournament_id', $turnamen->id)));
+
+        /*
+         * Dihitung lewat COUNT, bukan dengan mengambil semuanya lalu menghitung
+         * barisnya: yang dicari cuma satu angka, dan mengambil 282 baris
+         * beserta enam relasinya untuk itu adalah persis beban yang sedang
+         * dihilangkan.
+         */
+        $jumlah = (clone $dasar)->count();
+
+        $penugasan = $dasar
             ->with([
                 'match.arena',
                 'match.red.athletes',
@@ -264,9 +369,10 @@ class DashboardController extends Controller
                 'match.blue.contingent',
                 'match.bracket.weightClass.tournament',
             ])
+            ->limit(self::MAKS_PENUGASAN)
             ->get();
 
-        return $penugasan
+        $daftar = $penugasan
             ->sortBy(fn (MatchOfficial $tugas) => $tugas->match->order_in_arena ?? PHP_INT_MAX)
             ->map(function (MatchOfficial $tugas): array {
                 $match = $tugas->match;
@@ -312,5 +418,7 @@ class DashboardController extends Controller
             })
             ->values()
             ->all();
+
+        return ['daftar' => $daftar, 'sisa' => max(0, $jumlah - count($daftar))];
     }
 }
