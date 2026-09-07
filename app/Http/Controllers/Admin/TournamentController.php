@@ -92,6 +92,22 @@ class TournamentController extends Controller
     }
 
     /** Fragmen panel detail yang diambil drawer saat baris tabel diklik. */
+    /**
+     * Alamat kejuaraan tanpa akhiran apa pun.
+     *
+     * Tidak ada halaman "detail" selain panel, tapi alamat inilah yang
+     * diketik orang di bilah alamat — dan sampai sekarang ia jatuh ke rute
+     * PUT/DELETE dan membalas 405 "Alamat ini tidak dibuka lewat peramban".
+     * Kalimat itu benar untuk endpoint aksi dan menyesatkan di sini: yang
+     * salah bukan cara membukanya, melainkan tidak ada apa-apa di situ untuk
+     * dibuka. Nomor yang tidak ada tetap 404 lewat route model binding,
+     * seperti seharusnya.
+     */
+    public function show(Tournament $tournament): RedirectResponse
+    {
+        return redirect()->route('admin.turnamen.panel', $tournament);
+    }
+
     public function panel(Tournament $tournament): View
     {
         return view('admin.turnamen.panel', [

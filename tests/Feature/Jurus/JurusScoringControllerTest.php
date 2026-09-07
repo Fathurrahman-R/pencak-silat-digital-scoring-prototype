@@ -164,3 +164,20 @@ it('diskualifikasi bisa disahkan walau juri belum lengkap', function () {
         ->postJson(route('admin.turnamen.jurus.penampilan.sahkan', [$this->tournament, $this->performance]))
         ->assertOk();
 });
+
+/*
+ * Diskualifikasi tidak bisa ditarik kembali lewat sistem, jadi penjagaannya
+ * berdiri SEBELUM tekanan.
+ *
+ * Sampai uji lapangan hari ini tombolnya langsung menjatuhkan keputusan: satu
+ * sentuhan keliru di layar yang dipegang sambil berdiri mengubah skor seorang
+ * pesilat jadi 0.00, dan tidak ada satu pun jalan di sistem untuk
+ * mengembalikannya -- berbeda dari pengurangan 0.50, yang punya tombol Batal.
+ */
+it('menuntut konfirmasi sebelum diskualifikasi dijatuhkan', function () {
+    $this->actingAs($this->pengawas)
+        ->get(route('admin.turnamen.jurus.penampilan.operator', [$this->tournament, $this->performance]))
+        ->assertOk()
+        ->assertSee('judul-dq', false)
+        ->assertSee('Tidak jadi');
+});

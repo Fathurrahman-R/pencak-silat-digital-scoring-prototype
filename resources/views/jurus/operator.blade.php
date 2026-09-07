@@ -20,11 +20,15 @@
     @endphp
 
     <div x-data="jurusPanel(@js($config))" class="flex min-h-screen flex-col gap-4 p-4">
-        <header>
-            <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">OPERATOR JURUS</p>
-            <h1 class="text-[18px] font-medium text-silat-teks" x-text="peserta.nama"></h1>
-            <p class="text-[13px] text-silat-teks-redup" x-text="peserta.kontingen"></p>
-            <p class="text-[12px] text-silat-teks-redup">{{ $performance->jurusEvent->nama() }} · {{ ucfirst($performance->tahap) }}</p>
+        <header class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <p class="silat-angka text-[11px] tracking-[.1em] text-silat-teks-samar">OPERATOR JURUS</p>
+                <h1 class="text-[18px] font-medium text-silat-teks" x-text="peserta.nama"></h1>
+                <p class="text-[13px] text-silat-teks-redup" x-text="peserta.kontingen"></p>
+                <p class="text-[12px] text-silat-teks-redup">{{ $performance->jurusEvent->nama() }} · {{ ucfirst($performance->tahap) }}</p>
+            </div>
+
+            <x-silat.indikator-koneksi class="shrink-0" />
         </header>
 
         <p x-show="galat" x-text="galat" class="rounded-silat bg-red-500/15 px-4 py-2 text-[13px] text-red-300"></p>
@@ -196,14 +200,56 @@
                     waktu -- dan ia tidak bisa ditarik kembali, jadi ia tidak
                     boleh duduk sebaris dengan tombol yang ditekan berkali-kali.
                 --}}
-                <div x-show="! performance.didiskualifikasi" x-cloak class="mb-3 flex items-center gap-3">
-                    <button type="button" x-on:click="diskualifikasi()"
+                {{--
+                    Satu tekanan lagi sebelum jadi, karena tekanan pertamanya
+                    tidak bisa dibatalkan.
+
+                    Sampai uji lapangan hari ini, tombol ini langsung
+                    menjatuhkan diskualifikasi: satu sentuhan keliru di layar
+                    yang dipegang sambil berdiri mengubah skor seorang pesilat
+                    jadi 0.00, dan tidak ada satu pun jalan di sistem untuk
+                    mengembalikannya. Pengurangan 0.50 punya tombol "Batal";
+                    yang ini tidak, jadi penjagaannya harus berdiri SEBELUM
+                    tekanan, bukan sesudahnya. Bentuknya sengaja sama dengan
+                    dialog "Akhiri partai" di panel Tanding: batal di kiri,
+                    akibatnya ditulis kalimat penuh.
+                --}}
+                <div x-show="! performance.didiskualifikasi" x-cloak class="mb-3 flex items-center gap-3"
+                     x-data="{ dialogDq: false }">
+                    <button type="button" x-on:click="dialogDq = true"
                             class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-peringatan px-5 text-[14px] font-medium text-silat-peringatan">
                         Diskualifikasi
                     </button>
                     <span class="text-[12px] leading-relaxed text-silat-teks-redup">
                         Skor menjadi {{ number_format(config('scoring.jurus.skor_diskualifikasi', 0), 2) }} dan penampilan tidak bisa dinilai lagi.
                     </span>
+
+                    <div x-show="dialogDq" x-cloak x-on:keydown.escape.window="dialogDq = false"
+                         class="fixed inset-0 z-90 grid place-items-center bg-black/75 p-6">
+                        <div class="w-full max-w-[520px] rounded-silat-besar border border-silat-garis bg-silat-panel p-6.5"
+                             role="dialog" aria-modal="true" aria-labelledby="judul-dq">
+                            <p id="judul-dq" class="text-[21px] font-semibold tracking-[-0.02em] text-silat-teks">
+                                Diskualifikasi <span x-text="peserta.nama"></span>?
+                            </p>
+                            <p class="mt-3 text-[14.5px] leading-[1.7] text-silat-teks-redup">
+                                Skor akhirnya menjadi
+                                {{ number_format(config('scoring.jurus.skor_diskualifikasi', 0), 2) }}, penampilan ini
+                                tidak bisa dinilai lagi, dan keputusannya <span class="text-silat-teks">tidak bisa
+                                ditarik kembali lewat sistem</span>. Kalau batal, tidak ada yang berubah.
+                            </p>
+
+                            <div class="mt-6 flex justify-end gap-3">
+                                <button type="button" x-on:click="dialogDq = false"
+                                        class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-tepi-kendali px-5 text-[14.5px] text-silat-teks-kedua">
+                                    Tidak jadi
+                                </button>
+                                <button type="button" x-on:click="dialogDq = false; diskualifikasi()"
+                                        class="min-h-[var(--silat-sentuh-min)] rounded-silat border border-silat-peringatan px-5 text-[14.5px] font-semibold text-silat-peringatan">
+                                    Diskualifikasi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             @endresource
 

@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Arena extends Model
 {
@@ -19,16 +21,12 @@ class Arena extends Model
         'code',
         'sort_order',
         'is_active',
-        'active_match_id',
-        'active_match_set_at',
-        'active_match_set_by',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
-            'active_match_set_at' => 'datetime',
         ];
     }
 
@@ -60,24 +58,94 @@ class Arena extends Model
     }
 
     /**
-     * Partai yang sedang ditayangkan gelanggang ini.
+     * Apa yang sedang ditayangkan gelanggang ini.
      *
-     * Satu-satunya sumber kebenarannya. Sebelum ada kolom ini, ia diturunkan
+     * Satu-satunya sumber kebenarannya. Sebelum ada catatan ini, ia diturunkan
      * dari `matches.status` -- yang berarti setiap panel ikut memutuskan
      * partai mana yang terbuka, dan memindahkannya menuntut partai berjalan
      * diakhiri lebih dulu.
      *
-     * Ditulis HANYA oleh App\Support\Gelanggang\PointerPartaiAktif, sama
+     * Ditulis HANYA oleh App\Support\Gelanggang\PointerTayang, sama
      * seperti `current_round` yang hanya ditulis MatchTimer.
+     *
+     * Tinggal di tabelnya sendiri, bukan sebagai kolom di sini: `arenas`
+     * bergolongan GLOBAL di sinkron, dan pointer ini ditulis node gelanggang.
+     * Lihat migrasi `buat_tabel_arena_tayang`.
      */
-    public function partaiAktif(): BelongsTo
+    public function tayang(): HasOne
     {
-        return $this->belongsTo(SilatMatch::class, 'active_match_id');
+        return $this->hasOne(ArenaTayang::class);
     }
 
-    public function penunjukPartaiAktif(): BelongsTo
+    public function partaiAktif(): HasOne
     {
-        return $this->belongsTo(User::class, 'active_match_set_by');
+        return $this->hasOne(ArenaTayang::class)->where('tayang_type', ArenaTayang::TANDING);
+    }
+
+    /**
+     * Id partai Tanding yang sedang ditayangkan, atau null.
+     *
+     * Dipertahankan sebagai `active_match_id` supaya pemanggil yang sudah ada
+     * tidak perlu ikut berubah saat pointernya pindah tabel. Ia membaca
+     * relasi `tayang` -- eager-load relasi itu di jalur yang memuat banyak
+     * gelanggang sekaligus, kalau tidak tiap gelanggang menambah satu query.
+     */
+    protected function activeMatchId(): Attribute
+    {
+        return Attribute::get(function (): ?int {
+            $tayang = $this->tayang;
+
+            return $tayang?->menayangkanPartai() ? (int) $tayang->tayang_id : null;
+        });
+    }
+
+    protected function activeMatchSetAt(): Attribute
+    {
+        return Attribute::get(fn () => $this->tayang?->disetel_pada);
+    }
+
+    protected function activeMatchSetBy(): Attribute
+    {
+        return Attribute::get(fn () => $this->tayang?->disetel_oleh);
+    }
+
+    /**
+     * Gelanggang yang sedang menayangkan sesuatu -- apa pun jenisnya.
+     *
+     * Menggantikan `whereNotNull('active_match_id')` yang tersebar di beberapa
+     * tempat sebelum pointer pindah tabel.
+     */
+    public function scopeSedangTayang(Builder $query): Builder
+    {
+        return $query->whereHas('tayang', fn (Builder $t) => $t->whereNotNull('tayang_id'));
+    }
+
+    /** Gelanggang yang sedang menayangkan partai Tanding tertentu. */
+    public function scopeMenayangkanPartai(Builder $query, int $matchId): Builder
+    {
+        return $query->whereHas('tayang', fn (Builder $t) => $t
+            ->where('tayang_type', ArenaTayang::TANDING)
+            ->where('tayang_id', $matchId));
+    }
+
+    /**
+     * Id partai yang sedang ditayangkan seluruh gelanggang pada satu kejuaraan.
+     *
+     * Satu query, bukan satu per gelanggang: dipakai di jalur yang menyusun
+     * daftar, dan di sanalah selisihnya terasa.
+     *
+     * @return list<int>
+     */
+    public static function partaiYangSedangTayang(?int $tournamentId = null): array
+    {
+        return ArenaTayang::query()
+            ->where('tayang_type', ArenaTayang::TANDING)
+            ->whereNotNull('tayang_id')
+            ->when($tournamentId !== null, fn (Builder $q) => $q
+                ->whereHas('arena', fn (Builder $a) => $a->where('tournament_id', $tournamentId)))
+            ->pluck('tayang_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**
@@ -97,7 +165,7 @@ class Arena extends Model
      * Aparat yang bertugas di gelanggang ini sepanjang hari.
      *
      * Disalin ke `match_officials` saat pengendali menunjuk sebuah partai --
-     * lihat PointerPartaiAktif. Yang disimpan di sini penugasan hariannya;
+     * lihat PointerTayang. Yang disimpan di sini penugasan hariannya;
      * yang tercatat di sana siapa yang sungguh bertugas pada partai itu.
      */
     public function aparat(): HasMany

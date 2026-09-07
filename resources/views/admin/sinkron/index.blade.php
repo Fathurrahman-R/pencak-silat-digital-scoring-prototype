@@ -145,8 +145,24 @@
                             </p>
                         </template>
 
+                        {{--
+                            Atribut Alpine di sini dibangun sebagai EKSPRESI PHP
+                            (`:x-on:click`), bukan ditulis dengan @js() di dalam
+                            nilainya.
+
+                            @js() di dalam atribut komponen Blade tidak pernah
+                            dikompilasi: ia sampai ke peramban apa adanya sebagai
+                            teks `tarik(@js($satu['nama']))`, dan Alpine
+                            menjawabnya dengan "SyntaxError: Invalid or unexpected
+                            token". Tombolnya terlihat normal dan tidak melakukan
+                            apa pun saat ditekan -- satu-satunya tombol untuk
+                            menarik data dari laptop lain, mati tanpa satu pun
+                            tanda di layar. Baris x-show di bawah tetap memakai
+                            @js() karena keduanya duduk di elemen biasa, bukan di
+                            atribut komponen.
+                        --}}
                         <x-si.tombol tipe="button"
-                                     x-on:click="tarik(@js($satu['nama']))"
+                                     :x-on:click="'tarik('.\Illuminate\Support\Js::from($satu['nama']).')'"
                                      x-bind:disabled="berjalan !== null">
                             <span x-show="berjalan !== @js($satu['nama'])">Tarik dari peer ini</span>
                             <span x-show="berjalan === @js($satu['nama'])" x-cloak>Menarik…</span>

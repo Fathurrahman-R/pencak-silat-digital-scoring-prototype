@@ -228,6 +228,21 @@ class SilatRoleSeeder extends Seeder
                      */
                     'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
+                    /*
+                     * Kategori Jurus juga dikendalikan dari gelanggang: sejak
+                     * panel Jurus punya alamat per gelanggang, pengendali yang
+                     * menentukan penampilan mana yang sedang ditayangkan.
+                     *
+                     * Ditemukan lewat blackbox testing bahwa ia bisa MEMINDAHKAN
+                     * penampilan (dijaga `kendali-gelanggang.assign`) tapi tidak
+                     * bisa MEMBUKA panelnya (dijaga `penampilan-jurus.view`) --
+                     * peran yang memutuskan tanpa boleh melihat apa yang sedang
+                     * diputuskannya.
+                     *
+                     * Hanya melihat: menilai tetap urusan juri, pengurangan 0.50
+                     * urusan Dewan Wasit Juri, pengesahan urusan Ketua.
+                     */
+                    'penampilan-jurus' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,
                     'hasil-partai' => [ResourceAction::View, ResourceAction::Print],

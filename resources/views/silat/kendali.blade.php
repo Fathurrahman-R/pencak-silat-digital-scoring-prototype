@@ -48,8 +48,28 @@
         </header>
 
         <template x-if="galat || pesan">
-            <p class="mx-6 mt-4 shrink-0 rounded-silat bg-silat-panel px-4 py-2.5 text-[13.5px] text-silat-teks-kedua"
-               x-text="galat || pesan"></p>
+            <div class="mx-6 mt-4 flex shrink-0 flex-wrap items-center gap-3 rounded-silat bg-silat-panel px-4 py-2.5">
+                <p class="min-w-0 flex-1 text-[13.5px] text-silat-teks-kedua" x-text="galat || pesan"></p>
+
+                {{--
+                    Jalan paksa berdiri DI SAMPING penolakannya, bukan di
+                    tempat lain.
+
+                    Pesannya sudah lama menyuruh pengendali "pindah paksa"
+                    sementara tidak satu pun tombol di panel ini mengirimnya:
+                    gelanggang yang partainya ditinggal berjalan -- perangkat
+                    pengendali mati, partai batal di tengah -- tidak punya
+                    jalan keluar sama sekali. Tombolnya sengaja terpisah dan
+                    baru muncul setelah penolakan: memaksa tetap harus
+                    dinyatakan, bukan ditemukan sebagai efek samping.
+                --}}
+                <template x-if="paksaTertunda">
+                    <button type="button"
+                            x-on:click="pilihPartai(paksaTertunda.matchId, true)"
+                            class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali px-4 text-[13.5px] font-semibold text-silat-teks"
+                            x-text="paksaTertunda.matchId === null ? 'Kosongkan paksa' : 'Pindah paksa'"></button>
+                </template>
+            </div>
         </template>
 
         <div class="grid min-h-0 flex-1 grid-cols-1 gap-5 px-6 pt-5 pb-6 lg:grid-cols-[1fr_340px]">
@@ -114,10 +134,155 @@
                                     Tayangkan
                                 </button>
                             </template>
+
+                            {{-- Pemindahan antar gelanggang berdiri di baris
+                                 partainya sendiri, bukan di layar terpisah:
+                                 yang memutuskan sedang menatap antrean, dan
+                                 keputusannya lahir dari membandingkan antrean
+                                 itu dengan gelanggang sebelah. --}}
+                            <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0 && ! partai.aktif">
+                                <select class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali bg-transparent px-2 text-[12.5px] text-silat-teks-kedua"
+                                        aria-label="Pindahkan partai ini ke gelanggang lain"
+                                        x-on:change="if ($event.target.value) { lepasKeGelanggang(partai.id, $event.target.value); $event.target.value = '' }">
+                                    <option value="">Pindahkan…</option>
+                                    <template x-for="lain in (panel?.serah?.gelanggang ?? [])" :key="lain.id">
+                                        <option x-bind:value="lain.id" x-text="lain.nama"></option>
+                                    </template>
+                                </select>
+                            </template>
                         </div>
                     </template>
                 </div>
             </div>
+
+            {{--
+                SERAH-TERIMA JADWAL.
+
+                Dua daftar yang hanya muncul kalau ada isinya. Jendela di antara
+                melepas dan mengambil sengaja TERLIHAT di kedua layar: jendela
+                yang disembunyikan adalah jendela yang baru ketahuan saat
+                pesilatnya sudah berdiri di matras yang salah.
+            --}}
+            <template x-if="(panel?.serah?.menunggu?.length ?? 0) > 0 || (panel?.serah?.ditawarkan?.length ?? 0) > 0 || (panel?.serah?.baruMasuk?.length ?? 0) > 0">
+                <div class="mt-4 flex flex-col gap-4">
+                    {{--
+                        Partai yang sudah jadi milik gelanggang ini tapi belum
+                        punya nomor urut -- hampir selalu hasil serah-terima.
+
+                        Berdiri sendiri, bukan mengandalkan antrean: antrean
+                        menaruh yang tanpa nomor di paling belakang lalu memotong
+                        dua puluh, dan di gelanggang dengan ratusan partai
+                        terjadwal, partai yang baru masuk tidak pernah terlihat
+                        sama sekali.
+                    --}}
+                    <template x-if="(panel?.serah?.baruMasuk?.length ?? 0) > 0">
+                        <div class="rounded-silat-besar border border-silat-garis">
+                            <div class="border-b border-silat-garis px-4 py-3.5">
+                                <p class="text-[15px] font-semibold tracking-[-0.01em] text-silat-teks">
+                                    Baru masuk, belum ditempatkan
+                                </p>
+                                <p class="mt-1 text-[12.5px] text-silat-teks-samar">
+                                    Sudah jadi milik gelanggang ini. Belum punya nomor urut, jadi tidak muncul di antrean.
+                                </p>
+                            </div>
+
+                            <template x-for="(satu, i) in (panel?.serah?.baruMasuk ?? [])" :key="satu.id">
+                                <div class="flex items-center gap-3.5 px-4 py-3.5"
+                                     x-bind:class="i > 0 ? 'border-t border-silat-panel' : ''">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-[14px] text-silat-teks">
+                                            <span x-text="satu.merah || '—'"></span>
+                                            <span class="text-silat-teks-samar">vs</span>
+                                            <span x-text="satu.biru || '—'"></span>
+                                        </p>
+                                        <p class="silat-angka mt-1 text-[11.5px] text-silat-teks-samar">
+                                            Partai <span x-text="satu.id"></span>
+                                            · <span x-text="satu.kelas ?? '—'"></span>
+                                        </p>
+                                    </div>
+
+                                    <button type="button"
+                                            x-on:click="pilihPartai(satu.id)"
+                                            class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
+                                        Tayangkan
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="(panel?.serah?.ditawarkan?.length ?? 0) > 0">
+                        <div class="rounded-silat-besar border border-silat-garis">
+                            <div class="border-b border-silat-garis px-4 py-3.5">
+                                <p class="text-[15px] font-semibold tracking-[-0.01em] text-silat-teks">
+                                    Ditawarkan dari gelanggang lain
+                                </p>
+                                <p class="mt-1 text-[12.5px] text-silat-teks-samar">
+                                    Belum masuk jadwal gelanggang ini sampai diambil.
+                                </p>
+                            </div>
+
+                            <template x-for="(satu, i) in (panel?.serah?.ditawarkan ?? [])" :key="satu.id">
+                                <div class="flex items-center gap-3.5 px-4 py-3.5"
+                                     x-bind:class="i > 0 ? 'border-t border-silat-panel' : ''">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-[14px] text-silat-teks">
+                                            <span x-text="satu.jenis === 'jurus' ? 'Penampilan' : 'Partai'"></span>
+                                            <span x-text="satu.baris_id"></span>
+                                        </p>
+                                        <p class="mt-1 text-[11.5px] text-silat-teks-samar">
+                                            dari <span x-text="satu.asal ?? '—'"></span>
+                                            <template x-if="satu.alasan">
+                                                <span> · <span x-text="satu.alasan"></span></span>
+                                            </template>
+                                        </p>
+                                    </div>
+
+                                    <button type="button"
+                                            x-on:click="ambilLepasan(satu.id)"
+                                            class="h-11 w-24 shrink-0 rounded-silat bg-silat-teks text-[13px] font-semibold text-silat-latar">
+                                        Ambil
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="(panel?.serah?.menunggu?.length ?? 0) > 0">
+                        <div class="rounded-silat-besar border border-silat-garis">
+                            <div class="border-b border-silat-garis px-4 py-3.5">
+                                <p class="text-[15px] font-semibold tracking-[-0.01em] text-silat-teks">
+                                    Dilepas, menunggu diambil
+                                </p>
+                                <p class="mt-1 text-[12.5px] text-silat-teks-samar">
+                                    Sudah tidak ditayangkan di sini, dan belum jadi milik gelanggang tujuan.
+                                </p>
+                            </div>
+
+                            <template x-for="(satu, i) in (panel?.serah?.menunggu ?? [])" :key="satu.id">
+                                <div class="flex items-center gap-3.5 px-4 py-3.5"
+                                     x-bind:class="i > 0 ? 'border-t border-silat-panel' : ''">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-[14px] text-silat-teks">
+                                            <span x-text="satu.jenis === 'jurus' ? 'Penampilan' : 'Partai'"></span>
+                                            <span x-text="satu.baris_id"></span>
+                                        </p>
+                                        <p class="mt-1 text-[11.5px] text-silat-teks-samar">
+                                            ke <span x-text="satu.tujuan ?? '—'"></span>
+                                        </p>
+                                    </div>
+
+                                    <button type="button"
+                                            x-on:click="batalkanLepas(satu.id)"
+                                            class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
+                                        Batalkan
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
 
             {{-- TIMER DAN BABAK. Tidak pernah tergulir. --}}
             <aside class="flex min-h-0 flex-col gap-4">

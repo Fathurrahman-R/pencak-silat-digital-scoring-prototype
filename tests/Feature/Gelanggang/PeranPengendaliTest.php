@@ -15,7 +15,7 @@ use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Bagan\KesiapanHulu;
-use App\Support\Gelanggang\PointerPartaiAktif;
+use App\Support\Gelanggang\PointerTayang;
 use App\Support\Scoring\MatchTimer;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
@@ -93,9 +93,20 @@ it('membiarkan Operator IT tetap membuka panel sebagai papan tampilan', function
     $operator = ($this->buatUser)('operator-it');
     $this->arena->operators()->attach($operator->id);
 
+    /*
+     * Alamat per-partai sekarang mengantar ke alamat gelanggang: alamat partai
+     * basi begitu pengendali memindahkan jadwal, sementara alamat gelanggang
+     * mengikuti apa pun yang sedang ditayangkan. Yang diuji di sini bukan
+     * pengalihannya -- itu punya berkasnya sendiri -- melainkan bahwa Operator
+     * IT tidak kehilangan panelnya di ujung sana.
+     */
+    $tujuan = route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]);
+
     $this->actingAs($operator)
         ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
-        ->assertOk();
+        ->assertRedirect($tujuan);
+
+    $this->actingAs($operator)->get($tujuan)->assertOk();
 });
 
 /*
@@ -165,7 +176,7 @@ it('menyalin aparat gelanggang ke partai saat pointer menunjuknya', function () 
         'arena_id' => $this->arena->id, 'user_id' => $wasit->id, 'role' => MatchOfficial::ROLE_WASIT, 'number' => null,
     ]);
 
-    (new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class)))->tunjuk($this->arena, $this->match, $pengendali);
+    (new PointerTayang(new MatchTimer, app(KesiapanHulu::class)))->tunjuk($this->arena, $this->match, $pengendali);
 
     $aparat = MatchOfficial::where('match_id', $this->match->id)->get();
 
@@ -190,7 +201,7 @@ it('tidak menimpa aparat yang sudah ditugaskan khusus untuk partai itu', functio
         'match_id' => $this->match->id, 'user_id' => $juriKhusus->id, 'role' => MatchOfficial::ROLE_JURI, 'number' => 1,
     ]);
 
-    (new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class)))->tunjuk($this->arena, $this->match, $pengendali);
+    (new PointerTayang(new MatchTimer, app(KesiapanHulu::class)))->tunjuk($this->arena, $this->match, $pengendali);
 
     expect(MatchOfficial::where('match_id', $this->match->id)->pluck('user_id')->all())
         ->toBe([$juriKhusus->id]);

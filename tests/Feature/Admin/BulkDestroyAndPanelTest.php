@@ -140,3 +140,24 @@ it('melindungi resource terkunci dari bulk destroy', function () {
     $this->assertDatabaseHas('resources', ['id' => $locked->id]);
     $this->assertDatabaseMissing('resources', ['id' => $loose->id]);
 });
+
+/*
+ * Alamat kejuaraan tanpa akhiran apa pun dulu membalas 405 "Alamat ini tidak
+ * dibuka lewat peramban" -- kalimat yang benar untuk endpoint aksi, tapi
+ * menyesatkan bagi orang yang mengetik nomor kejuaraan di bilah alamat. Yang
+ * dibutuhkannya: dibawa ke panel kejuaraan itu, atau 404 kalau nomornya
+ * memang tidak ada.
+ */
+it('membawa alamat kejuaraan telanjang ke panel kejuaraan', function () {
+    $tournament = Tournament::factory()->create();
+
+    $this->actingAs($this->superAdmin)
+        ->get('/admin/turnamen/'.$tournament->id)
+        ->assertRedirect(route('admin.turnamen.panel', $tournament));
+});
+
+it('membalas 404 untuk nomor kejuaraan yang tidak ada', function () {
+    $this->actingAs($this->superAdmin)
+        ->get('/admin/turnamen/999999')
+        ->assertNotFound();
+});

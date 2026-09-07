@@ -8,10 +8,15 @@ use App\Events\Scoring\MatchStateChanged;
 use App\Http\Controllers\Concerns\MenjagaAparatGelanggang;
 use App\Http\Controllers\Controller;
 use App\Models\Arena;
+use App\Models\JurusPerformance;
+use App\Models\SerahJadwal;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
-use App\Support\Gelanggang\PointerPartaiAktif;
+use App\Support\Gelanggang\PenolakanDapatDipaksa;
+use App\Support\Gelanggang\PointerTayang;
+use App\Support\Gelanggang\SerahTerimaJadwal;
+use App\Support\Jurus\StatePenampilan;
 use App\Support\Panel\KonfigPanel;
 use App\Support\Panel\StatePartaiPanel;
 use App\Support\Scoring\BabakSusulan;
@@ -61,10 +66,11 @@ class PanelGelanggangController extends Controller
     private const PANEL_KENDALI = 'silat.kendali';
 
     public function __construct(
-        private readonly PointerPartaiAktif $pointer,
+        private readonly PointerTayang $pointer,
         private readonly KonfigPanel $konfig,
         private readonly StatePartaiPanel $state,
         private readonly BabakSusulan $susulan,
+        private readonly SerahTerimaJadwal $serahTerima,
     ) {}
 
     public function state(Request $request, Tournament $tournament, Arena $arena): JsonResponse
@@ -191,7 +197,7 @@ class PanelGelanggangController extends Controller
     /**
      * Menetapkan partai yang ditayangkan gelanggang.
      *
-     * Satu-satunya jalan masuk ke PointerPartaiAktif dari HTTP.
+     * Satu-satunya jalan masuk ke PointerTayang dari HTTP.
      */
     public function pilihPartai(Request $request, Tournament $tournament, Arena $arena): RedirectResponse|JsonResponse
     {
@@ -209,7 +215,11 @@ class PanelGelanggangController extends Controller
         ]);
 
         if (($data['match_id'] ?? null) === null) {
-            $this->jalankan(fn () => $this->pointer->kosongkan($arena, $request->user()));
+            $this->jalankan(fn () => $this->pointer->kosongkan(
+                $arena,
+                $request->user(),
+                paksa: (bool) ($data['paksa'] ?? false),
+            ));
 
             return $this->balas($request, $tournament, $arena, 'Gelanggang dikosongkan.');
         }
@@ -225,6 +235,239 @@ class PanelGelanggangController extends Controller
         ));
 
         return $this->balas($request, $tournament, $arena, "Gelanggang berpindah ke partai {$match->id}.");
+    }
+
+    /**
+     * Pengendali memilih penampilan Jurus yang ditayangkan gelanggang.
+     *
+     * Kembaran pilihPartai() untuk kategori Jurus. `performance_id` kosong
+     * berarti mengosongkan gelanggang -- bentuk yang sama, supaya panel
+     * kendali tidak perlu dua alur berbeda untuk satu tombol.
+     */
+    public function pilihPenampilan(Request $request, Tournament $tournament, Arena $arena): RedirectResponse|JsonResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+        $this->pastikanPengendali($arena, $request->user());
+
+        $data = $request->validate([
+            'performance_id' => ['nullable', 'integer'],
+            'paksa' => ['sometimes', 'boolean'],
+        ]);
+
+        if (($data['performance_id'] ?? null) === null) {
+            $this->jalankan(fn () => $this->pointer->kosongkan(
+                $arena,
+                $request->user(),
+                paksa: (bool) ($data['paksa'] ?? false),
+            ));
+
+            return $this->balas($request, $tournament, $arena, 'Gelanggang dikosongkan.');
+        }
+
+        $performance = JurusPerformance::whereKey($data['performance_id'])->firstOrFail();
+
+        abort_unless($performance->jurusEvent->tournament_id === $tournament->id, 404);
+
+        $this->jalankan(fn () => $this->pointer->tunjukPenampilan(
+            $arena,
+            $performance,
+            $request->user(),
+            paksa: (bool) ($data['paksa'] ?? false),
+        ));
+
+        return $this->balas($request, $tournament, $arena, "Gelanggang berpindah ke penampilan {$performance->id}.");
+    }
+
+    /**
+     * Melepas satu partai atau penampilan ke gelanggang lain.
+     *
+     * Pelepas berhenti menayangkannya seketika, tapi baris itu belum berpindah
+     * pemilik: ia menggantung sebagai penawaran sampai pengendali tujuan
+     * mengambilnya. Jendela itu SENGAJA terlihat di kedua layar -- jendela
+     * yang disembunyikan adalah jendela yang baru ketahuan saat pesilat sudah
+     * berdiri di matras yang salah.
+     */
+    public function lepasKeGelanggang(Request $request, Tournament $tournament, Arena $arena): RedirectResponse|JsonResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+        $this->pastikanPengendali($arena, $request->user());
+
+        $data = $request->validate([
+            'ke_arena_id' => ['required', 'integer'],
+            'jenis' => ['required', 'in:tanding,jurus'],
+            'baris_id' => ['required', 'integer'],
+            'alasan' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $tujuan = Arena::whereKey($data['ke_arena_id'])->firstOrFail();
+        $this->pastikanMilik($tournament, $tujuan);
+
+        $baris = $data['jenis'] === SerahJadwal::TANDING
+            ? SilatMatch::whereKey($data['baris_id'])->firstOrFail()
+            : JurusPerformance::whereKey($data['baris_id'])->firstOrFail();
+
+        if ($baris instanceof SilatMatch) {
+            $this->pastikanPartaiMilik($tournament, $baris);
+        } else {
+            abort_unless($baris->jurusEvent->tournament_id === $tournament->id, 404);
+        }
+
+        $this->jalankan(fn () => $this->serahTerima->lepas(
+            $arena,
+            $tujuan,
+            $baris,
+            $request->user(),
+            $data['alasan'] ?? null,
+        ));
+
+        return $this->balas($request, $tournament, $arena, "Dilepas ke {$tujuan->name}, menunggu diambil.");
+    }
+
+    /** Pelepas menarik kembali penawarannya, selama belum diambil. */
+    public function batalkanLepas(Request $request, Tournament $tournament, Arena $arena, SerahJadwal $serah): RedirectResponse|JsonResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+        $this->pastikanPengendali($arena, $request->user());
+
+        abort_unless($serah->arena_id === $arena->id, 403, 'Penawaran ini bukan milik gelanggang ini.');
+
+        $this->jalankan(fn () => $this->serahTerima->batalkan($serah, $request->user()));
+
+        return $this->balas($request, $tournament, $arena, 'Penawaran dibatalkan.');
+    }
+
+    /**
+     * Gelanggang tujuan mengambil baris yang ditawarkan kepadanya.
+     *
+     * Di sinilah `arena_id` berpindah, dan hanya di sini -- sesudah adopsinya
+     * tercatat sebagai baris milik node ini.
+     */
+    public function ambilLepasan(Request $request, Tournament $tournament, Arena $arena, SerahJadwal $serah): RedirectResponse|JsonResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+        $this->pastikanPengendali($arena, $request->user());
+
+        abort_unless($serah->ke_arena_id === $arena->id, 403, 'Penawaran ini tidak ditujukan ke gelanggang ini.');
+
+        $this->jalankan(fn () => $this->serahTerima->ambil($serah, $request->user()));
+
+        return $this->balas($request, $tournament, $arena, 'Masuk ke jadwal gelanggang ini.');
+    }
+
+    /** Panel juri Jurus, mengikuti penampilan yang ditunjuk gelanggang. */
+    public function jurusJuri(Request $request, Tournament $tournament, Arena $arena): View
+    {
+        return $this->panelJurus('jurus.juri', $request, $tournament, $arena);
+    }
+
+    /** Panel operator Jurus, mengikuti penampilan yang ditunjuk gelanggang. */
+    public function jurusOperator(Request $request, Tournament $tournament, Arena $arena): View
+    {
+        return $this->panelJurus('jurus.operator', $request, $tournament, $arena);
+    }
+
+    /**
+     * State penampilan yang sedang ditayangkan gelanggang.
+     *
+     * Beralamat gelanggang, bukan penampilan: itulah yang membuat panel juri
+     * ikut berpindah sendiri saat pengendali mengganti nomor. Alamat per
+     * penampilan basi tepat pada saat pergantian, dan yang menanggungnya juri
+     * yang harus mengetik ulang alamat di HP-nya.
+     *
+     * Muatannya sama persis dengan endpoint per penampilan -- keduanya lewat
+     * App\Support\Jurus\StatePenampilan.
+     */
+    public function jurusState(Tournament $tournament, Arena $arena): JsonResponse
+    {
+        $this->pastikanMilik($tournament, $arena);
+
+        $performance = $this->pointer->penampilanAktif($arena);
+
+        if ($performance === null) {
+            return response()->json([
+                'penampilan_aktif' => false,
+                'pesan' => 'Gelanggang ini belum menayangkan penampilan.',
+            ]);
+        }
+
+        return response()->json([
+            'penampilan_aktif' => true,
+            'aksi' => $this->aksiJurus($tournament, $performance),
+        ] + app(StatePenampilan::class)($performance));
+    }
+
+    /**
+     * Merender panel Jurus untuk penampilan yang sedang ditunjuk.
+     *
+     * Gelanggang kosong mendapat layar tunggu yang sama dengan panel Tanding,
+     * bukan 404: pagi sebelum nomor pertama dan jeda antar nomor adalah
+     * keadaan normal, dan yang membukanya tidak sedang salah alamat.
+     */
+    private function panelJurus(string $view, Request $request, Tournament $tournament, Arena $arena): View
+    {
+        $this->pastikanMilik($tournament, $arena);
+
+        $performance = $this->pointer->penampilanAktif($arena);
+
+        if ($performance === null) {
+            /*
+             * Layar tunggu yang SAMA dengan panel Tanding, bukan salinannya.
+             * Kalimatnya menyebut "partai" dan itu memang tepat: yang ditunggu
+             * sama-sama keputusan pengendali, dan petugas Jurus membaca layar
+             * yang bentuknya sudah dikenalnya dari matras sebelah.
+             */
+            return view('silat.menunggu-partai', [
+                'tournament' => $tournament,
+                'arena' => $arena,
+                'manifestUrl' => null,
+                'config' => $this->blokPanel($tournament, $arena, null, $request->user()) + ['menunggu' => true],
+            ]);
+        }
+
+        $performance->load('jurusEvent', 'registration.athletes', 'registration.contingent');
+
+        $config = $this->aksiJurus($tournament, $performance) + [
+            'state' => route('admin.turnamen.gelanggang.panel.jurus-state', [$tournament, $arena]),
+        ];
+
+        if ($view === 'jurus.juri') {
+            $config['judgeUserId'] = $request->user()->id;
+        }
+
+        return view($view, [
+            'tournament' => $tournament,
+            'performance' => $performance,
+            'config' => $config,
+        ]);
+    }
+
+    /**
+     * Alamat aksi penampilan.
+     *
+     * Tetap per PENAMPILAN, tidak ikut pindah ke alamat gelanggang: aksi
+     * menyebut sasaran yang pasti, dan nilai yang dikirim ke "apa pun yang
+     * sedang tayang" akan mendarat di penampilan yang keliru begitu pengendali
+     * berpindah di antara juri menekan dan permintaannya sampai.
+     *
+     * Alamat-alamat ini ikut terkirim ulang tiap kali state ditarik, jadi
+     * panel selalu memegang sasaran yang mutakhir.
+     *
+     * @return array<string, mixed>
+     */
+    private function aksiJurus(Tournament $tournament, JurusPerformance $performance): array
+    {
+        return [
+            'performanceId' => $performance->id,
+            'battleId' => $performance->jurus_battle_id,
+            'mulai' => route('admin.turnamen.jurus.penampilan.timer.mulai', [$tournament, $performance]),
+            'berhenti' => route('admin.turnamen.jurus.penampilan.timer.berhenti', [$tournament, $performance]),
+            'nilai' => route('admin.turnamen.jurus.penampilan.nilai', [$tournament, $performance]),
+            'penguranganJuri' => route('admin.turnamen.jurus.penampilan.pengurangan-juri', [$tournament, $performance]),
+            'penguranganPengawas' => route('admin.turnamen.jurus.penampilan.pengurangan-pengawas', [$tournament, $performance]),
+            'penguranganBatal' => route('admin.turnamen.jurus.penampilan.pengurangan.batal', [$tournament, $performance, '__ID__']),
+            'diskualifikasi' => route('admin.turnamen.jurus.penampilan.diskualifikasi', [$tournament, $performance]),
+            'sahkan' => route('admin.turnamen.jurus.penampilan.sahkan', [$tournament, $performance]),
+        ];
     }
 
     /**
@@ -340,6 +583,71 @@ class PanelGelanggangController extends Controller
                 'biru' => $partai->blue?->athletes->pluck('name')->implode(', '),
                 'aktif' => $partai->id === $arena->active_match_id,
             ])->all();
+
+            /*
+             * Serah-terima antar gelanggang ikut di sini, bukan di endpoint
+             * `state` yang ditarik tiap panel: daftarnya berubah beberapa kali
+             * sehari, sementara `state` ditarik tiap tekanan tombol juri.
+             * Menaruhnya di sana berarti dua query tambahan pada jalur
+             * terpanas untuk data yang hampir tidak pernah berubah.
+             *
+             * Keduanya dikirim bersama supaya pengendali tidak perlu keluar ke
+             * layar lain untuk memindahkan jadwal maupun menerimanya.
+             */
+            $blok['serah'] = [
+                'gelanggang' => Arena::where('tournament_id', $arena->tournament_id)
+                    ->aktif()
+                    ->whereKeyNot($arena->id)
+                    ->orderBy('sort_order')
+                    ->get(['id', 'name'])
+                    ->map(fn (Arena $lain) => ['id' => $lain->id, 'nama' => $lain->name])
+                    ->all(),
+                'menunggu' => $this->serahTerima->menungguDiambil($arena)
+                    ->map(fn ($satu) => [
+                        'id' => $satu->id,
+                        'jenis' => $satu->baris_type,
+                        'baris_id' => $satu->baris_id,
+                        'tujuan' => $satu->tujuan?->name,
+                        'alasan' => $satu->alasan,
+                    ])->all(),
+                'ditawarkan' => $this->serahTerima->ditawarkanKe($arena)
+                    ->map(fn ($satu) => [
+                        'id' => $satu->id,
+                        'jenis' => $satu->baris_type,
+                        'baris_id' => $satu->baris_id,
+                        'asal' => $satu->arena?->name,
+                        'alasan' => $satu->alasan,
+                    ])->all(),
+                /*
+                 * Partai yang ada di gelanggang ini tapi belum punya nomor
+                 * urut. Hampir selalu hasil serah-terima: adopsi sengaja tidak
+                 * membawa nomor urut gelanggang asal, karena menempelkannya
+                 * akan menyisipkan partai di tengah antrean orang lain.
+                 *
+                 * Berdiri sebagai daftar sendiri, bukan mengandalkan antrean:
+                 * `antrean()` menaruh yang tanpa nomor di paling belakang lalu
+                 * memotong dua puluh, dan gelanggang dengan 281 partai
+                 * terjadwal membuat partai yang baru masuk tidak pernah
+                 * terlihat sama sekali. Ditemukan begitu lewat blackbox
+                 * testing -- penawaran terserap, lalu partainya lenyap.
+                 */
+                'baruMasuk' => SilatMatch::where('arena_id', $arena->id)
+                    ->whereNull('order_in_arena')
+                    ->where('status', '!=', SilatMatch::STATUS_SELESAI)
+                    ->with(['red.athletes', 'blue.athletes', 'bracket.weightClass'])
+                    ->orderBy('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (SilatMatch $partai) => [
+                        'id' => $partai->id,
+                        'kelas' => $partai->bracket?->weightClass?->name,
+                        'merah' => $partai->red?->athletes->pluck('name')->implode(', '),
+                        'biru' => $partai->blue?->athletes->pluck('name')->implode(', '),
+                    ])->all(),
+                'lepas' => route('admin.turnamen.gelanggang.panel.lepas', [$tournament, $arena]),
+                'batal' => route('admin.turnamen.gelanggang.panel.lepas.batal', [$tournament, $arena, '__ID__']),
+                'ambil' => route('admin.turnamen.gelanggang.panel.lepas.ambil', [$tournament, $arena, '__ID__']),
+            ];
         }
 
         return $blok;
@@ -376,7 +684,18 @@ class PanelGelanggangController extends Controller
                 'tournament' => $tournament,
                 'arena' => $arena,
                 'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $this->peranDariView($view)]),
-                'config' => $this->blokPanel($tournament, $arena, null, $request->user()),
+                /*
+                 * Penanda `menunggu` memberi tahu partaiPanel bahwa halaman
+                 * yang memuatnya TIDAK punya markup panel.
+                 *
+                 * Siaran `gelanggang.partai` sampai ke layar ini dan state
+                 * barunya terserap dengan benar, tapi tidak ada satu pun
+                 * elemen yang menggambarnya -- tanpa penanda ini, layar tunggu
+                 * menjanjikan panel yang terbuka sendiri lalu diam selamanya,
+                 * dan juri baru sadar setelah seseorang menyuruhnya memuat
+                 * ulang di tengah partai.
+                 */
+                'config' => $this->blokPanel($tournament, $arena, null, $request->user()) + ['menunggu' => true],
             ]);
         }
 
@@ -431,7 +750,19 @@ class PanelGelanggangController extends Controller
         try {
             return $aksi();
         } catch (RuntimeException $e) {
-            throw ValidationException::withMessages(['aksi' => $e->getMessage()]);
+            /*
+             * Penolakan yang bisa ditembus paksa membawa penanda sendiri.
+             *
+             * Panel kendali menyalakan tombol "paksa" dari kunci ini, bukan
+             * dari potongan kalimat pesannya -- redaksi boleh diperbaiki tanpa
+             * diam-diam mematikan satu-satunya jalan keluar pengendali.
+             */
+            throw ValidationException::withMessages(
+                ['aksi' => $e->getMessage()]
+                + ($e instanceof PenolakanDapatDipaksa
+                    ? ['dapat_dipaksa' => 'Aksi ini masih bisa dijalankan paksa.']
+                    : []),
+            );
         }
     }
 

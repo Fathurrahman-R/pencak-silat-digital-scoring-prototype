@@ -12,7 +12,7 @@ use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Bagan\KesiapanHulu;
-use App\Support\Gelanggang\PointerPartaiAktif;
+use App\Support\Gelanggang\PointerTayang;
 use App\Support\Scoring\MatchTimer;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
@@ -136,7 +136,7 @@ it('menolak menayangkan partai yang hulunya di gelanggang lain belum sampai', fu
     $pengendali = User::factory()->create();
     $pengendali->syncRoles(['pengendali-gelanggang']);
 
-    $pointer = new PointerPartaiAktif(new MatchTimer, app(KesiapanHulu::class));
+    $pointer = new PointerTayang(new MatchTimer, app(KesiapanHulu::class));
 
     expect(fn () => $pointer->tunjuk($this->arenaA, $final, $pengendali))
         ->toThrow(RuntimeException::class, 'Gelanggang B');

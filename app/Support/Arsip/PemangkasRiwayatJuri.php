@@ -2,6 +2,7 @@
 
 namespace App\Support\Arsip;
 
+use App\Models\ArenaTayang;
 use App\Models\SilatMatch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -57,9 +58,14 @@ class PemangkasRiwayatJuri
             ->whereIn('id', DB::table('arsip_keluar')
                 ->where('status', PendorongArsip::DITERIMA)
                 ->pluck('match_id'))
-            ->whereNotIn('id', DB::table('arenas')
-                ->whereNotNull('active_match_id')
-                ->pluck('active_match_id'))
+            /*
+             * Partai yang sedang ditayangkan gelanggang mana pun tidak
+             * dipangkas, walau arsipnya sudah diterima: layar masih membacanya.
+             */
+            ->whereNotIn('id', DB::table('arena_tayang')
+                ->where('tayang_type', ArenaTayang::TANDING)
+                ->whereNotNull('tayang_id')
+                ->pluck('tayang_id'))
             ->orderBy('ratified_at')
             ->limit($batas)
             ->get();

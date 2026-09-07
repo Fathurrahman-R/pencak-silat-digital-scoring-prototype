@@ -25,11 +25,15 @@
     <div x-data="perbandinganBattle(@js($config))" class="min-h-dvh px-5 py-6">
 
         <header class="mx-auto max-w-[900px] pb-5">
-            <p class="silat-angka text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">
-                {{ $battle->bracket->jurusEvent->jenis->label() }}
-                · {{ $battle->bracket->jurusEvent->golongan_usia->label() }}
-                · {{ $battle->bracket->jurusEvent->jenis_kelamin->label() }}
-            </p>
+            <div class="flex items-start justify-between gap-4">
+                <p class="silat-angka text-[10.5px] tracking-[.12em] text-silat-teks-samar uppercase">
+                    {{ $battle->bracket->jurusEvent->jenis->label() }}
+                    · {{ $battle->bracket->jurusEvent->golongan_usia->label() }}
+                    · {{ $battle->bracket->jurusEvent->jenis_kelamin->label() }}
+                </p>
+
+                <x-silat.indikator-koneksi class="shrink-0" />
+            </div>
             <p class="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-silat-teks">
                 {{ TahapBaganJurus::label(TahapBaganJurus::untuk($battle->round, $battle->bracket->size)) }}
                 · Battle {{ $battle->id }}
