@@ -30,9 +30,11 @@ use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\Admin\VerifikasiJuriController;
 use App\Http\Controllers\Admin\WeightInController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PemasanganController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\BerandaController;
 use App\Http\Middleware\CatatWaktuState;
+use App\Http\Middleware\PemasanganAwal;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', BerandaController::class)->name('home');
@@ -59,6 +61,25 @@ if (config('design-system.enabled')) {
     Route::view('/design-system', 'design-system.si')->name('design-system.si');
     Route::view('/design-system/gelanggang', 'silat.peraga')->name('design-system.gelanggang');
 }
+
+/*
+|--------------------------------------------------------------------------
+| Pemasangan node
+|--------------------------------------------------------------------------
+|
+| Terbuka TANPA login, dan hanya selama basis data mesin ini masih kosong.
+| Seluruh akun panitia lahir di node global dan datang lewat sinkron, jadi
+| node yang baru dipasang tidak punya siapa pun untuk menekan tombol tarik.
+|
+| PemasanganAwal menutupnya -- 404 -- begitu akun pertama masuk, dan itu
+| terjadi pada penarikan pertama itu sendiri. Alasan lengkapnya ada di kelas
+| middleware-nya.
+|
+*/
+Route::middleware(PemasanganAwal::class)->prefix('pemasangan')->name('pemasangan.')->group(function () {
+    Route::get('/', [PemasanganController::class, 'index'])->name('index');
+    Route::post('/tarik', [PemasanganController::class, 'tarik'])->name('tarik');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -362,7 +383,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/', 'state')->name('state')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/operator', 'operator')->name('operator')->middleware('resource:'.rk('partai', ResourceAction::View));
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
-                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));                    Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
+                    Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
+                    Route::get('/keberatan', 'keberatan')->name('keberatan')->middleware('resource:'.rk('var', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/juri/manifest.webmanifest', 'manifest')->name('juri.manifest')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/berita-acara', 'beritaAcara')->name('berita-acara')->middleware('resource:'.rk('hasil-partai', ResourceAction::Print));
@@ -427,7 +449,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::get('/wasit', 'wasit')->name('wasit')->middleware('resource:'.rk('hukuman', ResourceAction::View));
                     Route::get('/juri', 'juri')->name('juri')->middleware('resource:'.rk('penilaian', ResourceAction::Create));
                     Route::get('/dewan-juri', 'dewanJuri')->name('dewan-juri')->middleware('resource:'.rk('hasil-partai', ResourceAction::View));
-
 
                     /*
                      * Panel Jurus beralamat GELANGGANG, sejajar dengan panel

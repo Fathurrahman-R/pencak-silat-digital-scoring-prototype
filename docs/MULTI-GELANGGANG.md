@@ -120,6 +120,42 @@ belum dikonfigurasi tidak menyajikan isi basis datanya ke jaringan gelanggang
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
 
+## Penarikan pertama: node yang belum punya akun
+
+Node gelanggang yang baru dipasang **tidak boleh diseed**. Seluruh data
+kejuaraan — termasuk `users`, `roles`, dan `resources` — bergolongan GLOBAL:
+node global satu-satunya yang menulisnya, dan node gelanggang menerimanya lewat
+sinkron. Menyeed di kedua mesin menghasilkan dua deret id auto-increment yang
+berbeda, dan penerapan paket meng-*upsert* menurut id: baris global menimpa
+baris lokal yang artinya berbeda. Bentuk terburuknya bukan kejuaraan ganda,
+melainkan `model_has_roles` yang menunjuk peran bernomor sama tapi bukan peran
+yang sama — petugas mendapat izin yang bukan miliknya, tanpa satu pun pesan
+galat.
+
+Yang dijalankan di node gelanggang cuma:
+
+```bash
+php artisan migrate            # skema saja, TANPA --seed
+.\scripts\server\siapkan-gelanggang.ps1 -Peran gelanggang -Arena A -Token RAHASIA -Peer 'global|http://<ip-global>:8000'
+```
+
+Lalu buka **`/pemasangan`** di peramban. Halaman itu terbuka **tanpa login**,
+menampilkan identitas mesin dan daftar peer, dan menarik potongan demi potongan
+seperti halaman sinkron biasa.
+
+Ia hidup hanya bila ketiganya terpenuhi: tabel `users` masih kosong, token
+sinkron sudah terpasang, dan ada peer terdaftar. Penarikan pertama membawa akun
+dari node global — dan sejak baris pertama itu masuk, `/pemasangan` membalas
+**404** untuk selamanya, tanpa ada yang perlu ingat mematikannya. Sesudah itu
+masuk memakai akun dari node global dan gunakan menu Sinkron Gelanggang seperti
+biasa.
+
+> Yang bisa dilakukan orang asing di jaringan gelanggang, seandainya ia
+> menemukan alamat itu pada mesin yang memang masih kosong: memicu penarikan
+> dari peer yang sudah tertulis di `.env` mesin itu sendiri, memakai token yang
+> tertulis di situ juga. Ia tidak memilih sumbernya, tidak menyisipkan apa pun,
+> dan tidak ada yang bisa dibaca dari basis data yang masih kosong.
+
 ## Menarik data
 
 Buka **Sinkron Gelanggang** di menu admin, tekan **Tarik dari peer ini**.
