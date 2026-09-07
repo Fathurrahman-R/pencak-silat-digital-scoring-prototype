@@ -45,7 +45,12 @@
                x-text="galat || pesan"></p>
         </template>
 
-        <div class="grid flex-1 grid-cols-[1fr_420px] items-start gap-5 px-6 pt-5 pb-7">
+        {{-- Kolom papan skor 420px baru dipasang mulai `lg`, sama seperti panel
+             kendali dan papan. Tanpa penjaga itu satu-satunya nilai yang
+             berlaku juga di layar 375px, dan halamannya tergulir ke samping
+             sejauh 89px -- panel ini memang dibuka dari HP saat Dewan Wasit
+             Juri memeriksa baris nilai di pinggir matras. --}}
+        <div class="grid flex-1 grid-cols-1 items-start gap-5 px-6 pt-5 pb-7 *:min-w-0 lg:grid-cols-[1fr_420px]">
 
             {{-- Riwayat: koreksi lewat baris pembatal, bukan menyunting riwayat --}}
             <div class="flex min-w-0 flex-col gap-3.5"
@@ -120,6 +125,91 @@
                         </div>
                     </template>
                 </div>
+
+                {{--
+                    LAJUR TEKANAN JURI.
+
+                    Riwayat di atas cuma memperlihatkan nilai yang TERBIT.
+                    Tekanan yang tidak cukup disepakati tidak meninggalkan jejak
+                    di layar mana pun -- padahal itulah yang ditanyakan pelatih
+                    saat memprotes: "juri saya menekan, kenapa tidak jadi
+                    nilai?". Sebelum ada blok ini, satu-satunya jawabannya
+                    adalah membuka basis data, di tengah tenggat protes lima
+                    menit.
+
+                    Tiga keadaan dibedakan dengan kata, bukan cuma warna:
+                    tekanan yang ikut menerbitkan nilai, yang ditolak sistem,
+                    dan yang berdiri SENDIRIAN -- sah, tercatat, tapi tidak
+                    menemukan juri lain di dalam jendela kesepakatan. Yang
+                    ketiga itulah jawaban yang selama ini tidak terlihat, dan
+                    yang membuat juri-nya tidak terbaca sebagai lalai.
+                --}}
+                <template x-if="tekanan !== null && tekanan !== undefined">
+                    <div class="flex flex-col gap-3.5">
+                        <div class="flex items-center gap-3.5">
+                            <p class="text-[17px] font-semibold tracking-[-0.01em] text-silat-teks">Tekanan juri</p>
+                            <span class="silat-angka text-[11.5px] text-silat-teks-samar"
+                                  x-text="tekanan.length + ' tekanan · urut terbaru'"></span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-silat-besar border border-silat-garis">
+                            <template x-if="tekanan.length === 0 && ! riwayatDipangkasPada">
+                                <p class="px-4 py-8 text-center text-[13.5px] text-silat-teks-redup">
+                                    Belum ada juri yang menekan.
+                                </p>
+                            </template>
+
+                            {{-- Riwayat yang sudah dipangkas dinyatakan, bukan
+                                 dibiarkan kosong: daftar kosong pada partai
+                                 yang dipangkas terbaca sama persis dengan
+                                 partai yang memang tidak pernah ditekan
+                                 siapa pun -- dan yang kedua itu serius. --}}
+                            <template x-if="tekanan.length === 0 && riwayatDipangkasPada">
+                                <p class="px-4 py-8 text-center text-[13.5px] text-silat-teks-redup">
+                                    Riwayat tekanan sudah dipangkas setelah arsip buktinya diterima.
+                                    Rinciannya ada di paket arsip dan berita acara.
+                                </p>
+                            </template>
+
+                            <template x-for="(t, i) in tekanan" :key="t.id">
+                                <div class="flex items-center gap-3 px-4 py-2.5"
+                                     x-bind:class="i > 0 ? 'border-t border-silat-panel' : ''">
+
+                                    <span class="w-2 shrink-0 self-stretch rounded-full"
+                                          x-bind:class="t.corner === 'red' ? 'bg-silat-merah' : 'bg-silat-biru'"
+                                          role="img"
+                                          x-bind:aria-label="t.corner === 'red' ? 'Sudut merah' : 'Sudut biru'"></span>
+
+                                    <span class="silat-angka w-14 shrink-0 text-[11.5px] text-silat-teks-samar"
+                                          x-text="'B' + t.round"></span>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-[13.5px] text-silat-teks">
+                                            <span x-text="t.juri ?? 'Juri tidak dikenal'"></span>
+                                            <span class="text-silat-teks-samar"> · </span>
+                                            <span x-text="t.teknik"></span>
+                                        </p>
+                                        <p class="silat-angka mt-0.5 text-[11px] text-silat-teks-samar"
+                                           x-text="new Date(t.waktu).toLocaleTimeString('id-ID', { hour12: false }) + '.' + String(new Date(t.waktu).getMilliseconds()).padStart(3, '0')"></p>
+                                    </div>
+
+                                    {{-- Katanya yang membedakan, bukan warnanya
+                                         saja: tiga keadaan yang akibatnya jauh
+                                         berbeda tidak boleh dipisahkan hanya
+                                         oleh rona yang berdekatan. --}}
+                                    <span class="silat-angka w-24 shrink-0 rounded-silat-kecil px-2 py-1 text-center text-[11px]"
+                                          x-bind:class="{
+                                              'bg-silat-teks text-silat-panel': t.status === 'terbit',
+                                              'border border-silat-tepi-petak text-silat-teks-kedua': t.status === 'sendirian',
+                                              'border border-dashed border-silat-tepi-petak text-silat-teks-samar': t.status === 'ditolak',
+                                          }"
+                                          x-text="t.status === 'terbit' ? 'Jadi nilai' : (t.status === 'sendirian' ? 'Sendirian' : 'Ditolak')"
+                                          x-bind:title="t.alasan_tolak ?? ''"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
 
                 {{--
                     Membatalkan nilai mengubah hasil resmi, jadi konfirmasinya

@@ -2,8 +2,10 @@
 
 namespace App\Support\Panel;
 
+use App\Enums\ResourceAction;
 use App\Enums\StatusBabak;
 use App\Enums\Sudut;
+use App\Models\JudgeInput;
 use App\Models\JudgeVerification;
 use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
@@ -13,6 +15,7 @@ use App\Support\Scoring\PollingVerifikasi;
 use App\Support\Scoring\SnapshotSkor;
 use App\Support\Scoring\TandingScoreCalculator;
 use App\Support\Scoring\TanggaHukuman;
+use Illuminate\Support\Collection;
 
 /**
  * Seluruh keadaan satu partai, dalam bentuk yang dibaca panel Alpine.
@@ -28,6 +31,13 @@ use App\Support\Scoring\TanggaHukuman;
  */
 class StatePartaiPanel
 {
+    /**
+     * Sebutan aparat, dihitung sekali per permintaan.
+     *
+     * @var Collection<int, string>|null
+     */
+    private ?Collection $sebutan = null;
+
     public function __construct(
         private readonly TanggaHukuman $tangga,
         private readonly HitunganTeknik $hitungan,
@@ -218,6 +228,17 @@ class StatePartaiPanel
              * kedua itu keadaan yang serius. Panel harus bisa membedakannya.
              */
             'riwayat_dipangkas_pada' => $match->judge_inputs_dipangkas_pada?->toIso8601String(),
+            /*
+             * Lajur tekanan juri mentah -- termasuk yang TIDAK jadi nilai.
+             *
+             * Dikirim hanya kepada yang boleh membuka panel peninjauan hasil.
+             * Panel juri menarik endpoint yang sama, dan tekanan mentah tidak
+             * ada gunanya di sana sementara ongkosnya satu kueri pada jalur
+             * yang ditarik tiap kali sebuah nilai terbit.
+             */
+            'tekanan' => $untuk !== null && $untuk->can(rk('hasil-partai', ResourceAction::View))
+                ? $this->tekanan($match)
+                : null,
             'keberatan' => $this->keberatan($match),
             'verifikasi' => $this->verifikasi($match, $untuk),
         ];
@@ -377,6 +398,92 @@ class StatePartaiPanel
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * Tiap tekanan tombol juri pada partai ini, apa pun hasilnya.
+     *
+     * # Kenapa ada
+     *
+     * Riwayat panel hanya memperlihatkan nilai yang TERBIT. Tekanan yang tidak
+     * cukup disepakati tidak meninggalkan jejak di layar mana pun -- padahal
+     * itulah yang ditanyakan pelatih saat memprotes: "juri saya menekan, kenapa
+     * tidak jadi nilai?". Dewan Wasit Juri sebelumnya cuma bisa menjawabnya
+     * dengan membuka basis data, di tengah tenggat protes lima menit.
+     *
+     * Yang membuatnya bisa dijawab adalah tiga keadaan yang dibedakan di sini:
+     * tekanan yang ikut menerbitkan nilai, tekanan yang ditolak sistem beserta
+     * alasannya, dan tekanan yang berdiri SENDIRIAN -- sah, tercatat, tapi
+     * tidak menemukan juri lain di dalam jendela kesepakatan. Yang ketiga
+     * itulah jawaban yang selama ini tidak terlihat.
+     *
+     * # Kenapa dibatasi
+     *
+     * Satu partai tiga babak meninggalkan puluhan sampai ratusan tekanan.
+     * Enam puluh terbaru cukup untuk menjawab protes atas kejadian yang baru
+     * saja terjadi -- dan protes selalu tentang kejadian yang baru saja
+     * terjadi. Yang lebih lama ada di berita acara dan paket arsip.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function tekanan(SilatMatch $match): array
+    {
+        /*
+         * Partai yang riwayatnya sudah dipangkas menjawab dengan daftar
+         * kosong, bukan daftar yang seolah tidak pernah ada tekanan.
+         * Pembedanya `riwayat_dipangkas_pada` yang sudah ikut di payload.
+         */
+        if ($match->judge_inputs_dipangkas_pada !== null) {
+            return [];
+        }
+
+        $sebutan = $this->sebutanAparat($match);
+
+        return JudgeInput::query()
+            ->where('match_id', $match->id)
+            ->latest('server_ts')
+            ->latest('id')
+            ->limit(60)
+            ->get(['id', 'round', 'judge_user_id', 'corner', 'point_type', 'server_ts', 'score_event_id', 'rejected_reason'])
+            ->map(fn (JudgeInput $i) => [
+                'id' => $i->id,
+                'round' => $i->round,
+                'juri' => $sebutan[$i->judge_user_id] ?? null,
+                'corner' => $i->corner->value,
+                'teknik' => $i->point_type->label(),
+                'nilai' => $i->point_type->nilai(),
+                'waktu' => $i->server_ts->toIso8601String(),
+                /*
+                 * Tiga keadaan, tiga kata yang berbeda. "Tidak jadi nilai"
+                 * saja menyamakan tekanan yang ditolak sistem dengan tekanan
+                 * sah yang kebetulan sendirian -- dan yang kedua adalah
+                 * tekanan yang juri-nya benar.
+                 */
+                'status' => match (true) {
+                    $i->score_event_id !== null => 'terbit',
+                    $i->rejected_reason !== null => 'ditolak',
+                    default => 'sendirian',
+                },
+                'score_event_id' => $i->score_event_id,
+                'alasan_tolak' => $i->rejected_reason,
+            ])
+            ->all();
+    }
+
+    /**
+     * Sebutan aparat partai ini, dipetakan sekali per permintaan.
+     *
+     * Dipakai riwayat DAN lajur tekanan. Dihitung dua kali, panel Dewan Wasit
+     * Juri membayar dua kueri untuk jawaban yang sama persis.
+     *
+     * @return Collection<int, string>
+     */
+    private function sebutanAparat(SilatMatch $match): Collection
+    {
+        return $this->sebutan ??= ($match->relationLoaded('officials')
+            ? $match->officials
+            : $match->officials()->with('user:id,name')->get())
+            ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
+    }
+
     private function riwayat(SilatMatch $match): array
     {
         /*
@@ -385,10 +492,7 @@ class StatePartaiPanel
          * nama tiap penekan satu per satu akan jadi puluhan query untuk satu
          * halaman yang dibuka justru saat pertandingan sedang disengketakan.
          */
-        $sebutan = ($match->relationLoaded('officials')
-            ? $match->officials
-            : $match->officials()->with('user:id,name')->get())
-            ->mapWithKeys(fn (MatchOfficial $o) => [$o->user_id => $o->sebutan()]);
+        $sebutan = $this->sebutanAparat($match);
 
         /*
          * Nilai dan hukuman yang lahir dari verifikasi juri tidak punya

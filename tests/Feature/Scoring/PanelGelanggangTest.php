@@ -4,19 +4,22 @@ use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Arena;
+use App\Models\ArenaTayang;
 use App\Models\Bracket;
-use App\Models\MatchOfficial;
 use App\Models\Contingent;
+use App\Models\MatchOfficial;
 use App\Models\Penalty;
 use App\Models\Registration;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Scoring\MatchTimer;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
@@ -54,7 +57,10 @@ beforeEach(function () {
      * ditetapkan sebelum panelnya diuji -- tanpa itu yang tampil layar tunggu,
      * bukan papan tombolnya.
      */
-    $this->arena->forceFill(['active_match_id' => $this->match->id])->save();
+    ArenaTayang::updateOrCreate(
+        ['arena_id' => $this->arena->id],
+        ['tayang_type' => ArenaTayang::TANDING, 'tayang_id' => $this->match->id, 'disetel_pada' => now()],
+    );
 
     $this->buatUser = function (string $peran) {
         $user = User::factory()->create();
@@ -97,7 +103,7 @@ it('menampilkan panel operator dan menyisipkan konfigurasi alamat aksi', functio
      * tempat ia sekarang benar-benar lahir -- endpoint state.
      */
     $this->actingAs($operator)
-        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('identitas.partai', false)
         ->assertSee('partaiPanel', false)
@@ -210,7 +216,7 @@ it('tidak memasang indikator jatuhan juri di panel operator', function () {
     $operator = ($this->buatUser)('operator-it');
 
     $halaman = $this->actingAs($operator)
-        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
         ->assertOk();
 
     $halaman->assertSee('Pukulan')
@@ -241,7 +247,7 @@ it('mengizinkan juri melihat panel operator sebagai pemantau, meski tombolnya te
     $juri = ($this->buatUser)('juri');
 
     $this->actingAs($juri)
-        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
         ->assertOk();
 });
 
@@ -372,7 +378,7 @@ it('memasang papan hasil di panel operator', function () {
     $operator = ($this->buatUser)('operator-it');
 
     $this->actingAs($operator)
-        ->get(route('admin.turnamen.partai.operator', [$this->tournament, $this->match]))
+        ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertSee('Skor per babak')
         ->assertSee('Rincian')
@@ -404,4 +410,130 @@ it('mengirim rincian teknik kedua sudut di payload state panel', function () {
         ->assertJsonPath('teknik.merah.tendangan', 1)
         ->assertJsonPath('teknik.merah.pukulan', 0)
         ->assertJsonPath('teknik.biru.jatuhan', 0);
+});
+
+/*
+ * Pointer tayang pindah dari kolom di `arenas` ke tabelnya sendiri
+ * (`arena_tayang`), dan itu memindahkan satu pembacaan gratis jadi satu query.
+ * Endpoint inilah yang paling tidak boleh menanggungnya: ia ditarik tiap panel
+ * yang terbuka, tiap ada siaran, ditambah sekali tiap dua puluh detik selama
+ * babak berjalan.
+ *
+ * Yang dijaga bukan angka pastinya -- itu akan berubah tiap kali payload
+ * bertambah -- melainkan bahwa jumlahnya tidak tumbuh mengikuti banyaknya
+ * gelanggang. Pointer yang dibaca per gelanggang di dalam perulangan adalah
+ * bentuk N+1 yang tidak terlihat sampai kejuaraan punya dua belas matras.
+ */
+it('tidak menambah query saat kejuaraan punya lebih banyak gelanggang', function () {
+    $operator = ($this->buatUser)('operator-it');
+
+    $hitung = function () use ($operator): int {
+        $jumlah = 0;
+        $pendengar = function () use (&$jumlah) {
+            $jumlah++;
+        };
+
+        DB::listen($pendengar);
+
+        $this->actingAs($operator)
+            ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+            ->assertOk();
+
+        return $jumlah;
+    };
+
+    /*
+     * Panggilan pertama dibuang: ia ikut menanggung pemanasan -- cache izin,
+     * konfigurasi, peta resource. Membandingkannya dengan panggilan kedua
+     * mengukur pemanasan itu, bukan jumlah gelanggang, dan hasilnya justru
+     * TURUN (37 lalu 26) sehingga uji ini lolos atau gagal karena alasan yang
+     * sama sekali bukan yang dijaganya.
+     */
+    $hitung();
+
+    $satuGelanggang = $hitung();
+
+    // Sebelas gelanggang lain, masing-masing dengan pointernya sendiri.
+    foreach (range(1, 11) as $urutan) {
+        $lain = Arena::factory()->for($this->tournament)->create(['sort_order' => $urutan]);
+
+        ArenaTayang::create([
+            'arena_id' => $lain->id,
+            'tayang_type' => ArenaTayang::TANDING,
+            'tayang_id' => $this->match->id,
+            'disetel_pada' => now(),
+        ]);
+    }
+
+    expect($hitung())->toBe($satuGelanggang);
+});
+
+/*
+ * Lajur tekanan juri di panel Dewan Wasit Juri.
+ *
+ * Riwayat panel hanya memperlihatkan nilai yang TERBIT. Tekanan yang tidak
+ * cukup disepakati tidak meninggalkan jejak di layar mana pun -- padahal itu
+ * yang ditanyakan pelatih saat memprotes: "juri saya menekan, kenapa tidak jadi
+ * nilai?". Sebelum ini jawabannya cuma bisa dicari di basis data, di tengah
+ * tenggat protes lima menit.
+ */
+it('mengirim tekanan juri yang tidak jadi nilai kepada peninjau hasil', function () {
+    // buatUser sudah menugaskan juri ke partai ini; menambahkannya lagi
+    // menabrak unique(match_id, user_id).
+    $juri = ($this->buatUser)('juri');
+
+    (new MatchTimer)->mulaiBabak($this->match, 1);
+
+    // Satu juri saja -- di bawah ambang, jadi tidak pernah jadi nilai.
+    $this->actingAs($juri)
+        ->post(route('admin.turnamen.partai.nilai', [$this->tournament, $this->match]), [
+            'babak' => 1, 'corner' => 'red', 'jenis' => 'pukulan',
+        ])->assertSessionHasNoErrors();
+
+    $pengawas = ($this->buatUser)('pengawas-wasit-juri');
+
+    $muatan = $this->actingAs($pengawas)
+        ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertJsonCount(1, 'tekanan')
+        // Sendirian: sah, tercatat, tapi tidak menemukan juri lain di jendela
+        // kesepakatan. Inilah keadaan yang selama ini tidak terlihat.
+        ->assertJsonPath('tekanan.0.status', 'sendirian')
+        ->assertJsonPath('tekanan.0.corner', 'red')
+        ->json();
+
+    expect($muatan['tekanan'][0]['juri'])->not->toBeNull()
+        // Riwayat nilai tetap kosong -- tidak ada nilai yang terbit.
+        ->and(collect($muatan['riwayat'])->where('tipe', 'nilai'))->toBeEmpty();
+});
+
+/*
+ * Panel juri menarik endpoint yang SAMA. Tekanan mentah tidak ada gunanya di
+ * sana, dan ongkosnya satu kueri pada jalur yang ditarik tiap kali sebuah nilai
+ * terbit.
+ */
+it('tidak mengirim lajur tekanan kepada juri', function () {
+    $juri = ($this->buatUser)('juri');
+
+    $this->actingAs($juri)
+        ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertJsonPath('tekanan', null);
+});
+
+/*
+ * Partai yang riwayatnya sudah dipangkas menjawab dengan daftar kosong, bukan
+ * daftar yang seolah tidak pernah ada tekanan. Pembedanya
+ * `riwayat_dipangkas_pada`, yang sudah lama ikut di payload.
+ */
+it('mengosongkan lajur tekanan pada partai yang riwayatnya dipangkas', function () {
+    $pengawas = ($this->buatUser)('pengawas-wasit-juri');
+
+    $this->match->forceFill(['judge_inputs_dipangkas_pada' => now()])->save();
+
+    $this->actingAs($pengawas)
+        ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertJsonCount(0, 'tekanan')
+        ->assertJsonPath('riwayat_dipangkas_pada', fn ($nilai) => $nilai !== null);
 });
