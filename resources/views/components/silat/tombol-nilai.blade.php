@@ -41,7 +41,16 @@
 
 <button
     type="button"
-    x-bind:disabled="! $store.koneksi.tersambung"
+    {{--
+        Dua sebab tombol ini mati, dan keduanya sebab yang sama: tekanan yang
+        tidak akan dihitung tidak boleh terasa seperti tekanan yang dihitung.
+
+        Yang kedua -- babak tidak sedang menerima nilai -- dibandingkan dengan
+        `=== false`, bukan dibalik dengan `!`. Di luar panel juri (galeri
+        komponen) getter itu memang tidak ada, dan `! undefined` akan
+        mematikan seluruh tombol contoh tanpa satu pun alasan nyata.
+    --}}
+    x-bind:disabled="! $store.koneksi.tersambung || babakMenerimaNilai === false"
     {{ $attributes->merge([
         'class' => $latar.' '.implode(' ', [
             'flex w-full select-none flex-col items-center justify-center gap-1',

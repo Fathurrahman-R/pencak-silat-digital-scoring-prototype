@@ -110,6 +110,11 @@
     --silat-teks-mati: var(--g-teks-mati);
     --silat-hidup: var(--g-hidup);
 
+    /* Mutu jaringan gelanggang: hidup (lancar) -> emas (lambat) ->
+       awas (buruk). Lihat catatan --g-awas di dasar.css untuk alasan
+       ronanya dijauhkan dari merah sudut. */
+    --silat-awas: var(--g-awas);
+
     --silat-teks-merah: var(--teks-di-merah);
     --silat-teks-merah-redup: var(--teks-di-merah-redup);
     --silat-teks-merah-samar: var(--teks-di-merah-samar);
@@ -178,6 +183,7 @@
     --color-silat-tepi-kendali: var(--silat-tepi-kendali);
     --color-silat-teks-mati: var(--silat-teks-mati);
     --color-silat-hidup: var(--silat-hidup);
+    --color-silat-awas: var(--silat-awas);
 
     --color-silat-teks-merah: var(--silat-teks-merah);
     --color-silat-teks-merah-redup: var(--silat-teks-merah-redup);
@@ -266,6 +272,7 @@
        panggung: #c9a227 hanya 1.9 di atas putih. DESIGN-SYSTEM.md §2. */
     --silat-emas: #8a6d10;
     --silat-hidup: #16a34a;
+    --silat-awas: #be123c;   /* 6.29 di kertas */
 }
 
 :root[data-theme='dark'] .silat-publik {
@@ -288,6 +295,7 @@
 
     --silat-emas: var(--emas);
     --silat-hidup: var(--g-hidup);
+    --silat-awas: var(--g-awas);
 }
 
 @layer base {

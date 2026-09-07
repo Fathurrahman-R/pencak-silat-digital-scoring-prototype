@@ -53,8 +53,25 @@
                  sendiri dan mendorong seluruh kolom kendali ke luar layar --
                  tombol "Mulai" dan "Akhiri partai" ikut terpotong. --}}
             <div class="flex min-h-0 min-w-0 flex-col">
-                <x-silat.blok-operator sudut="red" kunci-skor="merah" />
-                <x-silat.blok-operator sudut="blue" kunci-skor="biru" />
+                {{--
+                    Blok skor menyerahkan tempatnya begitu hasil DISAHKAN.
+
+                    Selama partai berjalan dan selama hasilnya masih menunggu
+                    Dewan Wasit Juri, dua blok inilah isi layar: angka besar
+                    yang dibaca dari pinggir matras. Sesudah disahkan, angka
+                    itu tidak berubah lagi dan tidak ada lagi yang perlu
+                    diawasi sekilas -- yang dibutuhkan justru rinciannya: dari
+                    mana angka akhir itu datang, babak mana yang menentukan.
+                    Menaruh keduanya bertumpuk membuat papan hasil terdorong ke
+                    bawah lipatan layar, dan operator harus menggulir untuk
+                    melihat hal yang justru paling penting saat itu.
+                --}}
+                <template x-if="! match?.ratified">
+                    <div class="flex min-h-0 flex-1 flex-col">
+                        <x-silat.blok-operator sudut="red" kunci-skor="merah" />
+                        <x-silat.blok-operator sudut="blue" kunci-skor="biru" />
+                    </div>
+                </template>
 
                 {{--
                     Pita keadaan. Satu tempat untuk semua kabar panel ini —
@@ -128,8 +145,13 @@
                     ke luar layar akan menghalangi banyak.
                 --}}
                 <template x-if="sudahSelesai">
-                    <div class="min-h-0 flex-1 overflow-y-auto border-t border-silat-garis p-5">
-                        <x-silat.papan-hasil />
+                    <div class="min-h-0 flex-1 overflow-y-auto border-t border-silat-garis"
+                         x-bind:class="match?.ratified ? 'p-0' : 'p-5'">
+                        {{-- Sesudah disahkan papan ini MENGGANTIKAN blok skor,
+                             jadi ia mengisi kolomnya penuh tanpa sela dan
+                             tanpa sudut membulat -- bukan kartu yang mengambang
+                             di tengah bidang kosong. --}}
+                        <x-silat.papan-hasil x-bind:class="match?.ratified ? 'min-h-full rounded-none' : ''" />
                     </div>
                 </template>
             </div>

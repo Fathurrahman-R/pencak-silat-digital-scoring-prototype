@@ -27,6 +27,17 @@ $redup = $biru ? 'text-silat-teks-biru-samar' : 'text-silat-teks-merah-samar';
 $kedua = $biru ? 'text-silat-teks-biru' : 'text-silat-teks-merah-redup';
 
 /*
+* Petak hukuman duduk di atas batang sudut TERANG (#d42027 / #12439e),
+* bukan di bidang dalam yang gelap. Token tepi yang dipakai di seluruh
+* panel -- #8a8a90 -- dihitung terhadap bidang gelap: di atas merah terang
+* ia cuma 1,53, jauh di bawah ambang 3,0 untuk unsur non-teks, dan
+* deretnya praktis tidak terlihat. Token teks sudut yang terang lolos:
+* 3,54 di merah dan 5,80 di biru. Pasangan ini dijaga scripts/kontras.mjs.
+*/
+$tepiRail = $biru ? 'border-silat-teks-biru' : 'border-silat-teks-merah-redup';
+$redupRail = $biru ? 'text-silat-teks-biru' : 'text-silat-teks-merah-redup';
+
+/*
 * Dua teknik saja. Jatuhan tidak lagi ditekan juri -- nilainya mutlak dan
 * diterbitkan wasit -- jadi barisnya tidak akan pernah menyala. Indikator
 * yang selamanya kosong terbaca operator sebagai juri yang tidak menekan,
@@ -36,7 +47,50 @@ $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan'];
 @endphp
 
 <div class="{{ $bidang }} flex min-h-0 flex-1 items-stretch">
-    <div class="{{ $rail }} w-2 shrink-0"></div>
+    {{--
+        Batang warna sudut sekaligus wadah indikator hukuman.
+
+        Sebelumnya deret hukuman tersisip di bawah nama pesilat, sebaris dengan
+        indikator juri -- dua alat ukur berbentuk sama persis, bertumpuk di
+        kolom yang sama. Wasit yang mencari "sudah teguran berapa" harus
+        memindai deret juri lebih dulu setiap kali. Dipindah ke batang sudut,
+        tiap pertanyaan punya tempatnya sendiri, dan hukuman jatuh di tempat
+        mata bergerak lebih dulu: tepi kiri bidang berwarna.
+
+        Ketujuh petaknya BERTUMPUK dalam satu lajur, bukan berderet mendatar.
+        Berderet, ketiga kelompok menuntut sekitar 380px -- lebih lebar
+        daripada seluruh blok sudut di layar ponsel, dan yang pertama terpotong
+        justru Peringatan. Bertumpuk, yang dipakai cuma selebar satu petak, dan
+        yang bertambah tingginya -- dimensi paling longgar di blok ini.
+
+        Jarak antar kelompok lebih lebar daripada jarak antar petak: itu
+        satu-satunya yang memisahkan Pembinaan, Teguran, dan Peringatan
+        sekarang, karena deretnya tidak lagi punya label.
+    --}}
+    <div class="{{ $rail }} flex shrink-0 flex-col items-center justify-center gap-[clamp(8px,1.1vw,18px)] px-[clamp(4px,0.5vw,8px)] py-[clamp(8px,1.1vw,18px)]">
+        @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)
+        @php($jatah = config("scoring.tanding.hukuman.{$jenis}.jumlah_kolom", 0))
+
+        <div class="flex flex-row {{ $tepiRail }}" aria-hidden="true">
+            @for ($i = 1; $i <= $jatah; $i++)
+                {{-- Petak terakhir Peringatan berarti diskualifikasi.
+                         Penandanya tepi ATAS yang putus-putus sekarang, bukan
+                         tepi kiri: lajurnya vertikal, jadi yang memisahkan satu
+                         petak dari petak sebelumnya adalah garis mendatar. --}}
+                <span class="grid h-[clamp(30px,2.6vw,44px)] w-[clamp(34px,3vw,50px)] place-items-center border-[1.5px] {{ $tepiRail }}"
+                @class(['border-t-[1.5px] border-dashed'=> $jenis === 'peringatan' && $i === $jatah])
+                x-bind:class="(hukuman?.{{ $kunciSkor }}?.{{ $jenis }} ?? 0) >= {{ $i }}
+                ? 'bg-silat-teks text-silat-panel'
+                : '{{ $redupRail }}'">
+                <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="true" :ukuran="26"
+                    x-bind:class="(hukuman?.{{ $kunciSkor }}?.{{ $jenis }} ?? 0) >= {{ $i }}
+                                ? ''
+                                : 'invert opacity-70'" />
+                </span>
+                @endfor
+        </div>
+        @endforeach
+    </div>
 
     {{-- Ukuran huruf dan padding memakai `clamp()`: nilai TERBESARNYA sama
          persis dengan rancangan (nama 64px, kontingen 24px, skor 156px), jadi
@@ -52,11 +106,11 @@ $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan'];
                 <p class="mt-1.5 truncate text-[clamp(13px,1.6vw,24px)] {{ $kedua }}" x-text="match.{{ $sudut }}?.contingent ?? '—'"></p>
             </div>
 
-            {{-- Jarak antar kelompok dirapatkan setelah kotaknya diperbesar:
-                 dua deret indikator 44px dan tiga deret hukuman 44px tidak muat
-                 di setengah layar kalau jaraknya tetap selebar sebelumnya, dan
-                 yang pertama terpotong justru Peringatan — deret yang paling
-                 tidak boleh luput. --}}
+            {{-- Tinggal indikator juri di sini; deret hukuman sudah pindah ke
+                 dalam batang warna sudut. Pembungkusnya dipertahankan karena ia
+                 yang menjaga jarak indikator terhadap nama pesilat di atasnya,
+                 dan karena kelompok kedua bisa kembali ke sini kalau nanti ada
+                 indikator lain yang memang milik kolom nama. --}}
             <div class="flex flex-col items-start gap-6">
                 {{-- Indikator juri per teknik: yang terlihat operator adalah
                      berapa juri yang menekan teknik yang sama, karena itulah
@@ -89,42 +143,6 @@ $teknik = ['pukulan' => 'Pukulan', 'tendangan' => 'Tendangan'];
                     @endforeach
                 </div>
 
-                {{--
-                    Deretan petak hukuman lebih lebar daripada layar ponsel.
-                    Ia digulir di dalam wadahnya sendiri, bukan mendorong
-                    seluruh halaman jadi lebih lebar dari viewport: badan
-                    halaman yang ikut bergeser mendatar membuat tombol kendali
-                    di kolom bawah tidak lagi sejajar dengan apa yang terlihat.
-                --}}
-                <div class="flex max-w-full items-center gap-2 overflow-x-auto">
-                    <!-- <p class="silat-angka mb-2 text-[10px] tracking-[.12em] {{ $redup }} uppercase">Hukuman</p> -->
-
-                    @foreach (['pembinaan', 'teguran', 'peringatan'] as $jenis)
-                    @php($jatah = config("scoring.tanding.hukuman.{$jenis}.jumlah_kolom", 0))
-                    <div class="mt-2 flex items-center gap-2.5 ">
-                        <!-- <span class="w-[82px] shrink-0 text-[12.5px] {{ $kedua }}">{{ ucfirst($jenis) }}</span> -->
-                        <div class="flex border-[1.5px] {{ $tepi }}" aria-hidden="true">
-                            @for ($i = 1; $i <= $jatah; $i++)
-                                {{-- Petak terakhir Peringatan berarti diskualifikasi.
-                                     Penandanya kini tepi KIRI yang putus-putus, bukan
-                                     kotak putus-putus yang berdiri sendiri: deretnya
-                                     bersambung, jadi yang tersisa untuk dibedakan
-                                     hanyalah garis pemisahnya. --}}
-                                <span class="grid h-11 w-[54px] place-items-center border-e-[1.5px] last:border-e-0 {{ $tepi }}"
-                                @class(['border-s-[1.5px] border-dashed'=> $jenis === 'peringatan' && $i === $jatah])
-                                x-bind:class="(hukuman?.{{ $kunciSkor }}?.{{ $jenis }} ?? 0) >= {{ $i }}
-                                ? 'bg-silat-teks text-silat-panel'
-                                : '{{ $redup }}'">
-                                <x-silat.ikon-hukuman :jenis="$jenis" :tingkat="$i" :nyala="true" :ukuran="30"
-                                    x-bind:class="(hukuman?.{{ $kunciSkor }}?.{{ $jenis }} ?? 0) >= {{ $i }}
-                                        ? ''
-                                        : 'invert opacity-70'" />
-                                </span>
-                                @endfor
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
             </div>
         </div>
 
