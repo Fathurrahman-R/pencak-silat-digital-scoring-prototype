@@ -45,6 +45,61 @@ class PromosiPemenang
             $partai->sudutBerikutnya().'_registration_id' => $partai->winner_registration_id,
         ]);
 
-        return $berikutnya->refresh();
+        $berikutnya->refresh();
+
+        $this->rambatkanBilaTanpaLawan($berikutnya);
+
+        return $berikutnya;
+    }
+
+    /**
+     * Meneruskan peserta yang sudut lawannya tidak akan pernah terisi.
+     *
+     * Hanya terjadi pada bagan pemasalan berjumlah ganjil: partai terakhir
+     * sebuah babak bisa berdiri tanpa partai pasangan di babak sebelumnya,
+     * jadi tidak ada satu pun pemenang yang akan naik ke sudut satunya.
+     * Membiarkannya berarti gelanggang menunggu lawan yang tidak ada, dan
+     * itulah bentuk kemacetan yang paling sulit dikenali di hari-H: partai
+     * terjadwal, papan siap, tapi satu sudut kosong selamanya.
+     *
+     * Untuk bagan pangkat dua, cabang ini tidak pernah diambil -- tiap partai
+     * di babak dua ke atas selalu punya dua partai sumber -- jadi perilaku
+     * bagan gugur dan battle Jurus tidak berubah sama sekali.
+     */
+    private function rambatkanBilaTanpaLawan(Terbagankan&Model $partai): void
+    {
+        if ($partai->winner_registration_id !== null) {
+            return;
+        }
+
+        $terisi = $partai->red_registration_id ?? $partai->blue_registration_id;
+        $kosong = $partai->red_registration_id === null || $partai->blue_registration_id === null;
+
+        if ($terisi === null || ! $kosong) {
+            return;
+        }
+
+        // Sudut yang kosong diisi pemenang partai sumbernya. Kalau partai
+        // sumber itu tidak ada, tidak akan pernah ada yang mengisinya.
+        $sumberKosong = $partai->red_registration_id === null
+            ? $partai->position * 2 - 1
+            : $partai->position * 2;
+
+        $adaSumber = $partai->sesamaBagan()
+            ->where('round', $partai->round - 1)
+            ->where('position', $sumberKosong)
+            ->exists();
+
+        if ($adaSumber) {
+            return;
+        }
+
+        $partai->update([
+            'winner_registration_id' => $terisi,
+            'win_reason' => 'bye',
+            'status' => $partai::STATUS_SELESAI,
+        ]);
+
+        $this($partai->refresh());
     }
 }

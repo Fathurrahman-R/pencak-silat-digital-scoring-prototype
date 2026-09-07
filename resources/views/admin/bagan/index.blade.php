@@ -76,9 +76,28 @@
                                 dan keputusan itu diambil setelah melihat
                                 susunannya -- tombolnya ada di halaman bagan.
                             --}}
+                            {{--
+                                Mode dipilih DI SEBELAH tombolnya, bukan di
+                                halaman setelan tersendiri.
+
+                                Satu kejuaraan memakai keduanya di hari yang
+                                sama -- pemasalan untuk usia dini, gugur untuk
+                                dewasa -- jadi yang menyusun bagan memutuskan
+                                per kelas, sambil melihat berapa peserta kelas
+                                itu. Bawaannya gugur, bentuk yang dikenal
+                                pembaca bagan.
+                            --}}
                             @resource(rk('bagan', ResourceAction::Create))
-                                <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}">
+                                <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}"
+                                      class="flex items-center gap-2">
                                     @csrf
+                                    <select name="mode" aria-label="Mode bagan {{ $k->name }}"
+                                            class="h-9 rounded-[var(--radius)] border border-line bg-surface px-2 text-[12.5px] text-ink">
+                                        @foreach (App\Enums\ModeBagan::cases() as $mode)
+                                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                                        @endforeach
+                                    </select>
+
                                     <x-si.tombol tipe="submit" ukuran="kecil" :nonaktif="! $bisaSusun">
                                         Susun bagan
                                     </x-si.tombol>

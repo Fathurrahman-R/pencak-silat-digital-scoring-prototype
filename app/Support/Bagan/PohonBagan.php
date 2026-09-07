@@ -2,6 +2,7 @@
 
 namespace App\Support\Bagan;
 
+use App\Enums\ModeBagan;
 use App\Models\Bracket;
 use Illuminate\Support\Collection;
 
@@ -62,7 +63,18 @@ class PohonBagan
          * kelengkapan data; kalau ada slot yang hilang, yang pantas terjadi
          * adalah kotak kosong, bukan layar galat.
          */
-        $ukuran = UrutanUnggulan::ukuranBagan(max(2, $slots->count() ?: $bracket->size));
+        /*
+         * Bagan pemasalan TIDAK dibulatkan ke pangkat dua.
+         *
+         * Membulatkannya akan menggambar enam kotak kosong di sebelah sepuluh
+         * peserta -- kotak yang tidak mewakili siapa pun dan tidak pernah
+         * dipertandingkan, padahal seluruh alasan mode pemasalan ada justru
+         * untuk menghapus bye itu.
+         */
+        $ukuran = $bracket->mode === ModeBagan::Pemasalan
+            ? max(2, $slots->count() ?: $bracket->size)
+            : UrutanUnggulan::ukuranBagan(max(2, $slots->count() ?: $bracket->size));
+
         $jumlahBabak = (int) ceil(log($ukuran, 2));
 
         // Tengah tiap slot babak pertama, lalu rata-rata berpasangan ke atas.
@@ -80,9 +92,18 @@ class PohonBagan
          * menggambar kolom kosong berlabel "Final" di sebelah final yang
          * sebenarnya.
          */
+        /*
+         * Potongan berisi SATU tinggi -- babak ganjil pada bagan pemasalan --
+         * mempertahankan ketinggiannya apa adanya: yang melenggang berdiri
+         * tepat di ketinggian tempatnya sendiri, bukan di tengah pasangan
+         * yang tidak ada. Untuk bagan pangkat dua tiap potongan selalu berisi
+         * dua, jadi cabang ini tidak pernah diambil di sana.
+         */
         for ($r = 1; $r < $jumlahBabak; $r++) {
-            foreach (array_chunk($tengah[$r - 1], 2) as $j => [$atas, $bawah]) {
-                $tengah[$r][$j] = intdiv($atas + $bawah, 2);
+            foreach (array_chunk($tengah[$r - 1], 2) as $j => $pasangan) {
+                $tengah[$r][$j] = count($pasangan) === 2
+                    ? intdiv($pasangan[0] + $pasangan[1], 2)
+                    : $pasangan[0];
             }
         }
 
@@ -108,7 +129,7 @@ class PohonBagan
         }
 
         return [
-            'tinggi' => intdiv($ukuran, 2) * self::LANGKAH - (self::LANGKAH - self::SLOT_TINGGI * 2 - self::SLOT_JARAK),
+            'tinggi' => (int) ceil($ukuran / 2) * self::LANGKAH - (self::LANGKAH - self::SLOT_TINGGI * 2 - self::SLOT_JARAK),
             'lebar' => $x - self::PENGHUBUNG,
             'slot_tinggi' => self::SLOT_TINGGI,
             'kolom' => $kolom,
@@ -171,7 +192,7 @@ class PohonBagan
     {
         $bye = [];
 
-        for ($j = 0; $j < intdiv($ukuran, 2); $j++) {
+        for ($j = 0; $j < (int) ceil($ukuran / 2); $j++) {
             $terisi = (int) ($slots->get($j * 2)?->registration_id !== null)
                 + (int) ($slots->get($j * 2 + 1)?->registration_id !== null);
 
@@ -228,12 +249,26 @@ class PohonBagan
         for ($r = 0; $r < $jumlahBabak - 1; $r++) {
             $separuh = intdiv(self::PENGHUBUNG, 2);
 
-            foreach (array_chunk($tengah[$r], 2) as $j => [$atas, $bawah]) {
+            foreach (array_chunk($tengah[$r], 2) as $j => $pasangan) {
                 // Pasangan bye tidak digambar di kolom pertama, jadi tidak ada
                 // slot yang bisa dijadikan pangkal garisnya.
                 if ($r === 0 && isset($pasanganBye[$j])) {
                     continue;
                 }
+
+                /*
+                 * Potongan berisi satu -- yang melenggang pada bagan pemasalan
+                 * berjumlah ganjil. Satu garis mendatar lurus, tanpa siku:
+                 * tidak ada dua slot yang dipertemukan di sini, dan siku yang
+                 * digambar tanpa lawan terbaca sebagai partai yang tidak ada.
+                 */
+                if (count($pasangan) === 1) {
+                    $garis[] = ['jenis' => 'h', 'x' => $x, 'y' => $pasangan[0], 'panjang' => self::PENGHUBUNG];
+
+                    continue;
+                }
+
+                [$atas, $bawah] = $pasangan;
 
                 $garis[] = ['jenis' => 'h', 'x' => $x, 'y' => $atas, 'panjang' => $separuh];
                 $garis[] = ['jenis' => 'h', 'x' => $x, 'y' => $bawah, 'panjang' => $separuh];
