@@ -122,6 +122,43 @@ Kata sandi seluruhnya `password`. Ulangi dari bersih dengan `php artisan silat:s
 
 Langkah ujinya per tahap ada di [`docs/PANDUAN-WORKFLOW.md`](docs/PANDUAN-WORKFLOW.md).
 
+### Kejuaraan berskala penuh
+
+Kejuaraan siap-uji di atas berukuran seratus pesilat pada lima kelas — pas untuk menelusuri satu partai dengan tangan, dan terlalu kecil untuk menemukan apa pun yang hanya muncul pada data sebesar kejuaraan sungguhan. Dua skala berikut mengisi **seluruh 174 kelas tanding dan seluruh 64 nomor Jurus**:
+
+```bash
+php artisan silat:simulasi --skala=sedang    # ±550 pesilat, 2 gelanggang
+php artisan silat:simulasi --skala=besar     # ±2.700 pesilat, 3 gelanggang
+```
+
+| Skala | Kontingen | Atlet | Pendaftaran | Partai | Gelanggang | Waktu susun |
+|---|---|---|---|---|---|---|
+| `sedang` | 6 | ±556 | ±476 | ±174 | 2 | ±26 detik |
+| `besar` | 12 | ±2.712 | ±2.472 | ±2.388 | 3 | ±78 detik |
+
+Ketiga skala punya slug sendiri, jadi ketiganya boleh berdiri bersamaan di satu basis data — berlatih pada data besar tidak membuang kejuaraan kecil yang sedang dipakai. Akunnya sama persis dengan tabel di atas (`juri1@silat.test`, dan seterusnya), ditambah `operator3@silat.test`, `wasit3@silat.test`, dan `juri7@silat.test`–`juri9@silat.test` untuk gelanggang ketiga.
+
+Nomor Jurus ikut terisi, termasuk ganda (2 pesilat) dan regu (3 pesilat), dan bagan gugurnya sudah tersusun beserta penampilan ronde pertama — jadi panel juri Jurus punya sesuatu untuk dinilai tanpa satu langkah manual pun.
+
+```bash
+php artisan silat:simulasi --skala=besar --tanpa-bagan
+```
+
+Berhenti sesudah pendaftaran sah dan lunas, sebelum satu pun bagan berdiri. Dipakai saat yang dilatih justru penyusunan bagannya sendiri: memilih mode, mengundi ulang, menukar tempat, mengunci.
+
+Yang **tidak** dikerjakan kedua skala ini, berbeda dari simulasi kecil: berkas peserta tidak ditulis ke disk. Untuk menguji unduhan berkas di panel verifikasi, pakai `--skala=kecil`.
+
+### Dua mode penyusunan bagan Tanding
+
+| Mode | Ukuran bagan | Babak pertama |
+|---|---|---|
+| **Gugur** | dibulatkan ke pangkat dua (8, 16, 32…) | tempat sisa jadi bye, disebar merata oleh susunan unggulan baku |
+| **Pemasalan** | seukuran jumlah peserta, tanpa dibulatkan | seluruh peserta bertanding; kalau ganjil, peserta di tempat terakhir melenggang |
+
+Mode dipilih per kelas saat menyusun bagan — satu kejuaraan lazim memakai pemasalan untuk usia dini dan gugur untuk dewasa di hari yang sama, dan seeder berskala penuh memang menyusunnya begitu.
+
+Keduanya sama-sama sistem gugur dan sama-sama menghabiskan partai sebanyak peserta dikurangi satu. Yang perlu diketahui panitia sebelum memilih pemasalan: pada jumlah peserta ganjil, tempat terakhir bisa melenggang lebih dari sekali — sembilan peserta berarti satu orang melenggang tiga kali lalu bertanding sekali di final. Yang menahannya hanya undian acak, jadi pemasalan paling cocok untuk jumlah peserta genap.
+
 ---
 
 ## Peta modul

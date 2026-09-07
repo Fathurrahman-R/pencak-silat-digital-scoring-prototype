@@ -32,6 +32,7 @@
 | Menilai serangan yang masuk | Juri 1–3 | PWA Juri |
 | Mencatat nilai/hukuman yang terlewat di babak lalu | **Pengendali Gelanggang** | Panel Kendali → "Catat susulan babak N" |
 | Mengakhiri partai (KO, WMP, mutlak, dst.) | **Pengendali Gelanggang** | Panel Kendali |
+| Meninggalkan partai yang terlanjur dimulai dan tidak jadi dimainkan | **Pengendali Gelanggang** | Panel Kendali → pilih partai lain (atau "Kosongkan gelanggang"), lalu tombol **Pindah paksa** yang muncul di pesan penolakan |
 | Menayangkan skor di gelanggang | Operator IT | Papan tampilan (`/gelanggang/{arena}/panel/papan`) |
 | Meninjau riwayat, membatalkan nilai/hukuman keliru, **mengesahkan hasil** | Dewan Juri | Panel Dewan Juri |
 | Mencetak berita acara | Ketua Pertandingan / Dewan Juri | Tombol "Berita acara (PDF)" di Panel Dewan Juri |
@@ -48,7 +49,9 @@
 | Mencatat pengurangan 0.50, menetapkan diskualifikasi | Pengawas/Dewan Wasit Juri | Panel Operator Jurus (bagian Pengurangan) |
 | **Mengesahkan skor akhir** | Ketua Pertandingan | Panel Operator Jurus |
 
-Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi.
+Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi. Pengesahan juga menuntut penampilannya sudah **selesai**: timernya dijalankan lalu dihentikan.
+
+Panel Jurus mengikuti siaran, sama seperti panel Tanding: nilai juri, timer, pengurangan, dan pengesahan muncul di panel lain dalam hitungan detik tanpa memuat ulang halaman. Halaman perbandingan battle ikut bergerak, jadi yang menekan "Tetapkan pemenang" tidak pernah membaca satu sisi yang basi. Kalau penanda koneksi di pojok panel menyala **Terputus**, yang terlihat di layar sedang berhenti diperbarui -- periksa jaringan gelanggang sebelum mengambil keputusan dari angkanya.
 
 ## Protes VAR dan Protes Manajer
 

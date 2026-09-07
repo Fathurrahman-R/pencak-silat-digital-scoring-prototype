@@ -187,9 +187,18 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 **Siapa:** Sekretariat Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Bagan
 
 1. Pilih kelas tanding. Sistem menampilkan berapa peserta sah yang tersedia.
-2. **Susun** — acak atau berurutan. Bye disebar merata di babak pertama untuk jumlah peserta bukan pangkat dua, dan peserta yang lawannya bye langsung diluluskan ke babak berikutnya.
-3. **Tukar** slot secara manual bila undian perlu diatur (memisahkan satu kontingen, misalnya).
-4. **Kunci** setelah bagan disahkan.
+2. Pilih **mode bagan** di sebelah tombol Susun — per kelas, bukan sekali untuk seluruh kejuaraan:
+
+   | Mode | Ukuran bagan | Babak pertama |
+   |---|---|---|
+   | **Gugur** (bawaan) | dibulatkan ke pangkat dua: 8, 16, 32… | tempat yang tersisa jadi bye, disebar merata; yang lawannya bye langsung diluluskan |
+   | **Pemasalan** | seukuran jumlah peserta, tanpa dibulatkan | seluruh peserta bertanding; kalau jumlahnya ganjil, peserta di tempat terakhir melenggang |
+
+   Pemasalan dipakai kejuaraan usia dini, tempat yang dituju adalah semua anak naik matras — bukan separuh peserta yang melenggang karena kebetulan bagannya harus 16. Yang perlu diketahui sebelum memilihnya: pada jumlah peserta **ganjil**, tempat terakhir bisa melenggang lebih dari satu babak (sembilan peserta: melenggang tiga kali, lalu bertanding sekali di final). Untuk jumlah genap, hal itu tidak terjadi sama sekali.
+
+3. **Susun** — acak atau berurutan.
+4. **Tukar** slot secara manual bila undian perlu diatur (memisahkan satu kontingen, misalnya).
+5. **Kunci** setelah bagan disahkan. Mode hanya bisa diubah lewat susun ulang, dan susun ulang mengacak undian dari nol.
 
 **Setelah dikunci**, penyusunan ulang wajib beralasan dan tercatat di jejak audit. Kunci bagan sebelum hari-H, bukan pada pagi harinya.
 
