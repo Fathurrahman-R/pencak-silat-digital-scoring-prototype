@@ -428,6 +428,18 @@ class PanelGelanggangController extends Controller
 
         $config = $this->aksiJurus($tournament, $performance) + [
             'state' => route('admin.turnamen.gelanggang.panel.jurus-state', [$tournament, $arena]),
+            /*
+             * Panel ini mengikuti GELANGGANG, jadi ia harus mendengar channel
+             * gelanggang -- bukan cuma channel penampilan yang sedang tayang.
+             *
+             * Tanpa itu, pengendali yang berpindah ke partai Tanding atau ke
+             * penampilan lain meninggalkan panel juri Jurus memajang
+             * penampilan yang sudah tidak ada di matras, dengan tombol nilai
+             * yang masih hidup. Ditemukan begitu di peramban: dua setengah
+             * detik sesudah gelanggang beralih, panelnya belum bergerak sama
+             * sekali, dan baru benar setelah dimuat ulang dengan tangan.
+             */
+            'arenaId' => $arena->id,
         ];
 
         if ($view === 'jurus.juri') {
@@ -563,6 +575,7 @@ class PanelGelanggangController extends Controller
             + [
                 'bukaSusulan' => route('admin.turnamen.gelanggang.panel.babak-susulan.buka', [$tournament, $arena]),
                 'tutupSusulan' => route('admin.turnamen.gelanggang.panel.babak-susulan.tutup', [$tournament, $arena]),
+                'bolehKendali' => $this->bolehMengendalikan($arena, $untuk),
             ];
 
         /*
@@ -583,6 +596,44 @@ class PanelGelanggangController extends Controller
                 'biru' => $partai->blue?->athletes->pluck('name')->implode(', '),
                 'aktif' => $partai->id === $arena->active_match_id,
             ])->all();
+
+            /*
+             * Kategori Jurus ikut dikirim ke panel kendali.
+             *
+             * Satu gelanggang menayangkan satu hal -- partai Tanding ATAU
+             * penampilan Jurus -- tapi panel kendali sampai sekarang cuma
+             * mengenal yang pertama. Akibatnya terukur di peramban: gelanggang
+             * yang sedang menayangkan penampilan Jurus membuat panel
+             * pengendalinya menulis "Belum ada partai dipilih", seolah matras
+             * itu menganggur, sementara juri Jurus di gelanggang yang sama
+             * sedang menatap penampilan yang berjalan.
+             *
+             * Yang dikirim: apa yang sedang tayang (kalau itu Jurus), dan
+             * antrean penampilan gelanggang ini supaya pengendali bisa
+             * memindahkannya tanpa keluar dari panel.
+             */
+            $penampilanTayang = $this->pointer->penampilanAktif($arena);
+
+            $blok['jurus'] = [
+                'pilih' => route('admin.turnamen.gelanggang.panel.penampilan-aktif', [$tournament, $arena]),
+                'panel' => route('admin.turnamen.gelanggang.panel.jurus-operator', [$tournament, $arena]),
+                'tayang' => $penampilanTayang === null ? null : [
+                    'id' => $penampilanTayang->id,
+                    'nomor' => $penampilanTayang->jurusEvent?->nama(),
+                    'peserta' => $penampilanTayang->registration?->athletes->pluck('name')->implode(', '),
+                    'kontingen' => $penampilanTayang->registration?->contingent?->name,
+                    'status' => $penampilanTayang->status,
+                ],
+                'antrean' => $this->pointer->antreanJurus($arena)->map(fn (JurusPerformance $satu) => [
+                    'id' => $satu->id,
+                    'urutan' => $satu->order_in_arena,
+                    'status' => $satu->status,
+                    'nomor' => $satu->jurusEvent?->nama(),
+                    'peserta' => $satu->registration?->athletes->pluck('name')->implode(', '),
+                    'kontingen' => $satu->registration?->contingent?->name,
+                    'aktif' => $penampilanTayang !== null && $satu->id === $penampilanTayang->id,
+                ])->all(),
+            ];
 
             /*
              * Serah-terima antar gelanggang ikut di sini, bukan di endpoint
@@ -786,14 +837,37 @@ class PanelGelanggangController extends Controller
     {
         abort_if($user === null, 403);
 
-        if (! $user->hasRole('pengendali-gelanggang')) {
-            return;
-        }
-
         abort_unless(
-            $arena->pengendali()->whereKey($user->id)->exists(),
+            $this->bolehMengendalikan($arena, $user),
             403,
             'Anda bukan pengendali gelanggang ini.',
         );
+    }
+
+    /**
+     * Apakah orang ini boleh MENGENDALIKAN gelanggang ini, bukan sekadar
+     * melihatnya.
+     *
+     * Peran `pengendali-gelanggang` dibatasi ke gelanggang yang memang
+     * dipegangnya; peran lain yang punya izinnya (panitia, ketua) tidak
+     * dibatasi -- merekalah yang menambal saat pengendali berhalangan.
+     *
+     * Dipakai dua kali dengan arti yang sama: menolak aksi di server, dan
+     * memutuskan apakah tombolnya digambar sama sekali. Panel kendali yang
+     * memajang tombol yang pasti dijawab 403 lebih berbahaya daripada panel
+     * yang tidak memajangnya -- yang menekan "Kosongkan gelanggang" di
+     * gelanggang sebelah tidak selalu membaca pesan galatnya.
+     */
+    private function bolehMengendalikan(Arena $arena, ?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if (! $user->hasRole('pengendali-gelanggang')) {
+            return true;
+        }
+
+        return $arena->pengendali()->whereKey($user->id)->exists();
     }
 }

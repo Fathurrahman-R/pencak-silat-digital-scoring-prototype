@@ -122,7 +122,16 @@ class MatchTimer
     {
         $babakAktif = $match->babakAktif();
 
-        if ($babakAktif?->berjalan()) {
+        /*
+         * Babak yang sedang DIJEDA ikut ditutup, bukan cuma yang berjalan.
+         *
+         * KO, undur diri, dan diskualifikasi hampir selalu diputuskan saat jam
+         * sudah dijeda -- itu justru urutan yang benar. Kalau babaknya
+         * dibiarkan berstatus 'jeda', partai yang sudah punya pemenang tetap
+         * terbaca sebagai babak yang bisa dilanjutkan: tombol Lanjutkan, Jeda,
+         * Selesaikan babak, dan Reset babak tetap hidup di panel operator.
+         */
+        if (in_array($babakAktif?->status, [StatusBabak::Berjalan, StatusBabak::Jeda], true)) {
             $this->selesaikanBabak($babakAktif);
         }
 

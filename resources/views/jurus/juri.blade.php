@@ -12,7 +12,11 @@
         angka: titik desimalnya ditempatkan sendiri oleh sistem.
     --}}
     <div x-data="jurusPanel(@js($config))"
-         class="flex h-dvh flex-col gap-2 overflow-hidden p-2 select-none">
+         {{-- Tinggi layar dikunci mulai `md`. Panel ini dirancang untuk tablet
+              melintang; di ponsel tegak ketiga lajurnya bertumpuk dan isinya
+              memang melebihi satu layar, jadi ia harus boleh digulir alih-alih
+              terpotong diam-diam. --}}
+         class="flex min-h-dvh flex-col gap-2 p-2 select-none md:h-dvh md:overflow-hidden">
 
         <header class="flex shrink-0 items-center justify-between gap-3">
             <div class="flex min-w-0 items-baseline gap-3">
@@ -40,7 +44,10 @@
             Tanding dan dicatat di sana. Scope bersarang tetap bisa memanggil
             kirimNilaiInput() dan penguranganJuri() milik induknya.
         --}}
-        <div class="grid min-h-0 flex-1 grid-cols-[1fr_250px_260px] gap-3"
+        {{-- Tiga lajur menuntut 510px hanya untuk dua kolom kanannya; di layar
+             375px lajur pertama menyusut sampai papan tiknya tidak bisa
+             ditekan. Bertumpuk di bawah `md`. --}}
+        <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[1fr_250px_260px]"
              x-data="{
                 digit: '',
                 get tampil() {

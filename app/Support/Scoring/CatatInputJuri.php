@@ -108,6 +108,24 @@ class CatatInputJuri
      * Timer babak susulan tidak pernah jalan dan tidak perlu jalan. Syarat
      * `berjalan()` karena itu DIGANTI seluruhnya oleh syarat "susulan terbuka
      * untuk babak ini", bukan ditambahkan padanya.
+     *
+     * # Waktu habis, tapi babak belum dijeda
+     *
+     * `berjalan()` cuma membaca kolom `status`, dan kolom itu tidak berubah
+     * sendiri saat jam babak menyentuh nol -- ia baru berubah kalau pengendali
+     * menekan Jeda atau Selesaikan babak. Di antara dua saat itu ada jeda
+     * beberapa detik yang selalu ada (tangan manusia, dan hitungan mundur yang
+     * ditonton dulu sampai habis), dan sepanjang detik-detik itu tombol juri
+     * masih tembus: nilai yang lahir setelah waktu resmi berakhir tercatat
+     * seolah masih di dalam babak.
+     *
+     * Yang menutup babak karena itu waktunya sendiri, bukan tombol operator.
+     * `habis()` dihitung dari `duration_ms` dikurangi waktu terpakai -- angka
+     * yang sama yang dipakai jam di semua panel -- jadi penolakannya jatuh
+     * pada detik yang sama dengan angka 00:00 yang dilihat juri.
+     *
+     * Sengaja TIDAK dipakai di jalur susulan: babak susulan memang dibuka
+     * dengan timer yang sudah habis, dan justru itulah gunanya.
      */
     private function diterima(SilatMatch $match, int $babak, ?MatchRound $round): bool
     {
@@ -119,7 +137,7 @@ class CatatInputJuri
             return $match->susulan_round === $babak;
         }
 
-        return $match->current_round === $babak && $round->berjalan();
+        return $match->current_round === $babak && $round->berjalan() && ! $round->habis();
     }
 
     private function alasanTolak(SilatMatch $match, int $babak, ?MatchRound $round): string
@@ -130,6 +148,7 @@ class CatatInputJuri
                 => "Babak {$match->susulan_round} sedang dibuka untuk input susulan — hanya babak itu yang menerima nilai.",
             $match->current_round !== $babak => 'Babak ini bukan babak yang sedang berjalan.',
             ! $round->berjalan() => 'Timer babak sedang tidak berjalan.',
+            $round->habis() => 'Waktu babak sudah habis.',
             default => 'Ditolak.',
         };
     }

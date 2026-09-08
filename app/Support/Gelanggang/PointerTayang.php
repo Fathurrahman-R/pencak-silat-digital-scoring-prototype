@@ -95,6 +95,17 @@ class PointerTayang
             $this->pastikanBolehDitinggalkan($sebelumnya, $paksa);
         }
 
+        /*
+         * Satu gelanggang menayangkan satu hal, jadi menayangkan partai
+         * Tanding melepas penampilan Jurus yang sedang tayang. Pelepasan itu
+         * dijaga persis seperti melepas partai yang babaknya masih berjalan --
+         * sebelumnya tidak, dan akibatnya terlihat di peramban: penampilan
+         * yang sedang dinilai tergusur tanpa satu pun penolakan, sementara
+         * juri Jurus tetap memegang panel berisi penampilan yang sudah tidak
+         * ada di matras.
+         */
+        $this->pastikanPenampilanBolehDitinggalkan($this->penampilanAktif($arena), $paksa);
+
         DB::transaction(function () use ($arena, $match, $oleh) {
             $this->tulisTayang($arena, ArenaTayang::TANDING, $match->id, $oleh);
 
@@ -133,6 +144,8 @@ class PointerTayang
          */
         if ($sebelumnya === null) {
             if ($arena->tayang?->menayangkanJurus()) {
+                $this->pastikanPenampilanBolehDitinggalkan($this->penampilanAktif($arena), $paksa);
+
                 $this->tulisTayang($arena, null, null, $oleh);
                 $this->umumkan($arena->refresh(), null, null);
             }
@@ -177,6 +190,12 @@ class PointerTayang
 
         if ($partaiSebelumnya !== null) {
             $this->pastikanBolehDitinggalkan($partaiSebelumnya, $paksa);
+        }
+
+        $penampilanSebelumnya = $this->penampilanAktif($arena);
+
+        if ($penampilanSebelumnya?->id !== $performance->id) {
+            $this->pastikanPenampilanBolehDitinggalkan($penampilanSebelumnya, $paksa);
         }
 
         DB::transaction(function () use ($arena, $performance, $oleh) {
@@ -373,6 +392,41 @@ class PointerTayang
     /**
      * @throws PenolakanDapatDipaksa
      */
+    /**
+     * Penampilan Jurus yang sedang berjalan tidak boleh tergusur diam-diam.
+     *
+     * Kembaran pastikanBolehDitinggalkan() untuk sisi Jurus, dan alasannya
+     * sama persis: satu gelanggang menayangkan satu hal, jadi menayangkan
+     * apa pun yang lain berarti melepas yang sedang tayang. Yang membedakan
+     * cuma apa yang dilakukan sesudah pengendali memaksa.
+     *
+     * Partai Tanding yang ditinggalkan paksa DIJEDA babaknya -- jamnya berhenti
+     * dan bisa dilanjutkan. Penampilan Jurus tidak punya jeda: timernya sekali
+     * jalan, dan menghentikannya berarti mencatat durasi sebagai durasi
+     * penampilan yang sebenarnya tidak pernah selesai dimainkan. Durasi itulah
+     * yang menentukan pengurangan waktu (Pasal 12.1.e), jadi angka yang
+     * dikarang di sini akan muncul sebagai potongan nilai yang tidak pernah
+     * terjadi di matras.
+     *
+     * Karena itu statusnya dibiarkan apa adanya: penampilan tetap tercatat
+     * berjalan, dan pengendali bisa kembali menayangkannya lalu
+     * menyelesaikannya seperti biasa.
+     *
+     * @throws PenolakanDapatDipaksa
+     */
+    private function pastikanPenampilanBolehDitinggalkan(?JurusPerformance $penampilan, bool $paksa): void
+    {
+        if ($penampilan === null || $penampilan->status !== JurusPerformance::STATUS_BERLANGSUNG) {
+            return;
+        }
+
+        if (! $paksa) {
+            throw new PenolakanDapatDipaksa(
+                'Penampilan Jurus yang sedang berjalan belum diselesaikan. Selesaikan dulu, atau pindah paksa.',
+            );
+        }
+    }
+
     private function pastikanBolehDitinggalkan(SilatMatch $partai, bool $paksa): void
     {
         if ($partai->status !== SilatMatch::STATUS_BERLANGSUNG) {

@@ -3,18 +3,20 @@
 <x-layouts.silat :title="'Operator Jurus — '.$performance->registration->athletes->pluck('name')->implode(', ')">
     @php
         /*
-         * Waktu acuan, toleransi, dan ambang diskualifikasi dibaca dari
-         * config/scoring.php lewat JurusEvent -- bukan ditulis di layar sebagai
-         * angka tetap. Ketiganya berbeda per nomor DAN per golongan usia:
-         * Usia Dini boleh melenceng 10 detik, Dewasa hanya 5.
+         * Waktu acuan datang dari JurusEvent, toleransi dan ambang
+         * diskualifikasi dari setelan kejuaraan -- bukan ditulis di layar
+         * sebagai angka tetap, dan bukan lagi dari config. Ketiganya berbeda
+         * per nomor DAN per golongan usia: Usia Dini boleh melenceng 10 detik,
+         * Dewasa hanya 5, dan panitia menggesernya lewat menu Peraturan.
          *
          * Nilainya tetap selama halaman hidup, jadi ia dihitung di sini alih-alih
          * ikut muatan JSON yang disegarkan tiap perubahan skor.
          */
         $acuanMs = $performance->jurusEvent->waktuAcuanMs($performance->tahap);
-        $golongan = $performance->jurusEvent->golongan_usia->value;
-        $toleransi = config("scoring.jurus.toleransi_detik.{$golongan}", config('scoring.jurus.toleransi_detik.bawaan'));
-        $ambangDq = config("scoring.jurus.diskualifikasi_lewat_detik.{$golongan}", config('scoring.jurus.diskualifikasi_lewat_detik.bawaan'));
+        $waktuJurus = $performance->jurusEvent->tournament->peraturan()
+            ->jurusWaktuUntuk($performance->jurusEvent->golongan_usia);
+        $toleransi = $waktuJurus['toleransi_detik'];
+        $ambangDq = $waktuJurus['diskualifikasi_lewat_detik'];
         $acuanDetik = $acuanMs ? (int) round($acuanMs / 1000) : null;
         $jam = fn (int $d) => sprintf('%02d:%02d', intdiv($d, 60), $d % 60);
     @endphp
@@ -36,11 +38,59 @@
 
         <div class="rounded-silat bg-silat-panel p-6">
             <div class="flex items-end justify-between gap-6">
-                <div>
-                    <p class="silat-angka text-[64px] leading-none font-medium text-silat-teks" x-text="tampilWaktu"></p>
+                {{--
+                    Jamnya sendiri yang menyatakan penampilan ini di dalam atau
+                    di luar rentang aman.
+                    ------------------------------------------------------------
+                    Rentangnya memang tertulis di bawah ("Aman 01:15–01:25"),
+                    tapi membandingkan dua angka di dua tempat adalah pekerjaan
+                    yang harus dilakukan operator SETIAP penampilan, sambil
+                    mengawasi matras. Terlihat pada QA: penampilan 00:02 pada
+                    acuan 01:20 lewat tanpa satu pun tanda di layar.
+
+                    Yang dilakukan tetap cuma MENANDAI. Pengurangan waktu
+                    diputuskan Pengawas dan ditekan manual (Pasal 12.1.e.1.a);
+                    panel tidak boleh menjatuhkannya sendiri.
+                --}}
+                @php($amanBawah = $acuanDetik ? $acuanDetik - $toleransi : null)
+                @php($amanAtas = $acuanDetik ? $acuanDetik + $toleransi : null)
+                @php($batasGugur = $acuanDetik ? $acuanDetik + $ambangDq : null)
+
+                <div x-data="{
+                        get detik() { return Math.round((performance?.duration_ms ?? 0) / 1000) },
+                        get diluarAman() {
+                            @if ($acuanDetik)
+                                return performance?.status === 'selesai'
+                                    && (this.detik < {{ $amanBawah }} || this.detik > {{ $amanAtas }});
+                            @else
+                                return false;
+                            @endif
+                        },
+                        get gugur() {
+                            @if ($acuanDetik)
+                                return performance?.status === 'selesai' && this.detik > {{ $batasGugur }};
+                            @else
+                                return false;
+                            @endif
+                        },
+                     }">
+                    <p class="silat-angka text-[64px] leading-none font-medium"
+                       x-bind:class="gugur ? 'text-silat-peringatan' : (diluarAman ? 'text-silat-teguran' : 'text-silat-teks')"
+                       x-text="tampilWaktu"></p>
                     <p class="mt-1 text-[12px] text-silat-teks-redup" x-text="{
                         terjadwal: 'Belum dimulai', berlangsung: 'Sedang tampil', selesai: 'Selesai',
                     }[performance.status]"></p>
+
+                    @if ($acuanDetik)
+                        <p x-show="diluarAman && ! gugur" x-cloak
+                           class="mt-1 text-[12px] font-medium text-silat-teguran">
+                            Di luar rentang aman — Pengawas boleh menjatuhkan pengurangan waktu.
+                        </p>
+                        <p x-show="gugur" x-cloak
+                           class="mt-1 text-[12px] font-medium text-silat-peringatan">
+                            Lewat {{ $jam($batasGugur) }} — penampilan ini bisa didiskualifikasi.
+                        </p>
+                    @endif
                 </div>
 
                 @if ($acuanDetik)
