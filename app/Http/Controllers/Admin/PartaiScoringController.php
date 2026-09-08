@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AkibatProtes;
 use App\Enums\JenisSerangan;
 use App\Enums\Sudut;
 use App\Enums\TingkatPelanggaran;
@@ -952,12 +953,38 @@ class PartaiScoringController extends Controller
         }
     }
 
-    /** Jumlah babak yang berlaku untuk golongan usia partai ini. */
+    /**
+     * Jumlah babak yang berlaku untuk partai ini.
+     *
+     * Termasuk babak tambahan dari protes manajer yang DITERIMA dengan akibat
+     * itu (Pasal 15 ayat 4 huruf c.e.2). Tanpa penambahan ini, validasi di sini
+     * menolak babak ke-4 dengan "Partai ini hanya punya 3 babak" sebelum
+     * MatchTimer sempat berjalan -- dan MatchTimer sudah lama mengizinkannya.
+     * Akibatnya keputusan protes tercatat rapi di riwayat tapi tidak pernah
+     * bisa dijalankan di gelanggang.
+     */
     private function jumlahBabak(SilatMatch $match): int
     {
         $kelas = $match->bracket->weightClass;
 
-        return (int) $kelas->tournament->peraturan()
+        $normal = (int) $kelas->tournament->peraturan()
             ->babakUntuk($kelas->golongan_usia)['jumlah'];
+
+        return $normal + ($this->adaBabakTambahan($match) ? 1 : 0);
+    }
+
+    /**
+     * Satu babak tambahan, dan hanya satu.
+     *
+     * Batasnya tegas: berapa pun protes yang diterima, yang bertambah tetap
+     * satu babak. Menjumlahkannya per protes membuka jalan ke pertandingan yang
+     * tidak pernah berakhir.
+     */
+    private function adaBabakTambahan(SilatMatch $match): bool
+    {
+        return $match->managerProtests()
+            ->where('keputusan', 'diterima')
+            ->where('akibat', AkibatProtes::BabakTambahan->value)
+            ->exists();
     }
 }

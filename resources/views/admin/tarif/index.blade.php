@@ -1,6 +1,6 @@
 @php use App\Enums\ResourceAction; @endphp
 
-@php($terkunci = ! $tournament->status->bolehUbahAturan())
+@php($terkunci = ! $tournament->status->bolehUbahTarif())
 
 <x-layouts.admin heading="Tarif pendaftaran"
                  :description="$tournament->name"

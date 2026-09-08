@@ -14,6 +14,9 @@ use App\Models\Registration;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Gelanggang\PenolakanDapatDipaksa;
+use App\Support\Gelanggang\PointerTayang;
+use App\Support\Jurus\JurusTimer;
 use Database\Seeders\ResourceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\SilatResourceSeeder;
@@ -236,4 +239,125 @@ it('membiarkan pengendali membuka panel Jurus gelanggangnya', function () {
         ->getJson(route('admin.turnamen.gelanggang.panel.jurus-state', [$this->tournament, $this->arena]))
         ->assertOk()
         ->assertJsonPath('penampilan_aktif', true);
+});
+
+/*
+ * Penampilan yang SEDANG BERJALAN tidak boleh tergusur diam-diam.
+ *
+ * Satu gelanggang menayangkan satu hal, jadi menayangkan partai Tanding
+ * otomatis melepas penampilan Jurus yang sedang tayang. Sampai perbaikan ini,
+ * pelepasan itu terjadi tanpa satu pun penolakan: ditemukan di peramban --
+ * pengendali menekan Tayangkan pada partai Tanding, `arena_tayang` berpindah,
+ * dan juri Jurus tetap memegang panel berisi penampilan yang sudah tidak ada
+ * di matras, dengan tombol nilai yang masih hidup.
+ *
+ * Partai Tanding yang berjalan sudah lama dijaga persis begini. Yang kurang
+ * cuma sisi Jurusnya.
+ */
+it('menolak menggusur penampilan yang sedang berjalan dengan partai Tanding', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+    app(JurusTimer::class)->mulai($this->pertama);
+
+    $kelas = $this->tournament->weightClasses()
+        ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
+
+    $bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
+    $partai = SilatMatch::create([
+        'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
+        'status' => SilatMatch::STATUS_TERJADWAL,
+        'arena_id' => $this->arena->id, 'order_in_arena' => 1,
+    ]);
+
+    expect(fn () => app(PointerTayang::class)->tunjuk($this->arena->fresh(), $partai, $this->pengendali))
+        ->toThrow(PenolakanDapatDipaksa::class);
+
+    expect($this->arena->fresh()->tayang->menayangkanJurus())->toBeTrue();
+});
+
+it('menggusur penampilan berjalan hanya kalau pengendali menyatakannya paksa', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+    app(JurusTimer::class)->mulai($this->pertama);
+
+    $kelas = $this->tournament->weightClasses()
+        ->untuk(GolonganUsia::Dewasa, JenisKelamin::Putra)->where('code', 'C')->firstOrFail();
+
+    $bracket = Bracket::create(['weight_class_id' => $kelas->id, 'size' => 2]);
+    $partai = SilatMatch::create([
+        'bracket_id' => $bracket->id, 'round' => 1, 'position' => 1,
+        'status' => SilatMatch::STATUS_TERJADWAL,
+        'arena_id' => $this->arena->id, 'order_in_arena' => 1,
+    ]);
+
+    app(PointerTayang::class)->tunjuk($this->arena->fresh(), $partai, $this->pengendali, paksa: true);
+
+    $tayang = $this->arena->fresh()->tayang;
+
+    /*
+     * Statusnya sengaja TIDAK diubah jadi selesai, sama seperti partai Tanding
+     * yang ditinggalkan paksa hanya dijeda: menyelesaikannya berarti mencatat
+     * durasi penampilan yang sebenarnya tidak pernah selesai dimainkan, dan
+     * durasi itulah yang menentukan pengurangan waktu.
+     */
+    expect($tayang->menayangkanPartai())->toBeTrue()
+        ->and($this->pertama->fresh()->status)->toBe(JurusPerformance::STATUS_BERLANGSUNG);
+});
+
+it('menolak menggusur penampilan berjalan dengan penampilan lain', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+    app(JurusTimer::class)->mulai($this->pertama);
+
+    expect(fn () => app(PointerTayang::class)->tunjukPenampilan($this->arena->fresh(), $this->kedua, $this->pengendali))
+        ->toThrow(PenolakanDapatDipaksa::class);
+});
+
+it('menolak mengosongkan gelanggang yang penampilannya sedang berjalan', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+    app(JurusTimer::class)->mulai($this->pertama);
+
+    expect(fn () => app(PointerTayang::class)->kosongkan($this->arena->fresh(), $this->pengendali))
+        ->toThrow(PenolakanDapatDipaksa::class);
+
+    app(PointerTayang::class)->kosongkan($this->arena->fresh(), $this->pengendali, paksa: true);
+
+    expect($this->arena->fresh()->tayang?->tayang_id)->toBeNull();
+});
+
+/*
+ * Penampilan yang belum dimulai boleh digusur tanpa upacara. Penjagaan yang
+ * berlaku untuk keadaan yang tidak berbahaya cuma melatih pengendali menekan
+ * "paksa" tanpa membacanya.
+ */
+it('membiarkan penampilan yang belum dimulai digusur tanpa paksa', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+
+    app(PointerTayang::class)->tunjukPenampilan($this->arena->fresh(), $this->kedua, $this->pengendali);
+
+    expect((int) $this->arena->fresh()->tayang->tayang_id)->toBe($this->kedua->id);
+});
+
+/*
+ * Panel kendali harus MELIHAT Jurus, bukan cuma bisa memindahkannya.
+ *
+ * Gelanggang yang menayangkan penampilan Jurus sempat membuat panel
+ * pengendalinya menulis "Belum ada partai dipilih" -- seolah matras itu
+ * menganggur -- sementara juri Jurus di gelanggang yang sama sedang menatap
+ * penampilan yang berjalan. Dari situ pengendali menayangkan partai Tanding di
+ * atasnya, dan sampai perbaikan ini tidak ada satu pun penolakan.
+ */
+it('mengirim tayangan dan antrean Jurus ke panel kendali', function () {
+    app(PointerTayang::class)->tunjukPenampilan($this->arena, $this->pertama, $this->pengendali);
+
+    $this->actingAs($this->pengendali)
+        ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertJsonPath('panel.jurus.tayang.id', $this->pertama->id)
+        ->assertJsonCount(2, 'panel.jurus.antrean')
+        ->assertJsonPath('panel.jurus.antrean.0.aktif', true);
+});
+
+it('menutup antrean Jurus dari petugas yang tidak mengendalikan gelanggang', function () {
+    $this->actingAs($this->juri)
+        ->getJson(route('admin.turnamen.gelanggang.panel.state', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertJsonMissingPath('panel.jurus');
 });

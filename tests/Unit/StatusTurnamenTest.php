@@ -20,6 +20,8 @@ it('menolak perpindahan status mundur', function () {
 
 it('mengizinkan setelan peraturan diubah hanya selama draf', function () {
     expect(StatusTurnamen::Draf->bolehUbahAturan())->toBeTrue()
-        ->and(StatusTurnamen::Berjalan->bolehUbahAturan())->toBeFalse()
+        // Kejuaraan berjalan ikut terbuka: penyesuaian di tengah kejuaraan
+        // tidak boleh menuntut siapa pun menyunting config di tiap laptop.
+        ->and(StatusTurnamen::Berjalan->bolehUbahAturan())->toBeTrue()
         ->and(StatusTurnamen::Selesai->bolehUbahAturan())->toBeFalse();
 });

@@ -37,11 +37,15 @@
                 <x-si.badge :varian="$tournament->status->varian()">{{ $tournament->status->label() }}</x-si.badge>
 
                 <p class="max-w-[70ch] flex-1 text-base2 text-ink-secondary">
-                    @if ($tournament->status->bolehUbahAturan())
-                        Setelan peraturan masih bisa diubah. Begitu kejuaraan dijalankan, setelannya
-                        terkunci — partai yang sudah dinilai tidak boleh berubah dasar perhitungannya.
+                    @if ($tournament->status->bolehUbahTarif())
+                        Setelan peraturan dan tarif masih bisa diubah. Begitu kejuaraan dijalankan,
+                        tarif terkunci — dua kontingen tidak boleh membayar harga berbeda untuk nomor
+                        yang sama.
+                    @elseif ($tournament->status->bolehUbahAturan())
+                        Tarif sudah terkunci. Setelan peraturan masih bisa diubah dan berlaku untuk
+                        partai yang dinilai sesudahnya; yang sudah tercatat tidak dihitung ulang.
                     @else
-                        Setelan peraturan terkunci dan tidak bisa dikembalikan ke draf.
+                        Setelan peraturan dan tarif terkunci, dan kejuaraan tidak bisa dikembalikan ke draf.
                     @endif
                 </p>
 

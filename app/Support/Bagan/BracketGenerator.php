@@ -45,6 +45,24 @@ class BracketGenerator
         }
 
         /*
+         * Bagan yang partainya sudah punya hasil tidak boleh disusun ulang,
+         * walau kuncinya sudah dibuka.
+         *
+         * Penyusunan ulang MENGHAPUS bagan lama beserta seluruh partainya
+         * (`$lama?->delete()` di bawah), dan bersama partainya ikut hilang
+         * nilai, hukuman, pemenang, dan medali yang sudah diumumkan. Membuka
+         * kunci sengaja dibuat mudah -- untuk memperbaiki undian yang keliru
+         * sebelum bertanding -- dan penjagaan yang sesungguhnya berdiri di
+         * sini, di tempat penghapusannya terjadi.
+         */
+        if ($lama !== null && $this->adaHasil($lama)) {
+            throw new RuntimeException(
+                "Bagan {$kelas->name} sudah punya partai yang dinilai atau disahkan, jadi tidak bisa disusun ulang. "
+                .'Batalkan hasil partainya lewat Dewan Wasit Juri lebih dulu bila undiannya memang harus diulang.',
+            );
+        }
+
+        /*
          * Ukuran bagan adalah satu-satunya tempat kedua mode berpisah di
          * tingkat data: gugur dibulatkan ke pangkat dua, pemasalan memakai
          * jumlah peserta apa adanya. Sisanya -- penyusunan partai, promosi
@@ -72,6 +90,24 @@ class BracketGenerator
 
             return $bracket->refresh();
         });
+    }
+
+    /**
+     * Apakah bagan ini sudah menyimpan hasil yang tidak boleh hilang.
+     *
+     * Tiga penanda, dan satu saja cukup: partai berstatus selesai, partai yang
+     * sudah punya pemenang, atau partai yang hasilnya sudah disahkan Dewan
+     * Wasit Juri. Ketiganya dibaca dari `matches` supaya bagan yang partainya
+     * baru berjalan sebagian pun ikut terjaga.
+     */
+    public function adaHasil(Bracket $bracket): bool
+    {
+        return $bracket->matches()
+            ->where(fn ($q) => $q
+                ->where('status', SilatMatch::STATUS_SELESAI)
+                ->orWhereNotNull('winner_registration_id')
+                ->orWhereNotNull('ratified_at'))
+            ->exists();
     }
 
     /**

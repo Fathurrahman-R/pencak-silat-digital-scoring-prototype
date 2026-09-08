@@ -42,7 +42,14 @@ enum ModeBagan: string
     {
         return match ($this) {
             self::Gugur => 'Gugur (bagan pangkat dua, sisanya bye)',
-            self::Pemasalan => 'Pemasalan (semua bertanding di babak pertama)',
+            /*
+             * Label lamanya berbunyi "semua bertanding di babak pertama".
+             * Itu benar hanya pada jumlah peserta genap; pada jumlah ganjil
+             * tempat terakhir tetap melenggang, persis seperti bye -- dan
+             * pengendali yang membaca janji itu lalu melihat satu peserta
+             * tidak bertanding akan mengira baganya salah tersusun.
+             */
+            self::Pemasalan => 'Pemasalan (bagan seukuran peserta, ganjil menyisakan satu)',
         };
     }
 

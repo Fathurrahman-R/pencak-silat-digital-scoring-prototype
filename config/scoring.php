@@ -119,24 +119,18 @@ return [
                 ],
 
                 /*
-                 * Pasal 11.6.d.4.b.3 memberi DUA pemicu, bukan satu: "Pesilat
-                 * yang mendapat Teguran ketiga kali langsung diberikan
-                 * Peringatan I atau setelah Teguran kedua dalam babak
+                 * Pasal 11.6.d.4.b.3: "…setelah Teguran kedua dalam babak
                  * pertandingan yang sama."
                  *
-                 * Tingkat teguran karena itu berjalan sepanjang partai —
-                 * Teguran I lalu Teguran II, tidak mengulang dari I tiap babak
-                 * baru — sementara pemicu keduanya dihitung per babak.
+                 * Tangganya berdiri sendiri tiap babak — sama seperti
+                 * pembinaan, hitungan teguran kembali nol di babak baru dan
+                 * tiap babak selalu dimulai dari Teguran I.
                  */
-                'cakupan' => 'partai',
+                'cakupan' => 'babak',
                 'jumlah_kolom' => 2,
 
-                // Teguran ketiga sepanjang partai tidak pernah terjadi sebagai
-                // teguran — ia langsung menjadi Peringatan I.
-                'naik_ke_peringatan_pada' => 3,
-
-                // Pemicu kedua: dua teguran dalam babak yang sama membuat
-                // pelanggaran berikutnya di babak itu langsung Peringatan I.
+                // Dua teguran dalam babak yang sama membuat pelanggaran
+                // berikutnya di babak itu langsung Peringatan I.
                 'naik_ke_peringatan_dalam_babak_pada' => 2,
             ],
 
@@ -212,6 +206,16 @@ return [
 
             // Tiga hitungan berturut-turut dalam satu babak: lawan menang teknik.
             'menang_teknik_setelah_hitungan_beruntun' => 3,
+
+            /*
+             * Cakupan hitungan beruntun itu: 'babak' atau 'partai'.
+             *
+             * Naskah menyebut "dalam satu babak", dan itulah bawaannya. Dibuat
+             * bisa diubah karena sebagian penyelenggara menghitungnya sepanjang
+             * partai, dan sebelum ini satu-satunya cara mengikutinya adalah
+             * menyunting berkas ini di tiap laptop gelanggang.
+             */
+            'cakupan_beruntun' => 'babak',
         ],
 
         // Pasal 11.6.g.2.b.1: dokter punya 120 detik memutuskan fit atau tidak.

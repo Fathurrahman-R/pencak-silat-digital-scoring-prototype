@@ -184,7 +184,19 @@ class BracketController extends Controller
             'kepala' => self::KEPALA_CETAK,
         ])->setPaper([0, 0, $lebar, $tinggi]);
 
-        return $pdf->stream('bagan-'.str($weightClass->namaLengkap())->slug().'.pdf');
+        /*
+         * Jangan disimpan peramban. Alamatnya tetap sama sepanjang kejuaraan
+         * sementara isinya berubah tiap undian ditukar, tempat diisi, atau
+         * bagan disusun ulang -- dan peramban yang menyajikan salinan lama
+         * memberi panitia bagan yang sudah usang tanpa satu pun tanda. Itu
+         * juga yang membuat perbaikan tampilan cetak seolah tidak berlaku:
+         * yang terbuka berkas kemarin, bukan yang baru digambar.
+         */
+        return $pdf->stream('bagan-'.str($weightClass->namaLengkap())->slug().'.pdf')
+            ->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+            ]);
     }
 
     /** Tepi kertas di sekeliling pohon, dalam piksel pohon. */
@@ -246,6 +258,23 @@ class BracketController extends Controller
         ]);
 
         $bracket = $weightClass->bracket()->firstOrFail();
+
+        /*
+         * Ditolak di sini juga, bukan cuma saat penyusunan ulang.
+         *
+         * Bagan yang terbuka menampilkan tombol "Susun ulang" dan formulir
+         * tukar tempat, dan keduanya menjanjikan sesuatu yang tidak akan
+         * dikerjakan pada bagan yang partainya sudah dinilai. Pengendali yang
+         * membuka kunci lalu menekan Susun ulang baru mengetahuinya dari
+         * penolakan -- sesudah bagan berstatus terbuka di layar semua orang.
+         */
+        if ($this->generator->adaHasil($bracket)) {
+            return back()->with(
+                'error',
+                "Bagan {$weightClass->name} sudah punya partai yang dinilai atau disahkan, jadi kuncinya tidak dibuka. "
+                .'Batalkan hasil partainya lewat Dewan Wasit Juri lebih dulu bila undiannya memang harus diulang.',
+            );
+        }
 
         $this->generator->bukaKunci($bracket);
 

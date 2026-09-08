@@ -17,6 +17,7 @@ use App\Support\Unggah\BatasUnggah;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -116,12 +117,46 @@ class AthleteController extends Controller
     {
         $this->pastikanBolehAkses($contingent);
         $this->pastikanMilik($contingent, $athlete);
+        $this->pastikanBelumTerdaftar($athlete);
 
         $athlete->delete();
 
         return redirect()
             ->route('admin.turnamen.kontingen.atlet.index', [$tournament, $contingent])
             ->with('success', 'Atlet dihapus.');
+    }
+
+    /**
+     * Atlet yang masih memegang pendaftaran tidak boleh dihapus.
+     *
+     * Tabel penghubungnya membuang barisnya sendiri, tapi PENDAFTARANNYA tidak
+     * ikut terbawa: yang tertinggal adalah pendaftaran hidup tanpa satu pun
+     * peserta. Ia tetap terhitung "peserta sah" di halaman Bagan, tetap masuk
+     * susunan bagan, dan hasilnya satu tempat di bagan berisi pesilat tanpa
+     * nama -- baru ketahuan saat namanya dipanggil di gelanggang.
+     *
+     * Jalannya dibalik: batalkan dulu pendaftarannya, baru hapus atletnya.
+     * Pesan di bawah menyebut nomor mana saja supaya official tahu persis apa
+     * yang harus dibatalkan, bukan cuma bahwa ia tidak boleh.
+     */
+    private function pastikanBelumTerdaftar(Athlete $athlete): void
+    {
+        $nomor = $athlete->registrations()
+            ->with(['weightClass', 'jurusEvent'])
+            ->get()
+            ->map(fn ($r) => $r->namaNomor())
+            ->all();
+
+        if ($nomor === []) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'atlet' => [
+                "{$athlete->name} masih terdaftar di ".implode(', ', $nomor)
+                .'. Batalkan pendaftarannya lebih dulu, baru atletnya bisa dihapus.',
+            ],
+        ]);
     }
 
     public function storeDocument(Request $request, Tournament $tournament, Contingent $contingent, Athlete $athlete): RedirectResponse

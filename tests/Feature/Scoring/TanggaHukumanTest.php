@@ -123,23 +123,37 @@ it('menaikkan pelanggaran setelah dua teguran dalam satu babak menjadi Peringata
 });
 
 /*
- * Pasal 11.6.d.4.b.3 punya dua pemicu. Yang ini pemicu pertamanya: teguran
- * ketiga SEPANJANG PARTAI, tanpa peduli babaknya. Sebelum perbaikan ini
- * hitungan teguran direset tiap babak, sehingga cabang ini tidak pernah jalan.
+ * Cakupan bawaan Teguran adalah BABAK: tiap babak dimulai lagi dari Teguran I,
+ * dan teguran babak sebelumnya tidak ikut menghitung eskalasi. Penyelenggara
+ * yang menghitungnya sepanjang partai menggesernya lewat menu Peraturan --
+ * jalur itu diuji di bawah.
  */
-it('menaikkan teguran ketiga sepanjang partai menjadi Peringatan I', function () {
+it('mengulang tingkat teguran dari I tiap babak', function () {
     $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran I
-    $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran II
+    $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran II
 
-    $babakTiga = $this->tangga->catat($this->match, Sudut::Biru, 3, TingkatPelanggaran::Sedang, null, $this->wasit);
+    $babakDua = $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit);
 
-    expect($babakTiga->tier)->toBe(TingkatHukuman::Peringatan)
-        ->and($babakTiga->level)->toBe(1)
-        ->and($babakTiga->points)->toBe(-5);
+    expect($babakDua->tier)->toBe(TingkatHukuman::Teguran)
+        ->and($babakDua->level)->toBe(1)
+        ->and($babakDua->points)->toBe(-1);
 });
 
-/** Tingkat teguran berjalan sepanjang partai, tidak mengulang dari I tiap babak. */
-it('melanjutkan tingkat teguran ke babak berikutnya', function () {
+/*
+ * Pengecualian per golongan usia benar-benar ditegakkan, bukan cuma tersimpan.
+ *
+ * Partai di berkas ini berada di kelas DEWASA. Setelan umum dibiarkan 'babak',
+ * dan hanya Dewasa yang dikecualikan jadi 'partai' -- kalau pengecualiannya
+ * tidak terbaca, teguran babak kedua akan kembali ke tingkat I.
+ */
+it('menegakkan pengecualian cakupan teguran milik golongan usia partai ini', function () {
+    $peraturan = $this->tournament->peraturan();
+    $peraturan->update(['override_golongan' => [
+        GolonganUsia::Dewasa->value => ['hukuman' => ['teguran' => ['cakupan' => 'partai']]],
+    ]]);
+
+    expect($peraturan->fresh()->hukumanTahap('teguran')['cakupan'])->toBe('babak');
+
     $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit);
 
     $babakDua = $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit);
@@ -147,6 +161,51 @@ it('melanjutkan tingkat teguran ke babak berikutnya', function () {
     expect($babakDua->tier)->toBe(TingkatHukuman::Teguran)
         ->and($babakDua->level)->toBe(2)
         ->and($babakDua->points)->toBe(-2);
+});
+
+/*
+ * Golongan yang TIDAK dikecualikan tetap mengikuti setelan umum, dan ikut
+ * berubah kalau setelan umumnya digeser. Ini yang membedakan pengecualian
+ * partial dari salinan penuh per golongan.
+ */
+it('membiarkan golongan lain mengikuti setelan umum', function () {
+    $peraturan = $this->tournament->peraturan();
+    $peraturan->update(['override_golongan' => [
+        GolonganUsia::Remaja->value => ['hukuman' => ['teguran' => ['cakupan' => 'partai']]],
+    ]]);
+
+    // Partai ini Dewasa, bukan Remaja -- pengecualian di atas tidak menyentuhnya.
+    $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit);
+
+    $babakDua = $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit);
+
+    expect($babakDua->level)->toBe(1)
+        ->and($peraturan->fresh()->hukumanTahap('teguran', GolonganUsia::Remaja)['cakupan'])->toBe('partai');
+});
+
+/*
+ * Cakupan yang digeser panitia benar-benar mengubah penegakan, bukan cuma
+ * tersimpan. Dengan cakupan 'partai', teguran babak pertama ikut dihitung dan
+ * pelanggaran ketiga -- di babak mana pun -- naik jadi Peringatan I.
+ */
+it('menghitung teguran sepanjang partai saat cakupannya disetel partai', function () {
+    $peraturan = $this->match->bracket->weightClass->tournament->peraturan();
+    $hukuman = $peraturan->hukuman;
+    $hukuman['teguran']['cakupan'] = 'partai';
+    $peraturan->update(['hukuman' => $hukuman]);
+
+    $this->tangga->catat($this->match, Sudut::Biru, 1, TingkatPelanggaran::Sedang, null, $this->wasit); // Teguran I
+
+    $babakDua = $this->tangga->catat($this->match, Sudut::Biru, 2, TingkatPelanggaran::Sedang, null, $this->wasit);
+
+    expect($babakDua->tier)->toBe(TingkatHukuman::Teguran)
+        ->and($babakDua->level)->toBe(2)
+        ->and($babakDua->points)->toBe(-2);
+
+    $babakTiga = $this->tangga->catat($this->match, Sudut::Biru, 3, TingkatPelanggaran::Sedang, null, $this->wasit);
+
+    expect($babakTiga->tier)->toBe(TingkatHukuman::Peringatan)
+        ->and($babakTiga->level)->toBe(1);
 });
 
 it('tidak mereset peringatan saat babak berganti', function () {

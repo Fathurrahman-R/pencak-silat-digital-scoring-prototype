@@ -57,7 +57,15 @@ class StatePartaiPublik
         $angka = $this->snapshot->baca($match);
         $rekap = ['total' => $angka['total'], 'babak' => $angka['babak']];
 
-        $penalti = fn (Sudut $sudut) => collect($this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang))
+        /*
+         * Setelan diambil SEBELUM closure di bawah disusun. Arrow function
+         * menangkap nilainya saat dibuat, bukan saat dipanggil; disiapkan
+         * belakangan, yang tertangkap adalah variabel yang belum ada.
+         */
+        $peraturan = $match->bracket->weightClass->tournament->peraturan();
+        $golonganKelas = $match->bracket->weightClass->golongan_usia;
+
+        $penalti = fn (Sudut $sudut) => collect($this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang, $peraturan, $golonganKelas))
             ->only(['pembinaan', 'teguran', 'peringatan'])
             ->all();
 
@@ -73,7 +81,6 @@ class StatePartaiPublik
         $teknik = $angka['teknik'];
 
         $round = $match->rounds->firstWhere('round', $babakSekarang);
-        $peraturan = $match->bracket->weightClass->tournament->peraturan();
 
         return [
             'ada_partai' => true,

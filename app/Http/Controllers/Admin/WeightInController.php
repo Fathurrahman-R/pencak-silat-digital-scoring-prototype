@@ -172,6 +172,23 @@ class WeightInController extends Controller
         $kelas = $registration->weightClass;
         $athlete = $registration->athletes->first();
 
+        /*
+         * Pendaftaran tanpa peserta dijawab kalimat, bukan 500.
+         *
+         * Barisnya seharusnya tidak pernah ada -- menghapus atlet yang masih
+         * terdaftar sekarang ditolak -- tapi basis data yang sudah terlanjur
+         * memuatnya tetap membuka halaman timbang, dan menekan Simpan di situ
+         * menjatuhkan seluruh halaman dengan galat yang tidak menyebut apa pun
+         * tentang sebabnya. Terlihat pada uji lapangan 8 September 2026.
+         */
+        if ($athlete === null) {
+            return back()->with(
+                'error',
+                'Pendaftaran ini tidak punya peserta, jadi tidak bisa ditimbang. '
+                .'Batalkan pendaftarannya lewat halaman Pendaftaran nomor.',
+            );
+        }
+
         // Hasil lolos ditetapkan sekarang, terhadap kelas yang berlaku saat
         // ini — bukan dihitung ulang saat dibaca. Kelas boleh disunting panitia
         // sesudahnya, dan hasil yang sudah ditandatangani tidak ikut berubah.

@@ -45,8 +45,18 @@ class ProtestCard extends Model
         return $this->hasMany(VarReview::class);
     }
 
+    /**
+     * Sisa kartu protes sudut ini.
+     *
+     * Jatahnya dari setelan kejuaraan; config cuma dipakai kalau partainya
+     * belum termuat -- baris kartu bisa dibaca lepas dari partainya, dan satu
+     * kueri rantai penuh untuk mengisi angka di layar tidak sepadan.
+     */
     public function sisaKartu(): int
     {
-        return max(0, config('scoring.var.kartu_protes.tanding') - $this->jumlah_dipakai);
+        $jatah = $this->match?->bracket?->weightClass?->tournament?->peraturan()?->kartu_protes_tanding
+            ?? config('scoring.var.kartu_protes.tanding');
+
+        return max(0, (int) $jatah - $this->jumlah_dipakai);
     }
 }

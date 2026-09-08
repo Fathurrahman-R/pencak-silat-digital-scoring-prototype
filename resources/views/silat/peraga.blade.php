@@ -132,13 +132,16 @@
                 Susunan konvensional: merah kiri, biru kanan, timer dan indikator juri di tengah.
             </p>
 
-            <div class="overflow-hidden rounded-silat bg-silat-latar ring-1 ring-silat-garis">
-                <div class="flex items-center justify-between border-b border-silat-garis px-4 py-2">
+            <div class="overflow-x-auto rounded-silat bg-silat-latar ring-1 ring-silat-garis">
+                <div class="flex min-w-[640px] items-center justify-between border-b border-silat-garis px-4 py-2">
                     <span class="silat-angka text-[12px] text-silat-teks-samar">Kejuaraan Daerah 2026</span>
                     <span class="silat-angka text-[12px] text-silat-teks-samar">Gelanggang A</span>
                 </div>
 
-                <div class="grid grid-cols-[1fr_210px_1fr]">
+                {{-- Lajur tengah selebar 210px menyisakan 80px per sudut di
+                     layar ponsel. Digulir mendatar di dalam wadahnya sendiri,
+                     susunan papan skor tetap terbaca apa adanya. --}}
+                <div class="grid min-w-[640px] grid-cols-[1fr_210px_1fr]">
                     <x-silat.blok-sudut
                         sudut="merah"
                         atlet="Andi Pratama"

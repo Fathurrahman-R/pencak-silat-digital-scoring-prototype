@@ -50,7 +50,12 @@
                             @endresource
                         @endif
 
+                        {{-- Tombol ikut hilang saat tagihan terkunci, bukan
+                             cuma ditolak di server: tombol yang ditekan lalu
+                             dijawab penolakan membuat official mengira sistemnya
+                             rusak, padahal keadaannya memang sengaja. --}}
                         @resource(rk('pendaftaran', ResourceAction::Delete))
+                        @unless ($contingent->pendaftaranBeku())
                             {{-- Kata, bukan tong sampah telanjang. Muatan lewat
                                  data-*: tanda kutip di dalam JSON memutus
                                  pembacaan ekspresi atribut. --}}
@@ -62,9 +67,16 @@
                                          x-on:click="$dispatch('batal-pendaftaran', $el.dataset)">
                                 Batalkan
                             </x-si.tombol>
+                        @endunless
                         @endresource
                     </div>
                 </div>
+            @if ($contingent->pendaftaranBeku())
+                <p class="mt-3 text-xs text-ink-muted">
+                    Daftar ini terkunci karena tagihan kontingen sudah masuk sesi pembayaran.
+                    Batalkan sesi pembayarannya di halaman Tagihan bila peserta masih harus diubah.
+                </p>
+            @endif
             @empty
                 <x-si.kosong judul="Belum ada pendaftaran nomor"
                              syarat="Daftarkan atlet ke kelas tanding atau nomor jurus lewat tombol di kanan atas. Kelas yang ditawarkan sudah disaring menurut gender, golongan usia, dan berat klaim tiap atlet." />

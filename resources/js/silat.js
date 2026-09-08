@@ -636,7 +636,35 @@ Alpine.data('partaiPanel', (cfg) => ({
             return true;
         }
 
-        return this.babakAktif?.status === 'berjalan';
+        /*
+         * Jam yang sudah menyentuh nol menutup babak, walau `status` masih
+         * 'berjalan'.
+         *
+         * Kolom status baru berubah kalau pengendali menekan Jeda atau
+         * Selesaikan babak, dan di antara 00:00 dan tekanan itu selalu ada
+         * beberapa detik. Tanpa syarat ini tombol juri masih tembus di
+         * detik-detik tersebut, dan nilainya tercatat seolah masih di dalam
+         * babak. CatatInputJuri menolaknya di server dengan syarat yang sama;
+         * yang di sini cuma supaya tombolnya tidak terlihat bisa ditekan.
+         */
+        return this.babakAktif?.status === 'berjalan' && this.sisaMsTampil > 0;
+    },
+
+    /**
+     * Jam sudah menyentuh nol, tapi babaknya belum ditutup pengendali.
+     *
+     * Kolom `status` di server tetap 'berjalan' sampai ada yang menekan Jeda
+     * atau Selesaikan babak, dan di antara 00:00 dan tekanan itu selalu ada
+     * beberapa detik. Panel yang membaca kolom itu apa adanya menulis
+     * "BERJALAN" di bawah jam yang menunjukkan 00:00 -- dua pernyataan yang
+     * saling membantah, dan yang dipercaya operator adalah yang salah.
+     *
+     * Keadaannya nyata dan punya arti sendiri: pertandingan sudah habis
+     * waktunya, tombol juri sudah tidak menerima apa pun (CatatInputJuri
+     * menolaknya dengan syarat yang sama), tapi babaknya belum resmi ditutup.
+     */
+    get waktuHabis() {
+        return this.babakAktif?.status === 'berjalan' && this.sisaMsTampil <= 0;
     },
 
     /** Dipakai tampilan jam -- MM:SS dari sisaMsTampil, yang diinterpolasi lokal antara dua siaran timer. */
@@ -889,6 +917,19 @@ Alpine.data('partaiPanel', (cfg) => ({
         return berhasil;
     },
 
+    /** Mengulang aksi yang ditolak, kali ini dengan pernyataan paksa. */
+    ulangiPaksa() {
+        const tertunda = this.paksaTertunda;
+
+        if (! tertunda) {
+            return;
+        }
+
+        return 'penampilanId' in tertunda
+            ? this.pilihPenampilan(tertunda.penampilanId, true)
+            : this.pilihPartai(tertunda.matchId, true);
+    },
+
     /**
      * Melepas satu partai atau penampilan ke gelanggang lain.
      *
@@ -932,6 +973,28 @@ Alpine.data('partaiPanel', (cfg) => ({
         }
 
         return this.kirim(this.panel.serah.ambil.replace('__ID__', serahId), {}, { segarkan: true });
+    },
+
+    /**
+     * Menayangkan penampilan Jurus dari panel kendali.
+     *
+     * Kembaran pilihPartai() untuk kategori Jurus, termasuk tawaran paksanya:
+     * satu gelanggang menayangkan satu hal, jadi memilih penampilan berarti
+     * melepas partai Tanding yang sedang tayang -- dan penolakan "belum
+     * diakhiri" datang lewat kunci galat yang sama.
+     */
+    async pilihPenampilan(performanceId, paksa = false) {
+        if (! this.panel?.jurus?.pilih) {
+            return;
+        }
+
+        const berhasil = await this.kirim(this.panel.jurus.pilih, { performance_id: performanceId, paksa }, { segarkan: true });
+
+        if (! berhasil && (this._galatKunci ?? []).includes('dapat_dipaksa')) {
+            this.paksaTertunda = { penampilanId: performanceId };
+        }
+
+        return berhasil;
     },
 
     bukaSusulan(babak) {
@@ -1581,6 +1644,26 @@ Alpine.data('partaiPanel', (cfg) => ({
             })
             .listen('.gelanggang.partai', () => {
                 this._siaranTerakhirAt = Date.now();
+
+                /*
+                 * Layar tunggu memuat ulang begitu POINTER bergerak, apa pun
+                 * isinya -- tidak menunggu muatan state menyebut satu partai.
+                 *
+                 * Gelanggang yang beralih ke penampilan JURUS tidak pernah
+                 * mengisi `match`, jadi layar tunggu yang menanti partai akan
+                 * diam selamanya sementara nomor Jurus sudah berjalan di
+                 * matras. Servernya yang tahu halaman mana yang pantas
+                 * dirender; yang perlu dilakukan layar ini cuma bertanya lagi.
+                 */
+                if (this.cfg.menunggu) {
+                    if (! this._mendarat) {
+                        this._mendarat = true;
+                        window.location.reload();
+                    }
+
+                    return;
+                }
+
                 this.muatUlang();
             });
     },
@@ -2012,9 +2095,11 @@ Alpine.data('jurusPanel', (cfg) => ({
     galat: null,
     _rafId: null,
     _saluran: [],
+    _saluranGelanggang: null,
     _pusher: null,
     _padaSambung: null,
     _sedangMenarik: false,
+    _mendarat: false,
 
     // Khusus panel juri (silat.jurus-juri) -- kosong dan tidak dipakai di
     // panel operator, tapi hidup di sini (bukan disebar dari luar) supaya
@@ -2069,6 +2154,33 @@ Alpine.data('jurusPanel', (cfg) => ({
             window.Echo.private(nama).listen('.jurus.penampilan', segarkan);
         }
 
+        /*
+         * Panel yang beralamat GELANGGANG ikut mendengar channel gelanggang.
+         *
+         * Channel penampilan cuma membawa perubahan penampilan ITU. Yang tidak
+         * dibawanya justru perubahan yang paling menentukan: pengendali
+         * berpindah ke penampilan lain, ke partai Tanding, atau mengosongkan
+         * gelanggang. Tanpa langganan ini, panel juri Jurus tetap memajang
+         * penampilan yang sudah tidak ada di matras -- lengkap dengan tombol
+         * nilai yang masih bisa ditekan.
+         *
+         * Dimuat ulang, bukan ditarik ulang: pergantian tayangan mengubah
+         * BENTUK halaman, bukan cuma angkanya. Penampilan yang hilang berarti
+         * layar tunggu, dan layar tunggu tidak punya satu pun elemen panel
+         * untuk diisi state baru. Servernya yang memutuskan halaman mana yang
+         * pantas; tugas panel ini cuma bertanya lagi.
+         */
+        if (this.cfg.arenaId) {
+            this._saluranGelanggang = `arena.${this.cfg.arenaId}`;
+
+            window.Echo.join(this._saluranGelanggang).listen('.gelanggang.partai', () => {
+                if (! this._mendarat) {
+                    this._mendarat = true;
+                    window.location.reload();
+                }
+            });
+        }
+
         this._pusher = window.Echo.connector?.pusher;
         this._padaSambung = segarkan;
         this._pusher?.connection?.bind('connected', this._padaSambung);
@@ -2080,6 +2192,11 @@ Alpine.data('jurusPanel', (cfg) => ({
         }
 
         this._saluran = [];
+
+        if (this._saluranGelanggang) {
+            window.Echo?.leave(this._saluranGelanggang);
+            this._saluranGelanggang = null;
+        }
 
         if (this._padaSambung) {
             this._pusher?.connection?.unbind('connected', this._padaSambung);

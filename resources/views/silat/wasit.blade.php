@@ -22,7 +22,11 @@
         babak macet permanen di panel juri (commit fa068e0).
     --}}
     <div x-data="partaiPanel(@js($config))"
-         class="flex h-dvh flex-col gap-2 overflow-hidden p-2 select-none">
+         {{-- Tinggi layar dikunci mulai `sm` saja. Panel ini dirancang untuk
+              tablet melintang, dan di ponsel tegak isinya memang tidak muat --
+              `overflow-hidden` di situ memotongnya diam-diam alih-alih
+              membiarkannya digulir. --}}
+         class="flex min-h-dvh flex-col gap-2 p-2 select-none sm:h-dvh sm:overflow-hidden">
       <div x-data="{ menyusunVerifikasi: false, _adaYangBerjalan: false }"
            x-on:tutup-verifikasi="menyusunVerifikasi = false"
            {{--
@@ -79,8 +83,13 @@
             </div>
         </template>
 
-        <header class="flex shrink-0 items-center justify-between gap-4">
-            <div class="flex items-baseline gap-3">
+        {{-- Membungkus di layar sempit. Kepala ini menampung lima hal di kiri
+             dan dua di kanan; pada 360px jumlahnya melebihi lebar layar, dan
+             tanpa `flex-wrap` yang terjadi bukan menyusut melainkan meluber ke
+             kanan -- indikator koneksi terdorong ke luar layar justru saat ia
+             paling perlu dibaca. --}}
+        <header class="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-2">
                 <span class="silat-angka text-[13px] font-medium text-silat-teks"
                       x-text="'Partai ' + (identitas.partai ?? '—')"></span>
                 <span class="silat-angka text-[12px] text-silat-teks-redup">
@@ -125,7 +134,7 @@
                 @endresource
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                 {{-- Skor ringkas: wasit tidak perlu papan penuh, tapi perlu tahu
                      kedudukan saat memutuskan hukuman berat. --}}
                 <span class="flex items-center gap-1.5">
@@ -160,7 +169,12 @@
         <template x-if="! verifikasiBerjalan && ! menyusunVerifikasi">
           <div class="flex min-h-0 flex-1 flex-col">
         @resource(rk('hukuman', ResourceAction::Create))
-            <div class="grid min-h-0 flex-1 grid-cols-[296px_1fr] gap-2.5"
+            {{-- Dua lajur mulai `sm`. Di ponsel tegak, kolom tetap 296px
+                 menyisakan kurang dari 60px untuk lajur tombol hukuman di
+                 sebelahnya -- tombolnya tetap ada tapi tidak bisa dibaca
+                 maupun ditekan. Bertumpuk, keduanya selebar layar dan panel
+                 boleh digulir. --}}
+            <div class="grid min-h-0 flex-1 grid-cols-1 gap-2.5 sm:grid-cols-[296px_1fr]"
                  x-data="{ sudut: 'red', hitungan: 1,
                            get sudutLabel() { return this.sudut === 'red' ? 'Sudut merah' : 'Sudut biru' },
                            get kunciSisi() { return this.sudut === 'red' ? 'merah' : 'biru' } }">

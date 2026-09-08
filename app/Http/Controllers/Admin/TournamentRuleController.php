@@ -13,9 +13,13 @@ use Illuminate\Http\RedirectResponse;
 /**
  * Setelan peraturan satu kejuaraan.
  *
- * Hanya bisa disunting selama kejuaraan berstatus Draf. Sesudah itu terkunci,
- * karena partai yang sudah dinilai tidak boleh berubah dasar perhitungannya —
- * termasuk yang hasilnya sudah disahkan dewan juri dan diumumkan.
+ * Terbuka selama kejuaraan belum Selesai — termasuk saat sedang Berjalan,
+ * supaya penyesuaian di tengah kejuaraan tidak menuntut siapa pun menyunting
+ * berkas kode di lima laptop. Partai yang sudah dinilai tidak ikut berubah:
+ * nilai dan hukuman menyimpan angkanya sendiri saat tercatat, jadi setelan baru
+ * hanya berlaku untuk yang terjadi sesudahnya.
+ *
+ * Alasan penguncian pada status Selesai ada di StatusTurnamen::bolehUbahAturan.
  */
 class TournamentRuleController extends Controller
 {

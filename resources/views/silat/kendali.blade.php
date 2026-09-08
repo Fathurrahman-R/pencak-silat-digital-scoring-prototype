@@ -16,7 +16,11 @@
         sambil mengawasi matras. Yang kedua tidak boleh ikut tergulir saat yang
         pertama digulir.
     --}}
-    <div x-data="partaiPanel(@js($config))" class="flex h-dvh flex-col overflow-hidden">
+    {{-- Tinggi layar dikunci mulai `lg` saja -- di bawahnya kolom jadwal dan
+         kolom kendali bertumpuk, dan keduanya tidak muat dalam satu layar
+         ponsel. `overflow-hidden` di situ memotong tombol paling bawah tanpa
+         menyisakan cara mencapainya. --}}
+    <div x-data="partaiPanel(@js($config))" class="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
 
         <header class="flex shrink-0 items-center gap-5 border-b border-silat-garis px-6 py-4">
             <div class="min-w-0">
@@ -31,7 +35,19 @@
                             vs <span x-text="(match.blue?.athletes ?? []).join(', ') || '—'"></span>
                         </span>
                     </template>
-                    <template x-if="! match?.id">
+                    {{-- Gelanggang yang menayangkan Jurus bukan gelanggang yang
+                         menganggur. Menulisnya "belum ada partai dipilih"
+                         membuat pengendali mengira matrasnya kosong, lalu
+                         menayangkan partai Tanding di atas penampilan yang
+                         sedang dinilai juri di gelanggang yang sama. --}}
+                    <template x-if="! match?.id && panel?.jurus?.tayang">
+                        <span>
+                            Jurus <span x-text="panel.jurus.tayang.nomor ?? '—'"></span>
+                            · <span x-text="panel.jurus.tayang.peserta || '—'"></span>
+                        </span>
+                    </template>
+
+                    <template x-if="! match?.id && ! panel?.jurus?.tayang">
                         <span class="text-silat-teks-redup">Belum ada partai dipilih</span>
                     </template>
                 </p>
@@ -65,9 +81,9 @@
                 --}}
                 <template x-if="paksaTertunda">
                     <button type="button"
-                            x-on:click="pilihPartai(paksaTertunda.matchId, true)"
+                            x-on:click="ulangiPaksa()"
                             class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali px-4 text-[13.5px] font-semibold text-silat-teks"
-                            x-text="paksaTertunda.matchId === null ? 'Kosongkan paksa' : 'Pindah paksa'"></button>
+                            x-text="paksaTertunda.matchId === null && ! ('penampilanId' in paksaTertunda) ? 'Kosongkan paksa' : 'Pindah paksa'"></button>
                 </template>
             </div>
         </template>
@@ -82,6 +98,25 @@
                 layar adalah kolom timer di sebelahnya.
             --}}
             <div class="flex min-h-0 min-w-0 flex-col">
+                {{--
+                    Pengendali gelanggang lain boleh MELIHAT panel ini -- ia
+                    perlu tahu matras sebelah sedang di partai mana -- tapi
+                    tidak boleh menekan apa pun di dalamnya. Tombolnya karena
+                    itu tidak digambar sama sekali, bukan digambar lalu dijawab
+                    403: yang menekan "Kosongkan gelanggang" di gelanggang
+                    sebelah tidak selalu membaca pesan galatnya, dan sebagian
+                    mengira gelanggangnya benar-benar kosong.
+                --}}
+                @unless ($config['bolehKendali'] ?? true)
+                    <div class="mb-3 flex shrink-0 items-center gap-2.5 rounded-silat border border-silat-garis bg-silat-panel px-4 py-3">
+                        <span class="size-2 shrink-0 rounded-full bg-silat-teks-redup"></span>
+                        <p class="text-[13.5px] leading-[1.5] text-silat-teks-kedua">
+                            Kamu bukan pengendali {{ $arena->name }} — layar ini hanya untuk dilihat.
+                            Kendalinya ada di pengendali yang ditugaskan ke gelanggang ini.
+                        </p>
+                    </div>
+                @endunless
+
                 <div class="flex shrink-0 items-center gap-3.5 pb-3">
                     <p class="text-[17px] font-semibold tracking-[-0.01em] text-silat-teks">Antrean gelanggang</p>
                     <span class="silat-angka text-[11.5px] text-silat-teks-samar"
@@ -127,19 +162,22 @@
                                 </span>
                             </template>
 
-                            <template x-if="! partai.aktif">
-                                <button type="button"
-                                        x-on:click="pilihPartai(partai.id)"
-                                        class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
-                                    Tayangkan
-                                </button>
-                            </template>
+                            @if ($config['bolehKendali'] ?? true)
+                                <template x-if="! partai.aktif">
+                                    <button type="button"
+                                            x-on:click="pilihPartai(partai.id)"
+                                            class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
+                                        Tayangkan
+                                    </button>
+                                </template>
+                            @endif
 
                             {{-- Pemindahan antar gelanggang berdiri di baris
                                  partainya sendiri, bukan di layar terpisah:
                                  yang memutuskan sedang menatap antrean, dan
                                  keputusannya lahir dari membandingkan antrean
                                  itu dengan gelanggang sebelah. --}}
+                            @if ($config['bolehKendali'] ?? true)
                             <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0 && ! partai.aktif">
                                 <select class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali bg-transparent px-2 text-[12.5px] text-silat-teks-kedua"
                                         aria-label="Pindahkan partai ini ke gelanggang lain"
@@ -150,10 +188,72 @@
                                     </template>
                                 </select>
                             </template>
+                            @endif
                         </div>
                     </template>
                 </div>
             </div>
+
+            {{--
+                ANTREAN JURUS.
+
+                Muncul hanya kalau gelanggang ini memang kebagian nomor Jurus.
+                Kejuaraan yang seluruhnya Tanding tidak perlu melihat satu
+                baris pun tentangnya, dan daftar kosong berjudul "Jurus"
+                membuat pengendali mencari sesuatu yang tidak ada.
+
+                Satu gelanggang menayangkan satu hal, jadi menekan Tayangkan di
+                sini melepas partai Tanding yang sedang tayang -- lewat
+                penjagaan yang sama, jadi partai yang babaknya masih berjalan
+                tetap menolak ditinggalkan tanpa pernyataan paksa.
+            --}}
+            <template x-if="(panel?.jurus?.antrean?.length ?? 0) > 0">
+                <div class="mt-4 flex min-h-0 flex-col">
+                    <div class="flex shrink-0 items-center gap-3.5 pb-3">
+                        <p class="text-[17px] font-semibold tracking-[-0.01em] text-silat-teks">Antrean Jurus</p>
+                        <span class="silat-angka text-[11.5px] text-silat-teks-samar"
+                              x-text="(panel?.jurus?.antrean?.length ?? 0) + ' penampilan'"></span>
+
+                        <a x-bind:href="panel?.jurus?.panel" target="_blank"
+                           class="silat-angka ml-auto text-[11px] tracking-[.08em] text-silat-teks-samar uppercase">Panel Jurus</a>
+                    </div>
+
+                    <div class="max-h-64 min-h-0 overflow-y-auto rounded-silat-besar border border-silat-garis">
+                        <template x-for="(satu, i) in (panel?.jurus?.antrean ?? [])" :key="satu.id">
+                            <div class="flex items-center gap-3.5 px-4 py-3.5"
+                                 x-bind:class="[i > 0 ? 'border-t border-silat-panel' : '', satu.aktif ? 'bg-silat-panel' : '']">
+                                <span class="silat-angka w-8 shrink-0 text-[12px] text-silat-teks-samar"
+                                      x-text="satu.urutan ?? '—'"></span>
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-[14px] text-silat-teks" x-text="satu.peserta || '—'"></p>
+                                    <p class="silat-angka mt-1 truncate text-[11.5px] text-silat-teks-samar">
+                                        <span x-text="satu.nomor ?? '—'"></span>
+                                        · <span x-text="satu.kontingen ?? '—'"></span>
+                                        · <span x-text="satu.status"></span>
+                                    </p>
+                                </div>
+
+                                <template x-if="satu.aktif">
+                                    <span class="silat-angka shrink-0 rounded-silat-kecil bg-silat-teks px-2.5 py-1.5 text-[11px] font-semibold text-silat-latar">
+                                        TAYANG
+                                    </span>
+                                </template>
+
+                                @if ($config['bolehKendali'] ?? true)
+                                    <template x-if="! satu.aktif">
+                                        <button type="button"
+                                                x-on:click="pilihPenampilan(satu.id)"
+                                                class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
+                                            Tayangkan
+                                        </button>
+                                    </template>
+                                @endif
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
 
             {{--
                 SERAH-TERIMA JADWAL.
@@ -201,11 +301,13 @@
                                         </p>
                                     </div>
 
-                                    <button type="button"
-                                            x-on:click="pilihPartai(satu.id)"
-                                            class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
-                                        Tayangkan
-                                    </button>
+                                    @if ($config['bolehKendali'] ?? true)
+                                        <button type="button"
+                                                x-on:click="pilihPartai(satu.id)"
+                                                class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
+                                            Tayangkan
+                                        </button>
+                                    @endif
                                 </div>
                             </template>
                         </div>
@@ -299,17 +401,26 @@
                         </template>
                     </div>
 
+                    {{-- Jam yang habis TIDAK digambar seperti jam yang
+                         berjalan: warnanya berubah jadi warna teguran, supaya
+                         yang melirik dari tepi matras melihat keadaannya tanpa
+                         membaca satu huruf pun. --}}
                     <p class="silat-angka text-[64px] leading-none font-medium"
-                       x-bind:class="babakAktif?.status === 'berjalan' ? 'text-silat-teks' : 'text-silat-teks-redup'"
+                       x-bind:class="waktuHabis
+                           ? 'text-silat-teguran'
+                           : (babakAktif?.status === 'berjalan' ? 'text-silat-teks' : 'text-silat-teks-redup')"
                        x-text="tampilWaktu" role="timer" aria-live="off">00:00</p>
 
                     <p class="silat-angka text-[11.5px] tracking-[.12em] text-silat-teks-samar uppercase"
                        x-text="sudahSelesai
                            ? 'Partai selesai'
-                           : ({ berjalan: 'Berjalan', jeda: 'Dijeda', belum_mulai: 'Belum dimulai', selesai: 'Babak selesai' }[babakAktif?.status] ?? 'Belum dimulai')"></p>
+                           : (waktuHabis
+                               ? 'Babak selesai'
+                               : ({ berjalan: 'Berjalan', jeda: 'Dijeda', belum_mulai: 'Belum dimulai', selesai: 'Babak selesai' }[babakAktif?.status] ?? 'Belum dimulai'))"></p>
                 </div>
 
                 @resource(rk('partai', ResourceAction::Update))
+                @if ($config['bolehKendali'] ?? true)
                     <div class="flex flex-col gap-2" x-show="match?.id">
                         {{-- Tinggi 64px mengikuti batas sentuh gelanggang:
                              ditekan sambil mengawasi matras, bukan layar. --}}
@@ -341,10 +452,12 @@
                     </div>
                 @endresource
 
-                <x-silat.akhiri-partai />
+                    <x-silat.akhiri-partai />
+                @endif
 
 
                 @resource(rk('kendali-gelanggang', ResourceAction::Manage))
+                @if ($config['bolehKendali'] ?? true)
                     {{--
                         BABAK SUSULAN.
 
@@ -390,17 +503,20 @@
                             </div>
                         </template>
                     </div>
+                @endif
                 @endresource
 
-                {{--
-                    Mengosongkan gelanggang. Bukan tombol besar, dan bukan di
-                    dekat tombol babak: ia jarang dipakai, dan yang jarang
-                    dipakai tidak boleh duduk di tempat yang tangan sudah hafal.
-                --}}
-                <button type="button" x-show="match?.id" x-on:click="pilihPartai(null)"
-                        class="mt-auto h-12 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13.5px] font-medium text-silat-teks-redup">
-                    Kosongkan gelanggang
-                </button>
+                @if ($config['bolehKendali'] ?? true)
+                    {{--
+                        Mengosongkan gelanggang. Bukan tombol besar, dan bukan di
+                        dekat tombol babak: ia jarang dipakai, dan yang jarang
+                        dipakai tidak boleh duduk di tempat yang tangan sudah hafal.
+                    --}}
+                    <button type="button" x-show="match?.id" x-on:click="pilihPartai(null)"
+                            class="mt-auto h-12 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13.5px] font-medium text-silat-teks-redup">
+                        Kosongkan gelanggang
+                    </button>
+                @endif
             </aside>
         </div>
     </div>

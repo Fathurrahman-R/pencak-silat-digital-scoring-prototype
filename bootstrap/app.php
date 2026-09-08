@@ -16,6 +16,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -161,4 +162,36 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        /*
+         * Id yang tidak ada dijawab dengan kalimat sendiri, bukan pesan bawaan
+         * Laravel.
+         *
+         * Bawaannya berbunyi "No query results for model [App\Models\WeightClass]
+         * 999999": berbahasa Inggris di aplikasi yang seluruh pesannya Indonesia,
+         * dan menyebut nama kelas beserta ruang namanya kepada siapa pun yang
+         * mengetuk. Nama tabel dan struktur internal tidak menolong orang yang
+         * salah menekan tautan, dan menolong orang yang sedang meraba-raba
+         * bentuk sistem ini dari luar.
+         *
+         * Yang ditangkap NotFoundHttpException, bukan ModelNotFoundException:
+         * Laravel sudah membungkus yang kedua jadi yang pertama sebelum callback
+         * ini dipanggil, dan pesan aslinya ikut terbawa di dalamnya. Hanya pesan
+         * berpola bawaan itu yang ditimpa -- `abort(404, '...')` yang ditulis
+         * sendiri di controller tetap sampai apa adanya.
+         */
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if (! str_starts_with($e->getMessage(), 'No query results for model')) {
+                return null;
+            }
+
+            $pesan = 'Data yang diminta tidak ditemukan. Kemungkinan sudah dihapus, '
+                .'atau tautannya menunjuk kejuaraan lain.';
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(['message' => $pesan], 404);
+            }
+
+            return response()->view('errors.404', ['message' => $pesan], 404);
+        });
     })->create();

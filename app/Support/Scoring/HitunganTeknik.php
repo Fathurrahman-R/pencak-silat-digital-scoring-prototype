@@ -18,6 +18,11 @@ use RuntimeException;
  * hitungan ke-10 langsung mengakhiri partai (menang mutlak), dan hitungan
  * ketiga berturut-turut terhadap sudut yang sama dalam satu babak membuat
  * lawannya menang teknik.
+ *
+ * Ketiga ambang itu -- dan cakupan hitungan beruntunnya, babak atau partai --
+ * datang dari setelan kejuaraan, bukan dari `config/scoring.php`. Berkas config
+ * cuma nilai bawaan saat kejuaraan dibuat; sesudah itu panitia mengubahnya lewat
+ * menu Peraturan tanpa menyentuh kode di tiap laptop gelanggang.
  */
 class HitunganTeknik
 {
@@ -73,9 +78,12 @@ class HitunganTeknik
             'created_by' => $pencatat->id,
         ]);
 
-        $ambangTeguran = config('scoring.tanding.hitungan_teknik.teguran_pada_hitungan');
-        $ambangMutlak = config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan');
-        $beruntunMenang = config('scoring.tanding.hitungan_teknik.menang_teknik_setelah_hitungan_beruntun');
+        $kelas = $match->bracket->weightClass;
+        $ambang = $kelas->tournament->peraturan()->hitunganTeknik($kelas->golongan_usia);
+
+        $ambangTeguran = (int) $ambang['teguran_pada_hitungan'];
+        $ambangMutlak = (int) $ambang['mutlak_pada_hitungan'];
+        $beruntunMenang = (int) $ambang['menang_teknik_setelah_hitungan_beruntun'];
 
         if ($hitunganTertinggi >= $ambangTeguran && ! $this->tangga->sudahDiskualifikasi($match, $sudut)) {
             $this->tangga->catatLangsungTeguran(
@@ -97,8 +105,12 @@ class HitunganTeknik
     }
 
     /**
-     * Berapa kali beruntun sudut ini dihitung dalam babak ini, tanpa
-     * diselingi hitungan terhadap sudut lawan.
+     * Berapa kali beruntun sudut ini dihitung, tanpa diselingi hitungan
+     * terhadap sudut lawan.
+     *
+     * Cakupannya mengikuti setelan kejuaraan: bawaannya 'babak' -- naskah
+     * menyebut "dalam satu babak" -- tapi penyelenggara yang menghitungnya
+     * sepanjang partai tinggal menggesernya di menu Peraturan.
      *
      * Terbuka untuk dibaca panel, bukan cuma dipakai di dalam sini: wasit yang
      * tidak melihat angka ini menekan hitungan ketiga tanpa tahu bahwa
@@ -106,7 +118,24 @@ class HitunganTeknik
      */
     public function beruntun(SilatMatch $match, Sudut $sudut, int $babak): int
     {
-        return $this->hitungBeruntun($this->hitunganBabak($match, $babak), $sudut);
+        $kelas = $match->bracket->weightClass;
+        $cakupan = $kelas->tournament->peraturan()->hitunganTeknik($kelas->golongan_usia)['cakupan_beruntun'] ?? 'babak';
+
+        return $this->hitungBeruntun(
+            $cakupan === 'partai' ? $this->hitunganPartai($match) : $this->hitunganBabak($match, $babak),
+            $sudut,
+        );
+    }
+
+    /**
+     * Seluruh hitungan partai ini, terbaru dulu -- dipakai saat cakupan
+     * beruntunnya disetel 'partai'.
+     *
+     * @return Collection<int, TechnicalCount>
+     */
+    public function hitunganPartai(SilatMatch $match): Collection
+    {
+        return $match->technicalCounts()->orderByDesc('id')->get();
     }
 
     /**

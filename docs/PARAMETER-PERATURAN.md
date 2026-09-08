@@ -14,8 +14,8 @@
 | `tanding.hukuman.pembinaan.cakupan` | `babak` | **MENYIMPANG** | Naskah menyebut pembinaan "berlaku secara akumulatif" dan membolehkannya lagi setelah Peringatan I/II — tidak pernah menyebut reset saat ganti babak. Penyelenggara memilih per babak: wasit di gelanggang mengingat pembinaan dalam babak berjalan, dan tangga yang tidak cocok dengan ingatan wasit lebih berbahaya daripada tangga yang sedikit longgar dari naskah |
 | `tanding.hukuman.pembinaan.ambang_naik_ke_teguran` | 2 | 11.6.d.4 | Pembinaan ketiga otomatis naik jadi Teguran |
 | `tanding.hukuman.teguran.pengurangan` | Teguran I −1, II −2 | 11.6.d.4 | |
-| `tanding.hukuman.teguran.naik_ke_peringatan_pada` | 3 | 11.6.d.4.b.3 | Teguran **ketiga sepanjang partai** tidak pernah tercatat sebagai teguran — otomatis Peringatan I |
-| `tanding.hukuman.teguran.naik_ke_peringatan_dalam_babak_pada` | 2 | 11.6.d.4.b.3 | Pemicu KEDUA yang sebelumnya tidak pernah jalan: "atau setelah Teguran kedua dalam babak pertandingan yang sama". Hitungan teguran dulu direset tiap babak, sehingga cabang "teguran ketiga" mustahil tercapai |
+| `tanding.hukuman.teguran.cakupan` | `babak` | 11.6.d.4.b.3 | Hitungan teguran kembali nol tiap babak, jadi tiap babak dimulai lagi dari Teguran I |
+| `tanding.hukuman.teguran.naik_ke_peringatan_dalam_babak_pada` | 2 | 11.6.d.4.b.3 | "…setelah Teguran kedua dalam babak pertandingan yang sama". Dihitung dalam cakupan yang berlaku di atas |
 | `tanding.hukuman.peringatan.pengurangan` | I −5, II −10, III null | 11.6.d.4 | Peringatan III berarti diskualifikasi, bukan pengurangan nilai |
 | `tanding.hukuman.peringatan.cakupan` | `partai` | 11.6.d.4.c | "Berlaku untuk seluruh babak", tidak pernah mereset |
 | `tanding.babak.*` | lihat tabel golongan usia | 9.3, 11.3 | Jumlah dan durasi babak per golongan usia |
@@ -25,6 +25,7 @@
 | `tanding.hitungan_teknik.teguran_pada_hitungan` | 9 | 11.6.g.2 | |
 | `tanding.hitungan_teknik.mutlak_pada_hitungan` | 10 | 11.6.g.3 | |
 | `tanding.hitungan_teknik.menang_teknik_setelah_hitungan_beruntun` | 3 | 11.6.g.2 | |
+| `tanding.hitungan_teknik.cakupan_beruntun` | `babak` | 11.6.g.3 | Naskah menyebut "dalam satu babak". Dibuat bisa diubah karena sebagian penyelenggara menghitungnya sepanjang partai |
 | `tanding.pemeriksaan_dokter_detik` | 120 | 11.6.g.2.b.1 | |
 | `tanding.undur_diri` | 3 panggilan, interval 30 detik | 11.6.g.5 | |
 | `tanding.pemecah_seri` | urutan 5 kriteria | 11.6.g.1.b | Berhenti di kriteria pertama yang memisahkan |
@@ -76,6 +77,48 @@
 | `penampilan_ulang` | Keadaan yang sama — kategori Jurus | Penampilan baru untuk pendaftaran dan tahap yang sama |
 
 Protes yang diterima **wajib** menyebut salah satunya: naskah tidak menyediakan pilihan "diterima tanpa akibat". Selama akibatnya belum dijalankan, pengesahan hasil ditahan — pemenang yang naik slot bagan sebelum babak tambahannya dimainkan membawa seluruh bagan ke susunan yang salah.
+
+## Dari mana angka ini dibaca saat pertandingan
+
+`config/scoring.php` adalah **nilai bawaan saat kejuaraan dibuat**, bukan yang
+dibaca mesin penilaian. Begitu kejuaraan berdiri, ia memegang salinannya sendiri
+di `tournament_rule_settings`, dan seluruh penegakan — tangga hukuman, hitungan
+teknik, durasi babak, jatah kartu protes, toleransi waktu Jurus — membaca dari
+sana. Menyunting berkas config di tengah kejuaraan tidak mengubah apa pun pada
+kejuaraan yang sudah berjalan; yang diubah panitia adalah menu
+**Kejuaraan → Setelan peraturan**.
+
+Setelan itu bertingkat tiga, dari yang paling umum ke yang paling khusus:
+
+| Lapis | Tempat | Berlaku untuk |
+|---|---|---|
+| 1 | `config/scoring.php` | Nilai bawaan kejuaraan baru |
+| 2 | Setelan peraturan kejuaraan | Seluruh kelas kejuaraan itu |
+| 3 | Pengecualian per golongan usia | Golongan pada barisnya saja |
+
+Tiap lapis hanya menimpa kolom yang benar-benar diisinya. Golongan yang seluruh
+kolom pengecualiannya dikosongkan ikut setelan umum — termasuk saat setelan
+umumnya diubah nanti. Itulah bedanya pengecualian *partial* dari salinan penuh
+per golongan: yang kedua akan membuat perubahan setelan umum diam-diam tidak
+berlaku di golongan mana pun.
+
+Yang bisa dikecualikan per golongan usia:
+
+- cakupan Pembinaan, Teguran, dan Peringatan (`babak` atau `partai`)
+- berapa teguran sebelum naik ke Peringatan
+- hitungan yang menerbitkan Teguran, hitungan menang mutlak, hitungan beruntun
+  untuk menang teknik, dan cakupan hitungan beruntun itu
+
+Durasi dan jumlah babak, selisih WMP, serta toleransi waktu Jurus sudah lama
+per golongan usia dan disetel di kartunya masing-masing.
+
+**Kapan terkunci.** Setelan peraturan terbuka selama kejuaraan belum *Selesai* —
+termasuk saat sedang berjalan, karena satu-satunya alternatifnya adalah
+menyunting berkas kode di tiap laptop gelanggang. Yang disimpan berlaku untuk
+partai yang dinilai sesudahnya; nilai dan hukuman yang sudah tercatat menyimpan
+angkanya masing-masing dan tidak dihitung ulang. **Tarif** dikunci lebih ketat —
+hanya saat Draf — karena dua kontingen tidak boleh membayar harga berbeda untuk
+nomor yang sama.
 
 ## Ringkasan: yang benar-benar tidak diatur naskah
 
