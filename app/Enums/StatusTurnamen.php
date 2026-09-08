@@ -36,7 +36,45 @@ enum StatusTurnamen: string
     }
 
     /** Setelan peraturan, kelas, dan tarif hanya boleh diubah selama draf. */
+    /**
+     * Setelan peraturan masih boleh disunting.
+     *
+     * Kejuaraan yang SEDANG BERJALAN ikut terbuka, dan itu disengaja. Setelan
+     * yang terkunci sejak hari pertama berarti satu-satunya cara menyesuaikan
+     * aturan di tengah kejuaraan -- durasi babak yang ternyata terlalu panjang,
+     * cakupan teguran yang berbeda dari kebiasaan penyelenggara -- adalah
+     * menyunting `config/scoring.php` di tiap laptop gelanggang. Itu lebih
+     * berbahaya daripada formulir yang terbuka: perubahannya tidak tercatat,
+     * tidak seragam antar mesin, dan ikut mengenai kejuaraan lain di basis data
+     * yang sama.
+     *
+     * Yang tidak ikut berubah adalah partai yang sudah dinilai. Nilai dan
+     * hukuman menyimpan angkanya sendiri saat tercatat, jadi setelan baru hanya
+     * berlaku untuk yang terjadi sesudahnya.
+     *
+     * Kejuaraan yang sudah SELESAI tetap terkunci: tidak ada lagi partai
+     * berikutnya, jadi satu-satunya akibat menyuntingnya adalah membuat
+     * dokumen hasil tidak lagi cocok dengan setelan yang tercatat.
+     */
     public function bolehUbahAturan(): bool
+    {
+        return $this !== self::Selesai;
+    }
+
+    /**
+     * Tarif pendaftaran masih boleh diubah.
+     *
+     * Syaratnya LEBIH KETAT daripada setelan peraturan, dan itu disengaja.
+     * Setelan peraturan yang diubah di tengah kejuaraan hanya berlaku untuk
+     * partai berikutnya; tarif yang diubah sesudah pendaftaran dibuka berarti
+     * dua kontingen membayar harga berbeda untuk nomor yang sama, dan yang
+     * membayar lebih dulu tidak punya cara mengetahuinya.
+     *
+     * Berdiri sendiri, bukan menumpang bolehUbahAturan(): keduanya pernah
+     * memakai predikat yang sama, dan melonggarkan yang satu diam-diam ikut
+     * membuka yang lain.
+     */
+    public function bolehUbahTarif(): bool
     {
         return $this === self::Draf;
     }

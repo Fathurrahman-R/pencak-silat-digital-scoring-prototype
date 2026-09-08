@@ -71,11 +71,21 @@ class Penalty extends Model
         return $this->voided_at !== null;
     }
 
-    /** Peringatan III -- tidak ada pengurangan nilai, tapi berarti diskualifikasi. */
+    /**
+     * Peringatan III -- tidak ada pengurangan nilai, tapi berarti diskualifikasi.
+     *
+     * Tingkatnya dari setelan kejuaraan, dengan config sebagai jaring pengaman
+     * saat baris ini dibaca lepas dari partainya (riwayat, ekspor). Yang
+     * menegakkan diskualifikasi tetap TanggaHukuman; metode ini cuma menamai
+     * baris yang sudah tercatat.
+     */
     public function diskualifikasi(): bool
     {
-        return $this->tier === TingkatHukuman::Peringatan
-            && $this->level >= config('scoring.tanding.hukuman.peringatan.tingkat_diskualifikasi');
+        $tingkat = $this->match?->bracket?->weightClass?->tournament?->peraturan()
+            ?->hukumanTahap('peringatan')['tingkat_diskualifikasi']
+            ?? config('scoring.tanding.hukuman.peringatan.tingkat_diskualifikasi');
+
+        return $this->tier === TingkatHukuman::Peringatan && $this->level >= (int) $tingkat;
     }
 
     public function scopeBerlaku(Builder $query): Builder

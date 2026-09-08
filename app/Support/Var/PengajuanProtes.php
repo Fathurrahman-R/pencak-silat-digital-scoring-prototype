@@ -34,7 +34,14 @@ class PengajuanProtes
                 ['jumlah_dipakai' => 0],
             );
 
-            $jatah = config('scoring.var.kartu_protes.tanding');
+            /*
+             * Jatah kartu dan tenggat keputusan dibaca dari setelan kejuaraan,
+             * bukan dari config: keduanya termasuk angka yang panitia geser
+             * sendiri lewat menu Peraturan, dan config cuma bawaannya saat
+             * kejuaraan dibuat.
+             */
+            $peraturan = $match->bracket->weightClass->tournament->peraturan();
+            $jatah = (int) $peraturan->kartu_protes_tanding;
 
             if ($kartu->jumlah_dipakai >= $jatah) {
                 throw new RuntimeException('Kartu protes sudut ini sudah habis.');
@@ -54,7 +61,7 @@ class PengajuanProtes
                 'penalty_id' => $penalty?->id,
                 'diajukan_at' => $diajukanAt,
                 'diajukan_oleh' => $pengaju->id,
-                'tenggat_at' => $diajukanAt->clone()->addSeconds(config('scoring.var.tenggat_keputusan_detik')),
+                'tenggat_at' => $diajukanAt->clone()->addSeconds((int) $peraturan->tenggat_var_detik),
             ]);
         });
     }

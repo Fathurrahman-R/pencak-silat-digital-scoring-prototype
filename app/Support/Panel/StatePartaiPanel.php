@@ -54,6 +54,8 @@ class StatePartaiPanel
         ]);
 
         $peraturan = $match->bracket->weightClass->tournament->peraturan();
+        $golonganKelas = $match->bracket->weightClass->golongan_usia;
+        $ambangHitungan = $peraturan->hitunganTeknik($golonganKelas);
         /*
          * Babak TAMPIL, bukan babak berjalan.
          *
@@ -113,7 +115,7 @@ class StatePartaiPanel
                 && ! $match->disahkan(),
         ]);
 
-        $penalti = fn (Sudut $sudut) => $this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang);
+        $penalti = fn (Sudut $sudut) => $this->tangga->ringkasan($hukumanBerlaku, $sudut, $babakSekarang, $peraturan, $golonganKelas);
 
         /*
          * Hitungan teknik babak ini, per sudut.
@@ -187,9 +189,9 @@ class StatePartaiPanel
                 // Ambangnya ikut dikirim supaya panel menyatakan sisa tekanan
                 // yang tersedia, bukan memajang angka telanjang yang artinya
                 // hanya diketahui orang yang hafal Pasal 11.6.g.3.
-                'ambang_beruntun' => (int) config('scoring.tanding.hitungan_teknik.menang_teknik_setelah_hitungan_beruntun'),
-                'ambang_teguran' => (int) config('scoring.tanding.hitungan_teknik.teguran_pada_hitungan'),
-                'ambang_mutlak' => (int) config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan'),
+                'ambang_beruntun' => (int) $ambangHitungan['menang_teknik_setelah_hitungan_beruntun'],
+                'ambang_teguran' => (int) $ambangHitungan['teguran_pada_hitungan'],
+                'ambang_mutlak' => (int) $ambangHitungan['mutlak_pada_hitungan'],
             ],
             'tawaran_wmp' => $this->kalkulator->cekTawaranWmp($match, $rekap['total'])?->value,
             /*
@@ -198,7 +200,7 @@ class StatePartaiPanel
              */
             'tawaran_serentak' => $this->kalkulator->penyelesaianHitunganSerentak(
                 $match,
-                (int) config('scoring.tanding.hitungan_teknik.mutlak_pada_hitungan'),
+                (int) $ambangHitungan['mutlak_pada_hitungan'],
                 // Barisnya sudah dimuat di atas; tanpa ini ia jadi query keenam.
                 $hitunganBabakIni,
             ),

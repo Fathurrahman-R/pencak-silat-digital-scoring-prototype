@@ -193,8 +193,9 @@ class KetuaPertandinganController extends Controller
          * Dewasa. Satu angka tetap akan membuat panel ini menyatakan penampilan
          * anak-anak lewat batas padahal masih di dalam toleransinya.
          */
-        $toleransiDetik = config('scoring.jurus.toleransi_detik.'.$golongan->value)
-            ?? config('scoring.jurus.toleransi_detik.bawaan');
+        $toleransiDetik = $penampilan->jurusEvent->tournament
+            ->peraturan()
+            ->jurusWaktuUntuk($golongan)['toleransi_detik'];
 
         $acuanMs = $penampilan->jurusEvent->waktu_acuan_ms;
         $toleransiMs = $toleransiDetik * 1000;

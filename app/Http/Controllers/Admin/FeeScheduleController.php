@@ -92,7 +92,7 @@ class FeeScheduleController extends Controller
     private function pastikanMasihDraf(Tournament $tournament): void
     {
         abort_unless(
-            $tournament->status->bolehUbahAturan(),
+            $tournament->status->bolehUbahTarif(),
             403,
             'Tarif terkunci karena kejuaraan sudah '.strtolower($tournament->status->label()).'.',
         );
