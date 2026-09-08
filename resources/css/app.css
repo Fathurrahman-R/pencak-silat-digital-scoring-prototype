@@ -509,15 +509,28 @@
     }
 
     /*
-     * Baris brand saat rail: 68px harus memuat kotak brand 28px DAN tombol
-     * lebarkan 32px. Dengan padding 12px di kedua sisi, sisa ruangnya 44px --
-     * tombolnya `shrink-0`, jadi yang mengalah adalah tautan brand, yang
-     * menyusut sampai kotaknya tinggal sepotong sisi yang terpotong
-     * `overflow-hidden`. Padding dirapatkan dan tautannya berhenti melar.
+     * Baris brand saat rail: TOMBOL SAJA, lambangnya ikut hilang.
+     *
+     * Rail selebar 68px tidak muat memuat kotak lambang 28px dan tombol
+     * lebarkan 32px sekaligus: dengan padding sekecil apa pun keduanya
+     * berhimpitan, dan yang mengalah selalu tautan brand -- ia `flex-1`,
+     * jadi ia menyusut sampai kotaknya tinggal sepotong sisi yang terpotong
+     * `overflow-hidden`. Lambang setengah terpotong tidak menyampaikan apa
+     * pun; ia cuma membuat baris paling atas terlihat rusak.
+     *
+     * Yang benar-benar dibutuhkan di baris itu cuma satu: jalan untuk
+     * melebarkan menunya kembali. Tanpa tombol itu rail jadi jalan buntu.
+     * Tautan ke Beranda tidak hilang dari jangkauan -- ia tetap jadi menu
+     * pertama di bawahnya.
      */
+    html[data-sidebar='collapsed'] [data-brand-link] {
+        display: none;
+    }
+
     html[data-sidebar='collapsed'] [data-rail='brand'] {
-        gap: 4px;
-        padding-inline: 4px;
+        gap: 0;
+        justify-content: center;
+        padding-inline: 0;
     }
 
     html[data-sidebar='collapsed'] [data-rail='center'] {

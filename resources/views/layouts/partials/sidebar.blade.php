@@ -48,7 +48,10 @@
         diam-diam menyunting data yang keliru.
     --}}
     <div data-rail="brand" class="flex h-15 shrink-0 items-center gap-2 border-b border-line px-3">
-        <a href="{{ route('dashboard') }}" data-rail="center"
+        {{-- `data-brand-link` menandai SELURUH tautan brand, bukan cuma
+             labelnya: saat menu diciutkan ia hilang utuh, kotak lambang
+             sekalian. Lihat alasannya di app.css. --}}
+        <a href="{{ route('dashboard') }}" data-rail="center" data-brand-link
            class="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden whitespace-nowrap">
             <span class="grid size-7 shrink-0 place-items-center rounded-[var(--radius-kecil)] bg-accent text-[13px] font-bold text-accent-on">
                 {{ mb_substr(config('app.name'), 0, 1) }}
