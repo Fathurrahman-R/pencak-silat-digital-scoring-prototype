@@ -101,16 +101,25 @@ class Registration extends Model
             : KategoriPertandingan::Jurus;
     }
 
-    /** Nama nomor yang diikuti, sebagaimana dibaca panitia dan announcer. */
+    /**
+     * Nama nomor yang diikuti, sebagaimana dibaca panitia dan announcer.
+     *
+     * Nomor yang barisnya sudah hilang -- kelas atau nomor Jurus terhapus,
+     * pendaftaran lama yang tertinggal -- dijawab kalimat penjelas, bukan galat.
+     * Metode ini dipanggil dari daftar, pesan penolakan, dan berita acara;
+     * satu baris rusak tidak boleh menjatuhkan seluruh halaman yang memuatnya.
+     */
     public function namaNomor(): string
     {
         if ($this->weight_class_id !== null) {
             $kelas = $this->weightClass;
 
-            return "Tanding {$kelas->jenis_kelamin->label()} {$kelas->golongan_usia->label()} {$kelas->name}";
+            return $kelas === null
+                ? 'Kelas tanding yang sudah tidak ada'
+                : "Tanding {$kelas->jenis_kelamin->label()} {$kelas->golongan_usia->label()} {$kelas->name}";
         }
 
-        return $this->jurusEvent->nama();
+        return $this->jurusEvent?->nama() ?? 'Nomor yang belum ditentukan';
     }
 
     /** Berapa atlet yang seharusnya mengisi pendaftaran ini. */

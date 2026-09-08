@@ -57,7 +57,7 @@ class ContingentController extends Controller
         return view('admin.kontingen.edit', [
             'tournament' => $tournament,
             'contingent' => $contingent,
-            'officials' => $this->pilihanOfficial(),
+            'officials' => $this->pilihanOfficial($contingent),
         ]);
     }
 
@@ -94,13 +94,30 @@ class ContingentController extends Controller
     }
 
     /**
-     * Pengguna yang bisa ditunjuk sebagai official.
+     * Pengguna yang bisa ditunjuk sebagai official kontingen.
+     *
+     * Disaring ke pemegang peran `official-kontingen` saja. Sebelum ini daftar
+     * ini memuat SELURUH akun sistem -- wasit, juri, ketua pertandingan,
+     * administrator -- dan menunjuk salah satunya memberi orang itu akses
+     * kontingen: daftar peserta, berkas, tagihan. Yang paling berbahaya adalah
+     * juri, karena kontingen yang dipegangnya berisi pesilat yang ia nilai
+     * sendiri di gelanggang.
+     *
+     * Official yang SEDANG terpasang tetap ikut ditampilkan walau perannya
+     * sudah berubah. Tanpa itu, membuka formulir ubah pada kontingen lama akan
+     * memilihkan "Belum ditentukan" diam-diam, dan menekan Simpan mencabut
+     * official yang sebenarnya masih bertugas.
      *
      * @return array<int|string, string>
      */
-    private function pilihanOfficial(): array
+    private function pilihanOfficial(?Contingent $contingent = null): array
     {
+        $terpasang = $contingent?->user_id;
+
         return ['' => 'Belum ditentukan'] + User::query()
+            ->where(fn ($q) => $q
+                ->whereHas('roles', fn ($r) => $r->where('name', 'official-kontingen'))
+                ->when($terpasang !== null, fn ($q2) => $q2->orWhere('id', $terpasang)))
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();

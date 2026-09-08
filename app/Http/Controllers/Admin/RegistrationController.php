@@ -182,6 +182,17 @@ class RegistrationController extends Controller
             403,
         );
 
+        /*
+         * Penjagaan yang sama dengan jalur TAMBAH.
+         *
+         * Sebelum ini `pastikanTidakBeku()` cuma dipasang di store(): menambah
+         * peserta pada tagihan terkunci ditolak, tapi menghapusnya tetap lolos.
+         * Akibatnya baris dan nominal tagihan bertahan pada jumlah lama --
+         * kontingen membayar delapan nomor dan tinggal tujuh, dan selisihnya
+         * baru ketahuan saat rekap keuangan tidak cocok dengan daftar peserta.
+         */
+        $this->pastikanTidakBeku($contingent);
+
         $this->pastikanBelumMasukBagan($registration);
 
         $registration->delete();
@@ -230,7 +241,11 @@ class RegistrationController extends Controller
      *
      * Ditolak dengan pesan, bukan dengan halaman galat, karena ini keadaan yang
      * wajar dan bisa diperbaiki sendiri official — tinggal batalkan sesi
-     * pembayarannya kalau memang masih mau menambah atlet.
+     * pembayarannya kalau memang masih mau mengubah daftar peserta.
+     *
+     * Berlaku untuk menambah MAUPUN menghapus: tagihan yang sudah terkunci
+     * menyebut jumlah nomor yang dibayar, dan kedua arah perubahan sama-sama
+     * membuatnya tidak lagi cocok dengan pendaftaran yang tersisa.
      */
     private function pastikanTidakBeku(Contingent $contingent): void
     {
@@ -243,7 +258,7 @@ class RegistrationController extends Controller
         throw ValidationException::withMessages([
             'pendaftaran' => [
                 "Pendaftaran dibekukan karena tagihan berstatus {$status}. "
-                .'Batalkan sesi pembayaran lebih dulu bila masih ingin menambah peserta.',
+                .'Batalkan sesi pembayaran lebih dulu bila daftar peserta masih harus diubah.',
             ],
         ]);
     }

@@ -47,7 +47,10 @@
                 @endphp
 
                 <div class="flex flex-wrap items-center gap-4 border-b border-line py-3 first:pt-0 last:border-0 last:pb-0">
-                    <div class="min-w-[220px] flex-1">
+                    {{-- 220px minimum di layar 360px menyisakan terlalu sedikit
+                         untuk lajur aksi di sebelahnya; di bawah `sm` blok nama
+                         kelas mengambil satu baris penuh sendiri. --}}
+                    <div class="w-full min-w-0 flex-1 sm:min-w-[220px]">
                         <p class="font-medium text-ink">
                             {{ $k->jenis_kelamin->label() }} {{ $k->golongan_usia->label() }} — {{ $k->name }}
                         </p>
@@ -64,7 +67,7 @@
                         <x-si.badge varian="netral">Belum disusun</x-si.badge>
                     @endif
 
-                    <div class="flex gap-1">
+                    <div class="flex w-full min-w-0 flex-wrap gap-1 sm:w-auto">
                         @if ($bracket)
                             <x-si.tombol :tautan="route('admin.turnamen.bagan.show', [$tournament, $k])" varian="kedua" ukuran="kecil">
                                 Lihat
@@ -88,13 +91,24 @@
                                 pembaca bagan.
                             --}}
                             @resource(rk('bagan', ResourceAction::Create))
+                                {{-- Membungkus di layar sempit: label modenya
+                                     panjang ("Gugur (bagan pangkat dua, sisanya
+                                     bye)"), dan sebaris dengan tombol Susun ia
+                                     menuntut 496px -- tombolnya terdorong ke
+                                     luar layar ponsel. --}}
                                 <form method="POST" action="{{ route('admin.turnamen.bagan.susun', [$tournament, $k]) }}"
-                                      class="flex items-center gap-2">
+                                      class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
                                     @csrf
                                     <select name="mode" aria-label="Mode bagan {{ $k->name }}"
-                                            class="h-9 rounded-[var(--radius)] border border-line bg-surface px-2 text-[12.5px] text-ink">
+                                            class="h-9 min-w-0 flex-1 rounded-[var(--radius)] border border-line bg-surface px-2 text-[12.5px] text-ink sm:flex-none">
+                                        {{-- Keterangan menempel di option-nya
+                                             sendiri lewat title: bedanya kedua
+                                             mode cuma terasa pada jumlah peserta
+                                             tertentu, dan label sependek ini
+                                             tidak muat menjelaskannya. --}}
                                         @foreach (App\Enums\ModeBagan::cases() as $mode)
-                                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                                            <option value="{{ $mode->value }}"
+                                                    title="{{ $mode->keterangan() }}">{{ $mode->label() }}</option>
                                         @endforeach
                                     </select>
 
