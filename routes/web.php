@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\PanelGelanggangController;
 use App\Http\Controllers\Admin\PartaiScoringController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\ImporPendaftaranController;
 use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\Admin\ResourceController;
@@ -226,9 +227,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
              * miliknya. Pembatasannya di ScopesContingents, bukan di route,
              * supaya tidak ada dua tampilan yang harus dijaga sinkron.
              */
+            /*
+             * `scopeBindings()`: {contingent} dicari LEWAT kejuaraan di URL,
+             * bukan dari seluruh tabel.
+             *
+             * Tanpa itu, /admin/turnamen/3/kontingen/1/atlet membuka kontingen
+             * milik kejuaraan 1 di bawah judul kejuaraan 3 -- lengkap dengan
+             * daftar atlet, tombol tambah, dan tagihannya. Terlihat pada QA:
+             * halamannya menjawab 200 dan menulis "Perisai Diri Jakarta · QA
+             * Alur Nol 2026", dua kejuaraan yang berbeda dalam satu baris.
+             * Rute partai, bagan, dan gelanggang sudah menjaga hal yang sama
+             * lewat pastikanMilik(); yang ini terlewat.
+             */
             Route::controller(ContingentController::class)
                 ->prefix('{tournament}/kontingen')
                 ->name('kontingen.')
+                ->scopeBindings()
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('kontingen', ResourceAction::View));
                     Route::get('/create', 'create')->name('create')->middleware('resource:'.rk('kontingen', ResourceAction::Create));
@@ -242,6 +256,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::controller(AthleteController::class)
                 ->prefix('{tournament}/kontingen/{contingent}/atlet')
                 ->name('kontingen.atlet.')
+                ->scopeBindings()
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('atlet', ResourceAction::View));
                     Route::post('/', 'store')->name('store')->middleware('resource:'.rk('atlet', ResourceAction::Create));
@@ -256,12 +271,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::controller(RegistrationController::class)
                 ->prefix('{tournament}/kontingen/{contingent}/pendaftaran')
                 ->name('kontingen.pendaftaran.')
+                ->scopeBindings()
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('pendaftaran', ResourceAction::View));
                     Route::post('/tanding', 'storeTanding')->name('tanding')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
                     Route::post('/jurus', 'storeJurus')->name('jurus')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
                     Route::post('/{registration}/ajukan', 'submit')->name('ajukan')->middleware('resource:'.rk('pendaftaran', ResourceAction::Update));
                     Route::delete('/{registration}', 'destroy')->name('destroy')->middleware('resource:'.rk('pendaftaran', ResourceAction::Delete));
+                });
+
+            /*
+             * Impor daftar peserta dari CSV atau Google Spreadsheet.
+             *
+             * Berdiri sebagai controller sendiri, bukan menumpang
+             * RegistrationController: yang dikerjakannya bukan satu pendaftaran
+             * melainkan seluruh berkas -- membaca, memeriksa, memutar balik,
+             * lalu menyimpan -- dan alur dua langkah itu tidak punya kemiripan
+             * apa pun dengan tombol Daftarkan.
+             *
+             * Izinnya `pendaftaran.create` yang sama: yang boleh mendaftarkan
+             * satu peserta boleh mendaftarkan seratus, dan izin impor
+             * tersendiri hanya akan jadi izin yang lupa diberikan.
+             */
+            Route::controller(ImporPendaftaranController::class)
+                ->prefix('{tournament}/kontingen/{contingent}/impor')
+                ->name('kontingen.impor.')
+                ->scopeBindings()
+                ->group(function () {
+                    Route::get('/', 'form')->name('form')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
+                    Route::get('/contoh', 'contoh')->name('contoh')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
+                    Route::post('/pratinjau', 'pratinjau')->name('pratinjau')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
+                    Route::post('/terapkan', 'terapkan')->name('terapkan')->middleware('resource:'.rk('pendaftaran', ResourceAction::Create));
                 });
 
             Route::controller(FeeScheduleController::class)
@@ -297,6 +337,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::controller(InvoiceController::class)
                 ->prefix('{tournament}/kontingen/{contingent}/tagihan')
                 ->name('kontingen.tagihan.')
+                ->scopeBindings()
                 ->group(function () {
                     Route::get('/', 'show')->name('show')->middleware('resource:'.rk('invoice', ResourceAction::View));
                     Route::post('/kunci', 'kunci')->name('kunci')->middleware('resource:'.rk('invoice', ResourceAction::Update));

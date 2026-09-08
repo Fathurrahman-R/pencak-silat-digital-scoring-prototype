@@ -27,6 +27,19 @@
         ];
     }
 
+    /*
+     * Impor duduk sebagai tab, bukan tombol di halaman pendaftaran: ia
+     * mengubah dua hal sekaligus -- daftar atlet DAN daftar nomor -- jadi
+     * menaruhnya di bawah salah satu dari keduanya membuatnya terbaca sebagai
+     * milik yang satu saja.
+     */
+    if ($gate->allows(rk('pendaftaran', ResourceAction::Create))) {
+        $items['Impor'] = [
+            route('admin.turnamen.kontingen.impor.form', [$tournament, $contingent]),
+            'admin/turnamen/*/kontingen/*/impor*',
+        ];
+    }
+
     if ($gate->allows(rk('invoice', ResourceAction::View))) {
         $items['Tagihan'] = [
             route('admin.turnamen.kontingen.tagihan.show', [$tournament, $contingent]),
