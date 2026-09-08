@@ -682,6 +682,9 @@ Tiga metrik. Ambangnya disetel dari pengukuran satu hari pertandingan empat gela
 angka ada di `config/pemantauan.php`, dan kalau perlu digeser, kuncinya (`PANTAU_*`) sudah tercatat
 sebagai komentar di `.env.example`.
 
+> Seluruh perintah `php artisan silat:*` dan `resource:*` — opsinya, kapan dipakai, dan apa yang
+> terjadi kalau salah pakai — ada di [PERINTAH-ARTISAN.md](PERINTAH-ARTISAN.md).
+
 | Metrik | Kuning | Merah | Artinya |
 |---|---|---|---|
 | Waktu endpoint state | 500 ms | 900 ms | Panel mulai tertinggal dari matras — pertimbangkan menaikkan `-Pekerja` |
