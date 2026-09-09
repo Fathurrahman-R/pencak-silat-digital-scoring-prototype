@@ -75,13 +75,34 @@ beforeEach(function () {
     };
 });
 
-it('merender papan Jurus, bukan layar menunggu partai', function () {
+/*
+ * Papan mode Jurus merender view OPERATOR yang sama, persis seperti papan mode
+ * Tanding. Kendali timer Jurus dipegang Operator IT, dan alamat yang dibukanya
+ * sepanjang hari adalah panel/papan -- view hanya-tampil di sini membuatnya
+ * membuka alamatnya sendiri lalu tidak menemukan tombol Mulai.
+ */
+it('merender panel operator Jurus di alamat papan, bukan layar menunggu partai', function () {
     ($this->tayangkanJurus)();
 
     $this->actingAs(($this->buatUser)('operator-it'))
         ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
         ->assertOk()
-        ->assertViewIs('jurus.papan');
+        ->assertViewIs('jurus.operator')
+        ->assertSee('Mulai');
+});
+
+/*
+ * Dan izinnya yang menyembunyikan tombolnya, bukan view kedua: juri membuka
+ * alamat papan yang sama dan melihat papan tanpa kendali.
+ */
+it('menyembunyikan kendali timer dari yang tidak memegang izinnya', function () {
+    ($this->tayangkanJurus)();
+
+    $this->actingAs(($this->buatUser)('juri'))
+        ->get(route('admin.turnamen.gelanggang.panel.papan', [$this->tournament, $this->arena]))
+        ->assertOk()
+        ->assertViewIs('jurus.operator')
+        ->assertDontSee('>Mulai<', escape: false);
 });
 
 it('merender panel juri Jurus di alamat panel juri gelanggang', function () {

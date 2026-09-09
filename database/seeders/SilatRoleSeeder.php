@@ -102,8 +102,23 @@ class SilatRoleSeeder extends Seeder
                 'grants' => [
                     'turnamen' => $lihat,
                     'gelanggang' => $lihat,
-                    'jadwal' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign],
-                    'bagan' => $lihat,
+                    /*
+                     * Print ikut, dan itu bukan kelengkapan.
+                     *
+                     * Sebelum ini `bagan.print` dan `jadwal.print` tidak
+                     * dimiliki SATU peran pun. Tombol "Cetak PDF" ada di kedua
+                     * halaman, tapi ia dibungkus @resource dan karena itu tidak
+                     * pernah tergambar untuk siapa pun -- hanya super-admin
+                     * yang lolos, lewat Gate::before. Bagan yang dipaku di
+                     * papan pengumuman dan jadwal yang dibawa ke meja
+                     * gelanggang jadi mustahil dicetak oleh yang bertugas
+                     * mencetaknya.
+                     */
+                    'jadwal' => [
+                        ResourceAction::View, ResourceAction::Update,
+                        ResourceAction::Assign, ResourceAction::Print,
+                    ],
+                    'bagan' => [ResourceAction::View, ResourceAction::Print],
                     'penugasan-aparat' => [ResourceAction::View, ResourceAction::Assign],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
                     /*
@@ -315,8 +330,15 @@ class SilatRoleSeeder extends Seeder
 
                     'kelas-tanding' => $lihat,
                     'nomor-jurus' => $lihat,
-                    'bagan' => $lihat,
-                    'jadwal' => $lihat,
+
+                    /*
+                     * Mencetak, bukan cuma melihat. Yang memaku bagan di papan
+                     * pengumuman dan membagikan jadwal ke meja gelanggang
+                     * adalah meja ini -- bukan Ketua Pertandingan, yang sedang
+                     * berdiri di matras, dan bukan super-admin.
+                     */
+                    'bagan' => [ResourceAction::View, ResourceAction::Print],
+                    'jadwal' => [ResourceAction::View, ResourceAction::Print],
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
                 ],
             ],

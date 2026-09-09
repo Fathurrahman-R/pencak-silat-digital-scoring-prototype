@@ -89,7 +89,25 @@ class PanelGelanggangController extends Controller
      */
     private const PANEL = [
         'kendali' => ['tanding' => self::PANEL_KENDALI, 'jurus' => self::PANEL_KENDALI],
-        'papan' => ['tanding' => 'silat.papan', 'jurus' => 'jurus.papan'],
+
+        /*
+         * Papan mode Jurus merender view OPERATOR yang sama, persis seperti
+         * papan mode Tanding -- lihat rasional di papan() di bawah.
+         *
+         * Sempat ada `jurus.papan` tersendiri, hanya-tampil, dan itu keliru
+         * dua kali. Kendali timer Jurus dipegang `penampilan-jurus.update`,
+         * yang dimiliki Operator IT -- dan alamat yang dibuka Operator IT
+         * sepanjang hari adalah panel/papan. Dengan view hanya-tampil, ia
+         * membuka alamatnya sendiri dan tidak menemukan tombol Mulai di sana;
+         * kendalinya ada di alamat lain, `panel/jurus-operator`. Itu persis
+         * kerugian "petugas harus mengetik alamat baru" yang membuat panel
+         * pindah ke alamat gelanggang sejak awal.
+         *
+         * Sekarang satu view, dan izinnya yang menyembunyikan tombol: yang
+         * tidak memegang `penampilan-jurus.update` melihat papan tanpa
+         * kendali, tanpa satu baris view tambahan.
+         */
+        'papan' => ['tanding' => 'silat.papan', 'jurus' => 'jurus.operator'],
         'juri' => ['tanding' => 'silat.juri', 'jurus' => 'jurus.juri'],
         'ketua' => ['tanding' => 'silat.panel-ketua', 'jurus' => 'jurus.panel-ketua'],
         'wasit' => ['tanding' => 'silat.wasit', 'jurus' => null],

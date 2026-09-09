@@ -44,11 +44,12 @@
 | Langkah | Siapa | Di mana |
 |---|---|---|
 | Menetapkan format nomor (`battle` atau peringkat) | Sekretariat | Menu Kategori Jurus → pilih nomor → Format |
-| Menyusun bagan gugur (format `battle`) | Operator IT | Menu Kategori Jurus → pilih nomor → Susun bagan; pohonnya di **Lihat pohon bagan**, bisa dicetak PDF |
+| Menyusun bagan gugur (format `battle`) | Operator IT | Menu Kategori Jurus → pilih nomor → Susun bagan; pohonnya di **Lihat pohon bagan** |
+| Mencetak bagan dan jadwal | Sekretariat, Ketua Pertandingan | Tombol **Cetak PDF** di halaman Bagan dan halaman Jadwal |
 | Buat penampilan dari pendaftaran terverifikasi (format peringkat) | Operator IT | Menu Kategori Jurus → pilih nomor → Buat penampilan |
-| **Menjadwalkan ke gelanggang** | Sekretariat | Menu Jadwal → tab **Jurus**. Battle dijadwalkan berpasangan: kedua sudutnya masuk antrean gelanggang berurutan, biru lebih dulu |
+| **Menjadwalkan ke gelanggang** | Ketua Pertandingan | Menu Jadwal → tab **Jurus**. Battle dijadwalkan berpasangan: kedua sudutnya masuk antrean gelanggang berurutan, biru lebih dulu |
 | Menayangkan penampilan berikutnya | Pengendali Gelanggang | Panel Kendali → **Antrean Jurus** → Tayangkan |
-| Mulai/hentikan timer penampilan | Operator IT | Panel Operator Jurus |
+| Mulai/hentikan timer penampilan | Operator IT | Panel gelanggang, alamat yang sama dengan papan Tanding |
 | Memberi nilai 9.00–10.00, mencatat pengurangan 0.01 | Juri Jurus | Panel Juri Jurus |
 | Mencatat pengurangan 0.50, menetapkan diskualifikasi | Pengawas/Dewan Wasit Juri | Panel Operator Jurus (bagian Pengurangan) |
 | **Mengesahkan skor akhir** | Ketua Pertandingan | Panel Operator Jurus |
@@ -56,7 +57,7 @@
 
 **Nomor Jurus yang belum dijadwalkan ke gelanggang tidak muncul di panel mana pun.** Kolom gelanggang penampilan diisi dari tab Jurus di menu Jadwal; sebelum itu antrean Jurus di Panel Kendali kosong dan tombol Tayangkan tidak tergambar. Alamat lama per penampilan tetap hidup untuk kejuaraan kecil yang menjalankan Jurus tanpa membaginya ke matras.
 
-**Satu gelanggang menayangkan satu hal.** Begitu Pengendali menayangkan penampilan Jurus, panel papan, juri, dan ketua di gelanggang itu berganti sendiri ke mode Jurus — alamatnya tidak berubah. Wasit, Dewan Wasit Juri, dan Komisi Protes tidak bertugas di Jurus; panelnya menampilkan layar tunggu yang menyebutkan sebabnya sampai gelanggang kembali menayangkan Tanding.
+**Satu gelanggang menayangkan satu hal, dan alamat panelnya tidak pernah berubah.** Begitu Pengendali menayangkan penampilan Jurus, panel papan, juri, dan ketua di gelanggang itu berganti sendiri ke mode Jurus. Operator IT membuka alamat papan yang sama seperti saat Tanding dan menemukan timer Jurus di sana — kendalinya muncul menurut izin, bukan menurut alamat. Wasit, Dewan Wasit Juri, dan Komisi Protes tidak bertugas di Jurus; panelnya menampilkan layar tunggu yang menyebutkan sebabnya sampai gelanggang kembali menayangkan Tanding.
 
 Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi. Pengesahan juga menuntut penampilannya sudah **selesai**: timernya dijalankan lalu dihentikan.
 
