@@ -538,11 +538,16 @@ Indonesia: `tombol`, `kartu`, `tabel/`, `modal`, `isian`, `pilihan`, `saklar`, `
 `linimasa`, `pohon-bagan`, `titik-hadir`, dan seterusnya. Jangan menulis markup Tailwind mentah
 untuk hal yang sudah punya komponen — konsistensi kontras WCAG AA dijaga lewat komponen ini.
 
-Empat pemeriksa rupa, jalankan sebelum menyerahkan perubahan UI:
+Lima pemeriksa aset, jalankan sebelum menyerahkan perubahan UI:
 
 ```bash
-npm run periksa-rupa   # kelas-hilang + kontras + kontras-kelas + sapu-prop
+npm run periksa-rupa   # kelas-hilang + kontras + kontras-kelas + sapu-prop + periksa-siaran
 ```
+
+Yang terakhir bukan tentang rupa: `periksa-siaran.mjs` menjaga `VITE_REVERB_SCHEME`
+tetap kosong, supaya skema WebSocket tidak ikut tertanam di dalam aset saat build.
+Ia ikut di sini karena inilah satu-satunya perintah yang memang dijalankan orang
+sesudah `npm run build`. Lihat komentar di kepala berkasnya.
 
 **Sumber kebenaran arah rupa adalah [`BRIEF-DESAIN.md`](BRIEF-DESAIN.md)** (arah "Digital Scoring",
 shadcn/zinc), bukan `docs/kanvas/`. Folder kanvas menggambar arah lama "Matras" dan sudah
