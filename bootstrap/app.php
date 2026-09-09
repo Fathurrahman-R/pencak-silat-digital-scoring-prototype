@@ -150,7 +150,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * Kalau suatu saat proxy-nya dipindah ke mesin lain, tambahkan alamat
          * mesin ITU di sini -- satu alamat, bukan satu rentang.
          */
-        $middleware->trustProxies(at: ['127.0.0.1', '::1']);
+        $middleware->trustProxies(at: ['127.0.0.0/8', '::1']);
 
         /*
          * Global, bukan hanya grup web: halaman galat, overlay vMix, dan

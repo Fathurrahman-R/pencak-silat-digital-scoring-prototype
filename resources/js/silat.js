@@ -155,8 +155,7 @@ function pantauKoneksi() {
      * terlihat, dan yang terbaca cuma "Reverb mati" -- padahal Reverb tidak
      * pernah dihubungi. Ditemukan begitu di Safari iOS.
      */
-    const { options } = pusher.connection;
-    const alamatWs = `${options.forceTLS ? 'wss' : 'ws'}://${options.wsHost}:${options.forceTLS ? options.wssPort : options.wsPort}/app/${options.key}`;
+    const alamatWs = window.Echo?.alamatWs ?? '(alamat tidak diketahui)';
 
     pusher.connection.bind('error', (galat) => {
         console.error('[silat] WebSocket gagal:', alamatWs, galat);

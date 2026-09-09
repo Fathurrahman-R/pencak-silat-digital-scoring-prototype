@@ -85,14 +85,34 @@ export function siapkanEcho() {
         wssPort: port,
         forceTLS: aman,
         /*
-         * Satu transport saja, yang memang cocok dengan halamannya. Membiarkan
-         * keduanya menyala membuat pusher-js mencoba `ws://` dari halaman
-         * `https://` sebagai cadangan -- percobaan yang pasti diblokir, dan
-         * yang menunda penanda "Terputus" muncul selama beberapa detik tanpa
-         * satu pun keterangan.
+         * KEDUANYA, jangan dipersempit menurut skema halaman.
+         *
+         * Sempat ditulis `aman ? ['wss'] : ['ws']` -- kelihatan lebih rapi, dan
+         * salah: pusher-js mendaftarkan transport WebSocket-nya dengan nama
+         * `ws`, dan `wss` bukan nama transport melainkan akibat dari
+         * `forceTLS`. Menyaring ke `['wss']` menyisakan NOL transport yang
+         * cocok, jadi ia berhenti di status `failed` tanpa pernah membuka satu
+         * soket pun -- terukur di Chrome: nol koneksi WebSocket, nol baris di
+         * log proxy.
+         *
+         * Kekhawatiran yang melahirkan penyempitan itu -- `ws://` dicoba dari
+         * halaman `https://` lalu diblokir -- sudah dijawab `forceTLS`: ia yang
+         * menentukan skema URL-nya, dan dengan `aman` bernilai true URL-nya
+         * selalu `wss://`.
          */
-        enabledTransports: aman ? ['wss'] : ['ws'],
+        enabledTransports: ['ws', 'wss'],
     });
+
+    /*
+     * Alamat yang dicoba, disimpan apa adanya untuk pesan galat.
+     *
+     * Dibaca pantauKoneksi() saat sambungan gagal. Ditulis di sini, bukan
+     * digali dari dalam pusher-js: percobaan pertama membacanya dari
+     * `pusher.connection.options` dan menghasilkan `ws://undefined:undefined`
+     * -- pesan galat yang justru menyesatkan orang yang sedang mencari
+     * sebabnya di pinggir matras.
+     */
+    window.Echo.alamatWs = `${aman ? 'wss' : 'ws'}://${alamat}:${port}/app/${import.meta.env.VITE_REVERB_APP_KEY}`;
 
     return window.Echo;
 }
