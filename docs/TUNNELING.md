@@ -72,6 +72,32 @@ live.contoh-domain.test {
 Ganti `localhost:8000` dengan port `php artisan serve`/PHP-FPM yang
 sesungguhnya, dan `localhost:8080` dengan `REVERB_PORT` dari `.env`.
 
+### Kalau halaman terbuka tapi polos, tanpa CSS dan tanpa angka yang bergerak
+
+Proxy meneruskan permintaan `https` ke Laravel sebagai `http`. Laravel hanya
+tahu itu dari `X-Forwarded-Proto`, dan hanya mempercayainya kalau proxy-nya
+terdaftar — `bootstrap/app.php` mempercayai **loopback saja**, karena Caddy di
+atas memang berdiri di mesin yang sama. Tidak percaya, seluruh alamat aset
+terbit berskema `http`, dan peramban memblokirnya dari halaman `https` sebagai
+konten campuran: tidak ada CSS, tidak ada Alpine, tidak ada Echo.
+
+Dua hal yang harus benar bersamaan, dan keduanya gejalanya sama persis —
+"siarannya mati", tanpa satu pun pesan di Safari iOS:
+
+1. Caddy meneruskan `X-Forwarded-Proto` (bawaannya sudah begitu) **dan**
+   berjalan di mesin yang sama dengan Laravel. Kalau ia dipindah ke mesin lain,
+   daftarkan alamat mesin itu di `trustProxies` pada `bootstrap/app.php`.
+2. `VITE_REVERB_SCHEME` di `.env` **kosong**, lalu `npm run build` ulang —
+   dijaga `npm run periksa-siaran`.
+
+Periksa cepat dari mesin proxy: `curl -sk https://<domain>/live/turnamen/1 |
+grep -o 'href="[^"]*build[^"]*"' | head -1`. Alamat yang keluar harus berskema
+`https`. Kalau `http`, yang salah nomor 1.
+
+**Sesudah menyunting `bootstrap/app.php`, jalankan ulang kolam PHP-nya**
+(`.\scripts\server\hentikan-server.ps1` lalu `jalankan-server.ps1`). Perubahan
+di berkas itu tidak berlaku pada proses yang sedang berjalan.
+
 ## Menyambungkan tunnel
 
 Tunnel (cloudflared, ngrok, atau sejenisnya) diarahkan ke Caddy di atas,
