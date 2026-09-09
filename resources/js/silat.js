@@ -372,6 +372,28 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
     verifikasi: null,
+
+    /*
+     * Id verifikasi yang modal hasilnya sudah ditutup.
+     *
+     * Disimpan sebagai ID, bukan sebagai boolean: modal harus muncul SEKALI per
+     * verifikasi, lalu tidak muncul lagi walaupun state terus ditarik tiap dua
+     * detik sepanjang sisa partai -- dan harus muncul LAGI untuk verifikasi
+     * berikutnya, yang di satu babak bisa terjadi beberapa kali.
+     */
+    _hasilVerifikasiDitutup: null,
+
+    /*
+     * Sudah pernah menyerap satu muatan state.
+     *
+     * Dipakai menyemai penanda di atas: verifikasi yang SUDAH diterapkan
+     * sebelum panel ini dibuka tidak boleh memunculkan modalnya. Endpoint
+     * state selalu mengirim verifikasi TERAKHIR partai ini, apa pun umurnya --
+     * jadi tanpa semaian ini, operator yang membuka papan di tengah babak
+     * ketiga disambut hasil verifikasi dari babak pertama, sebesar layar.
+     */
+    _hasilVerifikasiDisemai: false,
+
     pesan: null,
     galat: null,
 
@@ -1086,6 +1108,23 @@ Alpine.data('partaiPanel', (cfg) => ({
         return this.verifikasi?.berjalan === true;
     },
 
+    /**
+     * Modal hasil verifikasi sedang pantas ditampilkan.
+     *
+     * Syaratnya `sudah_diterapkan`, bukan `hasil` terisi. Hasil terbit begitu
+     * ambang suara tercapai, tapi ia belum keputusan sampai Wasit menekan
+     * Terapkan -- dan hasil yang dipajang sebesar layar sebelum itu akan
+     * diumumkan orang di sekitar meja mendahului Wasitnya sendiri.
+     */
+    get hasilVerifikasiTampil() {
+        return this.verifikasi?.sudah_diterapkan === true
+            && this.verifikasi?.id !== this._hasilVerifikasiDitutup;
+    },
+
+    tutupHasilVerifikasi() {
+        this._hasilVerifikasiDitutup = this.verifikasi?.id ?? null;
+    },
+
     /*
      * Ada protes VAR yang belum diputus.
      *
@@ -1466,6 +1505,19 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.tekanan = data.tekanan ?? null;
         this.riwayatDipangkasPada = data.riwayat_dipangkas_pada ?? null;
         this.keberatan = data.keberatan;
+        /*
+         * Muatan PERTAMA cuma menyemai, tidak memicu modal hasil. Yang sudah
+         * diterapkan sebelum panel ini dibuka bukan kabar baru bagi siapa pun
+         * di meja -- mereka sudah melihatnya waktu itu terjadi.
+         */
+        if (! this._hasilVerifikasiDisemai) {
+            this._hasilVerifikasiDisemai = true;
+
+            if (data.verifikasi?.sudah_diterapkan) {
+                this._hasilVerifikasiDitutup = data.verifikasi.id;
+            }
+        }
+
         this.verifikasi = data.verifikasi;
 
         this._segarkanTimer();
@@ -1487,6 +1539,12 @@ Alpine.data('partaiPanel', (cfg) => ({
         // Polling verifikasi partai lama muncul di panel juri partai baru --
         // juri menjawab pertanyaan tentang kejadian yang bukan di depannya.
         this.verifikasi = null;
+
+        // Semaian modal hasil ikut disetel ulang: verifikasi partai BARU yang
+        // kebetulan sudah diterapkan sebelum pengendali memindahkan pointer
+        // bukan kabar untuk meja ini, sama seperti saat panel baru dibuka.
+        this._hasilVerifikasiDitutup = null;
+        this._hasilVerifikasiDisemai = false;
 
         // Tawaran WMP yang menempel memicu tombol akhiri untuk partai yang
         // salah. Sama untuk tawaran hitungan serentak.

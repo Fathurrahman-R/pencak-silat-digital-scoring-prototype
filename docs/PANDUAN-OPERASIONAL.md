@@ -64,6 +64,23 @@ Panel Jurus mengikuti siaran, sama seperti panel Tanding: nilai juri, timer, pen
 
 **Perbandingan nilai kedua sudut muncul sendiri** di papan gelanggang, panel juri, panel operator, dan panel ketua begitu **kedua penampilan disahkan** — bukan begitu keduanya selesai tampil. Sebelum pengesahan angkanya masih bisa berubah oleh pengurangan Pengawas, dan angka yang berganti di depan penonton lebih menyesatkan daripada angka yang belum muncul. Skor akhir yang lebih tinggi menang; kalau **sama persis**, sistem berhenti dan Ketua Pertandingan yang memilih sudut, dengan alasan wajib yang ikut tercetak di berita acara. Kalau penanda koneksi di pojok panel menyala **Terputus**, yang terlihat di layar sedang berhenti diperbarui -- periksa jaringan gelanggang sebelum mengambil keputusan dari angkanya.
 
+## Verifikasi juri di panel operator
+
+Selama verifikasi berjalan pertandingan berhenti, dan operator adalah orang yang ditanyai semua orang di sekitar meja. Panel operator karena itu menampilkannya, meski operator tidak menekan apa pun di sana.
+
+| Kapan | Yang tampil |
+|---|---|
+| Wasit membuka verifikasi | Blok di atas pita keadaan, berjudul **Verifikasi Jatuhan** atau **Verifikasi Pelanggaran** — menyebut apa yang ditanyakan, bukan cuma bahwa ada verifikasi |
+| Juri menjawab satu per satu | Petak tiap juri (yang belum menjawab digambar sebagai tepi putus-putus) dan **hitungan suara tiap sudut** |
+| Suara sudah cukup | Satu baris: "Suara sudah cukup — menunggu Wasit menerapkannya" |
+| **Wasit menekan Terapkan** | **Modal di atas panel skor**: "Jatuhan Valid" / "Pelanggaran Valid", berbidang warna sudut yang menang suara. Menutup sendiri setelah sembilan detik, atau diketuk |
+
+**Hasilnya sengaja tidak muncul sebelum diterapkan.** Sebelumnya ia tumbuh di sudut blok verifikasi begitu ambang suara tercapai — sementara Wasit belum menekan apa pun — dan terbaca sebagai keputusan yang sudah jadi, sehingga yang membacanya di sekitar meja mengumumkannya mendahului Wasitnya sendiri.
+
+Hasil **"tidak ada"** memakai modal berwarna netral dan berbunyi "Jatuhan Tidak Valid" / "Pelanggaran Tidak Valid". Mewarnainya merah atau biru akan menjanjikan sudut yang justru baru saja dinyatakan tidak ada.
+
+Modal hanya muncul untuk penerapan yang terjadi **selagi panelnya terbuka**. Operator yang baru membuka papan di tengah babak ketiga tidak disambut hasil verifikasi dari babak pertama.
+
 ## Protes VAR dan Protes Manajer
 
 1. Pelatih mengangkat kartu protes VAR di pinggir gelanggang (fisik, di luar sistem).
