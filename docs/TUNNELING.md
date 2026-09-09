@@ -98,6 +98,33 @@ grep -o 'href="[^"]*build[^"]*"' | head -1`. Alamat yang keluar harus berskema
 (`.\scripts\server\hentikan-server.ps1` lalu `jalankan-server.ps1`). Perubahan
 di berkas itu tidak berlaku pada proses yang sedang berjalan.
 
+### Menguji jalur https tanpa tunnel sungguhan
+
+Kedua cacat di atas hanya muncul di halaman `https`, dan keduanya tidak
+menuliskan apa pun di Safari iOS — jadi menebaknya dari gejala mahal. Jalurnya
+bisa direproduksi di mesin sendiri:
+
+1. Terbitkan sertifikat swasembada, lalu jalankan proksi TLS kecil yang meniru
+   Caddyfile di atas: `/app/*` diteruskan ke `REVERB_PORT`, sisanya ke port
+   HTTP, **dengan `Host` dipertahankan** dan `X-Forwarded-Proto: https`
+   ditambahkan. Menimpa `Host` membuat Laravel membangun alamat asetnya ke
+   alamat proksi dan peramban menolaknya sebagai lintas-origin.
+2. Proksi harus menghubungi Laravel lewat **loopback** — itu syarat
+   `trustProxies`.
+3. Buka panel lewat proksi memakai **WebKit**, mesin yang sama dengan Safari,
+   dengan profil perangkat iPhone:
+   `webkit.launch()` + `newContext({ ...devices['iPhone 14'], ignoreHTTPSErrors: true })`.
+   Penegakan konten campurannya ada di mesinnya, jadi ia sama dengan Safari
+   sungguhan.
+4. Yang diperiksa bukan tebakan konfigurasi melainkan alamat yang **benar-benar
+   dibuka**: `page.on('websocket', ws => ws.url())`. Harus `wss://<host>:<port
+   halaman>/app/...` dan status `connected`.
+
+Diverifikasi begitu pada 9 September 2026: dengan perbaikannya, halaman `https`
+membuka `wss://…:8443/app/…` dan tersambung; dengan logika lama ia mencoba
+`wss://…:8080` — port yang memang tidak dibuka tunnel — lalu berhenti di
+`unavailable` dengan penanda layar "Terputus".
+
 ## Menyambungkan tunnel
 
 Tunnel (cloudflared, ngrok, atau sejenisnya) diarahkan ke Caddy di atas,
