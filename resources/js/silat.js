@@ -142,6 +142,37 @@ function pantauKoneksi() {
     });
 
     /*
+     * Kegagalan menyambung MENYEBUT alamat yang dicobanya.
+     *
+     * Penanda di layar cuma bisa berbunyi "Terputus" -- itu memang yang perlu
+     * diketahui juri, dan menambahkan alamat WebSocket di sana hanya membuat
+     * layar gelanggang penuh oleh hal yang tidak bisa ditindaklanjuti siapa pun
+     * di pinggir matras.
+     *
+     * Tapi yang MEMPERBAIKINYA butuh justru alamat itu, dan sebelum baris ini
+     * ia tidak pernah tertulis di mana pun: sambungan yang diblokir peramban
+     * (mis. `ws://` dari halaman `https://`) gagal tanpa satu pun pesan yang
+     * terlihat, dan yang terbaca cuma "Reverb mati" -- padahal Reverb tidak
+     * pernah dihubungi. Ditemukan begitu di Safari iOS.
+     */
+    const { options } = pusher.connection;
+    const alamatWs = `${options.forceTLS ? 'wss' : 'ws'}://${options.wsHost}:${options.forceTLS ? options.wssPort : options.wsPort}/app/${options.key}`;
+
+    pusher.connection.bind('error', (galat) => {
+        console.error('[silat] WebSocket gagal:', alamatWs, galat);
+    });
+
+    pusher.connection.bind('state_change', ({ current }) => {
+        if (current === 'unavailable' || current === 'failed') {
+            console.error(
+                `[silat] WebSocket ${current} — tidak berhasil menyambung ke ${alamatWs}. `
+                + 'Periksa: Reverb berjalan, portnya terbuka dari perangkat ini, '
+                + 'dan skema halaman (http/https) sama dengan skema WebSocket-nya.',
+            );
+        }
+    });
+
+    /*
      * WebSocket bukan pendeteksi putus yang cepat.
      *
      * Diukur di lapangan: WiFi HP juri dicabut, dan delapan detik kemudian
