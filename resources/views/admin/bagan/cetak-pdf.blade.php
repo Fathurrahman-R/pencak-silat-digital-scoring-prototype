@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Bagan {{ $weightClass->namaLengkap() }}</title>
+    <title>Bagan {{ $judul }}</title>
     {{--
         Bagan siap cetak — gambarnya sama dengan halaman Bagan di layar.
 
@@ -96,7 +96,14 @@
 <body>
     <div class="lembar" style="width: {{ $pohon['lebar'] + $margin * 2 }}px; height: {{ $pohon['tinggi'] + $kepala + $margin * 2 }}px">
         <div class="kepala" style="left: {{ $margin }}px; top: {{ $margin }}px; width: {{ $pohon['lebar'] }}px">
-            <h1>{{ $weightClass->namaLengkap() }}</h1>
+            {{-- Judulnya diserahkan pemanggil, bukan diambil dari kelas
+                 tanding: berkas ini juga mencetak bagan Jurus, yang
+                 menggantung pada NOMOR dan tidak punya kelas tanding sama
+                 sekali. Pohonnya identik, jadi cetakannya pun satu berkas --
+                 dua salinan berarti dua gambar yang suatu saat berbeda, dan
+                 kontingen yang membaca cetakan di papan pengumuman akan
+                 menyiapkan lawan yang berbeda dari yang tampil di layar. --}}
+            <h1>{{ $judul }}</h1>
             <p>
                 {{ $tournament->name }} ·
                 {{ $bracket->terkunci()

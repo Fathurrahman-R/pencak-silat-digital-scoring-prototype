@@ -1348,6 +1348,28 @@ Alpine.data('partaiPanel', (cfg) => ({
             return;
         }
 
+        /*
+         * Gelanggang beralih ke Jurus: halaman ini bukan lagi halaman yang
+         * pantas.
+         *
+         * Panel Tanding tidak punya satu pun elemen untuk menggambar
+         * penampilan Jurus, dan `match` yang jadi null membuatnya memajang
+         * partai kosong dengan tombol yang masih bisa ditekan. Servernya yang
+         * merender panel Jurus di alamat yang sama; yang perlu dilakukan di
+         * sini cuma bertanya lagi.
+         *
+         * Panel kendali dikecualikan lewat `ikutiTayang`: ia yang menekan
+         * peralihannya, dan bentuknya memang sama di kedua mode.
+         */
+        if (this.cfg.ikutiTayang && data.panel?.tayang === 'jurus') {
+            if (! this._mendarat) {
+                this._mendarat = true;
+                window.location.reload();
+            }
+
+            return;
+        }
+
         const gantiPartai = this.match?.id != null && idBaru !== this.match.id;
 
         if (gantiPartai) {
@@ -2024,8 +2046,28 @@ Alpine.data('perbandinganBattle', (cfg) => ({
     merah: null,
     biru: null,
     selisih: null,
+    siap: false,
+    seri: false,
+    galat: null,
 
     _saluran: null,
+
+    /*
+     * Muatan utuh, supaya <x-silat.komparasi-battle> yang sama bisa dipakai
+     * halaman ini DAN keempat panel gelanggang. Tanpa getter ini, halaman
+     * battle memegang muatan yang sama dalam bentuk yang berbeda, dan
+     * komponennya harus digandakan untuk membacanya.
+     */
+    get perbandingan() {
+        return {
+            battle: this.battle,
+            merah: this.merah,
+            biru: this.biru,
+            selisih: this.selisih,
+            siap: this.siap,
+            seri: this.seri,
+        };
+    },
 
     init() {
         this.muat();
@@ -2065,8 +2107,43 @@ Alpine.data('perbandinganBattle', (cfg) => ({
             this.merah = data.merah;
             this.biru = data.biru;
             this.selisih = data.selisih;
+            this.siap = data.siap ?? false;
+            this.seri = data.seri ?? false;
         } finally {
             this.memuat = false;
+        }
+    },
+
+    /** Menetapkan pemenang; sudut dan alasan hanya diisi saat skornya seri. */
+    async putuskanBattle(pemenang = null, alasan = null) {
+        this.galat = null;
+
+        try {
+            const res = await fetch(this.cfg.putuskan, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({ pemenang_registration_id: pemenang, alasan }),
+            });
+
+            const body = await res.json().catch(() => ({}));
+
+            if (! res.ok) {
+                this.galat = pesanGagal(res.status, body);
+
+                return false;
+            }
+
+            await this.muat();
+
+            return true;
+        } catch (e) {
+            this.galat = 'Tidak bisa menghubungi server. Periksa jaringan perangkat ini.';
+
+            return false;
         }
     },
 
@@ -2090,6 +2167,17 @@ Alpine.data('jurusPanel', (cfg) => ({
     skor: { median: 0, total_pengurangan: 0, akhir: 0 },
     nilaiJuri: [],
     pengurangan: [],
+
+    /*
+     * Perbandingan kedua sudut battle, atau null.
+     *
+     * Null untuk nomor berformat peringkat -- yang tidak punya battle sama
+     * sekali -- dan untuk battle yang salah satu sudutnya belum disahkan.
+     * Komponen <x-silat.komparasi-battle> yang memutuskan kapan ia digambar,
+     * dari `siap` di dalam muatan ini; panel tidak menghitungnya sendiri.
+     */
+    komparasi: null,
+
     berjalanMs: 0,
     pesan: null,
     galat: null,
@@ -2261,7 +2349,18 @@ Alpine.data('jurusPanel', (cfg) => ({
         this.skor = data.skor;
         this.nilaiJuri = data.nilai_juri;
         this.pengurangan = data.pengurangan;
+        this.komparasi = data.komparasi ?? null;
         this.memuat = false;
+
+        /*
+         * Alamat aksi ikut diserap tiap tarikan, bukan cuma saat halaman
+         * dimuat. Panel yang beralamat GELANGGANG berpindah penampilan tanpa
+         * memuat ulang, dan alamat yang dibekukan saat render akan mengirim
+         * nilai ke penampilan yang sudah turun dari matras.
+         */
+        if (data.aksi) {
+            Object.assign(this.cfg, data.aksi);
+        }
 
         if (this.nilaiSaya !== null) {
             this.nilaiInput = this.nilaiSaya.toFixed(2);
@@ -2349,6 +2448,26 @@ Alpine.data('jurusPanel', (cfg) => ({
 
     sahkan() {
         return this.kirim(this.cfg.sahkan);
+    },
+
+    /**
+     * Menetapkan pemenang battle dari panel yang menampilkan dasar
+     * keputusannya.
+     *
+     * `pemenang` dan `alasan` hanya diisi saat skor akhir kedua sudut sama --
+     * dan hanya di situ server menerimanya. Skor yang berbeda diputus angka;
+     * mengirim pilihan sudut untuk battle yang tidak seri ditolak server,
+     * bukan diam-diam diterima.
+     */
+    putuskanBattle(pemenang = null, alasan = null) {
+        if (! this.cfg.putuskanBattle) {
+            return false;
+        }
+
+        return this.kirim(this.cfg.putuskanBattle, {
+            pemenang_registration_id: pemenang,
+            alasan,
+        });
     },
 
     _mulaiStopwatch(mulaiEpochMs) {

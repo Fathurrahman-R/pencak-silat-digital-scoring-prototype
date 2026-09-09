@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\JurusBaganController;
 use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\PanelGelanggangController;
@@ -399,6 +400,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
                      * dua belas pemuatan ulang halaman.
                      */
                     Route::post('/{match}/pindahkan', 'pindahkan')->name('pindahkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+
+                    /*
+                     * Tab Jurus, memakai ulang resource `jadwal`.
+                     *
+                     * Izinnya memang pertanyaan yang sama -- "boleh menyusun
+                     * jadwal gelanggang?" -- dan resource baru berarti satu
+                     * peran lagi yang harus diberi izin di tiap kejuaraan yang
+                     * sudah berjalan, hanya untuk memisahkan dua tab pada satu
+                     * layar.
+                     *
+                     * Yang dijadwalkan berbeda bentuk per format nomor: battle
+                     * untuk nomor bagan gugur (dua sudutnya tidak boleh
+                     * terpisah gelanggang), penampilan untuk nomor peringkat
+                     * yang tidak punya battle sama sekali.
+                     */
+                    Route::prefix('jurus')->name('jurus.')->group(function () {
+                        Route::get('/', 'indexJurus')->name('index')->middleware('resource:'.rk('jadwal', ResourceAction::View));
+                        Route::get('/cetak', 'cetakJurus')->name('cetak')->middleware('resource:'.rk('jadwal', ResourceAction::Print));
+
+                        Route::post('/battle/{jurusBattle}/tetapkan', 'tetapkanBattle')->name('battle.tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/battle/{jurusBattle}/lepas', 'lepasBattle')->name('battle.lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+
+                        Route::post('/penampilan/{performance}/tetapkan', 'tetapkanPenampilan')->name('penampilan.tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/penampilan/{performance}/lepas', 'lepasPenampilan')->name('penampilan.lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/penampilan/{performance}/pindahkan', 'pindahkanPenampilan')->name('penampilan.pindahkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                    });
                 });
 
             Route::controller(AparatController::class)
@@ -613,6 +640,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
              * penampilan berjalan sekali dari awal sampai selesai, jadi tidak
              * ada kendali babak/jeda seperti timer partai.
              */
+            /*
+             * Bagan gugur nomor Jurus: digambar dan dicetak.
+             *
+             * Controller sendiri, tapi geometri pohon, komponen tampilan, dan
+             * lembar cetaknya SATU dengan bagan Tanding -- lewat kontrak
+             * SumberBagan. Resource `bagan` dipakai ulang, sama seperti
+             * `susun-bagan` di grup di bawah: izinnya memang pertanyaan yang
+             * sama, dan resource baru berarti satu peran lagi yang harus
+             * diberi izin di tiap kejuaraan yang sudah berjalan.
+             */
+            Route::controller(JurusBaganController::class)
+                ->prefix('{tournament}/jurus/{jurusEvent}/bagan')
+                ->name('jurus.bagan.')
+                ->group(function () {
+                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('bagan', ResourceAction::View));
+                    Route::get('/cetak', 'cetak')->name('cetak')->middleware('resource:'.rk('bagan', ResourceAction::Print));
+                });
+
             Route::controller(JurusScoringController::class)
                 ->prefix('{tournament}/jurus')
                 ->name('jurus.')

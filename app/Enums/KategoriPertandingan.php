@@ -29,11 +29,22 @@ enum KategoriPertandingan: string
         return $this->value;
     }
 
-    /** Tanding dipertandingkan dalam bagan gugur; Jurus dinilai per penampilan. */
-    public function pakaiBagan(): bool
-    {
-        return $this === self::Tanding;
-    }
+    /*
+     * `pakaiBagan()` DIHAPUS dari sini, tidak diperbaiki.
+     *
+     * Ia dulu menjawab false untuk Jurus, dan jawaban itu sudah tidak benar
+     * sejak nomor Jurus mengenal format `battle` -- yang memakai bagan gugur
+     * dengan aritmetika, pohon, dan lembar cetak yang sama persis dengan
+     * Tanding (Pasal 12.1.b.1).
+     *
+     * Yang lebih penting: pertanyaannya sendiri salah bentuk. "Kategori ini
+     * pakai bagan?" tidak bisa dijawab per kategori, karena yang menentukan
+     * adalah `jurus_events.format` -- per NOMOR. Membetulkan nilainya hanya
+     * akan menyisakan metode yang benar untuk sebagian nomor dan keliru untuk
+     * sisanya, dan yang menemukannya lain kali akan mengiranya jawaban sah.
+     *
+     * Penggantinya App\Enums\FormatJurus::pakaiBagan().
+     */
 
     /** @return array<string, string> */
     public static function options(): array

@@ -129,6 +129,24 @@ class Arena extends Model
     }
 
     /**
+     * Gelanggang yang sedang menayangkan penampilan Jurus tertentu.
+     *
+     * Pasangan scopeMenayangkanPartai, bukan penggantinya: `tayang_id` menunjuk
+     * dua tabel yang penomorannya berdiri sendiri, jadi id 7 pada `matches` dan
+     * id 7 pada `jurus_performances` adalah dua hal berbeda. Menanyakannya
+     * tanpa menyebut `tayang_type` akan menemukan gelanggang yang kebetulan
+     * menayangkan partai bernomor sama -- dan penampilan yang sebenarnya bebas
+     * akan ditolak dilepas dari jadwal, tanpa satu pun keterangan yang masuk
+     * akal bagi yang membacanya.
+     */
+    public function scopeMenayangkanPenampilan(Builder $query, int $performanceId): Builder
+    {
+        return $query->whereHas('tayang', fn (Builder $t) => $t
+            ->where('tayang_type', ArenaTayang::JURUS)
+            ->where('tayang_id', $performanceId));
+    }
+
+    /**
      * Id partai yang sedang ditayangkan seluruh gelanggang pada satu kejuaraan.
      *
      * Satu query, bukan satu per gelanggang: dipakai di jalur yang menyusun

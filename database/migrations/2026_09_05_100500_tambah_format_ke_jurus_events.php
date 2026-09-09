@@ -15,8 +15,9 @@ use Illuminate\Support\Facades\Schema;
  *
  * Sistem ini dibangun dengan anggapan sebaliknya -- peserta tampil bergiliran
  * lalu diperingkat dari nilainya. Anggapan itu tertulis di komentar migrasi
- * jurus_performances dan di KategoriPertandingan::pakaiBagan(), dan keduanya
- * keliru terhadap naskah 2025.
+ * jurus_performances dan di KategoriPertandingan::pakaiBagan(); keduanya sudah
+ * dikoreksi, dan yang kedua dihapus seluruhnya karena pertanyaannya memang
+ * tidak bisa dijawab per kategori.
  *
  * Bawaannya `penampilan` supaya nomor yang SUDAH tersusun di kejuaraan berjalan
  * tidak berubah bentuk di tengah jalan. Nomor baru dibuat sebagai `battle`;

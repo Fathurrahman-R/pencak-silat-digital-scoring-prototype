@@ -31,6 +31,14 @@ Sistem ini tidak menjawabnya. Ia membuat keadaannya tidak bisa terjadi.
 | Penghubung | Disisipkan node global, diperbarui gelanggang pemiliknya | `matches`, `jurus_performances`, `jurus_battles` |
 | Lokal | Gelanggang tempat partainya berjalan | nilai, hukuman, timer, verifikasi, VAR, protes |
 
+Penampilan Jurus dijadwalkan ke gelanggang lewat tab **Jurus** di menu Jadwal
+(`App\Support\Bagan\PenjadwalJurus`). Untuk nomor berformat `battle`, yang
+dijadwalkan adalah **battle**, bukan satu sudut: keduanya dimainkan berurutan
+di matras yang sama, biru lebih dulu (Pasal 12.1.d.7). Karena itu serah-terima
+jadwal antar gelanggang **menolak** satu sudut battle — memindahkannya sendiri
+akan meninggalkan lawannya di gelanggang asal, dan yang membacanya di panel
+kendali tidak punya cara menebak ke mana pasangannya pergi.
+
 Kepemilikan dibandingkan lewat **kode** gelanggang (`A`, `B`), bukan id.
 Id auto-increment berbeda antar basis data; membandingkan id berarti node A
 mengklaim baris milik B begitu urutan penyisipan di dua basis data kebetulan

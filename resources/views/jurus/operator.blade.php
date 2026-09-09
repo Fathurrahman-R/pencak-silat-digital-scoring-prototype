@@ -344,5 +344,10 @@
                 </p>
             </div>
         @endresource
+
+        {{-- Muncul sendiri begitu kedua sudut battle disahkan. Operator yang
+             mengumumkan pemenang membaca dasarnya dari sini, tanpa berpindah
+             ke halaman battle. --}}
+        <x-silat.komparasi-battle class="bg-silat-panel" />
     </div>
 </x-layouts.silat>

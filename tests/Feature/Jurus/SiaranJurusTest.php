@@ -191,6 +191,53 @@ it('menamai siaran dengan nama yang didengarkan panel', function () {
     expect((new PenampilanJurusBerubah($this->performance, 'nilai'))->broadcastAs())->toBe('jurus.penampilan');
 });
 
+/*
+ * Panel yang mengikuti GELANGGANG -- papan, kendali, ketua -- tidak tahu id
+ * penampilan yang sedang tayang sampai mereka menariknya. Tanpa channel
+ * gelanggang, nilai yang masuk tidak menggerakkan satu layar pun sampai
+ * seseorang memuat ulang.
+ */
+it('menyiarkan ke channel presence gelanggang penampilannya', function () {
+    $arena = \App\Models\Arena::factory()->for($this->tournament)->create();
+    $this->performance->update(['arena_id' => $arena->id]);
+
+    $saluran = collect((new PenampilanJurusBerubah($this->performance->fresh(), 'nilai'))->broadcastOn())
+        ->map(fn ($c) => (string) $c)
+        ->all();
+
+    expect($saluran)->toContain('presence-arena.'.$arena->id);
+});
+
+it('tidak menyiarkan Jurus ke channel publik meski saklar overlay menyala', function () {
+    config(['overlay.enabled' => true, 'live.enabled' => true]);
+
+    $arena = \App\Models\Arena::factory()->for($this->tournament)->create();
+    $this->performance->update(['arena_id' => $arena->id]);
+
+    $saluran = collect((new PenampilanJurusBerubah($this->performance->fresh(), 'nilai'))->broadcastOn())
+        ->map(fn ($c) => (string) $c)
+        ->all();
+
+    expect($saluran)->not->toContain('public-live.'.$arena->id);
+});
+
+it('tidak menambah channel gelanggang untuk penampilan yang belum dijadwalkan', function () {
+    $saluran = collect((new PenampilanJurusBerubah($this->performance, 'nilai'))->broadcastOn())
+        ->map(fn ($c) => (string) $c)
+        ->all();
+
+    expect($saluran)->toBe(['private-jurus.penampilan.'.$this->performance->id]);
+});
+
+/** Kelima event Tanding tetap membuka channel publiknya saat saklarnya menyala. */
+it('menjaga siaran publik Tanding tetap terbuka lewat SaluranArena::untuk', function () {
+    config(['overlay.enabled' => true]);
+
+    $saluran = collect(\App\Support\Live\SaluranArena::untuk(7))->map(fn ($c) => (string) $c)->all();
+
+    expect($saluran)->toBe(['presence-arena.7', 'public-live.7']);
+});
+
 it('hanya mengizinkan petugas penilaian masuk channel penampilan', function () {
     $otorisasi = app(JurusPenampilanChannelAuthorizer::class);
 

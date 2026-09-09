@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Support\Gelanggang\PenolakanDapatDipaksa;
 use App\Support\Gelanggang\PointerTayang;
 use App\Support\Gelanggang\SerahTerimaJadwal;
+use App\Support\Jurus\PerbandinganBattle;
 use App\Support\Jurus\StatePenampilan;
 use App\Support\Panel\KonfigPanel;
 use App\Support\Panel\StatePartaiPanel;
@@ -65,6 +66,37 @@ class PanelGelanggangController extends Controller
      */
     private const PANEL_KENDALI = 'silat.kendali';
 
+    /**
+     * View tiap peran, per jenis tayangan gelanggang.
+     *
+     * Alamat panel menyebut PERAN, bukan kategori: satu gelanggang menjalankan
+     * Tanding pagi hari dan Jurus siang hari, dan juri yang sama memegang
+     * keduanya. Menyuruhnya mengganti alamat di HP tiap kategori berganti
+     * adalah persis kerugian yang membuat panel pindah ke alamat gelanggang
+     * sejak awal.
+     *
+     * `null` pada kolom jurus BUKAN 404: peran itu memang tidak bertugas di
+     * kategori Jurus. Wasit yang membuka panelnya di gelanggang yang sedang
+     * menayangkan Jurus tidak sedang salah alamat -- ia sedang menunggu
+     * nomornya sendiri, dan yang pantas ia lihat adalah layar tunggu yang
+     * menyebutkan sebabnya.
+     *
+     * Kendali memetakan ke view yang sama di kedua mode, dan itu bukan
+     * kemalasan: `silat.kendali` memang sudah dua-mode (kepala tayangan Jurus
+     * dan Antrean Jurus sudah ada di dalamnya), dan tugasnya justru MEMILIH
+     * apa yang tayang -- panel yang berganti bentuk mengikuti pilihannya
+     * sendiri akan menghilangkan tombol yang baru saja ditekan.
+     */
+    private const PANEL = [
+        'kendali' => ['tanding' => self::PANEL_KENDALI, 'jurus' => self::PANEL_KENDALI],
+        'papan' => ['tanding' => 'silat.papan', 'jurus' => 'jurus.papan'],
+        'juri' => ['tanding' => 'silat.juri', 'jurus' => 'jurus.juri'],
+        'ketua' => ['tanding' => 'silat.panel-ketua', 'jurus' => 'jurus.panel-ketua'],
+        'wasit' => ['tanding' => 'silat.wasit', 'jurus' => null],
+        'dewan-juri' => ['tanding' => 'silat.dewan-juri', 'jurus' => null],
+        'komisi-protes' => ['tanding' => 'silat.keberatan', 'jurus' => null],
+    ];
+
     public function __construct(
         private readonly PointerTayang $pointer,
         private readonly KonfigPanel $konfig,
@@ -82,7 +114,7 @@ class PanelGelanggangController extends Controller
 
     public function kendali(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel(self::PANEL_KENDALI, $request, $tournament, $arena);
+        return $this->panel('kendali', $request, $tournament, $arena);
     }
 
     /**
@@ -97,22 +129,22 @@ class PanelGelanggangController extends Controller
      */
     public function papan(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.papan', $request, $tournament, $arena);
+        return $this->panel('papan', $request, $tournament, $arena);
     }
 
     public function wasit(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.wasit', $request, $tournament, $arena);
+        return $this->panel('wasit', $request, $tournament, $arena);
     }
 
     public function juri(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.juri', $request, $tournament, $arena);
+        return $this->panel('juri', $request, $tournament, $arena);
     }
 
     public function dewanJuri(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.dewan-juri', $request, $tournament, $arena);
+        return $this->panel('dewan-juri', $request, $tournament, $arena);
     }
 
     /**
@@ -124,7 +156,7 @@ class PanelGelanggangController extends Controller
      */
     public function komisiProtes(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.keberatan', $request, $tournament, $arena);
+        return $this->panel('komisi-protes', $request, $tournament, $arena);
     }
 
     /**
@@ -137,7 +169,7 @@ class PanelGelanggangController extends Controller
      */
     public function ketua(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panel('silat.panel-ketua', $request, $tournament, $arena);
+        return $this->panel('ketua', $request, $tournament, $arena);
     }
 
     /**
@@ -357,13 +389,13 @@ class PanelGelanggangController extends Controller
     /** Panel juri Jurus, mengikuti penampilan yang ditunjuk gelanggang. */
     public function jurusJuri(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panelJurus('jurus.juri', $request, $tournament, $arena);
+        return $this->panelJurus('jurus.juri', 'juri', $request, $tournament, $arena);
     }
 
     /** Panel operator Jurus, mengikuti penampilan yang ditunjuk gelanggang. */
     public function jurusOperator(Request $request, Tournament $tournament, Arena $arena): View
     {
-        return $this->panelJurus('jurus.operator', $request, $tournament, $arena);
+        return $this->panelJurus('jurus.operator', 'papan', $request, $tournament, $arena);
     }
 
     /**
@@ -393,6 +425,22 @@ class PanelGelanggangController extends Controller
         return response()->json([
             'penampilan_aktif' => true,
             'aksi' => $this->aksiJurus($tournament, $performance),
+
+            /*
+             * Perbandingan kedua sudut, kalau penampilan ini berdiri di dalam
+             * battle. Dihitung SATU kali di sini dan dipakai keempat panel yang
+             * mengikuti gelanggang -- papan, juri, ketua, operator. Empat
+             * salinan perhitungan berarti empat angka yang suatu saat berbeda,
+             * dan pelatih yang membandingkan dua layar lalu menemukan dua angka
+             * punya alasan sah untuk tidak percaya pada keduanya.
+             *
+             * Ongkosnya dibayar hanya oleh nomor berformat battle, dan hanya di
+             * endpoint Jurus -- bukan di `state` Tanding yang ditarik tiap
+             * tekanan tombol juri.
+             */
+            'komparasi' => $performance->battle !== null
+                ? app(PerbandinganBattle::class)($performance->battle)
+                : null,
         ] + app(StatePenampilan::class)($performance));
     }
 
@@ -403,11 +451,30 @@ class PanelGelanggangController extends Controller
      * bukan 404: pagi sebelum nomor pertama dan jeda antar nomor adalah
      * keadaan normal, dan yang membukanya tidak sedang salah alamat.
      */
-    private function panelJurus(string $view, Request $request, Tournament $tournament, Arena $arena): View
+    private function panelJurus(?string $view, string $peran, Request $request, Tournament $tournament, Arena $arena): View
     {
         $this->pastikanMilik($tournament, $arena);
 
         $performance = $this->pointer->penampilanAktif($arena);
+
+        /*
+         * Peran yang tidak bertugas di Jurus mendapat layar tunggu, bukan 404.
+         *
+         * Wasit, Dewan Wasit Juri, dan Komisi Protes tidak punya tugas di
+         * nomor Jurus. Yang membuka panelnya saat gelanggang sedang menayangkan
+         * Jurus tidak sedang salah alamat -- ia sedang menunggu nomor Tanding
+         * berikutnya, dan alamat yang dipegangnya memang alamat yang benar.
+         * 404 di situ membuatnya mengira panelnya rusak.
+         */
+        if ($view === null) {
+            return view('silat.menunggu-partai', [
+                'tournament' => $tournament,
+                'arena' => $arena,
+                'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $peran]),
+                'config' => $this->blokPanel($tournament, $arena, null, $request->user())
+                    + ['menunggu' => true, 'sebabMenunggu' => 'jurus'],
+            ]);
+        }
 
         if ($performance === null) {
             /*
@@ -448,6 +515,7 @@ class PanelGelanggangController extends Controller
 
         return view($view, [
             'tournament' => $tournament,
+            'arena' => $arena,
             'performance' => $performance,
             'config' => $config,
         ]);
@@ -479,6 +547,16 @@ class PanelGelanggangController extends Controller
             'penguranganBatal' => route('admin.turnamen.jurus.penampilan.pengurangan.batal', [$tournament, $performance, '__ID__']),
             'diskualifikasi' => route('admin.turnamen.jurus.penampilan.diskualifikasi', [$tournament, $performance]),
             'sahkan' => route('admin.turnamen.jurus.penampilan.sahkan', [$tournament, $performance]),
+
+            /*
+             * Penetapan pemenang battle, dari panel yang menampilkan dasar
+             * keputusannya. Null untuk nomor berformat peringkat -- panel
+             * memakai ketiadaannya untuk tidak menggambar tombolnya sama
+             * sekali, bukan menggambar tombol yang pasti ditolak server.
+             */
+            'putuskanBattle' => $performance->jurus_battle_id !== null
+                ? route('admin.turnamen.jurus.battle.putuskan', [$tournament, $performance->jurus_battle_id])
+                : null,
         ];
     }
 
@@ -576,6 +654,19 @@ class PanelGelanggangController extends Controller
                 'bukaSusulan' => route('admin.turnamen.gelanggang.panel.babak-susulan.buka', [$tournament, $arena]),
                 'tutupSusulan' => route('admin.turnamen.gelanggang.panel.babak-susulan.tutup', [$tournament, $arena]),
                 'bolehKendali' => $this->bolehMengendalikan($arena, $untuk),
+
+                /*
+                 * Jenis tayangan gelanggang: 'tanding', 'jurus', atau null.
+                 *
+                 * Satu field, NOL query tambahan -- relasi `tayang` sudah
+                 * dimuat untuk pointer di baris-baris sebelumnya. Yang
+                 * membacanya panel Tanding: begitu gelanggang beralih ke
+                 * Jurus, bentuk halaman yang pantas dirender berubah, dan
+                 * panel yang cuma menyerap state baru akan memajang partai
+                 * kosong dengan tombol yang masih hidup. Servernya yang tahu
+                 * halaman mana yang pantas; panel cukup bertanya lagi.
+                 */
+                'tayang' => $arena->tayang?->tayang_type,
             ];
 
         /*
@@ -704,9 +795,27 @@ class PanelGelanggangController extends Controller
         return $blok;
     }
 
-    private function panel(string $view, Request $request, Tournament $tournament, Arena $arena): View
+    private function panel(string $peran, Request $request, Tournament $tournament, Arena $arena): View
     {
         $this->pastikanMilik($tournament, $arena);
+
+        $view = self::PANEL[$peran]['tanding'];
+
+        /*
+         * Gelanggang yang sedang menayangkan Jurus merender panel Jurus, di
+         * alamat yang sama.
+         *
+         * Kendali dikecualikan: ia yang MEMILIH apa yang tayang, dan panel yang
+         * berganti bentuk mengikuti pilihannya sendiri akan menyembunyikan
+         * tombol yang baru saja ditekan.
+         *
+         * Dibaca lewat relasi `tayang` yang sudah dimuat partaiAktif() di bawah
+         * -- Eloquent men-cache relasinya, jadi tidak ada query tambahan pada
+         * jalur yang dipakai tiap panel dibuka.
+         */
+        if ($peran !== 'kendali' && $arena->tayang?->menayangkanJurus()) {
+            return $this->panelJurus(self::PANEL[$peran]['jurus'], $peran, $request, $tournament, $arena);
+        }
 
         $match = $this->pointer->partaiAktif($arena);
 
@@ -734,7 +843,7 @@ class PanelGelanggangController extends Controller
             return view('silat.menunggu-partai', [
                 'tournament' => $tournament,
                 'arena' => $arena,
-                'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $this->peranDariView($view)]),
+                'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $peran]),
                 /*
                  * Penanda `menunggu` memberi tahu partaiPanel bahwa halaman
                  * yang memuatnya TIDAK punya markup panel.
@@ -759,7 +868,7 @@ class PanelGelanggangController extends Controller
              * memakainya apa adanya; alamat per-gelanggang yang tidak pernah
              * basi menyusul bersama pangkasan flow petugas.
              */
-            'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $this->peranDariView($view)]),
+            'manifestUrl' => route('admin.turnamen.gelanggang.panel.manifest', [$tournament, $arena, $peran]),
             /*
              * Aksi per-partai hanya ada kalau partainya ada. Panel kendali
              * boleh dirender pada gelanggang kosong, dan di keadaan itu satu-
@@ -768,22 +877,14 @@ class PanelGelanggangController extends Controller
              * dipilih bukan cuma tidak berguna, ia tidak bisa dibentuk.
              */
             'config' => $this->blokPanel($tournament, $arena, $match, $request->user())
-                + ($match !== null ? $this->konfig->aksi($tournament, $match) : []),
+                + ($match !== null ? $this->konfig->aksi($tournament, $match) : [])
+                /*
+                 * Panel ini harus memuat ulang kalau gelanggang beralih ke
+                 * Jurus -- kecuali panel kendali, yang justru yang menekan
+                 * peralihannya dan tetap sama bentuknya di kedua mode.
+                 */
+                + ['ikutiTayang' => $peran !== 'kendali'],
         ]);
-    }
-
-    /** Nama peran untuk manifest, diturunkan dari view yang sedang dirender. */
-    private function peranDariView(string $view): string
-    {
-        return match ($view) {
-            'silat.wasit' => 'wasit',
-            'silat.dewan-juri' => 'dewan-juri',
-            'silat.kendali' => 'kendali',
-            'silat.keberatan' => 'komisi-protes',
-            'silat.panel-ketua' => 'ketua',
-            'silat.papan' => 'papan',
-            default => 'juri',
-        };
     }
 
     private function balas(Request $request, Tournament $tournament, Arena $arena, string $pesan): RedirectResponse|JsonResponse

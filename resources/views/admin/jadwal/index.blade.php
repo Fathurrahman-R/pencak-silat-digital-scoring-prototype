@@ -19,6 +19,11 @@
     </x-slot:actions>
 
     <div class="space-y-4">
+        <x-si.tab-halaman :daftar="[
+            'Tanding' => route('admin.turnamen.jadwal.index', $tournament),
+            'Jurus' => route('admin.turnamen.jadwal.jurus.index', $tournament),
+        ]" />
+
         <x-si.callout varian="keterangan" judul="Hanya partai yang kedua sudutnya sudah pasti yang muncul di sini">
             Partai yang masih menunggu pemenang babak sebelumnya belum bisa dijadwalkan. Jadwal di
             sini adalah urutan tayang, bukan jam: partai berjalan menurut nomor urutnya, dan yang

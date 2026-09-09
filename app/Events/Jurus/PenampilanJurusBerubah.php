@@ -3,6 +3,7 @@
 namespace App\Events\Jurus;
 
 use App\Models\JurusPerformance;
+use App\Support\Live\SaluranArena;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -27,17 +28,26 @@ use Illuminate\Queue\SerializesModels;
  * melainkan supaya panel bisa membedakan perubahan yang perlu diumumkan
  * (pengesahan) dari yang tidak, tanpa membandingkan dua salinan state.
  *
- * Dua channel, keduanya privat:
+ * Tiga channel, semuanya tertutup:
  *
  *   - `jurus.penampilan.{id}` -- panel operator, panel juri, panel pengawas.
  *   - `jurus.battle.{id}`     -- halaman perbandingan battle, yang membaca
  *     DUA penampilan sekaligus dan menjadi tempat pemenang ditetapkan.
  *     Hanya disertakan kalau penampilannya memang berdiri di dalam battle;
  *     nomor berformat peringkat tidak punya battle sama sekali.
+ *   - `arena.{id}` presence   -- panel yang mengikuti GELANGGANG, bukan
+ *     penampilan: papan gelanggang, panel kendali, panel ketua. Mereka tidak
+ *     tahu id penampilan yang sedang tayang sampai mereka menariknya, jadi
+ *     tanpa channel ini nilai yang masuk tidak menggerakkan layar mana pun
+ *     sampai seseorang memuat ulang. Hanya ada kalau penampilannya sudah
+ *     dijadwalkan ke gelanggang.
  *
  * Tidak ada channel publik: papan skor penonton dan overlay vMix belum
- * menampilkan Jurus. Saat nanti menampilkannya, tambahkan di sini -- dengan
- * muatan yang disaring, seperti JudgeInputReceived menyaring identitas juri.
+ * menampilkan Jurus. Karena itu channel gelanggang diambil lewat
+ * SaluranArena::presensi(), BUKAN ::untuk() -- yang terakhir ikut membuka
+ * `public-live.{id}` begitu saklar overlay atau live score menyala. Saat nanti
+ * Jurus memang ditayangkan ke penonton, tambahkan di sini dengan muatan yang
+ * disaring, seperti JudgeInputReceived menyaring identitas juri.
  */
 class PenampilanJurusBerubah implements ShouldBroadcastNow
 {
@@ -47,10 +57,13 @@ class PenampilanJurusBerubah implements ShouldBroadcastNow
 
     public readonly ?int $battleId;
 
+    public readonly ?int $arenaId;
+
     public function __construct(JurusPerformance $performance, public readonly string $sebab)
     {
         $this->performanceId = $performance->id;
         $this->battleId = $performance->jurus_battle_id;
+        $this->arenaId = $performance->arena_id;
     }
 
     /** @return array<int, Channel> */
@@ -62,7 +75,7 @@ class PenampilanJurusBerubah implements ShouldBroadcastNow
             $saluran[] = new PrivateChannel('jurus.battle.'.$this->battleId);
         }
 
-        return $saluran;
+        return [...$saluran, ...SaluranArena::presensi($this->arenaId)];
     }
 
     public function broadcastAs(): string
@@ -76,6 +89,13 @@ class PenampilanJurusBerubah implements ShouldBroadcastNow
         return [
             'performance_id' => $this->performanceId,
             'battle_id' => $this->battleId,
+            /*
+             * Pendengar channel gelanggang menerima siaran Tanding dan Jurus
+             * di saluran yang sama. `arena_id` menyebut asalnya, supaya panel
+             * Tanding bisa mengabaikan yang bukan urusannya tanpa menebak dari
+             * bentuk muatannya.
+             */
+            'arena_id' => $this->arenaId,
             'sebab' => $this->sebab,
         ];
     }
