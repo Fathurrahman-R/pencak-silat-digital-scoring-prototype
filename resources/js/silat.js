@@ -1003,6 +1003,21 @@ Alpine.data('partaiPanel', (cfg) => ({
         }, { segarkan: true });
     },
 
+    /**
+     * Penawaran yang masih menggantung untuk satu baris antrean, kalau ada.
+     *
+     * Melepas TIDAK memindahkan `arena_id` -- yang memindahkannya adalah node
+     * penerima, sesudah adopsinya tercatat (lihat SerahTerimaJadwal). Jadi
+     * selama penawaran menggantung, barisnya tetap berdiri di antrean pelepas.
+     * Tanpa penanda ini pengendali membaca baris biasa lengkap dengan tombol
+     * Tayangkan yang PASTI ditolak 422, dan baris kembar di daftar "Dilepas,
+     * menunggu diambil" tepat di bawahnya.
+     */
+    penawaranBaris(barisId, jenis = 'tanding') {
+        return (this.panel?.serah?.menunggu ?? [])
+            .find((satu) => satu.jenis === jenis && satu.baris_id === barisId) ?? null;
+    },
+
     /** Menarik kembali penawaran yang belum diambil gelanggang tujuan. */
     batalkanLepas(serahId) {
         if (! this.panel?.serah?.batal) {

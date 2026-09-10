@@ -33,6 +33,26 @@ Ronde kedua (10 September 2026) menemukan dua lagi, keduanya sekeluarga:
 5. Antrean Jurus di panel kendali tidak punya "Pindahkan…", sementara antrean
    Tanding tepat di atasnya punya. Seluruh sisi servernya sudah ada sejak
    rancangan serah-terima; yang tidak ada cuma pintunya.
+6. `nomor-jurus.update` -- pemilih format battle/peringkat -- dimiliki
+   Sekretariat, dan HANYA Sekretariat. Pemilih itu berdiri di halaman daftar
+   nomor Jurus, yang dijaga `penampilan-jurus.view`: kewenangan yang justru
+   tidak dimiliki Sekretariat. Jadi satu-satunya peran yang boleh menetapkan
+   format nomor mendapat 403 di layar yang menetapkannya, dan menunya pun
+   tidak tergambar untuknya. Lapisan ketiga dari keluarga yang sama:
+   kewenangan berpemilik, bertombol, tapi layarnya menolak pemiliknya.
+7. Reverb mati membuat aksi yang BERHASIL terbaca gagal. Seluruh event
+   gelanggang `ShouldBroadcastNow` -- tanpa worker antrean, demi latensi --
+   jadi siarannya berjalan di dalam permintaan yang menulis perubahannya.
+   Pointer gelanggang berpindah, commit selesai, lalu cURL kehabisan waktu dan
+   panel membalas `422 "Pusher error: cURL error 28"`. Yang menekan tombolnya
+   menekannya lagi. Ditemukan justru karena blok J dijalankan tanpa
+   `reverb:start`.
+8. Baris yang sedang ditawarkan ke gelanggang lain digambar seperti baris
+   biasa -- lengkap dengan "Tayangkan" yang PASTI dijawab 422 -- sementara
+   baris kembar dirinya berdiri di daftar "Dilepas, menunggu diambil" tepat di
+   bawahnya. Berlaku untuk kedua antrean, karena melepas memang tidak
+   memindahkan `arena_id`: yang memindahkannya node penerima, sesudah
+   adopsinya tercatat.
 
 Kelimanya tidak menuliskan apa pun di log. Cacat yang bentuknya "tombol tidak
 tergambar" memang tidak bisa ditangkap uji yang tidak punya mata.
@@ -54,6 +74,8 @@ node scripts/qa/c-batas-d-salah-guna.mjs     # batas nilai + salah guna, 11 case
 node scripts/qa/e-cetak.mjs                  # izin cetak, 7 case
 node scripts/qa/g-verifikasi.mjs             # modal hasil verifikasi, 9 case
 node scripts/qa/h-bagan-bertingkat.mjs       # bye + promosi ronde, 6 case
+node scripts/qa/i-serah-jurus.mjs            # serah-terima jadwal Jurus, 6 case
+node scripts/qa/j-peringkat.mjs              # nomor berformat peringkat, 10 case
 node scripts/qa/f-safari-ios.mjs             # WebKit profil iPhone
 ```
 
@@ -73,6 +95,19 @@ Semua alamat dan id lewat env, dengan bawaan yang masuk akal:
 | `QA_NOMOR_JURUS` | `1` | Nomor yang bagannya sudah tersusun |
 | `QA_ASAL_LAN` | `QA_ASAL` | Untuk uji Safari: IP LAN mesin saat itu |
 | `QA_ASAL_TUNNEL` | `https://localhost:8443` | Butuh `proksi-tunnel.mjs` berjalan |
+| `QA_ARENA_ASAL` / `QA_ARENA_TUJUAN` | `1` / `2` | Blok I; keduanya perlu pengendali sendiri |
+| `QA_NOMOR_PERINGKAT` | `1` | Blok J; nomor yang formatnya boleh diubah |
+
+`i-serah-jurus.mjs` menuntut gelanggang asal berisi **satu penampilan Jurus
+tanpa battle**, dan sebaiknya juga satu sudut battle supaya I-05 benar-benar
+diuji, bukan dilewati.
+
+`j-peringkat.mjs` menuntut nomor sasaran punya **>= 2 pendaftaran sah dan nol
+penampilan** -- ia mengubah formatnya sendiri di J-00, dan ubah format memang
+ditolak begitu penampilannya ada (J-09 menguji penolakan itu). Ia juga
+menuntut **Reverb hidup**: tanpa itu tiap penekanan tombol menunggu satu detik
+untuk cURL yang kehabisan waktu, dan rangkaiannya melambat sampai timeout,
+walau aksinya sendiri sekarang tetap berhasil.
 
 **`127.0.0.1` sengaja dihindari.** Di mesin pengembangan bisa ada server lain
 yang mengikat alamat itu secara spesifik, dan ikatan spesifik menang atas nginx
@@ -119,6 +154,19 @@ antrean Jurus. Pakai `text-is()`, dan lingkupi ke bloknya.
 **Asersi peka huruf.** Banyak label dirender `uppercase` lewat CSS, dan
 `innerText` mengembalikan hasil render — `includes('Nilai juri')` gagal pada
 teks yang tampil "NILAI JURI". Pakai regex `/…/i`.
+
+**Menunggu `panel != null` sebagai tanda muatan sudah datang.** `partaiPanel`
+menimpa `panel` dengan kerangka kosong saat init, jadi syarat itu benar sejak
+milidetik pertama -- sebelum tarikan `state` mana pun. Yang membacanya melihat
+antrean kosong dan menyimpulkan fiturnya rusak. Tunggu bloknya sendiri
+(`panel?.jurus !== undefined`).
+
+**`ancestor::div[...]` untuk melingkupi satu blok.** Ia menaiki pohon sampai
+menemukan yang cocok, dan `ancestor::div[.//button][1]` dari judul "Antrean
+Jurus" mendarat di pembungkus seluruh panel -- dua puluh tombol "Tayangkan"
+milik antrean Tanding ikut terjaring. Lingkupi ke wadah daftarnya
+(`following::div[contains(@class,"max-h-64")][1]`), dan untuk asersi tentang
+SATU baris, lingkupi lagi ke barisnya.
 
 **Membaca state Alpine dengan menyerialkan seluruh komponen.**
 `JSON.stringify` menyentuh setiap getter, dan sebagian melempar saat partai

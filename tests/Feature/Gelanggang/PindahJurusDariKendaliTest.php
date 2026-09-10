@@ -153,3 +153,61 @@ it('menolak permintaan pindah satu sudut battle sekalipun dikirim langsung', fun
         ])
         ->assertStatus(422);
 });
+
+/*
+ * Melepas tidak memindahkan `arena_id` -- yang memindahkannya node penerima,
+ * sesudah adopsinya tercatat. Jadi selama penawaran menggantung barisnya TETAP
+ * berdiri di antrean pelepas, dan itu memang disengaja.
+ *
+ * Yang tidak disengaja, dan ditemukan uji kotak hitam 10 September 2026:
+ * barisnya digambar seperti baris biasa, lengkap dengan tombol "Tayangkan"
+ * yang pasti dijawab 422 ("sedang ditawarkan ke ..."), sementara baris kembar
+ * dirinya berdiri di daftar "Dilepas, menunggu diambil" tepat di bawahnya.
+ * Pengendali membaca satu penampilan sebagai dua keadaan yang bertentangan.
+ */
+it('menandai baris yang sedang ditawarkan alih-alih menawarkan tombol yang pasti ditolak', function () {
+    ($this->kendali)()
+        ->assertOk()
+        ->assertSee("penawaranBaris(satu.id, 'jurus')", escape: false)
+        ->assertSee('! partai.aktif && ! penawaranBaris(partai.id)', escape: false)
+        ->assertSee('Ditawarkan ke', escape: false);
+});
+
+/*
+ * Penanda itu dihitung di panel dari `serah.menunggu`, jadi tiap penawaran
+ * wajib menyebut jenis dan id barisnya. Tanpa keduanya panel tidak punya cara
+ * mencocokkan penawaran dengan baris antrean -- dan penampilan Jurus nomor 7
+ * akan tertandai gara-gara partai Tanding nomor 7 sedang ditawarkan.
+ */
+it('menyebut jenis dan id baris pada tiap penawaran yang menggantung', function () {
+    $this->nomor->update(['format' => FormatJurus::Penampilan]);
+    $reg = ($this->daftarkan)(1)->first();
+
+    $penampilan = JurusPerformance::create([
+        'jurus_event_id' => $this->nomor->id,
+        'registration_id' => $reg->id,
+        'tahap' => 'final',
+    ]);
+
+    $this->penjadwal->tetapkan($penampilan, $this->arenaA);
+
+    $this->actingAs($this->pengendali)
+        ->postJson(route('admin.turnamen.gelanggang.panel.lepas', [$this->tournament, $this->arenaA]), [
+            'ke_arena_id' => $this->arenaB->id,
+            'jenis' => 'jurus',
+            'baris_id' => $penampilan->id,
+        ])
+        ->assertOk();
+
+    $menunggu = ($this->muatan)()->assertOk()->json('panel.serah.menunggu');
+
+    expect($menunggu)->toHaveCount(1)
+        ->and($menunggu[0]['jenis'])->toBe('jurus')
+        ->and($menunggu[0]['baris_id'])->toBe($penampilan->id)
+        ->and($menunggu[0]['tujuan'])->toBe('Gelanggang B');
+
+    // Dan barisnya memang masih berdiri di antrean pelepas -- itu yang membuat
+    // penandanya perlu ada.
+    $antrean = ($this->muatan)()->json('panel.jurus.antrean');
+    expect(collect($antrean)->pluck('id'))->toContain($penampilan->id);
+});

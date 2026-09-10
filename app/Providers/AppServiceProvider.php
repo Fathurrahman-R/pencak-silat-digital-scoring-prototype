@@ -6,8 +6,12 @@ use App\Models\Penalty;
 use App\Models\ScoreEvent;
 use App\Observers\SinkronObserver;
 use App\Observers\SnapshotSkorObserver;
+use App\Support\Live\SiaranTahanBanting;
 use App\Support\Sinkron\PetaSinkron;
+use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Broadcasting\Broadcaster as BroadcasterContract;
+use Illuminate\Contracts\Broadcasting\Factory as BroadcastingFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +31,35 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        /*
+         * Siaran yang gagal tidak menggagalkan aksinya -- alasan lengkapnya
+         * di SiaranTahanBanting.
+         *
+         * Dipasang di boot(), bukan register(): BroadcastServiceProvider milik
+         * framework mengikat manajernya SESUDAH provider aplikasi register,
+         * jadi ikatan yang dipasang lebih awal ditimpa tanpa suara. Diperiksa
+         * begitu -- closure yang tersimpan di container ternyata masih milik
+         * framework.
+         *
+         * `forgetInstance` untuk yang telanjur diresolusi selama boot; entri
+         * deferred dibuang supaya tidak ada yang memuat ulang providernya dan
+         * menimpa ikatan ini lagi.
+         */
+        $this->app->singleton(BroadcastManager::class, fn ($app) => new SiaranTahanBanting($app));
+        $this->app->alias(BroadcastManager::class, BroadcastingFactory::class);
+        $this->app->singleton(
+            BroadcasterContract::class,
+            fn ($app) => $app->make(BroadcastManager::class)->connection(),
+        );
+
+        $this->app->forgetInstance(BroadcastManager::class);
+        $this->app->forgetInstance(BroadcasterContract::class);
+        $this->app->removeDeferredServices([
+            BroadcastManager::class,
+            BroadcastingFactory::class,
+            BroadcasterContract::class,
+        ]);
+
         /*
          * /live/* dibuka lewat tunnel ke internet publik -- lonjakan
          * penonton (atau siapa pun yang menemukan URL-nya) tidak boleh bisa

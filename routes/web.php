@@ -662,7 +662,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->prefix('{tournament}/jurus')
                 ->name('jurus.')
                 ->group(function () {
-                    Route::get('/', 'daftarNomor')->name('nomor')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    /*
+                     * Dua pemilik, bukan satu.
+                     *
+                     * Halaman ini memuat DUA hal: daftar nomor beserta
+                     * penampilannya, dan pemilih format tiap nomor. Yang kedua
+                     * dijaga `nomor-jurus.update`, dan satu-satunya peran yang
+                     * memilikinya -- Sekretariat -- tidak memegang
+                     * `penampilan-jurus.view`. Dengan satu penjaga saja, ia
+                     * pemilik tunggal sebuah kewenangan yang layarnya membalas
+                     * 403 untuk dirinya sendiri; ditemukan begitu di peramban,
+                     * 10 September 2026.
+                     */
+                    Route::get('/', 'daftarNomor')->name('nomor')
+                        ->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View).'|'.rk('nomor-jurus', ResourceAction::View));
                     Route::get('/{jurusEvent}', 'index')->name('index')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
                     Route::post('/{jurusEvent}/buat-penampilan', 'generate')->name('generate')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Create));
 

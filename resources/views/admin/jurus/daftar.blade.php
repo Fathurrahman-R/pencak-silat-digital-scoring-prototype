@@ -54,9 +54,15 @@
                             </x-si.badge>
                         @endunless
 
-                        <x-si.tombol :tautan="route('admin.turnamen.jurus.index', [$tournament, $event])" varian="kedua" ukuran="kecil">
-                            Kelola penampilan
-                        </x-si.tombol>
+                        {{-- Sekretariat membuka layar ini untuk formatnya, dan
+                             tidak memegang penampilannya: tombol yang pasti
+                             dijawab 403 lebih buruk daripada tombol yang tidak
+                             ada. --}}
+                        @resource(rk('penampilan-jurus', ResourceAction::View))
+                            <x-si.tombol :tautan="route('admin.turnamen.jurus.index', [$tournament, $event])" varian="kedua" ukuran="kecil">
+                                Kelola penampilan
+                            </x-si.tombol>
+                        @endresource
                     </div>
                 @endforeach
             </div>
