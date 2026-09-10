@@ -11,7 +11,8 @@
         "sapu-prop": "node scripts/sapu-prop.mjs",
         "periksa-rupa": "node scripts/kelas-hilang.mjs && node scripts/kontras.mjs && node scripts/kontras-kelas.mjs && node scripts/sapu-prop.mjs && node scripts/periksa-siaran.mjs",
         "periksa-siaran": "node scripts/periksa-siaran.mjs",
-        "qa:jurus": "node scripts/qa/a-alur-jurus.mjs && node scripts/qa/b-seri.mjs && node scripts/qa/c-batas-d-salah-guna.mjs && node scripts/qa/e-cetak.mjs"
+        "qa:jurus": "node scripts/qa/a-alur-jurus.mjs && node scripts/qa/b-seri.mjs && node scripts/qa/c-batas-d-salah-guna.mjs && node scripts/qa/e-cetak.mjs && node scripts/qa/h-bagan-bertingkat.mjs",
+        "qa:verifikasi": "node scripts/qa/g-verifikasi.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

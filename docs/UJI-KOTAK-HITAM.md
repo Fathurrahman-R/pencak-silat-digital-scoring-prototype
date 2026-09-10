@@ -24,7 +24,17 @@ dari seluruh suite:
 3. Dokumentasi menyebut Sekretariat sebagai penjadwal Jurus, padahal hanya
    Ketua Pertandingan yang punya `jadwal.assign`.
 
-Ketiganya tidak menuliskan apa pun di log. Cacat yang bentuknya "tombol tidak
+Ronde kedua (10 September 2026) menemukan dua lagi, keduanya sekeluarga:
+
+4. `bagan.create`, `bagan.update`, `bagan.delete`, dan `nomor-jurus.update`
+   juga tidak dimiliki peran mana pun -- **seluruh tahap pra-acara** mustahil
+   dijalankan siapa pun kecuali super-admin. Ditemukan saat Ketua membuka
+   halaman bagan dan tidak menemukan form menyusunnya.
+5. Antrean Jurus di panel kendali tidak punya "Pindahkan…", sementara antrean
+   Tanding tepat di atasnya punya. Seluruh sisi servernya sudah ada sejak
+   rancangan serah-terima; yang tidak ada cuma pintunya.
+
+Kelimanya tidak menuliskan apa pun di log. Cacat yang bentuknya "tombol tidak
 tergambar" memang tidak bisa ditangkap uji yang tidak punya mata.
 
 ## Prasyarat
@@ -42,8 +52,16 @@ node scripts/qa/a-alur-jurus.mjs             # alur utama, 14 case
 node scripts/qa/b-seri.mjs                   # jalur SERI, 5 case
 node scripts/qa/c-batas-d-salah-guna.mjs     # batas nilai + salah guna, 11 case
 node scripts/qa/e-cetak.mjs                  # izin cetak, 7 case
+node scripts/qa/g-verifikasi.mjs             # modal hasil verifikasi, 9 case
+node scripts/qa/h-bagan-bertingkat.mjs       # bye + promosi ronde, 6 case
 node scripts/qa/f-safari-ios.mjs             # WebKit profil iPhone
 ```
+
+`h-bagan-bertingkat.mjs` menuntut satu nomor Jurus berisi **lima** peserta sah,
+supaya bagannya berukuran delapan dengan tiga bye dan tiga kolom. Dengan dua
+peserta ia tetap hijau tapi tidak menguji apa pun yang dimaksudkannya -- bagan
+berukuran dua tidak punya ronde kedua untuk dinaiki siapa pun. Itu pernah
+terjadi dan sempat dilaporkan sebagai lulus.
 
 Semua alamat dan id lewat env, dengan bawaan yang masuk akal:
 

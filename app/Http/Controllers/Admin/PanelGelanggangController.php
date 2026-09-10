@@ -741,6 +741,19 @@ class PanelGelanggangController extends Controller
                     'peserta' => $satu->registration?->athletes->pluck('name')->implode(', '),
                     'kontingen' => $satu->registration?->contingent?->name,
                     'aktif' => $penampilanTayang !== null && $satu->id === $penampilanTayang->id,
+
+                    /*
+                     * Penanda "sudut dari sebuah battle".
+                     *
+                     * Serah-terima memindahkan SATU baris, dan satu sudut
+                     * battle tidak boleh berpindah sendirian -- kedua sudutnya
+                     * dimainkan berurutan di matras yang sama (Pasal 12.1.d.7),
+                     * dan yang tertinggal akan berdiri sendirian di antrean
+                     * tanpa penjelasan. SerahTerimaJadwal menolaknya, jadi
+                     * panel tidak menawarkan tombolnya -- tombol yang pasti
+                     * ditolak lebih buruk daripada tombol yang tidak ada.
+                     */
+                    'battle' => $satu->jurus_battle_id,
                 ])->all(),
             ];
 

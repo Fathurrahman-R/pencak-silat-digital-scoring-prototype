@@ -118,7 +118,14 @@ class SilatRoleSeeder extends Seeder
                         ResourceAction::View, ResourceAction::Update,
                         ResourceAction::Assign, ResourceAction::Print,
                     ],
-                    'bagan' => [ResourceAction::View, ResourceAction::Print],
+                    /*
+                     * Delete di sini BUKAN menghapus bagan, melainkan membuka
+                     * kuncinya -- undian yang sudah final dinyatakan bisa
+                     * disusun ulang. Yang menyusunnya Operator IT; yang
+                     * membatalkan finalitasnya Ketua Pertandingan, karena ia
+                     * yang menanggung akibatnya di gelanggang.
+                     */
+                    'bagan' => [ResourceAction::View, ResourceAction::Print, ResourceAction::Delete],
                     'penugasan-aparat' => [ResourceAction::View, ResourceAction::Assign],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
                     /*
@@ -280,6 +287,23 @@ class SilatRoleSeeder extends Seeder
                 'description' => 'Menjalankan papan tampilan gelanggang dan perangkat siarannya. Tidak mengendalikan timer maupun jalannya partai.',
                 'grants' => [
                     'jadwal' => $lihat,
+
+                    /*
+                     * Menyusun bagan, menukar undian, dan menguncinya.
+                     *
+                     * Sebelum ini `bagan.create`, `bagan.update`, dan
+                     * `bagan.delete` tidak dimiliki SATU peran pun -- seluruh
+                     * tahap pra-acara mustahil dijalankan siapa pun kecuali
+                     * super-admin, yang lolos lewat Gate::before. Ditemukan
+                     * uji kotak hitam: Ketua membuka halaman bagan dan tidak
+                     * menemukan form menyusunnya.
+                     *
+                     * TANPA Delete. Membuka kunci bagan yang sudah final
+                     * dinilai seberat menghapusnya, dan itu wewenang Ketua
+                     * Pertandingan -- lihat rasional di grup rute `bagan`.
+                     */
+                    'bagan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update],
+
                     'partai' => $lihat,
                     'penilaian' => $lihat,
                     'hukuman' => $lihat,
@@ -329,7 +353,17 @@ class SilatRoleSeeder extends Seeder
                     'timbang-badan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
 
                     'kelas-tanding' => $lihat,
-                    'nomor-jurus' => $lihat,
+
+                    /*
+                     * Format nomor Jurus -- battle atau peringkat -- ditetapkan
+                     * di meja ini, bersama pendaftaran dan keabsahan peserta.
+                     * Ia mengubah BENTUK pertandingan, bukan menjalankannya,
+                     * jadi ia bukan pekerjaan gelanggang.
+                     *
+                     * Sebelum ini `nomor-jurus.update` juga tidak dimiliki
+                     * peran mana pun.
+                     */
+                    'nomor-jurus' => [ResourceAction::View, ResourceAction::Update],
 
                     /*
                      * Mencetak, bukan cuma melihat. Yang memaku bagan di papan

@@ -248,6 +248,37 @@
                                             Tayangkan
                                         </button>
                                     </template>
+
+                                    {{-- Pemindahan antar gelanggang, sejajar dengan
+                                         antrean Tanding di atas: yang memutuskan
+                                         sedang menatap antrean, dan keputusannya
+                                         lahir dari membandingkannya dengan
+                                         gelanggang sebelah. --}}
+                                    <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0
+                                                    && ! satu.aktif && ! satu.battle">
+                                        <select class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali bg-transparent px-2 text-[12.5px] text-silat-teks-kedua"
+                                                aria-label="Pindahkan penampilan ini ke gelanggang lain"
+                                                x-on:change="if ($event.target.value) { lepasKeGelanggang(satu.id, $event.target.value, 'jurus'); $event.target.value = '' }">
+                                            <option value="">Pindahkan…</option>
+                                            <template x-for="lain in (panel?.serah?.gelanggang ?? [])" :key="lain.id">
+                                                <option x-bind:value="lain.id" x-text="lain.nama"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+
+                                    {{-- Sudut dari sebuah battle tidak bisa
+                                         berpindah sendirian: kedua sudutnya
+                                         dimainkan berurutan di matras yang sama
+                                         (Pasal 12.1.d.7), dan yang tertinggal
+                                         akan berdiri sendirian di antrean tanpa
+                                         penjelasan. Yang ditawarkan bukan tombol
+                                         yang pasti ditolak, melainkan kalimat
+                                         yang menyebut ke mana harus pergi. --}}
+                                    <template x-if="satu.battle && ! satu.aktif">
+                                        <span class="w-24 shrink-0 text-[11.5px] leading-tight text-silat-teks-redup">
+                                            Satu sudut battle — pindahkan lewat menu Jadwal
+                                        </span>
+                                    </template>
                                 @endif
                             </div>
                         </template>

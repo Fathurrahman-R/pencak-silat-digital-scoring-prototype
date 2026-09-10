@@ -50,22 +50,60 @@ it('memberi Ketua Pertandingan izin mencetak bagan dan jadwal', function () {
 
 /*
  * Yang menentukan: SEKURANG-KURANGNYA satu peran operasional memilikinya.
- * Uji dua di atas bisa saja lulus karena kebetulan; yang ini gagal tepat pada
+ * Uji-uji di atas bisa saja lulus karena kebetulan; yang ini gagal tepat pada
  * keadaan yang sungguh terjadi -- nol pemilik.
+ *
+ * Daftarnya sengaja memuat seluruh kewenangan yang MENJALANKAN kejuaraan, bukan
+ * hanya cetak: uji kotak hitam menemukan `bagan.create`, `bagan.update`,
+ * `bagan.delete`, dan `nomor-jurus.update` sama-sama tanpa pemilik, sehingga
+ * seluruh tahap pra-acara mustahil dijalankan siapa pun kecuali super-admin.
  */
-it('memastikan izin cetak tidak berakhir tanpa pemilik satu pun', function () {
-    foreach (['bagan', 'jadwal'] as $sumber) {
-        $kunci = rk($sumber, ResourceAction::Print);
+it('memastikan kewenangan penyelenggaraan tidak berakhir tanpa pemilik satu pun', function () {
+    $wajibBerpemilik = [
+        ['bagan', ResourceAction::View],
+        ['bagan', ResourceAction::Create],
+        ['bagan', ResourceAction::Update],
+        ['bagan', ResourceAction::Delete],
+        ['bagan', ResourceAction::Print],
+        ['jadwal', ResourceAction::View],
+        ['jadwal', ResourceAction::Assign],
+        ['jadwal', ResourceAction::Print],
+        ['nomor-jurus', ResourceAction::Update],
+    ];
 
-        $pemilik = Role::all()->filter(function (Role $peran) use ($kunci) {
+    $yatim = [];
+
+    foreach ($wajibBerpemilik as [$sumber, $aksi]) {
+        $kunci = rk($sumber, $aksi);
+
+        $ada = Role::all()->contains(function (Role $peran) use ($kunci) {
             $user = User::factory()->create();
             $user->syncRoles([$peran->name]);
 
             return $user->can($kunci);
         });
 
-        expect($pemilik)->not->toBeEmpty("tidak ada satu peran pun yang memiliki {$kunci}");
+        if (! $ada) {
+            $yatim[] = $kunci;
+        }
     }
+
+    expect($yatim)->toBe([], 'kewenangan tanpa pemilik: '.implode(', ', $yatim));
+});
+
+/*
+ * Menyusun bagan dan MEMBATALKAN finalitasnya adalah dua kewenangan berbeda.
+ * Operator IT menyusun; membuka kunci undian yang sudah final ada di Ketua
+ * Pertandingan, yang menanggung akibatnya di gelanggang.
+ */
+it('memisahkan menyusun bagan dari membuka kuncinya', function () {
+    $operator = ($this->berperan)('operator-it');
+    $ketua = ($this->berperan)('ketua-pertandingan');
+
+    expect($operator->can(rk('bagan', ResourceAction::Create)))->toBeTrue()
+        ->and($operator->can(rk('bagan', ResourceAction::Update)))->toBeTrue()
+        ->and($operator->can(rk('bagan', ResourceAction::Delete)))->toBeFalse()
+        ->and($ketua->can(rk('bagan', ResourceAction::Delete)))->toBeTrue();
 });
 
 /*
