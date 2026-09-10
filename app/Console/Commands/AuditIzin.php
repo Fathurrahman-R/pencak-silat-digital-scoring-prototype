@@ -27,6 +27,9 @@ use Spatie\Permission\Models\Role;
  */
 class AuditIzin extends Command
 {
+    /** @var array<string, array<int, string>> key => nama tampilan yang menyebutnya */
+    private array $asalKey = [];
+
     protected $signature = 'silat:audit-izin {--json : Keluarkan sebagai JSON}';
 
     protected $description = 'Memeriksa kepemilikan dan keterjangkauan tiap resource key';
@@ -45,6 +48,7 @@ class AuditIzin extends Command
 
         $rute = $this->ruteBerpenjaga();
         [$keyPasti, $keyMungkin] = $this->keyDiKode();
+
         $blade = array_values(array_unique(array_merge($keyPasti, $keyMungkin)));
 
         $temuan = [
@@ -55,6 +59,8 @@ class AuditIzin extends Command
             'key_tanpa_permukaan' => [],
             'key_terdaftar_tak_terpakai' => [],
             'pemilik_tanpa_jalan' => [],
+            'penjaga_tak_sejalan' => $this->penjagaTakSejalan($rute),
+            'pemilik_tanpa_layar' => [],
         ];
 
         // 1. Key yang dipakai rute atau tampilan tapi tidak dimiliki siapa pun.
@@ -128,6 +134,75 @@ class AuditIzin extends Command
             }
         }
 
+        /*
+         * 5. Pemilik tanpa layar.
+         *
+         * Key yang hanya hidup di dalam tampilan -- tombol atau blok yang
+         * dibungkus @resource -- tidak dijaga rute mana pun, jadi pemeriksaan
+         * "pemilik tanpa jalan" di atas tidak pernah menyentuhnya. Yang
+         * menentukan keterjangkauannya HALAMAN yang memuatnya.
+         *
+         * Persis di sini letak cacat Sekretariat: ia memegang
+         * `nomor-jurus.update`, tombolnya ada di `admin.jurus.daftar`, dan
+         * halaman itu dijaga key yang tidak ia punya.
+         */
+        $tampilanRute = $this->tampilanPerRute();
+
+        foreach ($this->asalKey as $key => $tampilan) {
+            /*
+             * Key yang PUNYA rute sendiri tetap diperiksa di sini.
+             *
+             * Percobaan pertama melewatinya, dan itu justru membutakan
+             * pemeriksaan ini terhadap cacat yang melahirkannya:
+             * `nomor-jurus.update` memang menjaga rute POST-nya sendiri, dan
+             * Sekretariat memang boleh menembak rute itu. Yang tidak bisa ia
+             * lakukan adalah MELIHAT formulirnya -- halaman yang memuatnya
+             * dijaga key lain. Yang menentukan bukan pemilik rutenya,
+             * melainkan pemilik halamannya.
+             */
+            foreach ($pemilik[$key] ?? [] as $namaPeran) {
+                $bisa = false;
+                $halaman = [];
+
+                /*
+                 * Rute GET yang menuntut key ini sendiri sudah cukup: peran
+                 * yang boleh MEMBUKA sesuatu dengan key itu jelas bisa
+                 * memakainya. Rute POST tidak dihitung -- bisa menembak
+                 * endpoint bukan berarti bisa melihat formulirnya, dan itulah
+                 * seluruh isi cacat yang melahirkan pemeriksaan ini.
+                 */
+                foreach ($rute['per_key'][$key] ?? [] as $satuRute) {
+                    if ($satuRute['get'] && $this->peranMemenuhi($namaPeran, $satuRute['keys'], $peta, $peran)) {
+                        $bisa = true;
+                        break;
+                    }
+                }
+
+                if ($bisa) {
+                    continue;
+                }
+
+                foreach (array_unique($tampilan) as $satuTampilan) {
+                    foreach ($tampilanRute[$satuTampilan] ?? [] as $satuRute) {
+                        $halaman[] = $satuRute['nama'];
+
+                        if ($this->peranMemenuhi($namaPeran, $satuRute['keys'], $peta, $peran)) {
+                            $bisa = true;
+                            break 2;
+                        }
+                    }
+                }
+
+                if (! $bisa && $halaman !== []) {
+                    $temuan['pemilik_tanpa_layar'][] = [
+                        'key' => $key,
+                        'peran' => $namaPeran,
+                        'rute' => array_unique($halaman),
+                    ];
+                }
+            }
+        }
+
         return $this->option('json')
             ? $this->keluarkanJson($temuan, $pemilik)
             : $this->keluarkanTeks($temuan, $pemilik, $rute);
@@ -166,9 +241,11 @@ class AuditIzin extends Command
             $jumlah++;
             $nama = $satu->getName() ?? $satu->uri();
 
+            $bisaDibuka = in_array('GET', $satu->methods(), true);
+
             foreach ($segmen as $satuSegmen) {
                 foreach ($satuSegmen as $key) {
-                    $perKey[$key][] = ['nama' => $nama, 'keys' => $segmen];
+                    $perKey[$key][] = ['nama' => $nama, 'keys' => $segmen, 'get' => $bisaDibuka];
                 }
             }
         }
@@ -226,6 +303,7 @@ class AuditIzin extends Command
     {
         $pasti = [];
         $mungkin = [];
+        $this->asalKey = [];
         $polaRk = "/rk\(\s*'([a-z0-9\-]+)'\s*,\s*ResourceAction::([A-Za-z]+)\s*\)/";
         $polaHarfiah = "/'([a-z][a-z0-9\-]*)\.(view|create|update|delete|approve|reject|print|export|assign|manage)'/";
 
@@ -259,7 +337,12 @@ class AuditIzin extends Command
 
             preg_match_all($polaRk, $isi, $cocok, PREG_SET_ORDER);
             foreach ($cocok as $satu) {
-                $pasti[] = $satu[1].'.'.strtolower($satu[2]);
+                $key = $satu[1].'.'.strtolower($satu[2]);
+                $pasti[] = $key;
+
+                if (str_starts_with($satuBerkas->getPathname(), resource_path('views'))) {
+                    $this->asalKey[$key][] = $this->namaTampilan($satuBerkas->getPathname());
+                }
             }
 
             preg_match_all($polaHarfiah, $isi, $cocok, PREG_SET_ORDER);
@@ -269,6 +352,128 @@ class AuditIzin extends Command
         }
 
         return [array_values(array_unique($pasti)), array_values(array_unique($mungkin))];
+    }
+
+    /** `resources/views/admin/jurus/daftar.blade.php` -> `admin.jurus.daftar` */
+    private function namaTampilan(string $jalur): string
+    {
+        $relatif = str_replace([resource_path('views').DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR], ['', '/'], $jalur);
+
+        return str_replace('/', '.', preg_replace('/\.blade\.php$/', '', $relatif));
+    }
+
+    /**
+     * Tampilan yang dirender tiap rute, dibaca dari SUMBER method controller.
+     *
+     * Statis dan kasar -- `view($nama)` dengan variabel tidak terbaca -- tapi
+     * cukup untuk pertanyaan yang penting: halaman mana yang memuat tombol
+     * ini, dan siapa boleh membukanya.
+     *
+     * @return array<string, array<int, array{nama: string, keys: array<int, array<int, string>>}>>
+     */
+    private function tampilanPerRute(): array
+    {
+        $peta = [];
+
+        foreach (Route::getRoutes() as $satu) {
+            /** @var RouteObjek $satu */
+            $aksi = $satu->getActionName();
+
+            if (! str_contains($aksi, '@')) {
+                continue;
+            }
+
+            [$kelas, $method] = explode('@', $aksi);
+
+            if (! class_exists($kelas) || ! method_exists($kelas, $method)) {
+                continue;
+            }
+
+            try {
+                $refleksi = new \ReflectionMethod($kelas, $method);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            $berkas = $refleksi->getFileName();
+
+            if ($berkas === false) {
+                continue;
+            }
+
+            $sumber = implode('', array_slice(
+                file($berkas),
+                $refleksi->getStartLine() - 1,
+                $refleksi->getEndLine() - $refleksi->getStartLine() + 1,
+            ));
+
+            preg_match_all("/view\(\s*'([a-z0-9_.\-]+)'/i", $sumber, $cocok, PREG_SET_ORDER);
+
+            $segmen = [];
+
+            foreach ($satu->gatherMiddleware() as $middleware) {
+                if (is_string($middleware) && str_starts_with($middleware, 'resource:')) {
+                    foreach (explode(',', substr($middleware, strlen('resource:'))) as $bagian) {
+                        $segmen[] = array_values(array_filter(array_map('trim', explode('|', $bagian))));
+                    }
+                }
+            }
+
+            foreach ($cocok as $satuCocok) {
+                $peta[$satuCocok[1]][] = ['nama' => $satu->getName() ?? $satu->uri(), 'keys' => $segmen];
+            }
+        }
+
+        return $peta;
+    }
+
+    /**
+     * Rute yang kata kerjanya tidak sejalan dengan aksi key penjaganya.
+     *
+     * `tarif.destroy` yang dijaga `tarif.update` berarti siapa pun yang boleh
+     * menyunting tarif juga boleh menghapusnya, dan `tarif.delete` yang
+     * diberikan seseorang tidak berlaku apa-apa. Tidak semuanya salah --
+     * membatalkan pengurangan memang sengaja dijaga `hasil-jurus.update`,
+     * bukan `.delete` -- jadi daftar ini untuk dinilai, bukan untuk dipatuhi.
+     *
+     * @param  array{per_key: array<string, array<int, array{nama: string, keys: array<int, array<int, string>>}>>, jumlah: int}  $rute
+     * @return array<int, string>
+     */
+    private function penjagaTakSejalan(array $rute): array
+    {
+        $harapan = [
+            'destroy' => 'delete',
+            'store' => 'create',
+            'export' => 'export',
+            'cetak' => 'print',
+        ];
+
+        $temuan = [];
+
+        foreach ($rute['per_key'] as $key => $daftar) {
+            foreach ($daftar as $satu) {
+                $akhiran = last(explode('.', $satu['nama']));
+
+                if (! isset($harapan[$akhiran])) {
+                    continue;
+                }
+
+                $aksiDituntut = array_map(
+                    fn (array $pilihan) => array_map(fn (string $k) => last(explode('.', $k)), $pilihan),
+                    $satu['keys'],
+                );
+
+                $punya = in_array($harapan[$akhiran], array_merge(...$aksiDituntut), true);
+
+                if (! $punya) {
+                    $temuan[] = "{$satu['nama']} dijaga ".implode(' + ', array_map(
+                        fn (array $pilihan) => implode('|', $pilihan), $satu['keys'],
+                    ))." — diharap aksi `{$harapan[$akhiran]}`";
+                }
+            }
+        }
+
+        return array_values(array_unique($temuan));
     }
 
     /** @param array<string, mixed> $temuan */
@@ -297,6 +502,8 @@ class AuditIzin extends Command
             'key_tanpa_permukaan' => 'Key dimiliki peran tapi tidak dipakai rute maupun tampilan',
             'key_terdaftar_tak_terpakai' => 'Key terdaftar tapi tak dimiliki siapa pun dan tak dijaga apa pun',
             'pemilik_tanpa_jalan' => 'Peran memiliki key tapi tiap rute yang menuntutnya tertutup untuknya',
+            'pemilik_tanpa_layar' => 'Peran memiliki key yang tombolnya ada di halaman yang tertutup untuknya',
+            'penjaga_tak_sejalan' => 'Kata kerja rute tidak sejalan dengan aksi key penjaganya (perlu dinilai manusia)',
         ];
 
         foreach ($judul as $kunci => $teks) {
@@ -308,6 +515,14 @@ class AuditIzin extends Command
             foreach ($isi as $satu) {
                 if (is_array($satu)) {
                     $this->line("         {$satu['peran']} memiliki {$satu['key']}; rute: ".implode(', ', array_unique($satu['rute'])));
+
+                    continue;
+                }
+
+                // Temuan yang sudah berupa kalimat (kata kerja tak sejalan)
+                // tidak diberi keterangan pemakai: ia menyebut rutenya sendiri.
+                if (str_contains($satu, ' ')) {
+                    $this->line("         {$satu}");
 
                     continue;
                 }
@@ -324,7 +539,7 @@ class AuditIzin extends Command
     /** @param array<string, mixed> $temuan */
     private function adaMasalah(array $temuan): bool
     {
-        foreach (['key_tanpa_permission', 'key_tanpa_pemilik', 'key_tak_dikenal_di_rute', 'key_tak_dikenal_di_tampilan', 'pemilik_tanpa_jalan'] as $berat) {
+        foreach (['key_tanpa_permission', 'key_tanpa_pemilik', 'key_tak_dikenal_di_rute', 'key_tak_dikenal_di_tampilan', 'pemilik_tanpa_jalan', 'pemilik_tanpa_layar'] as $berat) {
             if ($temuan[$berat] !== []) {
                 return true;
             }
