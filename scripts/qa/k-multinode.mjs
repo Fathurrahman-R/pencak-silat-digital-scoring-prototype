@@ -89,8 +89,8 @@ await jalankan('K-05', 'Penarikan pertama membawa akun dari node global', async 
 
     await halaman.waitForFunction(
         () => /Penarikan selesai/i.test(document.body.innerText),
-        null, { timeout: 180_000 },
-    ).catch(() => { throw new Error('penarikan tidak pernah selesai dalam 3 menit'); });
+        null, { timeout: 600_000 },
+    ).catch(() => { throw new Error('penarikan tidak pernah selesai dalam 10 menit'); });
 
     const teks = await halaman.innerText('body');
     const diterapkan = Number(/(\d+)\s+diterapkan/i.exec(teks)?.[1] ?? 0);

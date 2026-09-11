@@ -49,6 +49,13 @@
              CREATE DATABASE digiscoring_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; -->
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_DATABASE" value="digiscoring_test"/>
+        <!--
+            Rangkaian uji menyiapkan data prasyaratnya sendiri sambil menyamar
+            jadi node gelanggang untuk menguji kepemilikan. Penjagaan "node
+            gelanggang tidak menulis data kejuaraan" diuji terpisah, dengan
+            saklar ini dinyalakan di dalam ujinya.
+        -->
+        <env name="SINKRON_JAGA_PENULIS_GLOBAL" value="false"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

@@ -22,6 +22,17 @@ return [
     'peran' => env('SINKRON_PERAN', 'gelanggang'),
 
     /*
+    | Menolak node gelanggang menulis data kejuaraan (PenjagaTulisGlobal).
+    |
+    | Menyala di mesin sungguhan. Dimatikan di rangkaian uji, yang menyiapkan
+    | data prasyaratnya sendiri sambil menyamar jadi node gelanggang untuk
+    | menguji kepemilikan -- penjagaannya sendiri diuji terpisah, dengan
+    | saklar ini dinyalakan di dalam ujinya.
+    */
+
+    'jaga_penulis_global' => env('SINKRON_JAGA_PENULIS_GLOBAL', true),
+
+    /*
     | Nama node ini, dipakai sebagai penanda asal di paket sinkron dan arsip.
     | Harus unik antar laptop dan sebaiknya menyebut gelanggangnya -- yang
     | membaca log saat ada yang salah adalah panitia, bukan mesin.

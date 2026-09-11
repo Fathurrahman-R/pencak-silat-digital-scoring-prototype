@@ -268,6 +268,83 @@ class PetaSinkron
         return array_merge(self::GLOBAL, self::PENGHUBUNG, array_keys(self::LOKAL));
     }
 
+
+    /**
+     * Kolom kunci tiap tabel, untuk tabel yang kuncinya BUKAN `id`.
+     *
+     * Tiga tabel pivot Spatie tidak punya kolom `id` sama sekali, sementara
+     * seluruh mesin sinkron -- catatan, paket, dan penerapannya -- menulis dan
+     * membaca lewat `id`. Akibatnya `model_has_roles` tidak pernah ikut
+     * berpindah: akun tiba di node gelanggang tanpa satu pun peran, lalu
+     * setiap panel menolaknya, dan yang terbaca di layar bukan "peranmu belum
+     * ikut tersinkron" melainkan "Akses ditolak".
+     *
+     * Ditemukan uji kotak hitam 11 September 2026, saat memperbaiki cacat
+     * tetangganya: catatan yang tidak pernah memuat keadaan awal.
+     *
+     * @var array<string, list<string>>
+     */
+    public const KUNCI = [
+        'role_has_permissions' => ['permission_id', 'role_id'],
+        'model_has_roles' => ['role_id', 'model_type', 'model_id'],
+        'model_has_permissions' => ['permission_id', 'model_type', 'model_id'],
+    ];
+
+    /**
+     * Kolom kunci sebuah tabel. `id` untuk hampir semuanya.
+     *
+     * @return list<string>
+     */
+    public static function kunci(string $tabel): array
+    {
+        return self::KUNCI[$tabel] ?? ['id'];
+    }
+
+    /**
+     * Penanda baris yang dipakai `sinkron_keluar.baris_id`.
+     *
+     * Kunci tunggal ditulis apa adanya supaya catatan lama tetap terbaca;
+     * kunci gabungan ditulis sebagai JSON -- bentuk yang bisa dikembalikan
+     * lagi jadi klausa `where` tanpa menebak pemisah yang mungkin muncul di
+     * dalam nilainya, dan `model_type` memang berisi nama kelas berbackslash.
+     *
+     * @param  array<string, mixed>  $baris
+     */
+    public static function penandaBaris(string $tabel, array $baris): string
+    {
+        $kunci = self::kunci($tabel);
+
+        if ($kunci === ['id']) {
+            return (string) ($baris['id'] ?? '');
+        }
+
+        $bagian = [];
+
+        foreach ($kunci as $kolom) {
+            $bagian[$kolom] = (string) ($baris[$kolom] ?? '');
+        }
+
+        return json_encode($bagian, JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Mengembalikan penanda jadi klausa `where` berbentuk kolom => nilai.
+     *
+     * @return array<string, string>
+     */
+    public static function klausaKunci(string $tabel, string $penanda): array
+    {
+        $kunci = self::kunci($tabel);
+
+        if ($kunci === ['id']) {
+            return ['id' => $penanda];
+        }
+
+        $terurai = json_decode($penanda, true);
+
+        return is_array($terurai) ? array_map('strval', $terurai) : [];
+    }
+
     /** Apakah tabel ini ikut disinkronkan sama sekali. */
     public static function disinkronkan(string $tabel): bool
     {

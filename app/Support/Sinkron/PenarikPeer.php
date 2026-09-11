@@ -64,7 +64,12 @@ class PenarikPeer
 
         $ringkasan = $this->penerap->terapkan($paket);
 
-        $this->majukanKursor($namaPeer, (int) $paket['kursor'], $ringkasan['diterapkan'] + $ringkasan['dihapus']);
+        $this->majukanKursor(
+            $namaPeer,
+            (int) $paket['kursor'],
+            $ringkasan['diterapkan'] + $ringkasan['dihapus'],
+            (bool) ($paket['selesai'] ?? true),
+        );
 
         return [
             'peer' => $namaPeer,
@@ -91,15 +96,25 @@ class PenarikPeer
         return (int) (DB::table('sinkron_kursor')->where('peer', $peer)->value('kursor_terakhir') ?? 0);
     }
 
-    private function majukanKursor(string $peer, int $kursor, int $baris): void
+    /**
+     * `selesai_pada` dicatat sekali, saat peer pertama kali bilang habis.
+     *
+     * Dari situlah halaman pemasangan tahu boleh menutup diri. Tanpa penanda
+     * ini ia menutup pada potongan pertama -- akun sudah masuk, kejuaraannya
+     * belum, dan tidak ada lagi permukaan untuk melanjutkan.
+     */
+    private function majukanKursor(string $peer, int $kursor, int $baris, bool $selesai): void
     {
+        $sudahSelesai = DB::table('sinkron_kursor')->where('peer', $peer)->value('selesai_pada');
+
         DB::table('sinkron_kursor')->upsert([[
             'peer' => $peer,
             'kursor_terakhir' => $kursor,
             'ditarik_pada' => now(),
+            'selesai_pada' => $sudahSelesai ?? ($selesai ? now() : null),
             'baris_diterapkan' => $baris,
             'galat_terakhir' => null,
-        ]], ['peer'], ['kursor_terakhir', 'ditarik_pada', 'baris_diterapkan', 'galat_terakhir']);
+        ]], ['peer'], ['kursor_terakhir', 'ditarik_pada', 'selesai_pada', 'baris_diterapkan', 'galat_terakhir']);
     }
 
     private function catatGalat(string $peer, string $pesan): void

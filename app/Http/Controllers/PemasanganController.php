@@ -6,7 +6,9 @@ use App\Support\Sinkron\PenarikPeer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use RuntimeException;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Penarikan pertama sebuah node, sebelum ada satu pun akun untuk login.
@@ -68,8 +70,43 @@ class PemasanganController extends Controller
 
         try {
             return response()->json($this->penarik->tarikSatuPotongan($data['peer']));
-        } catch (RuntimeException $e) {
-            return response()->json(['pesan' => $e->getMessage()], 422);
+        } catch (Throwable $e) {
+            return response()->json(['pesan' => $this->pesanAman($e, $data['peer'])], 422);
         }
     }
+
+    /**
+     * Galat penarikan yang aman dibaca orang asing.
+     *
+     * `/pemasangan` terbuka TANPA LOGIN -- itu memang perlu, karena mesin yang
+     * belum punya akun tidak bisa meminta siapa pun masuk. Konsekuensinya apa
+     * pun yang tergambar di sini terbaca siapa saja di jaringan gelanggang,
+     * termasuk perangkat penonton.
+     *
+     * Galat basis data membawa nama basis data, nama tabel, nama constraint,
+     * dan potongan query beserta nilainya. Uji kotak hitam 11 September 2026
+     * memotretnya: satu layar berisi skema separuh aplikasi, di halaman yang
+     * tidak menuntut apa pun untuk dibuka.
+     *
+     * Yang tergambar sekarang kalimat yang menyebut apa yang harus dilakukan;
+     * rinciannya masuk log mesin ini, tempat yang memang dibaca saat ada yang
+     * salah.
+     */
+    private function pesanAman(Throwable $e, string $peer): string
+    {
+        Log::warning('Penarikan pemasangan gagal.', [
+            'peer' => $peer,
+            'galat' => $e->getMessage(),
+        ]);
+
+        if ($e instanceof QueryException) {
+            return 'Data dari peer tidak bisa diterapkan di mesin ini. '
+                .'Rinciannya tercatat di log node ini (storage/logs). '
+                .'Biasanya ini berarti node peer belum menyemai catatan sinkronnya — '
+                .'jalankan `php artisan silat:sinkron-semai` di node global, lalu ulangi.';
+        }
+
+        return $e->getMessage();
+    }
 }
+

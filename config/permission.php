@@ -136,7 +136,17 @@ return [
      *
      * To enable, set to true, and then create listeners to watch these events.
      */
-    'events_enabled' => false,
+    /*
+     * Dinyalakan supaya perubahan peran ikut tercatat untuk sinkron.
+     *
+     * `model_has_roles` tabel pivot murni: tidak punya model Eloquent, jadi
+     * tidak pernah lewat observer sinkron. Tanpa event ini, peran yang
+     * dipasang sesudah penyemaian tidak pernah sampai ke node lain -- akun
+     * ada di sana, perannya tidak, dan tiap panel membalas "Akses ditolak".
+     *
+     * Lihat App\Listeners\CatatPivotPeran.
+     */
+    'events_enabled' => true,
 
     /*
      * Teams Feature.

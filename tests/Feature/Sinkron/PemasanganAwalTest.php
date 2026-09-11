@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use App\Support\Sinkron\PenarikPeer;
 
 /*
@@ -71,8 +72,59 @@ it('menarik potongan pertama tanpa login', function () {
  * Begitu satu pengguna ada -- dan penarikan pertama pasti membawanya --
  * permukaan ini tertutup untuk selamanya.
  */
-it('menutup diri begitu basis data punya pengguna', function () {
+/*
+ * Syaratnya bukan "sudah ada pengguna", melainkan "sudah ada yang bisa
+ * MENYELESAIKAN pemasangannya sendiri".
+ *
+ * Penarikan awal butuh belasan potongan; akun tiba di potongan pertama dan
+ * perannya menyusul beberapa potongan kemudian. Menutup halaman ini pada akun
+ * pertama meninggalkan node di jalan buntu -- halaman pemasangan sudah 404,
+ * halaman sinkron menuntut izin yang belum tiba, dan tidak ada seorang pun
+ * yang bisa masuk untuk melanjutkan. Terlihat begitu di peramban, 11
+ * September 2026: 26 akun masuk, nol peran, penarikan berhenti seperempat
+ * jalan.
+ */
+it('tetap terbuka selama akun yang masuk belum memegang izin sinkron', function () {
     User::factory()->create();
+
+    $this->get(route('pemasangan.index'))->assertOk();
+});
+
+/*
+ * Akun berizin pun belum cukup.
+ *
+ * Penyemaian menaruh akun beserta perannya di potongan PERTAMA, jadi ukuran
+ * "sudah ada yang bisa meneruskan" membuat halaman ini menutup diri setelah
+ * seratus milidetik -- sementara ribuan baris sisanya belum berangkat dan
+ * tidak ada lagi permukaan untuk menariknya. Terukur begitu, 11 September
+ * 2026: akun ada, kejuaraannya tidak.
+ */
+it('tetap terbuka selama peer belum pernah ditarik sampai habis', function () {
+    $pengguna = User::factory()->create();
+    $pengguna->syncRoles(['ketua-pertandingan']);
+
+    DB::table('sinkron_kursor')->insert([
+        'peer' => 'global',
+        'kursor_terakhir' => 500,
+        'ditarik_pada' => now(),
+        'selesai_pada' => null,
+        'baris_diterapkan' => 500,
+    ]);
+
+    $this->get(route('pemasangan.index'))->assertOk();
+});
+
+it('menutup diri sesudah penarikan awal tuntas dan ada yang bisa meneruskan', function () {
+    $pengguna = User::factory()->create();
+    $pengguna->syncRoles(['ketua-pertandingan']);
+
+    DB::table('sinkron_kursor')->insert([
+        'peer' => 'global',
+        'kursor_terakhir' => 4247,
+        'ditarik_pada' => now(),
+        'selesai_pada' => now(),
+        'baris_diterapkan' => 4247,
+    ]);
 
     $this->get(route('pemasangan.index'))->assertNotFound();
     $this->postJson(route('pemasangan.tarik'), ['peer' => 'global'])->assertNotFound();

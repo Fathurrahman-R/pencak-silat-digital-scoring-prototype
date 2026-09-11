@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Penalty;
 use App\Models\ScoreEvent;
+use App\Observers\PenjagaTulisGlobal;
 use App\Observers\SinkronObserver;
 use App\Observers\SnapshotSkorObserver;
+use App\Listeners\CatatPivotPeran;
 use App\Support\Live\SiaranTahanBanting;
 use App\Support\Sinkron\PetaSinkron;
 use Illuminate\Broadcasting\BroadcastManager;
@@ -13,8 +15,13 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Broadcasting\Broadcaster as BroadcasterContract;
 use Illuminate\Contracts\Broadcasting\Factory as BroadcastingFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Events\PermissionAttachedEvent;
+use Spatie\Permission\Events\PermissionDetachedEvent;
+use Spatie\Permission\Events\RoleAttachedEvent;
+use Spatie\Permission\Events\RoleDetachedEvent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -93,8 +100,28 @@ class AppServiceProvider extends ServiceProvider
          * di baris pertama begitu tahu barisnya bukan milik node ini, dan
          * pemasangan satu gelanggang tanpa peer tidak memiliki apa-apa.
          */
-        foreach (PetaSinkron::MODEL as $model) {
+        foreach (PetaSinkron::MODEL as $tabel => $model) {
             $model::observe(SinkronObserver::class);
+
+            /*
+             * Data kejuaraan ditulis di node global saja. Penjagaannya dipasang
+             * di model, bukan di controller: penerapan paket menulis lewat
+             * query builder dan karena itu melewatinya dengan sendirinya --
+             * node gelanggang tetap boleh MENERIMA data global, yang dihadang
+             * cuma yang lahir dari layarnya sendiri.
+             */
+            if (in_array($tabel, PetaSinkron::GLOBAL, true)) {
+                $model::observe(PenjagaTulisGlobal::class);
+            }
         }
+
+        /*
+         * Pivot peran tidak punya model, jadi tidak pernah lewat observer.
+         * Tanpa listener ini, akun berpindah antar node tanpa perannya.
+         */
+        Event::listen(RoleAttachedEvent::class, [CatatPivotPeran::class, 'handleRoleAttached']);
+        Event::listen(RoleDetachedEvent::class, [CatatPivotPeran::class, 'handleRoleDetached']);
+        Event::listen(PermissionAttachedEvent::class, [CatatPivotPeran::class, 'handlePermissionAttached']);
+        Event::listen(PermissionDetachedEvent::class, [CatatPivotPeran::class, 'handlePermissionDetached']);
     }
 }

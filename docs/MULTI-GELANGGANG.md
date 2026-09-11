@@ -128,6 +128,25 @@ belum dikonfigurasi tidak menyajikan isi basis datanya ke jaringan gelanggang
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
 
+## Sebelum memasang laptop pertama: semai catatan sinkron
+
+Catatan sinkron lahir dari observer, jadi ia hanya berisi baris yang BERUBAH
+sesudah observernya terpasang. Kejuaraan yang datanya sudah tersusun --
+peserta diimpor, bagan disusun, jadwal ditetapkan -- karena itu punya catatan
+yang nyaris kosong, dan node baru yang menariknya menerima anak tanpa induk.
+
+```bash
+php artisan silat:sinkron-semai      # di node global, sekali
+```
+
+Node global menyemainya sendiri saat peer pertama menarik dari nol, jadi
+perintah ini jaring pengaman, bukan keharusan. Yang berguna dari
+menjalankannya lebih dulu: waktunya bisa dipilih, bukan jatuh di tengah
+antrean panitia yang sedang memasang laptop.
+
+> Terukur pada kejuaraan 556 atlet: 4.247 baris disemai, dan penarikan
+> pertama sebuah node gelanggang selesai dalam **24 detik**.
+
 ## Penarikan pertama: node yang belum punya akun
 
 Node gelanggang yang baru dipasang **tidak boleh diseed**. Seluruh data

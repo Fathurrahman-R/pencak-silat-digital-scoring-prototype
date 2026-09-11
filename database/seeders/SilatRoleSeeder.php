@@ -344,6 +344,18 @@ class SilatRoleSeeder extends Seeder
                     'resources' => $lihat,
                     'mappings' => $lihat,
 
+                    /*
+                     * Menarik data antar laptop.
+                     *
+                     * Sebelum ini hanya Ketua Pertandingan dan Pengendali
+                     * Gelanggang yang memegangnya -- dan NODE GLOBAL tidak
+                     * punya pengendali gelanggang sama sekali. Di mesin itu
+                     * satu-satunya yang bisa menekan "Tarik" jadi Ketua, yang
+                     * sedang berdiri di matras, sementara yang memasang dan
+                     * menjaga laptopnya justru meja ini.
+                     */
+                    'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
+
                     // ── Peserta dan keuangan, bekas meja Sekretariat ────────
                     'kontingen' => $ubah,
                     'atlet' => $ubah,

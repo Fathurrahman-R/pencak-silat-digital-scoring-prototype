@@ -12,6 +12,7 @@ use App\Models\Registration;
 use App\Models\ScoreEvent;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
+use App\Support\Sinkron\CatatanKeluar;
 use App\Support\Sinkron\Kepemilikan;
 use App\Support\Sinkron\PembungkusPaket;
 use App\Support\Sinkron\PenerapPaket;
@@ -77,12 +78,24 @@ beforeEach(function () {
 
         return new Kepemilikan;
     };
+
+    /*
+     * Node ini dianggap sudah menyemai, dan titik awalnya dicatat.
+     *
+     * `bangun(0)` sekarang berarti "peer ini belum punya apa-apa": node yang
+     * belum pernah menyemai akan menyemai keadaan sekarang lebih dulu, dan
+     * potongan pertamanya berisi ribuan baris data kejuaraan -- bukan nilai
+     * yang baru saja diterbitkan test ini. Yang diuji di berkas ini mekanisme
+     * DELTA-nya, jadi titik awalnya digeser ke sesudah penyemaian.
+     */
+    app(CatatanKeluar::class)->semai();
+    $this->awal = app(CatatanKeluar::class)->kursorTerakhir();
 });
 
 it('membungkus nilai yang terbit di gelanggang sendiri', function () {
     $nilai = ($this->nilai)(($this->partai)($this->arenaA, 1));
 
-    $paket = (new PembungkusPaket(new Kepemilikan))->bangun(0);
+    $paket = app(PembungkusPaket::class)->bangun($this->awal);
 
     $skor = collect($paket['baris'])->firstWhere('tabel', 'score_events');
 
@@ -103,7 +116,7 @@ it('memadatkan perubahan berulang jadi satu baris berkeadaan terakhir', function
     $nilai = ($this->nilai)(($this->partai)($this->arenaA, 2));
     $nilai->forceFill(['voided_at' => now(), 'void_reason' => 'uji'])->save();
 
-    $paket = (new PembungkusPaket(new Kepemilikan))->bangun(0);
+    $paket = app(PembungkusPaket::class)->bangun($this->awal);
     $skor = collect($paket['baris'])->where('tabel', 'score_events');
 
     expect($skor)->toHaveCount(1)
@@ -113,7 +126,7 @@ it('memadatkan perubahan berulang jadi satu baris berkeadaan terakhir', function
 it('tidak membungkus baris milik gelanggang lain', function () {
     ($this->nilai)(($this->partai)($this->arenaB, 3));
 
-    $paket = (new PembungkusPaket(new Kepemilikan))->bangun(0);
+    $paket = app(PembungkusPaket::class)->bangun($this->awal);
 
     expect(collect($paket['baris'])->where('tabel', 'score_events'))->toBeEmpty();
 });
@@ -129,7 +142,7 @@ it('menandai belum selesai saat catatan lebih banyak dari batas', function () {
     ($this->nilai)($partai, 'blue');
     ($this->nilai)($partai);
 
-    $paket = (new PembungkusPaket(new Kepemilikan))->bangun(0, batas: 2);
+    $paket = app(PembungkusPaket::class)->bangun(0, batas: 2);
 
     expect($paket['selesai'])->toBeFalse();
 });

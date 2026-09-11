@@ -101,6 +101,40 @@ class Kepemilikan
         return $kode !== null && $this->memegangArena($kode);
     }
 
+    /**
+     * Apakah node ini berhak MENGIRIMKAN baris ini ke peer.
+     *
+     * Berbeda dari `milikNodeIni()`, yang menjawab siapa berhak
+     * MEMPERBARUINYA. Node global menyisipkan seluruh data kejuaraan --
+     * termasuk partai yang sudah dijadwalkan ke gelanggang, yang sejak saat
+     * itu diperbarui gelanggangnya. Kalau hak kirim disamakan dengan hak
+     * perbarui, node global berhenti menyiarkan partai begitu ia dijadwalkan,
+     * dan laptop gelanggang yang baru dipasang tidak pernah menerima daftar
+     * partainya sendiri: ia menunggu kiriman dari satu-satunya mesin yang
+     * menurut aturan memilikinya, yaitu dirinya sendiri, yang belum punya
+     * apa-apa.
+     *
+     * Terlihat begitu di peramban 11 September 2026: seluruh tabel tersalin
+     * lengkap ke node baru, `matches` nol dari 174.
+     *
+     * Yang menjaga supaya siaran ini tidak menimpa hasil pertandingan yang
+     * lebih baru ada di sisi penerima: baris yang sudah ada dan miliknya
+     * sendiri tidak pernah ditimpa.
+     *
+     * @param  array<string, mixed>  $baris
+     */
+    public function bolehMengirim(string $tabel, array $baris): bool
+    {
+        if ($this->milikNodeIni($tabel, $baris)) {
+            return true;
+        }
+
+        $dataKejuaraan = in_array($tabel, PetaSinkron::GLOBAL, true)
+            || in_array($tabel, PetaSinkron::PENGHUBUNG, true);
+
+        return $dataKejuaraan && $this->nodeGlobal();
+    }
+
     public function memegangArena(string $kode): bool
     {
         return in_array($kode, $this->arena, true);

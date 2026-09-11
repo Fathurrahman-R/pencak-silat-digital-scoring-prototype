@@ -48,74 +48,223 @@ class PenerapPaket
         $ringkasan = ['diterapkan' => 0, 'dihapus' => 0, 'ditolak' => 0, 'dilewati' => 0];
         $partaiTersentuh = [];
 
-        DB::transaction(function () use ($baris, &$ringkasan, &$partaiTersentuh) {
-            foreach ($this->urutkan($baris) as $satu) {
-                $tabel = $satu['tabel'];
+        /*
+         * Pemeriksaan foreign key ditangguhkan selama satu potongan.
+         *
+         * Urutan di dalam potongan sudah dijaga, tapi penarikan berjalan
+         * POTONGAN DEMI POTONGAN dan induk sebuah baris bisa berada di
+         * potongan yang lain. Catatan lama yang terbit sebelum penyemaian
+         * berdiri di nomor yang lebih kecil, jadi potongan pertama sebuah node
+         * baru berisi penampilan Jurus sementara nomor Jurus-nya menunggu di
+         * potongan ketujuh -- dan satu pelanggaran menghentikan seluruh
+         * penarikan, persis yang terjadi 11 September 2026.
+         *
+         * Yang ditangguhkan cuma pemeriksaannya, bukan datanya: begitu seluruh
+         * potongan masuk, tidak ada baris yatim yang tersisa. Ditangguhkan per
+         * transaksi, dan dikembalikan apa pun yang terjadi -- koneksi ini juga
+         * melayani permintaan lain sesudahnya.
+         */
+        $mysql = DB::connection()->getDriverName() === 'mysql';
 
-                if (! PetaSinkron::disinkronkan($tabel)) {
-                    $ringkasan['dilewati']++;
+        if ($mysql) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
-                    continue;
-                }
+        try {
+            DB::transaction(function () use ($baris, &$ringkasan, &$partaiTersentuh) {
+                /** @var array<string, list<array<string, mixed>>> $kumpulan */
+                $kumpulan = [];
 
-                $data = $satu['data'] ?? [];
+                $this->muatKunciYangAda($baris);
 
-                /*
-                 * Penolakan baris milik sendiri -- pemutus lingkaran yang
-                 * kedua, dan yang paling menentukan.
-                 *
-                 * Peer boleh saja mengirimkan kembali baris yang dulu ia
-                 * terima dari sini. Menerimanya berarti menimpa catatan asli
-                 * dengan salinan yang sudah tertinggal beberapa penarikan --
-                 * nilai yang sudah dibatalkan hidup lagi, tepat pada partai
-                 * yang sedang disengketakan.
-                 */
-                if ($satu['aksi'] === CatatanKeluar::HAPUS) {
-                    /*
-                     * Kepemilikan baris yang akan dihapus dibaca dari salinan
-                     * LOKAL, bukan dari paket -- paket penghapusan tidak
-                     * membawa isi barisnya, dan tanpa isi tidak ada cara tahu
-                     * gelanggang mana pemiliknya. Baris yang sudah tidak ada
-                     * di sini dianggap selesai.
-                     */
-                    $lokal = DB::table($tabel)->where('id', $satu['id'])->first();
+                foreach ($this->urutkan($baris) as $satu) {
+                    $tabel = $satu['tabel'];
 
-                    if ($lokal === null) {
+                    if (! PetaSinkron::disinkronkan($tabel)) {
                         $ringkasan['dilewati']++;
 
                         continue;
                     }
 
-                    if ($this->kepemilikan->milikNodeIni($tabel, (array) $lokal)) {
+                    $data = $satu['data'] ?? [];
+
+                    /*
+                     * Penolakan baris milik sendiri -- pemutus lingkaran yang
+                     * kedua, dan yang paling menentukan.
+                     *
+                     * Peer boleh saja mengirimkan kembali baris yang dulu ia
+                     * terima dari sini. Menerimanya berarti menimpa catatan asli
+                     * dengan salinan yang sudah tertinggal beberapa penarikan --
+                     * nilai yang sudah dibatalkan hidup lagi, tepat pada partai
+                     * yang sedang disengketakan.
+                     */
+                    if ($satu['aksi'] === CatatanKeluar::HAPUS) {
+                        /*
+                         * Kepemilikan baris yang akan dihapus dibaca dari salinan
+                         * LOKAL, bukan dari paket -- paket penghapusan tidak
+                         * membawa isi barisnya, dan tanpa isi tidak ada cara tahu
+                         * gelanggang mana pemiliknya. Baris yang sudah tidak ada
+                         * di sini dianggap selesai.
+                         */
+                        $klausa = PetaSinkron::klausaKunci($tabel, (string) $satu['id']);
+                        $lokal = $klausa === [] ? null : DB::table($tabel)->where($klausa)->first();
+
+                        if ($lokal === null) {
+                            $ringkasan['dilewati']++;
+
+                            continue;
+                        }
+
+                        if ($this->kepemilikan->milikNodeIni($tabel, (array) $lokal)) {
+                            $ringkasan['ditolak']++;
+
+                            continue;
+                        }
+
+                        DB::table($tabel)->where($klausa)->delete();
+                        $ringkasan['dihapus']++;
+
+                        continue;
+                    }
+
+                    if ($data === []) {
                         $ringkasan['ditolak']++;
 
                         continue;
                     }
 
-                    DB::table($tabel)->where('id', $satu['id'])->delete();
-                    $ringkasan['dihapus']++;
+                    /*
+                     * Baris milik sendiri ditolak -- kecuali belum ada di sini.
+                     *
+                     * Penolakan ini memutus lingkaran: peer bisa saja
+                     * mengirimkan kembali baris yang dulu ia terima dari sini,
+                     * dan menerimanya berarti menimpa catatan asli dengan
+                     * salinan yang tertinggal beberapa penarikan.
+                     *
+                     * Tapi baris yang BELUM ADA di sini tidak menimpa apa pun.
+                     * Node gelanggang yang baru dipasang memiliki -- menurut
+                     * aturan kepemilikan -- seluruh partai gelanggangnya, dan
+                     * tidak punya satu pun di basis datanya. Menolaknya berarti
+                     * menolak satu-satunya kiriman yang bisa memberinya jadwal
+                     * sendiri.
+                     */
+                    /*
+                     * "Sudah ada di sini?" ditanyakan SEKALI PER TABEL, bukan
+                     * sekali per baris.
+                     *
+                     * Lima ratus baris berarti lima ratus `exists()` -- dan
+                     * pemasangan satu laptop gelanggang jadi sepuluh menit,
+                     * terukur begitu saat menguji pemasangan dari nol. Daftar
+                     * kunci yang sudah ada dibaca sekali lalu disimpan selama
+                     * potongan ini.
+                     */
+                    $sudahAda = isset($this->kunciAda[$tabel])
+                        ? isset($this->kunciAda[$tabel][(string) $satu['id']])
+                        : $this->adaSatuPerSatu($tabel, (string) $satu['id']);
 
-                    continue;
+                    if ($sudahAda && $this->kepemilikan->milikNodeIni($tabel, $data)) {
+                        $ringkasan['ditolak']++;
+
+                        continue;
+                    }
+
+                    /*
+                     * Dikumpulkan per tabel, bukan ditulis satu per satu.
+                     *
+                     * Satu potongan berisi lima ratus baris, dan lima ratus
+                     * upsert terpisah membuat pemasangan satu laptop gelanggang
+                     * memakan belasan menit -- terukur begitu saat menguji
+                     * pemasangan dari nol. Susunan kolomnya seragam karena
+                     * isinya dibaca dari tabel yang sama di sisi pengirim.
+                     */
+                    $kumpulan[$tabel][] = $data;
+                    $ringkasan['diterapkan']++;
+
+                    if (isset($data['match_id'])) {
+                        $partaiTersentuh[(string) $data['match_id']] = true;
+                    }
                 }
 
-                if ($data === [] || $this->kepemilikan->milikNodeIni($tabel, $data)) {
-                    $ringkasan['ditolak']++;
-
-                    continue;
+                foreach ($kumpulan as $tabel => $baris) {
+                    foreach (array_chunk($baris, 200) as $sepotong) {
+                        DB::table($tabel)->upsert(
+                            $sepotong,
+                            PetaSinkron::kunci($tabel),
+                            array_keys($sepotong[0]),
+                        );
+                    }
                 }
-
-                DB::table($tabel)->upsert([$data], ['id'], array_keys($data));
-                $ringkasan['diterapkan']++;
-
-                if (isset($data['match_id'])) {
-                    $partaiTersentuh[(string) $data['match_id']] = true;
-                }
+            });
+        } finally {
+            if ($mysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
             }
-        });
+        }
 
         $this->batalkanSnapshot(array_keys($partaiTersentuh));
 
         return $ringkasan;
+    }
+
+    /**
+     * Kunci yang sudah ada di mesin ini, per tabel, untuk satu potongan.
+     *
+     * @var array<string, array<string, true>>
+     */
+    private array $kunciAda = [];
+
+    /**
+     * Membaca sekali, untuk seluruh tabel yang disebut potongan ini, kunci
+     * mana saja yang sudah ada di sini.
+     *
+     * @param  list<array{tabel: string, id: string, aksi: string, data?: array<string, mixed>}>  $baris
+     */
+    private function muatKunciYangAda(array $baris): void
+    {
+        $this->kunciAda = [];
+
+        $perTabel = [];
+
+        foreach ($baris as $satu) {
+            $perTabel[$satu['tabel']][] = (string) $satu['id'];
+        }
+
+        foreach ($perTabel as $tabel => $penanda) {
+            if (! PetaSinkron::disinkronkan($tabel)) {
+                continue;
+            }
+
+            $kunci = PetaSinkron::kunci($tabel);
+
+            /*
+             * Kunci tunggal ditanyakan sekaligus lewat `whereIn`. Kunci
+             * gabungan -- tiga tabel pivot peran -- dibaca seluruhnya: isinya
+             * sepuluhan sampai ratusan baris, jauh lebih murah daripada satu
+             * kueri per baris, dan menyusun `whereIn` bertingkat untuk tiga
+             * kolom tidak menghasilkan apa pun yang lebih cepat.
+             */
+            if ($kunci === ['id']) {
+                $ada = DB::table($tabel)->whereIn('id', $penanda)->pluck('id');
+
+                $this->kunciAda[$tabel] = array_fill_keys($ada->map(fn ($satu) => (string) $satu)->all(), true);
+
+                continue;
+            }
+
+            $ada = DB::table($tabel)->get()
+                ->map(fn ($satu) => PetaSinkron::penandaBaris($tabel, (array) $satu))
+                ->all();
+
+            $this->kunciAda[$tabel] = array_fill_keys($ada, true);
+        }
+    }
+
+    /** Jalan mundur, untuk tabel yang entah kenapa tidak sempat dimuat. */
+    private function adaSatuPerSatu(string $tabel, string $penanda): bool
+    {
+        $klausa = PetaSinkron::klausaKunci($tabel, $penanda);
+
+        return $klausa !== [] && DB::table($tabel)->where($klausa)->exists();
     }
 
     /**

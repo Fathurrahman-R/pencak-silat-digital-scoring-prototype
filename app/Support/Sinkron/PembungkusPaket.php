@@ -30,7 +30,10 @@ use Illuminate\Support\Facades\DB;
  */
 class PembungkusPaket
 {
-    public function __construct(private readonly Kepemilikan $kepemilikan) {}
+    public function __construct(
+        private readonly Kepemilikan $kepemilikan,
+        private readonly CatatanKeluar $catatan,
+    ) {}
 
     /**
      * @return array{
@@ -44,6 +47,21 @@ class PembungkusPaket
     public function bangun(int $sejak, ?int $batas = null): array
     {
         $batas ??= (int) config('sinkron.potongan', 500);
+
+        /*
+         * Peer yang menarik dari NOL adalah peer yang belum punya apa-apa, dan
+         * catatan ini hanya berisi perubahan sesudah observernya terpasang.
+         * Kalau node ini belum pernah menyemai, ia menyemai sekarang -- sekali,
+         * saat pertama kali ada yang meminta keadaan awal.
+         *
+         * Tanpa ini, node baru menerima anak tanpa induk: penampilan Jurus
+         * tanpa nomor Jurus-nya, akun tanpa perannya. Satu pelanggaran foreign
+         * key menghentikan seluruh penarikan di potongan pertama, dan laptop
+         * gelanggang itu tidak pernah bisa dipasang.
+         */
+        if ($sejak <= 0 && ! $this->catatan->sudahDisemai()) {
+            $this->catatan->semai();
+        }
 
         $catatan = DB::table('sinkron_keluar')
             ->where('id', '>', $sejak)
@@ -90,7 +108,9 @@ class PembungkusPaket
                 continue;
             }
 
-            $baris = DB::table($satu->tabel)->where('id', $satu->baris_id)->first();
+            $klausa = PetaSinkron::klausaKunci($satu->tabel, (string) $satu->baris_id);
+
+            $baris = $klausa === [] ? null : DB::table($satu->tabel)->where($klausa)->first();
 
             /*
              * Baris yang sudah tidak ada dikirim sebagai penghapusan, apa pun
@@ -110,7 +130,7 @@ class PembungkusPaket
 
             $data = (array) $baris;
 
-            if (! $this->kepemilikan->milikNodeIni($satu->tabel, $data)) {
+            if (! $this->kepemilikan->bolehMengirim($satu->tabel, $data)) {
                 continue;
             }
 
