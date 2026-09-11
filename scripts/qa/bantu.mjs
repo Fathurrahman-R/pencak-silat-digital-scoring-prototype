@@ -109,10 +109,20 @@ export async function masuk(browser, email, { iphone = false, asal = ASAL } = {}
     return { konteks, halaman };
 }
 
+/*
+ * `QA_TAMPAK=1` membuka jendelanya, dan memperlambat tiap tindakan supaya
+ * bisa diikuti mata. Bawaannya tetap headless: rangkaian penuh dijalankan
+ * berkali-kali dan jendela yang muncul-hilang di atas pekerjaan orang lebih
+ * mengganggu daripada berguna.
+ */
+export const TAMPAK = (process.env.QA_TAMPAK ?? '') !== '';
+
 export async function bukaPeramban({ iphone = false } = {}) {
+    const opsi = TAMPAK ? { headless: false, slowMo: 350 } : { headless: true };
+
     return iphone
-        ? webkit.launch({ headless: true })
-        : chromium.launch({ executablePath: CHROME, headless: true });
+        ? webkit.launch(opsi)
+        : chromium.launch({ executablePath: CHROME, ...opsi });
 }
 
 /** POST JSON memakai token CSRF halaman -- jalur yang sama dengan panelnya. */

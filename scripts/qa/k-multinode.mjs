@@ -119,7 +119,16 @@ await jalankan('K-07', 'Akun yang lahir di node global bisa dipakai masuk di nod
     return `masuk sebagai ketua di ${B}`;
 }, { halaman });
 
+const terhalang = akunPertama === null;
+
+/*
+ * Kasus di bawah menuntut sesi yang sudah masuk. Kalau pemasangan gagal,
+ * mereka TERHALANG -- bukan gagal, dan bukan alasan menjatuhkan seluruh
+ * rangkaian di tengah jalan.
+ */
 await jalankan('K-08', 'Halaman Sinkron Gelanggang menyebut identitas, peer, dan kursornya', async () => {
+    if (terhalang) return 'terhalang: pemasangan node gagal, tidak ada sesi yang bisa masuk';
+
     await akunPertama.halaman.goto(`${B}/admin/sinkron`, { waitUntil: 'domcontentloaded' });
 
     const teks = await akunPertama.halaman.innerText('body');
@@ -129,9 +138,11 @@ await jalankan('K-08', 'Halaman Sinkron Gelanggang menyebut identitas, peer, dan
     pastikan(/tarik/i.test(teks), 'tombol tarik tidak ada');
 
     return 'identitas, peer, dan tombol tarik hadir';
-}, { halaman: akunPertama.halaman });
+}, { halaman: akunPertama?.halaman ?? halaman });
 
 await jalankan('K-09', 'Menarik dari peer memajukan kursor dan mencatat waktunya', async () => {
+    if (terhalang) return 'terhalang: pemasangan node gagal, tidak ada sesi yang bisa masuk';
+
     const sebelum = JSON.parse((await ambil(`${B}/sinkron/identitas`, { token: TOKEN })).badan).kursor;
 
     await akunPertama.halaman.locator('button:has-text("Tarik")').first().click();
@@ -151,9 +162,11 @@ await jalankan('K-09', 'Menarik dari peer memajukan kursor dan mencatat waktunya
     pastikan(! /galat|gagal/i.test(teks), `halaman menyebut galat: ${teks.slice(0, 200)}`);
 
     return `kursor sendiri ${sebelum} -> ${sesudah}, halaman bersih dari galat`;
-}, { halaman: akunPertama.halaman });
+}, { halaman: akunPertama?.halaman ?? halaman });
 
 await jalankan('K-10', 'Menarik lagi tanpa perubahan baru tidak menggandakan apa pun', async () => {
+    if (terhalang) return 'terhalang: pemasangan node gagal, tidak ada sesi yang bisa masuk';
+
     const hitung = async (asal, sesi) => {
         await sesi.halaman.goto(`${asal}/admin/turnamen`, { waitUntil: 'domcontentloaded' });
 
@@ -171,7 +184,7 @@ await jalankan('K-10', 'Menarik lagi tanpa perubahan baru tidak menggandakan apa
     pastikan(sebelum === sesudah, `jumlah baris berubah ${sebelum} -> ${sesudah} tanpa perubahan baru`);
 
     return 'idempoten';
-}, { halaman: akunPertama.halaman });
+}, { halaman: akunPertama?.halaman ?? halaman });
 
 await jalankan('K-14', 'Arsip bukti hanya hidup di node global', async () => {
     const diGelanggang = await ambil(`${B}/sinkron/arsip/1/tanda-terima`, { token: TOKEN });
@@ -182,6 +195,8 @@ await jalankan('K-14', 'Arsip bukti hanya hidup di node global', async () => {
 }, { halaman });
 
 await jalankan('K-15', 'Penarikan yang gagal tidak memajukan kursor bacanya', async () => {
+    if (terhalang) return 'terhalang: pemasangan node gagal, tidak ada sesi yang bisa masuk';
+
     const bacaKursorPeer = async () => {
         await akunPertama.halaman.goto(`${B}/admin/sinkron`, { waitUntil: 'domcontentloaded' });
         const teks = await akunPertama.halaman.innerText('body');
@@ -215,7 +230,7 @@ await jalankan('K-15', 'Penarikan yang gagal tidak memajukan kursor bacanya', as
     pastikan(sebelum === sesudah, `kursor berubah ${sebelum} -> ${sesudah} padahal penarikannya gagal`);
 
     return `ditolak ${balasan.status}, kursor tetap ${sesudah}`;
-}, { halaman: akunPertama.halaman });
+}, { halaman: akunPertama?.halaman ?? halaman });
 
 await browser.close();
 process.exit(laporkan('K. Multi-server antar gelanggang dan node global') === 0 ? 0 : 1);
