@@ -85,7 +85,9 @@ class ResourceSeeder extends Seeder
                 'label' => 'Pemetaan Key',
                 'group' => 'Manajemen Akses',
                 'description' => 'Menentukan permission di balik tiap resource key.',
-                'actions' => [ResourceAction::View, ResourceAction::Update],
+                // Delete berdiri sendiri: memutus pemetaan mematikan otorisasi
+                // di balik sebuah key, dan itu bukan penyuntingan.
+                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Delete],
                 'locked' => true,
             ],
         ];

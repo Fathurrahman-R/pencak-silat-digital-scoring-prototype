@@ -154,5 +154,11 @@
                 @endforeach
             </div>
         </div>
+
+        {{-- Perbandingan kedua sudut, muncul sendiri begitu keduanya disahkan.
+             Juri melihat dasar keputusannya tanpa bertanya ke meja operator --
+             termasuk nilai juri lain, yang di Jurus memang tidak disembunyikan
+             sesama juri: penilaiannya sudah terkirim dan terkunci. --}}
+        <x-silat.komparasi-battle class="bg-silat-panel" />
     </div>
 </x-layouts.silat>

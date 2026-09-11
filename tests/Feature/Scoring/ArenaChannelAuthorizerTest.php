@@ -8,8 +8,6 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->authorizer = app(ArenaChannelAuthorizer::class);
 });
 
@@ -22,7 +20,7 @@ it('mengizinkan juri bergabung ke channel gelanggang lewat resource penilaian', 
 
 it('mengizinkan wasit bergabung ke channel gelanggang lewat resource hukuman', function () {
     $wasit = User::factory()->create();
-    $wasit->syncRoles(['wasit']);
+    $wasit->syncRoles([peranSistem('wasit')]);
 
     expect($this->authorizer->join($wasit, 1))->not->toBeFalse();
 });

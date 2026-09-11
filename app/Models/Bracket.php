@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ModeBagan;
+use App\Models\Concerns\MenamaiBabak;
+use App\Support\Bagan\Contracts\SumberBagan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
-class Bracket extends Model
+class Bracket extends Model implements SumberBagan
 {
-    use HasFactory;
+    use HasFactory, MenamaiBabak;
 
     protected $fillable = [
         'weight_class_id',
@@ -54,36 +57,34 @@ class Bracket extends Model
         return $this->locked_at !== null;
     }
 
-    /**
-     * Berapa babak dari babak pertama sampai final.
+    /*
+     * Kontrak SumberBagan, dibaca PohonBagan.
      *
-     * Dibulatkan KE ATAS, bukan log2 apa adanya. Bagan gugur berukuran pangkat
-     * dua tidak terpengaruh -- log2(16) tetap 4 -- tapi bagan pemasalan
-     * berukuran 10 butuh empat babak (5 partai, 3, 2, 1), dan log2(10) yang
-     * dipotong jadi 3 akan menghilangkan finalnya dari seluruh permukaan yang
-     * menggambar bagan.
+     * Mengembalikan relasi yang SUDAH dimuat, bukan menjalankan kuerinya lagi:
+     * BracketController::show() memuatnya lewat with(), dan menjalankan ulang
+     * di sini akan menambah dua query pada tiap permukaan yang menggambar
+     * bagan -- termasuk overlay siaran yang ditarik terus-menerus.
      */
-    public function jumlahBabak(): int
+
+    public function ukuranBagan(): int
     {
-        return (int) ceil(log(max(2, $this->size), 2));
+        return (int) $this->size;
     }
 
-    /**
-     * Nama babak sebagaimana disebut panitia dan announcer.
-     *
-     * Dihitung mundur dari final, bukan maju dari babak pertama: yang dikenal
-     * orang adalah "semifinal", bukan "babak ketiga".
-     */
-    public function namaBabak(int $round): string
+    public function modeBagan(): ModeBagan
     {
-        $sisa = $this->jumlahBabak() - $round;
+        return $this->mode ?? ModeBagan::Gugur;
+    }
 
-        return match ($sisa) {
-            0 => 'Final',
-            1 => 'Semifinal',
-            2 => 'Perempat final',
-            3 => 'Perdelapan final',
-            default => 'Penyisihan '.$round,
-        };
+    /** @return Collection<int, Model> */
+    public function tempatBagan(): Collection
+    {
+        return $this->slots;
+    }
+
+    /** @return Collection<int, Model> */
+    public function partaiBagan(): Collection
+    {
+        return $this->matches;
     }
 }

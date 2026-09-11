@@ -7,9 +7,14 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Satu penampilan Jurus: satu pendaftaran (perorangan atau beregu) tampil
  * satu kali pada satu tahap satu nomor. Sejajar dengan `matches` di Tanding,
- * tapi tidak berbagi tabel dengannya -- Jurus tidak punya bagan gugur atau
- * sudut merah/biru, jadi memaksakannya ke `matches` berarti banyak kolom
- * yang selalu kosong untuk salah satu kategori.
+ * tapi tidak berbagi tabel dengannya: satu partai Tanding adalah SATU baris
+ * berisi dua sudut, sementara satu pertemuan Jurus adalah DUA penampilan
+ * terpisah yang masing-masing dinilai sendiri.
+ *
+ * Keterangan pertama berkas ini menyebut "Jurus tidak punya bagan gugur atau
+ * sudut merah/biru". Itu keliru terhadap naskah 2025 (Pasal 12.1.b.1) dan
+ * sudah dikoreksi: sudutnya ditambahkan migrasi `tambah_battle_ke_jurus_
+ * performances`, bagannya oleh `buat_bagan_jurus`.
  */
 return new class extends Migration
 {

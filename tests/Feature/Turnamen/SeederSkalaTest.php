@@ -39,8 +39,6 @@ beforeEach(function () {
      * kedua dan seterusnya karena itu akan berjalan tanpa satu pun peran, dan
      * gagal pada baris yang tidak ada hubungannya dengan yang diuji.
      */
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $seeder = app(KejuaraanSkalaSeeder::class);
     $seeder->skala('sedang')->run();
 

@@ -8,8 +8,15 @@
     "jadinya siapa". Tanpa bagian ini, satu-satunya layar yang tahu jawabannya
     adalah tablet Wasit yang sedang dipegang di tengah matras.
 
-    Isinya karena itu cuma bacaan: pertanyaannya, siapa sudah menjawab apa,
-    hitungannya, dan hasil begitu ambang tercapai.
+    Isinya karena itu cuma bacaan: pertanyaannya, siapa sudah menjawab apa, dan
+    hitungan suara tiap sudut.
+
+    HASILNYA tidak ada di sini. Ia pindah ke modal <x-silat.verifikasi-hasil>,
+    yang muncul begitu Wasit MENERAPKANNYA. Alasannya: hasil yang terbit di
+    sudut layar begitu ambang tercapai terbaca sebagai keputusan yang sudah
+    jadi, padahal ia masih menunggu Wasit -- dan yang membacanya di sekitar
+    meja mengumumkannya lebih dulu. Yang pantas dilihat sepanjang polling
+    berjalan cuma suaranya, dan suara belum keputusan.
 
     Jawaban tiap juri memang terlihat di sini. Yang disembunyikan naskah adalah
     jawaban juri dari SESAMA JURI supaya yang belum menjawab tidak ikut arus —
@@ -24,9 +31,11 @@
     <div class="flex shrink-0 flex-col gap-3 border-t-2 border-silat-teks bg-silat-panel px-5 py-4 sm:px-7">
 
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span class="silat-angka rounded-silat-kecil bg-silat-teks px-2.5 py-1 text-[13px] font-semibold tracking-[.14em] text-silat-panel uppercase">
-                Verifikasi juri
-            </span>
+            {{-- Menyebut APA yang diverifikasi, bukan cuma bahwa ada
+                 verifikasi. Itu pertanyaan pertama yang diajukan semua orang
+                 di sekitar meja begitu pertandingan berhenti. --}}
+            <span class="silat-angka rounded-silat-kecil bg-silat-teks px-2.5 py-1 text-[13px] font-semibold tracking-[.14em] text-silat-panel uppercase"
+                  x-text="'Verifikasi ' + (verifikasi?.jenis_label ?? 'Juri')"></span>
             <span class="silat-angka text-[14px] text-silat-teks-samar"
                   x-text="'Diminta ' + (verifikasi?.diminta_oleh ?? 'aparat pertandingan') + ' · Babak ' + (verifikasi?.round ?? '–') + ' · pertandingan dihentikan'"></span>
         </div>
@@ -81,21 +90,19 @@
                     @endforeach
                 </div>
 
-                {{-- Hasil dinyatakan dengan kalimat yang sama persis dengan
-                     yang dibaca Wasit sebelum menekan Terapkan, dan yang nanti
-                     tercatat di riwayat — ketiganya datang dari satu sumber. --}}
-                <div x-show="verifikasi?.hasil" x-cloak
-                     class="rounded-silat border-l-[4px] border-silat-teks bg-silat-latar px-3.5 py-2.5">
-                    <p class="text-[12px] tracking-[.1em] text-silat-teks-samar uppercase">Hasil verifikasi</p>
-                    <p class="mt-1 text-[19px] leading-snug font-semibold text-silat-teks"
-                       x-text="verifikasi?.hasil_label ?? ''"></p>
-                    <p class="mt-1 text-[15px] leading-snug text-silat-teks-kedua" x-text="verifikasi?.akibat"></p>
-                    <p class="mt-1.5 text-[14px] text-silat-teks-redup">Menunggu Wasit menerapkannya.</p>
-                </div>
+                {{-- Ambang tercapai: yang dinyatakan cuma bahwa suaranya sudah
+                     cukup dan bolanya ada di Wasit. Sudut yang unggul TIDAK
+                     disebut di sini -- hitungan di atas sudah menunjukkannya
+                     apa adanya, dan menuliskannya sebagai kalimat membuatnya
+                     terbaca sebagai keputusan yang sudah jadi. --}}
+                <p x-show="verifikasi?.hasil" x-cloak
+                   class="rounded-silat border-l-[4px] border-silat-teks bg-silat-latar px-3.5 py-2.5 text-[15px] leading-snug text-silat-teks-kedua">
+                    Suara sudah cukup — menunggu Wasit menerapkannya.
+                </p>
 
                 <p x-show="! verifikasi?.hasil" x-cloak class="text-[15px] leading-relaxed text-silat-teks-redup">
                     Menunggu <span x-text="verifikasi?.ambang"></span> jawaban yang sama.
-                    Hasil terbit begitu ambang tercapai — jawaban juri yang belum masuk tidak lagi mengubahnya.
+                    Jawaban juri yang belum masuk tidak lagi mengubahnya setelah ambang tercapai.
                 </p>
             </div>
         </div>

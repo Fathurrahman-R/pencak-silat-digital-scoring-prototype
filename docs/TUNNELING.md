@@ -72,6 +72,59 @@ live.contoh-domain.test {
 Ganti `localhost:8000` dengan port `php artisan serve`/PHP-FPM yang
 sesungguhnya, dan `localhost:8080` dengan `REVERB_PORT` dari `.env`.
 
+### Kalau halaman terbuka tapi polos, tanpa CSS dan tanpa angka yang bergerak
+
+Proxy meneruskan permintaan `https` ke Laravel sebagai `http`. Laravel hanya
+tahu itu dari `X-Forwarded-Proto`, dan hanya mempercayainya kalau proxy-nya
+terdaftar — `bootstrap/app.php` mempercayai **loopback saja**, karena Caddy di
+atas memang berdiri di mesin yang sama. Tidak percaya, seluruh alamat aset
+terbit berskema `http`, dan peramban memblokirnya dari halaman `https` sebagai
+konten campuran: tidak ada CSS, tidak ada Alpine, tidak ada Echo.
+
+Dua hal yang harus benar bersamaan, dan keduanya gejalanya sama persis —
+"siarannya mati", tanpa satu pun pesan di Safari iOS:
+
+1. Caddy meneruskan `X-Forwarded-Proto` (bawaannya sudah begitu) **dan**
+   berjalan di mesin yang sama dengan Laravel. Kalau ia dipindah ke mesin lain,
+   daftarkan alamat mesin itu di `trustProxies` pada `bootstrap/app.php`.
+2. `VITE_REVERB_SCHEME` di `.env` **kosong**, lalu `npm run build` ulang —
+   dijaga `npm run periksa-siaran`.
+
+Periksa cepat dari mesin proxy: `curl -sk https://<domain>/live/turnamen/1 |
+grep -o 'href="[^"]*build[^"]*"' | head -1`. Alamat yang keluar harus berskema
+`https`. Kalau `http`, yang salah nomor 1.
+
+**Sesudah menyunting `bootstrap/app.php`, jalankan ulang kolam PHP-nya**
+(`.\scripts\server\hentikan-server.ps1` lalu `jalankan-server.ps1`). Perubahan
+di berkas itu tidak berlaku pada proses yang sedang berjalan.
+
+### Menguji jalur https tanpa tunnel sungguhan
+
+Kedua cacat di atas hanya muncul di halaman `https`, dan keduanya tidak
+menuliskan apa pun di Safari iOS — jadi menebaknya dari gejala mahal. Jalurnya
+bisa direproduksi di mesin sendiri:
+
+1. Terbitkan sertifikat swasembada, lalu jalankan proksi TLS kecil yang meniru
+   Caddyfile di atas: `/app/*` diteruskan ke `REVERB_PORT`, sisanya ke port
+   HTTP, **dengan `Host` dipertahankan** dan `X-Forwarded-Proto: https`
+   ditambahkan. Menimpa `Host` membuat Laravel membangun alamat asetnya ke
+   alamat proksi dan peramban menolaknya sebagai lintas-origin.
+2. Proksi harus menghubungi Laravel lewat **loopback** — itu syarat
+   `trustProxies`.
+3. Buka panel lewat proksi memakai **WebKit**, mesin yang sama dengan Safari,
+   dengan profil perangkat iPhone:
+   `webkit.launch()` + `newContext({ ...devices['iPhone 14'], ignoreHTTPSErrors: true })`.
+   Penegakan konten campurannya ada di mesinnya, jadi ia sama dengan Safari
+   sungguhan.
+4. Yang diperiksa bukan tebakan konfigurasi melainkan alamat yang **benar-benar
+   dibuka**: `page.on('websocket', ws => ws.url())`. Harus `wss://<host>:<port
+   halaman>/app/...` dan status `connected`.
+
+Diverifikasi begitu pada 9 September 2026: dengan perbaikannya, halaman `https`
+membuka `wss://…:8443/app/…` dan tersambung; dengan logika lama ia mencoba
+`wss://…:8080` — port yang memang tidak dibuka tunnel — lalu berhenti di
+`unavailable` dengan penanda layar "Terputus".
+
 ## Menyambungkan tunnel
 
 Tunnel (cloudflared, ngrok, atau sejenisnya) diarahkan ke Caddy di atas,

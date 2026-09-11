@@ -27,8 +27,6 @@ use Database\Seeders\SilatRoleSeeder;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
@@ -124,9 +122,9 @@ it('mendaratkan seluruh peran gelanggang langsung di panelnya', function (string
         ->get(route('dashboard'))
         ->assertRedirect(route("admin.turnamen.gelanggang.panel.{$rute}", [$this->tournament, $this->arena]));
 })->with([
-    ['wasit', 'wasit', 'wasit'],
-    ['dewan-juri', 'pengawas-wasit-juri', 'dewan-juri'],
-    ['komisi-protes', 'wasit-komisi-protes', 'komisi-protes'],
+    ['wasit', 'ketua-pertandingan', 'wasit'],
+    ['dewan-juri', 'ketua-pertandingan', 'dewan-juri'],
+    ['komisi-protes', 'ketua-pertandingan', 'komisi-protes'],
     ['ketua-pertandingan', 'ketua-pertandingan', 'ketua'],
 ]);
 

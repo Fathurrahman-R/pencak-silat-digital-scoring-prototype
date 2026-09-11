@@ -32,6 +32,8 @@ class PerbandinganBattle
      *     merah: array<string, mixed>|null,
      *     biru: array<string, mixed>|null,
      *     selisih: float|null,
+     *     siap: bool,
+     *     seri: bool,
      * }
      */
     public function __invoke(JurusBattle $battle): array
@@ -68,6 +70,33 @@ class PerbandinganBattle
             'selisih' => $merah !== null && $biru !== null
                 ? round(abs($merah['akhir'] - $biru['akhir']), 2)
                 : null,
+
+            /*
+             * `siap` menjawab pertanyaan TAMPILAN: kapan blok perbandingan
+             * pantas digambar sendiri di papan, panel juri, panel ketua, dan
+             * panel operator.
+             *
+             * Syaratnya kedua sudut sudah DISAHKAN, bukan sekadar sudah tampil.
+             * Nilai yang belum disahkan masih bisa berubah -- pengurangan
+             * Pengawas dijatuhkan sesudah penampilan berhenti, dan pembatalan
+             * pengurangan mengubah angkanya lagi. Perbandingan yang muncul
+             * lebih awal akan berganti angka di depan penonton, dan yang
+             * membacanya tidak punya cara tahu mana yang final.
+             *
+             * Sengaja TERPISAH dari syarat domain di PutuskanBattle: pemenang
+             * battle tidak boleh bergantung pada apa yang kebetulan sedang
+             * digambar di layar.
+             */
+            'siap' => $merah !== null && $biru !== null
+                && $merah['disahkan'] && $biru['disahkan'],
+
+            /*
+             * Seri dinyatakan, bukan disimpulkan pembacanya dari dua angka
+             * yang kebetulan sama. Panel memakainya untuk menampilkan pilihan
+             * sudut milik Ketua Pertandingan alih-alih tombol tetapkan biasa.
+             */
+            'seri' => $merah !== null && $biru !== null
+                && round($merah['akhir'], 2) === round($biru['akhir'], 2),
         ];
     }
 

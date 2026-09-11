@@ -85,12 +85,13 @@ it('membuat akun untuk tiap peran gelanggang dengan kata sandi bawaan', function
         'operator2@silat.test' => 'operator-it',
         'pengendali1@silat.test' => 'pengendali-gelanggang',
         'pengendali2@silat.test' => 'pengendali-gelanggang',
-        'wasit1@silat.test' => 'wasit',
+        // Wasit lebur ke Ketua Pertandingan; kunci akunnya tetap `wasitN`.
+        'wasit1@silat.test' => 'ketua-pertandingan',
         'juri1@silat.test' => 'juri',
         'juri6@silat.test' => 'juri',
-        'pengawas@silat.test' => 'pengawas-wasit-juri',
-        'komisi@silat.test' => 'wasit-komisi-protes',
-        'sekretariat@silat.test' => 'sekretariat',
+        'pengawas@silat.test' => 'ketua-pertandingan',
+        'komisi@silat.test' => 'ketua-pertandingan',
+        'sekretariat@silat.test' => 'operator-it',
         'official1@silat.test' => 'official-kontingen',
         'official10@silat.test' => 'official-kontingen',
     ];

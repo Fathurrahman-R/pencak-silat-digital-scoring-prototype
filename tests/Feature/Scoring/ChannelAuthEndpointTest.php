@@ -28,8 +28,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->broadcaster = Broadcast::driver('reverb');
     $this->broadcaster->channel('arena.{arenaId}', ArenaChannelAuthorizer::class);
 
@@ -74,7 +72,7 @@ it('mengizinkan juri bergabung ke presence channel gelanggang', function () {
 
 it('mengizinkan wasit bergabung ke presence channel gelanggang', function () {
     $wasit = User::factory()->create();
-    $wasit->syncRoles(['wasit']);
+    $wasit->syncRoles([peranSistem('wasit')]);
 
     expect(anggota(($this->auth)($wasit)))->toMatchArray(['user_id' => (string) $wasit->id]);
 });

@@ -177,7 +177,7 @@ class BracketController extends Controller
 
         $pdf = Pdf::loadView('admin.bagan.cetak-pdf', [
             'tournament' => $tournament,
-            'weightClass' => $weightClass,
+            'judul' => $weightClass->namaLengkap(),
             'bracket' => $bracket,
             'pohon' => $pohon,
             'margin' => self::MARGIN_CETAK,
@@ -199,11 +199,17 @@ class BracketController extends Controller
             ]);
     }
 
-    /** Tepi kertas di sekeliling pohon, dalam piksel pohon. */
-    private const MARGIN_CETAK = 32;
+    /**
+     * Tepi kertas di sekeliling pohon, dalam piksel pohon.
+     *
+     * Publik karena JurusBaganController mencetak lembar yang SAMA. Dua bagan
+     * yang dicetak dengan margin berbeda adalah dua lembar yang tidak bisa
+     * ditempel berdampingan di papan pengumuman.
+     */
+    public const MARGIN_CETAK = 32;
 
     /** Ruang kepala halaman di atas pohon, dalam piksel pohon. */
-    private const KEPALA_CETAK = 72;
+    public const KEPALA_CETAK = 72;
 
     public function tukar(Request $request, Tournament $tournament, WeightClass $weightClass): RedirectResponse
     {

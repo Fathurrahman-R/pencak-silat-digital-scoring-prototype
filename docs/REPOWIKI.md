@@ -302,15 +302,21 @@ di [`database/seeders/SilatRoleSeeder.php`](../database/seeders/SilatRoleSeeder.
 
 | `name` | Label |
 |---|---|
-| `ketua-pertandingan` | Ketua Pertandingan (melebur Delegasi Teknik) |
-| `pengawas-wasit-juri` | Pengawas / Dewan Wasit Juri |
-| `wasit-komisi-protes` | Wasit Komisi Protes |
-| `wasit` | Wasit |
-| `juri` | Juri |
+| `ketua-pertandingan` | Ketua Pertandingan (melebur Delegasi Teknik, Wasit, Dewan Wasit Juri, dan Wasit Komisi Protes) |
+| `juri` | Juri — satu-satunya peran matras yang berdiri sendiri |
 | `pengendali-gelanggang` | Pengendali Gelanggang |
-| `operator-it` | Operator IT |
-| `sekretariat` | Sekretariat Pertandingan (melebur sekretaris, bendahara, petugas timbang) |
+| `operator-it` | Operator IT (melebur Sekretariat: sekretaris, bendahara, petugas timbang, plus seluruh administrasi kejuaraan) |
 | `official-kontingen` | Official Kontingen |
+
+Peran yang sudah dibubarkan terdaftar di `SilatRoleSeeder::DIBUBARKAN`, lengkap
+dengan penggantinya; pemegangnya dipindahkan otomatis lalu peran lamanya
+dihapus. Yang dibuang tanpa pengganti ada di `DIBUANG` — sejauh ini hanya
+`user`, peran boilerplate tanpa kewenangan, yang justru NAIK haknya kalau
+dipindahkan ke peran mana pun.
+
+Nama peran sistem tidak lagi sama dengan jabatan di matras: `MatchOfficial::ROLE_WASIT`
+(`'wasit'`) jabatan di partai, sementara peran sistemnya `ketua-pertandingan`.
+Di uji, penerjemahannya berdiri di satu tempat: `peranSistem()` di `tests/Pest.php`.
 
 Empat perintah artisan menjaga daftar key tetap sinkron dengan rute:
 
@@ -538,11 +544,16 @@ Indonesia: `tombol`, `kartu`, `tabel/`, `modal`, `isian`, `pilihan`, `saklar`, `
 `linimasa`, `pohon-bagan`, `titik-hadir`, dan seterusnya. Jangan menulis markup Tailwind mentah
 untuk hal yang sudah punya komponen — konsistensi kontras WCAG AA dijaga lewat komponen ini.
 
-Empat pemeriksa rupa, jalankan sebelum menyerahkan perubahan UI:
+Lima pemeriksa aset, jalankan sebelum menyerahkan perubahan UI:
 
 ```bash
-npm run periksa-rupa   # kelas-hilang + kontras + kontras-kelas + sapu-prop
+npm run periksa-rupa   # kelas-hilang + kontras + kontras-kelas + sapu-prop + periksa-siaran
 ```
+
+Yang terakhir bukan tentang rupa: `periksa-siaran.mjs` menjaga `VITE_REVERB_SCHEME`
+tetap kosong, supaya skema WebSocket tidak ikut tertanam di dalam aset saat build.
+Ia ikut di sini karena inilah satu-satunya perintah yang memang dijalankan orang
+sesudah `npm run build`. Lihat komentar di kepala berkasnya.
 
 **Sumber kebenaran arah rupa adalah [`BRIEF-DESAIN.md`](BRIEF-DESAIN.md)** (arah "Digital Scoring",
 shadcn/zinc), bukan `docs/kanvas/`. Folder kanvas menggambar arah lama "Matras" dan sudah

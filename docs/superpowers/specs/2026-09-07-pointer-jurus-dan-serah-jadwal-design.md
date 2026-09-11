@@ -1,7 +1,15 @@
 # Pointer Penampilan Jurus dan Serah-Terima Jadwal Antar Gelanggang
 
-> Status: **disetujui, belum dikerjakan.** Ditulis 7 September 2026.
-> Sengaja tidak dipasang menjelang uji lapangan hari itu — lihat §9.
+> Status: **selesai dikerjakan.** Ditulis 7 September 2026, dipasang commit
+> `5047880` pada hari yang sama sesudah uji lapangan; §9 di bawah menjelaskan
+> kenapa ia sempat ditunda.
+>
+> Satu hal yang tidak ikut terpasang dan baru ditutup 9 September 2026:
+> **tidak ada satu pun permukaan yang menetapkan `jurus_performances.arena_id`.**
+> Akibatnya seluruh rancangan ini tidak terlihat sama sekali di lapangan —
+> antrean Jurus di panel kendali selalu kosong, dan `tunjukPenampilan()` selalu
+> menolak. Penjadwalnya sekarang ada di `App\Support\Bagan\PenjadwalJurus`,
+> dengan tab Jurus di halaman Jadwal.
 
 ## 1. Masalah
 

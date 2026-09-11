@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Models\JudgeVerification;
 use App\Models\Penalty;
 use App\Models\ScoreEvent;
+use App\Models\MatchOfficial;
 use App\Models\SilatMatch;
 use App\Models\Tournament;
 use App\Support\Arsip\PendorongArsip;
@@ -473,6 +474,7 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanTercatatDiPartai($match, $request->user(), MatchOfficial::ROLE_JURI);
 
         /*
          * Jalur terpanas di seluruh sistem: tiga juri menekan beruntun, dan
@@ -581,6 +583,7 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanTercatatDiPartai($match, $request->user(), MatchOfficial::ROLE_WASIT);
         $this->pastikanBelumSelesai($match);
         $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 
@@ -640,6 +643,7 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanTercatatDiPartai($match, $request->user(), MatchOfficial::ROLE_WASIT);
         $this->pastikanBelumSelesai($match);
         $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 
@@ -678,6 +682,7 @@ class PartaiScoringController extends Controller
     {
         $this->pastikanMilik($tournament, $match);
         $this->pastikanAparatPartai($match, $request->user());
+        $this->pastikanTercatatDiPartai($match, $request->user(), MatchOfficial::ROLE_WASIT);
         $this->pastikanBelumSelesai($match);
         $this->pastikanBabakMenerimaInput($match, (int) $request->input('babak'));
 

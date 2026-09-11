@@ -40,10 +40,54 @@ class SilatRoleSeeder extends Seeder
      */
     private const DIBUBARKAN = [
         'delegasi-teknik' => 'ketua-pertandingan',
-        'sekretaris-pertandingan' => 'sekretariat',
-        'bendahara' => 'sekretariat',
-        'petugas-timbang' => 'sekretariat',
+        'sekretaris-pertandingan' => 'operator-it',
+        'bendahara' => 'operator-it',
+        'petugas-timbang' => 'operator-it',
+
+        /*
+         * Sekretariat ikut lebur ke Operator IT, September 2026.
+         *
+         * Bukan karena pekerjaannya hilang -- pendaftaran, tagihan, timbangan,
+         * dan cetak tetap ada -- melainkan karena di kejuaraan yang dilayani
+         * aplikasi ini keduanya orang yang sama: satu meja dengan satu laptop
+         * yang juga memasang papan skor. Dua peran untuk satu orang cuma
+         * membuat separuh kewenangannya tertinggal di akun yang salah.
+         */
+        'sekretariat' => 'operator-it',
+
+        /*
+         * Wasit lebur ke Ketua Pertandingan, September 2026.
+         */
+        'wasit' => 'ketua-pertandingan',
+
+        /*
+         * Dewan Wasit Juri dan Komisi Protes menyusul, September 2026.
+         *
+         * Ketiganya sudah memegang hampir seluruh kewenangan yang sama dengan
+         * Ketua Pertandingan -- meninjau nilai, membatalkan, mengesahkan,
+         * memutus VAR -- dan di kejuaraan yang dilayani aplikasi ini mereka
+         * duduk di meja yang sama. Yang tersisa cuma satu kewenangan yang
+         * belum dipegang Ketua: menjatuhkan pengurangan Pengawas pada
+         * penampilan Jurus, dan itu ikut pindah bersama peleburan ini.
+         */
+        'pengawas-wasit-juri' => 'ketua-pertandingan',
+        'wasit-komisi-protes' => 'ketua-pertandingan',
+
+        // Peran bawaan boilerplate: `admin` cuma memegang users.*, dan
+        // pekerjaan itu sekarang ada di Operator IT.
+        'admin' => 'operator-it',
     ];
+
+    /*
+     * Peran yang dibuang TANPA pengganti.
+     *
+     * `user` tidak memegang kewenangan apa pun, jadi memindahkan pemegangnya
+     * ke peran mana pun justru MENAIKKAN haknya -- dan peran inilah yang
+     * paling mungkin menempel di akun yang baru mendaftar. Yang benar
+     * membuang perannya dan membiarkan akunnya tanpa peran, persis keadaan
+     * yang sudah ia miliki.
+     */
+    private const DIBUANG = ['user'];
 
     public function run(): void
     {
@@ -72,6 +116,13 @@ class SilatRoleSeeder extends Seeder
      */
     private function bubarkanPeranLama(): void
     {
+        foreach (self::DIBUANG as $namaPeran) {
+            $peran = Role::where('name', $namaPeran)->where('guard_name', 'web')->first();
+
+            $peran?->users()->get()->each(fn ($pengguna) => $pengguna->removeRole($peran));
+            $peran?->delete();
+        }
+
         foreach (self::DIBUBARKAN as $lama => $pengganti) {
             $peran = Role::where('name', $lama)->where('guard_name', 'web')->first();
 
@@ -102,17 +153,52 @@ class SilatRoleSeeder extends Seeder
                 'grants' => [
                     'turnamen' => $lihat,
                     'gelanggang' => $lihat,
-                    'jadwal' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign],
-                    'bagan' => $lihat,
-                    'penugasan-aparat' => [ResourceAction::View, ResourceAction::Assign],
+                    /*
+                     * Print ikut, dan itu bukan kelengkapan.
+                     *
+                     * Sebelum ini `bagan.print` dan `jadwal.print` tidak
+                     * dimiliki SATU peran pun. Tombol "Cetak PDF" ada di kedua
+                     * halaman, tapi ia dibungkus @resource dan karena itu tidak
+                     * pernah tergambar untuk siapa pun -- hanya super-admin
+                     * yang lolos, lewat Gate::before. Bagan yang dipaku di
+                     * papan pengumuman dan jadwal yang dibawa ke meja
+                     * gelanggang jadi mustahil dicetak oleh yang bertugas
+                     * mencetaknya.
+                     */
+                    'jadwal' => [
+                        ResourceAction::View, ResourceAction::Update,
+                        ResourceAction::Assign, ResourceAction::Print,
+                    ],
+                    /*
+                     * Delete di sini BUKAN menghapus bagan, melainkan membuka
+                     * kuncinya -- undian yang sudah final dinyatakan bisa
+                     * disusun ulang. Yang menyusunnya Operator IT; yang
+                     * membatalkan finalitasnya Ketua Pertandingan, karena ia
+                     * yang menanggung akibatnya di gelanggang.
+                     */
+                    'bagan' => [ResourceAction::View, ResourceAction::Print, ResourceAction::Delete],
+                    'penugasan-aparat' => [ResourceAction::Assign],
                     'partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Manage],
+
+                    /*
+                     * Bekas kewenangan Wasit, yang lebur ke sini September
+                     * 2026: menjatuhkan pembinaan, teguran, dan peringatan,
+                     * serta membaca nilai juri yang sedang masuk.
+                     *
+                     * `hukuman.view` sekalian yang membuka panel wasit
+                     * (`panel/wasit`) -- tanpa ia, yang memimpin partai tidak
+                     * punya layar untuk memimpinnya.
+                     */
+                    'hukuman' => [ResourceAction::View, ResourceAction::Create],
+                    'penilaian' => $lihat,
+
                     /*
                      * Jalan keluar saat perangkat pengendali mati di tengah
                      * pertandingan. Ketua Pertandingan wewenangnya lintas
                      * gelanggang, jadi ia satu-satunya yang bisa mengambil
                      * alih tanpa menunggu penugasan ulang.
                      */
-                    'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                    'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Assign, ResourceAction::Manage],
                     // Wewenangnya lintas gelanggang, jadi ia juga yang paling
                     // butuh menarik data dari laptop lain.
                     'sinkron-gelanggang' => [ResourceAction::View, ResourceAction::Update],
@@ -121,69 +207,25 @@ class SilatRoleSeeder extends Seeder
                     // Manajer atas nama pelatih (keduanya diajukan pelatih di
                     // gelanggang, bukan lewat akun sistem sendiri), lalu
                     // memutus tingkat pertama Protes Manajer.
-                    'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                    'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve],
                     // Pasal 13 menyebut verifikasi juri datang dari Ketua
                     // Pertandingan maupun Wasit. Deskripsi peran ini sudah
                     // berbunyi "memimpin verifikasi juri" sejak awal.
-                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
-                    'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
-                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
-                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
+                    'verifikasi-juri' => [ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                    'protes-manajer' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve],
+                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update],
+                    'hasil-jurus' => [ResourceAction::Update, ResourceAction::Approve],
+
+                    /*
+                     * Bekas kewenangan Dewan Wasit Juri: pengurangan 0.50 dan
+                     * diskualifikasi pada penampilan Jurus (Pasal 12.1.e).
+                     * Satu-satunya milik Dewan yang belum dipegang Ketua saat
+                     * keduanya lebur.
+                     */
+                    'pengurangan-jurus' => [ResourceAction::Create],
+
                     'overlay' => $lihat,
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
-                ],
-            ],
-            [
-                'name' => 'pengawas-wasit-juri',
-                'label' => 'Pengawas / Dewan Wasit Juri',
-                'description' => 'Mengevaluasi penilaian juri, menyusun penugasan, dan mencatat pengurangan 0.50 pada kategori Jurus.',
-                'grants' => [
-                    'penugasan-aparat' => [ResourceAction::View, ResourceAction::Assign],
-                    'partai' => $lihat,
-                    'penilaian' => $lihat,
-                    'hukuman' => [ResourceAction::View, ResourceAction::Create],
-                    /*
-                     * Termasuk MENGESAHKAN dan MENCETAK berita acara.
-                     *
-                     * Sebelumnya hanya View dan Update, jadi Dewan Wasit Juri
-                     * bisa membatalkan nilai keliru tapi tidak bisa
-                     * mengesahkan hasil yang sudah dibereskannya sendiri, dan
-                     * berita acaranya membalas 403 -- padahal panduan
-                     * operasional menaruh kedua pekerjaan itu di kursinya.
-                     * Pengesahan tertahan di Ketua Pertandingan, yang di
-                     * lapangan sedang mengurus gelanggang lain.
-                     */
-                    'hasil-partai' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
-                    // Melihat saja: hasil verifikasi masuk bahan evaluasi
-                    // penilaian juri, tapi memintanya adalah wewenang Wasit
-                    // dan Ketua Pertandingan.
-                    'verifikasi-juri' => $lihat,
-                    'var' => [ResourceAction::View, ResourceAction::Approve, ResourceAction::Reject],
-                    'penampilan-jurus' => $lihat,
-                    'pengurangan-jurus' => [ResourceAction::View, ResourceAction::Create],
-                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Update],
-                ],
-            ],
-            [
-                'name' => 'wasit-komisi-protes',
-                'label' => 'Wasit Komisi Protes',
-                'description' => 'Menganalisis tayangan ulang dan menetapkan hasil protes VAR dalam tenggat 5 menit.',
-                'grants' => [
-                    'partai' => $lihat,
-                    'penilaian' => $lihat,
-                    'hukuman' => $lihat,
-                    'var' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
-                ],
-            ],
-            [
-                'name' => 'wasit',
-                'label' => 'Wasit',
-                'description' => 'Memimpin pertandingan, menjatuhkan pembinaan, teguran, dan peringatan, serta menghentikan pertandingan.',
-                'grants' => [
-                    'partai' => [ResourceAction::View, ResourceAction::Update],
-                    'hukuman' => [ResourceAction::View, ResourceAction::Create],
-                    'penilaian' => $lihat,
-                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
                 ],
             ],
             [
@@ -196,7 +238,7 @@ class SilatRoleSeeder extends Seeder
                     // Menjawab verifikasi, tidak pernah membukanya. Juri yang
                     // bisa membuka pertanyaan sendiri bisa memaksa polling
                     // atas kejadian yang menguntungkan sudut yang dinilainya.
-                    'verifikasi-juri' => [ResourceAction::View, ResourceAction::Update],
+                    'verifikasi-juri' => [ResourceAction::Update],
                     // Sama seperti Tanding: juri Jurus hanya melihat penampilan
                     // dan mengirim nilai, tidak pernah mengendalikan timer.
                     'penampilan-jurus' => $lihat,
@@ -218,7 +260,7 @@ class SilatRoleSeeder extends Seeder
                 'grants' => [
                     'gelanggang' => $lihat,
                     'jadwal' => $lihat,
-                    'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                    'kendali-gelanggang' => [ResourceAction::View, ResourceAction::Assign, ResourceAction::Manage],
                     /*
                      * Menarik data dari gelanggang lain. Diberikan ke
                      * pengendali, bukan ditahan di sekretariat, karena yang
@@ -262,30 +304,47 @@ class SilatRoleSeeder extends Seeder
                  * naskah Pasal 13 ayat 2: menjalankan perangkat digital score
                  * dan siarannya, bukan memimpin jalannya pertandingan.
                  */
-                'description' => 'Menjalankan papan tampilan gelanggang dan perangkat siarannya. Tidak mengendalikan timer maupun jalannya partai.',
+                'description' => 'Satu meja untuk seluruh administrasi kejuaraan — pendaftaran, tagihan, timbangan, jadwal, bagan, dan setelan — sekaligus papan tampilan gelanggang beserta siarannya. Tidak mengendalikan timer maupun jalannya partai.',
                 'grants' => [
-                    'jadwal' => $lihat,
-                    'partai' => $lihat,
-                    'penilaian' => $lihat,
-                    'hukuman' => $lihat,
-                    'hasil-partai' => [ResourceAction::View, ResourceAction::Print],
-                    // Operator paling dekat dengan meja pelatih -- bisa
-                    // memasukkan protes VAR ke sistem, tapi tidak memutusnya.
-                    'var' => [ResourceAction::View, ResourceAction::Create],
-                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
-                    'hasil-jurus' => [ResourceAction::View, ResourceAction::Print],
+                    /*
+                     * ── Administrasi kejuaraan ──────────────────────────────
+                     *
+                     * Sekretariat lebur ke sini, September 2026: di kejuaraan
+                     * yang dilayani aplikasi ini, yang memasang papan skor dan
+                     * yang menerima pendaftaran orang yang sama.
+                     *
+                     * `gelanggang` ikut, termasuk menetapkan siapa operator
+                     * dan pengendali tiap matras -- sebelumnya tidak dimiliki
+                     * peran mana pun, jadi menyiapkan gelanggang mustahil
+                     * dijalankan siapa pun kecuali super-admin.
+                     *
+                     * `peraturan-turnamen` juga: angka yang menentukan
+                     * skoring, durasi babak, dan hukuman disetel di meja ini
+                     * sebelum acara, bukan di pinggir matras saat partai
+                     * berjalan.
+                     *
+                     * Yang TIDAK ikut: struktur hak akses itu sendiri --
+                     * `roles`, `permissions`, `resources`, dan `mappings`
+                     * selain melihat. Peran yang boleh menyunting perannya
+                     * sendiri bisa menaikkan haknya sendiri sampai setara
+                     * super-admin, dan itu menghapus arti seluruh pembagian di
+                     * berkas ini. Kalau panitia memang menghendakinya, yang
+                     * dipakai akun super-admin.
+                     */
+                    'turnamen' => [...$ubah, ResourceAction::Export],
+                    'gelanggang' => $ubah,
+                    'peraturan-turnamen' => [ResourceAction::View, ResourceAction::Update],
+                    'users' => [
+                        ResourceAction::View, ResourceAction::Create,
+                        ResourceAction::Update, ResourceAction::Delete,
+                        ResourceAction::Export,
+                    ],
+                    'roles' => $lihat,
+                    'permissions' => $lihat,
+                    'resources' => $lihat,
+                    'mappings' => $lihat,
 
-                    // Operator IT yang memasang Web Browser Input di vMix,
-                    // jadi dialah yang paling butuh daftar alamat overlay.
-                    'overlay' => $lihat,
-                ],
-            ],
-            [
-                'name' => 'sekretariat',
-                'label' => 'Sekretariat Pertandingan',
-                'description' => 'Meja pra-acara: menerima pendaftaran, memeriksa berkas, menagih dan mencatat pembayaran, lalu menimbang peserta Tanding.',
-                'grants' => [
-                    'turnamen' => $lihat,
+                    // ── Peserta dan keuangan, bekas meja Sekretariat ────────
                     'kontingen' => $ubah,
                     'atlet' => $ubah,
 
@@ -296,28 +355,57 @@ class SilatRoleSeeder extends Seeder
                      * berhak naik gelanggang.
                      */
                     'pendaftaran' => [
-                        ResourceAction::View, ResourceAction::Update,
+                        ResourceAction::View, ResourceAction::Create, ResourceAction::Update,
                         ResourceAction::Approve, ResourceAction::Reject,
-                        ResourceAction::Export,
                     ],
 
                     /*
-                     * Bekas kewenangan Bendahara. Tarif boleh disusun ulang,
-                     * tagihan boleh dikunci dan ditandai lunas — tapi tidak
-                     * ada Delete pada invoice: tagihan yang sudah terbit
-                     * bagian dari catatan keuangan kejuaraan.
+                     * Tarif boleh disusun ulang, tagihan boleh dikunci dan
+                     * ditandai lunas — tapi tidak ada Delete pada invoice:
+                     * tagihan yang sudah terbit bagian dari catatan keuangan
+                     * kejuaraan.
                      */
                     'tarif' => $ubah,
                     'invoice' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Export],
+                    'timbang-badan' => [ResourceAction::View, ResourceAction::Create],
 
-                    // Bekas kewenangan Petugas Timbang Badan.
-                    'timbang-badan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
+                    // Format nomor Jurus -- battle atau peringkat -- ditetapkan
+                    // di sini, bersama pendaftaran dan keabsahan peserta.
+                    'nomor-jurus' => [ResourceAction::View, ResourceAction::Update],
 
-                    'kelas-tanding' => $lihat,
-                    'nomor-jurus' => $lihat,
-                    'bagan' => $lihat,
-                    'jadwal' => $lihat,
                     'rekap' => [ResourceAction::View, ResourceAction::Export, ResourceAction::Print],
+
+                    // ── Gelanggang ─────────────────────────────────────────
+                    'jadwal' => [ResourceAction::View, ResourceAction::Assign, ResourceAction::Print],
+
+                    /*
+                     * Menyusun bagan, menukar undian, dan menguncinya.
+                     *
+                     * Sebelum ini `bagan.create`, `bagan.update`, dan
+                     * `bagan.delete` tidak dimiliki SATU peran pun -- seluruh
+                     * tahap pra-acara mustahil dijalankan siapa pun kecuali
+                     * super-admin, yang lolos lewat Gate::before. Ditemukan
+                     * uji kotak hitam: Ketua membuka halaman bagan dan tidak
+                     * menemukan form menyusunnya.
+                     *
+                     * TANPA Delete. Membuka kunci bagan yang sudah final
+                     * dinilai seberat menghapusnya, dan itu wewenang Ketua
+                     * Pertandingan -- lihat rasional di grup rute `bagan`.
+                     */
+                    'bagan' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Print],
+
+                    'partai' => $lihat,
+                    'penilaian' => $lihat,
+                    'hukuman' => $lihat,
+                    'hasil-partai' => [ResourceAction::View, ResourceAction::Print],
+                    // Operator paling dekat dengan meja pelatih -- bisa
+                    // memasukkan protes VAR ke sistem, tapi tidak memutusnya.
+                    'var' => [ResourceAction::View, ResourceAction::Create],
+                    'penampilan-jurus' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update],
+
+                    // Operator IT yang memasang Web Browser Input di vMix,
+                    // jadi dialah yang paling butuh daftar alamat overlay.
+                    'overlay' => $lihat,
                 ],
             ],
             [

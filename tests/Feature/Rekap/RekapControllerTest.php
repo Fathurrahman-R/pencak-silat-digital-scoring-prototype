@@ -16,13 +16,11 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
     $this->sekretariat = User::factory()->create();
-    $this->sekretariat->syncRoles(['sekretariat']);
+    $this->sekretariat->syncRoles(['operator-it']);
 });
 
 it('menampilkan halaman rekap', function () {

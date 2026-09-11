@@ -284,6 +284,17 @@ class StatePartaiPanel
             'id' => $verifikasi->id,
             'round' => $verifikasi->round,
             'jenis' => $verifikasi->jenis->value,
+            /*
+             * Nama jenisnya, untuk judul yang menyebut APA yang diverifikasi.
+             *
+             * "Verifikasi juri" sendirian tidak menjawab pertanyaan yang paling
+             * sering diajukan di sekitar meja operator saat pertandingan
+             * berhenti: diverifikasi apanya. Jawabannya sudah ada di enumnya,
+             * tinggal dibawa -- bukan dirangkai ulang di Blade dari `jenis`,
+             * yang berarti dua tempat yang harus diubah saat jenis ketiga
+             * ditambahkan.
+             */
+            'jenis_label' => $verifikasi->jenis->label(),
             'pertanyaan' => $verifikasi->jenis->pertanyaan(),
             'pilihan_tidak_ada' => $verifikasi->jenis->pilihanTidakAda(),
             'tingkat_pelanggaran' => $verifikasi->tingkat_pelanggaran?->value,

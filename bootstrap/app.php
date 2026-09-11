@@ -122,6 +122,37 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         /*
+         * Proxy tunnel yang berdiri di depan aplikasi -- dan HANYA itu.
+         *
+         * Live score publik disajikan lewat reverse proxy ber-TLS
+         * (docs/TUNNELING.md): penonton membuka `https://live.domain`, proxy
+         * meneruskannya ke Laravel sebagai `http://localhost:8000`. Tanpa
+         * baris ini Laravel tidak pernah tahu permintaannya datang lewat TLS,
+         * dan SELURUH alamat yang dibuatnya berskema `http` -- termasuk
+         * `<script src>` dan `<link rel=stylesheet>` ke /build/*.
+         *
+         * Peramban memblokir aset `http` di halaman `https` sebagai konten
+         * campuran. Yang tampil bukan halaman yang jelek, melainkan halaman
+         * tanpa CSS dan tanpa JS sama sekali: tidak ada Alpine, tidak ada
+         * Echo, tidak ada angka yang bergerak. Terbaca sebagai "siarannya
+         * mati", padahal berkasnya tidak pernah sampai. Safari iOS
+         * memblokirnya tanpa satu pun pesan yang terlihat.
+         *
+         * Dipercaya HANYA loopback, bukan `*` dan bukan seluruh RFC 1918.
+         *
+         * Proxy-nya memang berdiri di mesin yang sama --
+         * `reverse_proxy localhost:8000` di docs/TUNNELING.md -- jadi loopback
+         * sudah cukup. Melebarkannya ke seluruh LAN berarti perangkat mana pun
+         * di WiFi venue boleh mengarang alamat asalnya sendiri lewat
+         * X-Forwarded-For, dan alamat itulah yang dibaca AllowLocalNetworkOnly
+         * untuk menjaga overlay vMix dan endpoint sinkron.
+         *
+         * Kalau suatu saat proxy-nya dipindah ke mesin lain, tambahkan alamat
+         * mesin ITU di sini -- satu alamat, bukan satu rentang.
+         */
+        $middleware->trustProxies(at: ['127.0.0.0/8', '::1']);
+
+        /*
          * Global, bukan hanya grup web: halaman galat, overlay vMix, dan
          * live score publik sama-sama perlu dijaga dari pembingkaian.
          */

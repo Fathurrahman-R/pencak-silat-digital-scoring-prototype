@@ -142,6 +142,36 @@ function pantauKoneksi() {
     });
 
     /*
+     * Kegagalan menyambung MENYEBUT alamat yang dicobanya.
+     *
+     * Penanda di layar cuma bisa berbunyi "Terputus" -- itu memang yang perlu
+     * diketahui juri, dan menambahkan alamat WebSocket di sana hanya membuat
+     * layar gelanggang penuh oleh hal yang tidak bisa ditindaklanjuti siapa pun
+     * di pinggir matras.
+     *
+     * Tapi yang MEMPERBAIKINYA butuh justru alamat itu, dan sebelum baris ini
+     * ia tidak pernah tertulis di mana pun: sambungan yang diblokir peramban
+     * (mis. `ws://` dari halaman `https://`) gagal tanpa satu pun pesan yang
+     * terlihat, dan yang terbaca cuma "Reverb mati" -- padahal Reverb tidak
+     * pernah dihubungi. Ditemukan begitu di Safari iOS.
+     */
+    const alamatWs = window.Echo?.alamatWs ?? '(alamat tidak diketahui)';
+
+    pusher.connection.bind('error', (galat) => {
+        console.error('[silat] WebSocket gagal:', alamatWs, galat);
+    });
+
+    pusher.connection.bind('state_change', ({ current }) => {
+        if (current === 'unavailable' || current === 'failed') {
+            console.error(
+                `[silat] WebSocket ${current} — tidak berhasil menyambung ke ${alamatWs}. `
+                + 'Periksa: Reverb berjalan, portnya terbuka dari perangkat ini, '
+                + 'dan skema halaman (http/https) sama dengan skema WebSocket-nya.',
+            );
+        }
+    });
+
+    /*
      * WebSocket bukan pendeteksi putus yang cepat.
      *
      * Diukur di lapangan: WiFi HP juri dicabut, dan delapan detik kemudian
@@ -341,6 +371,28 @@ Alpine.data('partaiPanel', (cfg) => ({
 
     keberatan: { kartu: { merah: 2, biru: 2 }, var_reviews: [], protes_manajer: [] },
     verifikasi: null,
+
+    /*
+     * Id verifikasi yang modal hasilnya sudah ditutup.
+     *
+     * Disimpan sebagai ID, bukan sebagai boolean: modal harus muncul SEKALI per
+     * verifikasi, lalu tidak muncul lagi walaupun state terus ditarik tiap dua
+     * detik sepanjang sisa partai -- dan harus muncul LAGI untuk verifikasi
+     * berikutnya, yang di satu babak bisa terjadi beberapa kali.
+     */
+    _hasilVerifikasiDitutup: null,
+
+    /*
+     * Sudah pernah menyerap satu muatan state.
+     *
+     * Dipakai menyemai penanda di atas: verifikasi yang SUDAH diterapkan
+     * sebelum panel ini dibuka tidak boleh memunculkan modalnya. Endpoint
+     * state selalu mengirim verifikasi TERAKHIR partai ini, apa pun umurnya --
+     * jadi tanpa semaian ini, operator yang membuka papan di tengah babak
+     * ketiga disambut hasil verifikasi dari babak pertama, sebesar layar.
+     */
+    _hasilVerifikasiDisemai: false,
+
     pesan: null,
     galat: null,
 
@@ -951,6 +1003,21 @@ Alpine.data('partaiPanel', (cfg) => ({
         }, { segarkan: true });
     },
 
+    /**
+     * Penawaran yang masih menggantung untuk satu baris antrean, kalau ada.
+     *
+     * Melepas TIDAK memindahkan `arena_id` -- yang memindahkannya adalah node
+     * penerima, sesudah adopsinya tercatat (lihat SerahTerimaJadwal). Jadi
+     * selama penawaran menggantung, barisnya tetap berdiri di antrean pelepas.
+     * Tanpa penanda ini pengendali membaca baris biasa lengkap dengan tombol
+     * Tayangkan yang PASTI ditolak 422, dan baris kembar di daftar "Dilepas,
+     * menunggu diambil" tepat di bawahnya.
+     */
+    penawaranBaris(barisId, jenis = 'tanding') {
+        return (this.panel?.serah?.menunggu ?? [])
+            .find((satu) => satu.jenis === jenis && satu.baris_id === barisId) ?? null;
+    },
+
     /** Menarik kembali penawaran yang belum diambil gelanggang tujuan. */
     batalkanLepas(serahId) {
         if (! this.panel?.serah?.batal) {
@@ -1053,6 +1120,23 @@ Alpine.data('partaiPanel', (cfg) => ({
      */
     get verifikasiBerjalan() {
         return this.verifikasi?.berjalan === true;
+    },
+
+    /**
+     * Modal hasil verifikasi sedang pantas ditampilkan.
+     *
+     * Syaratnya `sudah_diterapkan`, bukan `hasil` terisi. Hasil terbit begitu
+     * ambang suara tercapai, tapi ia belum keputusan sampai Wasit menekan
+     * Terapkan -- dan hasil yang dipajang sebesar layar sebelum itu akan
+     * diumumkan orang di sekitar meja mendahului Wasitnya sendiri.
+     */
+    get hasilVerifikasiTampil() {
+        return this.verifikasi?.sudah_diterapkan === true
+            && this.verifikasi?.id !== this._hasilVerifikasiDitutup;
+    },
+
+    tutupHasilVerifikasi() {
+        this._hasilVerifikasiDitutup = this.verifikasi?.id ?? null;
     },
 
     /*
@@ -1348,6 +1432,28 @@ Alpine.data('partaiPanel', (cfg) => ({
             return;
         }
 
+        /*
+         * Gelanggang beralih ke Jurus: halaman ini bukan lagi halaman yang
+         * pantas.
+         *
+         * Panel Tanding tidak punya satu pun elemen untuk menggambar
+         * penampilan Jurus, dan `match` yang jadi null membuatnya memajang
+         * partai kosong dengan tombol yang masih bisa ditekan. Servernya yang
+         * merender panel Jurus di alamat yang sama; yang perlu dilakukan di
+         * sini cuma bertanya lagi.
+         *
+         * Panel kendali dikecualikan lewat `ikutiTayang`: ia yang menekan
+         * peralihannya, dan bentuknya memang sama di kedua mode.
+         */
+        if (this.cfg.ikutiTayang && data.panel?.tayang === 'jurus') {
+            if (! this._mendarat) {
+                this._mendarat = true;
+                window.location.reload();
+            }
+
+            return;
+        }
+
         const gantiPartai = this.match?.id != null && idBaru !== this.match.id;
 
         if (gantiPartai) {
@@ -1413,6 +1519,19 @@ Alpine.data('partaiPanel', (cfg) => ({
         this.tekanan = data.tekanan ?? null;
         this.riwayatDipangkasPada = data.riwayat_dipangkas_pada ?? null;
         this.keberatan = data.keberatan;
+        /*
+         * Muatan PERTAMA cuma menyemai, tidak memicu modal hasil. Yang sudah
+         * diterapkan sebelum panel ini dibuka bukan kabar baru bagi siapa pun
+         * di meja -- mereka sudah melihatnya waktu itu terjadi.
+         */
+        if (! this._hasilVerifikasiDisemai) {
+            this._hasilVerifikasiDisemai = true;
+
+            if (data.verifikasi?.sudah_diterapkan) {
+                this._hasilVerifikasiDitutup = data.verifikasi.id;
+            }
+        }
+
         this.verifikasi = data.verifikasi;
 
         this._segarkanTimer();
@@ -1434,6 +1553,12 @@ Alpine.data('partaiPanel', (cfg) => ({
         // Polling verifikasi partai lama muncul di panel juri partai baru --
         // juri menjawab pertanyaan tentang kejadian yang bukan di depannya.
         this.verifikasi = null;
+
+        // Semaian modal hasil ikut disetel ulang: verifikasi partai BARU yang
+        // kebetulan sudah diterapkan sebelum pengendali memindahkan pointer
+        // bukan kabar untuk meja ini, sama seperti saat panel baru dibuka.
+        this._hasilVerifikasiDitutup = null;
+        this._hasilVerifikasiDisemai = false;
 
         // Tawaran WMP yang menempel memicu tombol akhiri untuk partai yang
         // salah. Sama untuk tawaran hitungan serentak.
@@ -2024,8 +2149,28 @@ Alpine.data('perbandinganBattle', (cfg) => ({
     merah: null,
     biru: null,
     selisih: null,
+    siap: false,
+    seri: false,
+    galat: null,
 
     _saluran: null,
+
+    /*
+     * Muatan utuh, supaya <x-silat.komparasi-battle> yang sama bisa dipakai
+     * halaman ini DAN keempat panel gelanggang. Tanpa getter ini, halaman
+     * battle memegang muatan yang sama dalam bentuk yang berbeda, dan
+     * komponennya harus digandakan untuk membacanya.
+     */
+    get perbandingan() {
+        return {
+            battle: this.battle,
+            merah: this.merah,
+            biru: this.biru,
+            selisih: this.selisih,
+            siap: this.siap,
+            seri: this.seri,
+        };
+    },
 
     init() {
         this.muat();
@@ -2065,8 +2210,43 @@ Alpine.data('perbandinganBattle', (cfg) => ({
             this.merah = data.merah;
             this.biru = data.biru;
             this.selisih = data.selisih;
+            this.siap = data.siap ?? false;
+            this.seri = data.seri ?? false;
         } finally {
             this.memuat = false;
+        }
+    },
+
+    /** Menetapkan pemenang; sudut dan alasan hanya diisi saat skornya seri. */
+    async putuskanBattle(pemenang = null, alasan = null) {
+        this.galat = null;
+
+        try {
+            const res = await fetch(this.cfg.putuskan, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({ pemenang_registration_id: pemenang, alasan }),
+            });
+
+            const body = await res.json().catch(() => ({}));
+
+            if (! res.ok) {
+                this.galat = pesanGagal(res.status, body);
+
+                return false;
+            }
+
+            await this.muat();
+
+            return true;
+        } catch (e) {
+            this.galat = 'Tidak bisa menghubungi server. Periksa jaringan perangkat ini.';
+
+            return false;
         }
     },
 
@@ -2090,6 +2270,17 @@ Alpine.data('jurusPanel', (cfg) => ({
     skor: { median: 0, total_pengurangan: 0, akhir: 0 },
     nilaiJuri: [],
     pengurangan: [],
+
+    /*
+     * Perbandingan kedua sudut battle, atau null.
+     *
+     * Null untuk nomor berformat peringkat -- yang tidak punya battle sama
+     * sekali -- dan untuk battle yang salah satu sudutnya belum disahkan.
+     * Komponen <x-silat.komparasi-battle> yang memutuskan kapan ia digambar,
+     * dari `siap` di dalam muatan ini; panel tidak menghitungnya sendiri.
+     */
+    komparasi: null,
+
     berjalanMs: 0,
     pesan: null,
     galat: null,
@@ -2261,7 +2452,18 @@ Alpine.data('jurusPanel', (cfg) => ({
         this.skor = data.skor;
         this.nilaiJuri = data.nilai_juri;
         this.pengurangan = data.pengurangan;
+        this.komparasi = data.komparasi ?? null;
         this.memuat = false;
+
+        /*
+         * Alamat aksi ikut diserap tiap tarikan, bukan cuma saat halaman
+         * dimuat. Panel yang beralamat GELANGGANG berpindah penampilan tanpa
+         * memuat ulang, dan alamat yang dibekukan saat render akan mengirim
+         * nilai ke penampilan yang sudah turun dari matras.
+         */
+        if (data.aksi) {
+            Object.assign(this.cfg, data.aksi);
+        }
 
         if (this.nilaiSaya !== null) {
             this.nilaiInput = this.nilaiSaya.toFixed(2);
@@ -2349,6 +2551,26 @@ Alpine.data('jurusPanel', (cfg) => ({
 
     sahkan() {
         return this.kirim(this.cfg.sahkan);
+    },
+
+    /**
+     * Menetapkan pemenang battle dari panel yang menampilkan dasar
+     * keputusannya.
+     *
+     * `pemenang` dan `alasan` hanya diisi saat skor akhir kedua sudut sama --
+     * dan hanya di situ server menerimanya. Skor yang berbeda diputus angka;
+     * mengirim pilihan sudut untuk battle yang tidak seri ditolak server,
+     * bukan diam-diam diterima.
+     */
+    putuskanBattle(pemenang = null, alasan = null) {
+        if (! this.cfg.putuskanBattle) {
+            return false;
+        }
+
+        return this.kirim(this.cfg.putuskanBattle, {
+            pemenang_registration_id: pemenang,
+            alasan,
+        });
     },
 
     _mulaiStopwatch(mulaiEpochMs) {

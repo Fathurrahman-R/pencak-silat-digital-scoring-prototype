@@ -207,7 +207,7 @@ Halaman aplikasi memanggil `<x-layouts.base shell>` untuk mendapat latar shell;
 sisanya duduk langsung di atas permukaan kertas.
 
 **Tidak ada warna masuk desain sebelum angkanya diukur.** `npm run
-periksa-rupa` menjalankan empat pemeriksa berurutan; masing-masing keluar
+periksa-rupa` menjalankan lima pemeriksa berurutan; masing-masing keluar
 dengan kode 1 kalau gagal:
 
 | Pemeriksa | Menangkap |
@@ -216,6 +216,7 @@ dengan kode 1 kalau gagal:
 | `kontras.mjs` | 72 pasangan warna yang didaftarkan tangan, termasuk yang latar efektifnya butuh perhitungan alpha |
 | `kontras-kelas.mjs` | Pasangan `bg-*`/`text-*` yang ditulis di kelas, diresolusi dari token — menutup celah pemeriksa di atasnya |
 | `sapu-prop.mjs` | Prop yang menaungi prop sungguhan komponennya — daftarnya diturunkan dari `@props` tiap komponen, bukan dirawat tangan |
+| `periksa-siaran.mjs` | `VITE_REVERB_SCHEME` yang terisi, dan bundel yang membekukan `forceTLS` — keduanya membuat halaman `https` tetap membuka `ws://`, yang diblokir peramban sebagai konten campuran tanpa pesan yang terlihat di Safari iOS |
 
 Yang pertama dijalankan lebih dulu dan menghentikan sisanya, karena bundel
 basi membuat setiap laporan lain jadi tidak berarti.

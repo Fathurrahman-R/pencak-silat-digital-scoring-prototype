@@ -162,8 +162,20 @@
                                 </span>
                             </template>
 
+                            {{-- Baris yang sedang ditawarkan ke gelanggang lain
+                                 tidak menawarkan Tayangkan maupun Pindahkan:
+                                 keduanya pasti ditolak selama penawarannya
+                                 menggantung. Yang tampil ke mana ia ditawarkan,
+                                 supaya baris ini dan daftar "Dilepas, menunggu
+                                 diambil" di bawah terbaca sebagai satu hal. --}}
+                            <template x-if="! partai.aktif && penawaranBaris(partai.id)">
+                                <span class="w-24 shrink-0 text-[11.5px] leading-tight text-silat-teks-redup">
+                                    Ditawarkan ke <span x-text="penawaranBaris(partai.id)?.tujuan ?? 'gelanggang lain'"></span>
+                                </span>
+                            </template>
+
                             @if ($config['bolehKendali'] ?? true)
-                                <template x-if="! partai.aktif">
+                                <template x-if="! partai.aktif && ! penawaranBaris(partai.id)">
                                     <button type="button"
                                             x-on:click="pilihPartai(partai.id)"
                                             class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
@@ -178,7 +190,7 @@
                                  keputusannya lahir dari membandingkan antrean
                                  itu dengan gelanggang sebelah. --}}
                             @if ($config['bolehKendali'] ?? true)
-                            <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0 && ! partai.aktif">
+                            <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0 && ! partai.aktif && ! penawaranBaris(partai.id)">
                                 <select class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali bg-transparent px-2 text-[12.5px] text-silat-teks-kedua"
                                         aria-label="Pindahkan partai ini ke gelanggang lain"
                                         x-on:change="if ($event.target.value) { lepasKeGelanggang(partai.id, $event.target.value); $event.target.value = '' }">
@@ -240,13 +252,55 @@
                                     </span>
                                 </template>
 
+                                {{-- Sama seperti antrean Tanding di atas:
+                                     selama penawarannya menggantung, barisnya
+                                     tetap di sini karena yang memindahkan
+                                     `arena_id` adalah node penerima. --}}
+                                <template x-if="! satu.aktif && penawaranBaris(satu.id, 'jurus')">
+                                    <span class="w-24 shrink-0 text-[11.5px] leading-tight text-silat-teks-redup">
+                                        Ditawarkan ke <span x-text="penawaranBaris(satu.id, 'jurus')?.tujuan ?? 'gelanggang lain'"></span>
+                                    </span>
+                                </template>
+
                                 @if ($config['bolehKendali'] ?? true)
-                                    <template x-if="! satu.aktif">
+                                    <template x-if="! satu.aktif && ! penawaranBaris(satu.id, 'jurus')">
                                         <button type="button"
                                                 x-on:click="pilihPenampilan(satu.id)"
                                                 class="h-11 w-24 shrink-0 rounded-silat border border-silat-tepi-kendali text-[13px] font-medium text-silat-teks-kedua">
                                             Tayangkan
                                         </button>
+                                    </template>
+
+                                    {{-- Pemindahan antar gelanggang, sejajar dengan
+                                         antrean Tanding di atas: yang memutuskan
+                                         sedang menatap antrean, dan keputusannya
+                                         lahir dari membandingkannya dengan
+                                         gelanggang sebelah. --}}
+                                    <template x-if="(panel?.serah?.gelanggang?.length ?? 0) > 0
+                                                    && ! satu.aktif && ! satu.battle
+                                                    && ! penawaranBaris(satu.id, 'jurus')">
+                                        <select class="h-11 shrink-0 rounded-silat border border-silat-tepi-kendali bg-transparent px-2 text-[12.5px] text-silat-teks-kedua"
+                                                aria-label="Pindahkan penampilan ini ke gelanggang lain"
+                                                x-on:change="if ($event.target.value) { lepasKeGelanggang(satu.id, $event.target.value, 'jurus'); $event.target.value = '' }">
+                                            <option value="">Pindahkan…</option>
+                                            <template x-for="lain in (panel?.serah?.gelanggang ?? [])" :key="lain.id">
+                                                <option x-bind:value="lain.id" x-text="lain.nama"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+
+                                    {{-- Sudut dari sebuah battle tidak bisa
+                                         berpindah sendirian: kedua sudutnya
+                                         dimainkan berurutan di matras yang sama
+                                         (Pasal 12.1.d.7), dan yang tertinggal
+                                         akan berdiri sendirian di antrean tanpa
+                                         penjelasan. Yang ditawarkan bukan tombol
+                                         yang pasti ditolak, melainkan kalimat
+                                         yang menyebut ke mana harus pergi. --}}
+                                    <template x-if="satu.battle && ! satu.aktif">
+                                        <span class="w-24 shrink-0 text-[11.5px] leading-tight text-silat-teks-redup">
+                                            Satu sudut battle — pindahkan lewat menu Jadwal
+                                        </span>
                                     </template>
                                 @endif
                             </div>

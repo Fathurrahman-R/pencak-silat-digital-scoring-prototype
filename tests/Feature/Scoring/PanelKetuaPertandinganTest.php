@@ -22,8 +22,6 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
@@ -47,7 +45,7 @@ beforeEach(function () {
     $this->ketua->syncRoles(['ketua-pertandingan']);
 
     $this->wasit = User::factory()->create();
-    $this->wasit->syncRoles(['wasit']);
+    $this->wasit->syncRoles([peranSistem('wasit')]);
     MatchOfficial::create([
         'match_id' => $this->match->id, 'user_id' => $this->wasit->id, 'role' => MatchOfficial::ROLE_WASIT,
     ]);

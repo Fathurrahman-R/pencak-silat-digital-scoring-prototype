@@ -74,7 +74,15 @@ REVERB_PUBLISH_HOST=127.0.0.1
 # yang melayani HTTP.
 VITE_REVERB_HOST=
 VITE_REVERB_PORT="${REVERB_PORT}"
-VITE_REVERB_SCHEME=http
+
+# SENGAJA KOSONG juga. Peramban memakai skema halaman yang sedang dibukanya:
+# halaman http di LAN menyambung ws, halaman https lewat tunnel menyambung
+# wss ke port halamannya sendiri. Diisi "http" di sini, aset yang dibangun di
+# LAN memaksa ws:// juga pada halaman https -- dan peramban memblokirnya
+# sebagai konten campuran. Safari iOS menolaknya TANPA pesan yang terlihat:
+# panelnya diam, lalu menyalakan "Terputus", dan terbaca sebagai Reverb mati
+# padahal Reverb tidak pernah dihubungi.
+VITE_REVERB_SCHEME=
 
 # Overlay vMix -- default sudah mencakup RFC 1918, biasanya tidak perlu diisi
 # OVERLAY_ALLOWED_CIDRS=127.0.0.1/32,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
@@ -391,6 +399,7 @@ Rincian isinya ada di [README](../README.md#kejuaraan-siap-uji-untuk-simulasi-ma
 - [ ] **Kalau halamannya tidak terbuka sama sekali** dari HP: `jalankan-server.ps1` sudah mencetak alamat LAN yang benar saat dinyalakan -- cocokkan dulu dengan yang diketik di HP. Kalau alamatnya sudah benar, sebabnya firewall (bagian 7), atau HP-nya tersambung ke jaringan lain. Nginx mengikat seluruh antarmuka, jadi salah-bind bukan penyebabnya; itu hanya terjadi kalau yang dijalankan `php artisan serve` tanpa `--host=0.0.0.0` (bagian 6)
 - [ ] Login sebagai juri, buka panel juri, pastikan indikator koneksi hijau ("Tersambung")
 - [ ] **Kalau halamannya terbuka tapi indikatornya "Terputus"**: HTTP-nya sampai, WebSocket-nya tidak. Yang keliru ada di Reverb, bukan di aplikasinya -- `reverb:start` belum dijalankan, dijalankan tanpa `--host=0.0.0.0`, atau port 8080 belum diizinkan firewall. `REVERB_HOST` yang berisi alamat lain **bukan** penyebabnya: Reverb melayani permintaan dari alamat mana pun, dan peramban memakai alamat yang sedang dibukanya sendiri
+- [ ] **Kalau halaman dibuka lewat alamat `https` (tunnel), bukan IP LAN**: pastikan `VITE_REVERB_SCHEME` di `.env` **kosong**, lalu `npm run build` ulang. Diisi `http`, aset membawa `ws://` ke mana pun ia disajikan, dan peramban memblokirnya dari halaman `https` sebagai konten campuran — **Safari iOS menolaknya tanpa satu pun pesan yang terlihat**, jadi gejalanya sama persis dengan Reverb yang mati. Buka Konsol peramban: sejak perbaikan ini panel mencetak alamat WebSocket yang dicobanya beserta sebab gagalnya
 - [ ] Kirim satu nilai percobaan dari 2 HP berbeda dalam window konsensus (bawaan 2 detik; kejuaraan simulasi memakai 5 detik), pastikan nilai terbit di panel operator
 - [ ] **Tekanan beruntun.** Dua juri menekan teknik yang sama bergantian cepat, lalu berhenti. Yang harus terlihat di panel operator dan overlay: tiap titik juri padam kira-kira dua detik sejak tekanannya SENDIRI, tidak diperpanjang oleh tekanan juri lain; dan titik yang tekniknya baru saja terbit jadi nilai padam seketika, sementara teknik lain yang jendelanya masih terbuka tetap menyala
 - [ ] Satu juri menekan teknik yang sama dua kali beruntun -- titiknya harus terlihat berkedip ulang, bukan diam

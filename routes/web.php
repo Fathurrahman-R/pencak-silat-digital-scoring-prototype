@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\ResourceAction;
-use App\Http\Controllers\Admin\AparatController;
 use App\Http\Controllers\Admin\ArenaController;
 use App\Http\Controllers\Admin\AthleteController;
 use App\Http\Controllers\Admin\BracketController;
@@ -9,6 +8,7 @@ use App\Http\Controllers\Admin\ContingentController;
 use App\Http\Controllers\Admin\FeeScheduleController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\JurusBaganController;
 use App\Http\Controllers\Admin\JurusScoringController;
 use App\Http\Controllers\Admin\KetuaPertandinganController;
 use App\Http\Controllers\Admin\PanelGelanggangController;
@@ -171,7 +171,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::controller(ResourceMappingController::class)->prefix('mappings')->name('mappings.')->group(function () {
             Route::get('/', 'index')->name('index')->middleware('resource:'.rk('mappings', ResourceAction::View));
             Route::put('/{mapping}', 'update')->name('update')->middleware('resource:'.rk('mappings', ResourceAction::Update));
-            Route::delete('/{mapping}', 'destroy')->name('destroy')->middleware('resource:'.rk('mappings', ResourceAction::Update));
+            // Memutus pemetaan sebuah key berarti mematikan otorisasi di
+            // baliknya; itu bukan penyuntingan.
+            Route::delete('/{mapping}', 'destroy')->name('destroy')->middleware('resource:'.rk('mappings', ResourceAction::Delete));
             Route::post('/auto', 'autoMap')->name('auto')->middleware('resource:'.rk('mappings', ResourceAction::Update));
         });
 
@@ -309,9 +311,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('tarif.')
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('tarif', ResourceAction::View));
-                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Update));
-                    Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Update));
-                    Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                    /*
+                     * Menambah dan menghapus tarif dijaga aksinya sendiri,
+                     * bukan `tarif.update`.
+                     *
+                     * Sebelum ini ketiganya dijaga Update, jadi siapa pun yang
+                     * boleh membetulkan satu angka juga boleh menghapus
+                     * seluruh baris tarif -- dan `tarif.create`/`tarif.delete`
+                     * yang diberikan kepada seseorang tidak berlaku apa-apa.
+                     */
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Create));
+                    Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Create));
+                    Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Delete));
                 });
 
             Route::controller(VerificationController::class)
@@ -361,6 +372,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::post('/{arena}/operator', 'simpanOperator')->name('operator')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::post('/{arena}/pengendali', 'simpanPengendali')->name('pengendali')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
+
+                    /*
+                     * Penugasan aparat, dan satu-satunya tempatnya.
+                     *
+                     * Dijaga `penugasan-aparat.assign`, bukan
+                     * `gelanggang.update`: yang dilakukan di sini menempatkan
+                     * ORANG di kursi, bukan menyunting gelanggangnya. Kunci
+                     * itu dulu menjaga layar penugasan per partai, yang
+                     * dibuang bersama perubahan ini.
+                     */
+                    Route::post('/{arena}/aparat', 'simpanAparat')->name('aparat')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
                     Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
                 });
 
@@ -399,15 +421,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
                      * dua belas pemuatan ulang halaman.
                      */
                     Route::post('/{match}/pindahkan', 'pindahkan')->name('pindahkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+
+                    /*
+                     * Tab Jurus, memakai ulang resource `jadwal`.
+                     *
+                     * Izinnya memang pertanyaan yang sama -- "boleh menyusun
+                     * jadwal gelanggang?" -- dan resource baru berarti satu
+                     * peran lagi yang harus diberi izin di tiap kejuaraan yang
+                     * sudah berjalan, hanya untuk memisahkan dua tab pada satu
+                     * layar.
+                     *
+                     * Yang dijadwalkan berbeda bentuk per format nomor: battle
+                     * untuk nomor bagan gugur (dua sudutnya tidak boleh
+                     * terpisah gelanggang), penampilan untuk nomor peringkat
+                     * yang tidak punya battle sama sekali.
+                     */
+                    Route::prefix('jurus')->name('jurus.')->group(function () {
+                        Route::get('/', 'indexJurus')->name('index')->middleware('resource:'.rk('jadwal', ResourceAction::View));
+                        Route::get('/cetak', 'cetakJurus')->name('cetak')->middleware('resource:'.rk('jadwal', ResourceAction::Print));
+
+                        Route::post('/battle/{jurusBattle}/tetapkan', 'tetapkanBattle')->name('battle.tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/battle/{jurusBattle}/lepas', 'lepasBattle')->name('battle.lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+
+                        Route::post('/penampilan/{performance}/tetapkan', 'tetapkanPenampilan')->name('penampilan.tetapkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/penampilan/{performance}/lepas', 'lepasPenampilan')->name('penampilan.lepas')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                        Route::post('/penampilan/{performance}/pindahkan', 'pindahkanPenampilan')->name('penampilan.pindahkan')->middleware('resource:'.rk('jadwal', ResourceAction::Assign));
+                    });
                 });
 
-            Route::controller(AparatController::class)
-                ->prefix('{tournament}/partai/{match}/aparat')
-                ->name('partai.aparat.')
-                ->group(function () {
-                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::View));
-                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
-                });
+            /*
+             * Penugasan aparat PER PARTAI dibuang, September 2026.
+             *
+             * Aparat ditugaskan ke gelanggang dan berlaku sepanjang hari
+             * (`gelanggang.aparat`); `match_officials` tetap terisi lewat
+             * salinan saat pengendali menunjuk partainya, jadi nomor juri,
+             * otorisasi, dan berita acara tidak berubah sedikit pun. Yang
+             * hilang cuma satu layar yang menuntut empat baris penugasan
+             * dikali empat puluh partai.
+             */
 
             /*
              * Mesin scoring Tanding. `akhiri` dijaga resource Manage
@@ -613,11 +664,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
              * penampilan berjalan sekali dari awal sampai selesai, jadi tidak
              * ada kendali babak/jeda seperti timer partai.
              */
+            /*
+             * Bagan gugur nomor Jurus: digambar dan dicetak.
+             *
+             * Controller sendiri, tapi geometri pohon, komponen tampilan, dan
+             * lembar cetaknya SATU dengan bagan Tanding -- lewat kontrak
+             * SumberBagan. Resource `bagan` dipakai ulang, sama seperti
+             * `susun-bagan` di grup di bawah: izinnya memang pertanyaan yang
+             * sama, dan resource baru berarti satu peran lagi yang harus
+             * diberi izin di tiap kejuaraan yang sudah berjalan.
+             */
+            Route::controller(JurusBaganController::class)
+                ->prefix('{tournament}/jurus/{jurusEvent}/bagan')
+                ->name('jurus.bagan.')
+                ->group(function () {
+                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('bagan', ResourceAction::View));
+                    Route::get('/cetak', 'cetak')->name('cetak')->middleware('resource:'.rk('bagan', ResourceAction::Print));
+                });
+
             Route::controller(JurusScoringController::class)
                 ->prefix('{tournament}/jurus')
                 ->name('jurus.')
                 ->group(function () {
-                    Route::get('/', 'daftarNomor')->name('nomor')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
+                    /*
+                     * Dua pemilik, bukan satu.
+                     *
+                     * Halaman ini memuat DUA hal: daftar nomor beserta
+                     * penampilannya, dan pemilih format tiap nomor. Yang kedua
+                     * dijaga `nomor-jurus.update`, dan satu-satunya peran yang
+                     * memilikinya -- Sekretariat -- tidak memegang
+                     * `penampilan-jurus.view`. Dengan satu penjaga saja, ia
+                     * pemilik tunggal sebuah kewenangan yang layarnya membalas
+                     * 403 untuk dirinya sendiri; ditemukan begitu di peramban,
+                     * 10 September 2026.
+                     */
+                    Route::get('/', 'daftarNomor')->name('nomor')
+                        ->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View).'|'.rk('nomor-jurus', ResourceAction::View));
                     Route::get('/{jurusEvent}', 'index')->name('index')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::View));
                     Route::post('/{jurusEvent}/buat-penampilan', 'generate')->name('generate')->middleware('resource:'.rk('penampilan-jurus', ResourceAction::Create));
 

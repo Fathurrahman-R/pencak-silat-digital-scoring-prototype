@@ -15,15 +15,13 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->turnamen = Tournament::factory()->create();
 });
 
 function masukSebagai(string $role): User
 {
     $user = User::factory()->create();
-    $user->syncRoles([$role]);
+    $user->syncRoles([peranSistem($role)]);
 
     test()->actingAs($user);
 
@@ -127,7 +125,7 @@ it('hanya menampilkan baris yang izinnya dimiliki pengguna', function () {
 
     kontingenNunggak($this->turnamen, $kelas, 'Kontingen Uji');
 
-    masukSebagai('sekretariat');
+    masukSebagai('operator-it');
     $sekretariat = collect(pekerjaan($this->turnamen))->pluck('benda');
 
     masukSebagai('ketua-pertandingan');

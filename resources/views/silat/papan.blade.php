@@ -242,6 +242,12 @@
              menjawab, dan apa hasilnya. --}}
         <x-silat.verifikasi-operator />
 
+        {{-- Hasil yang SUDAH diterapkan Wasit, di atas panel skor. Ia mengambil
+             layar karena pertandingan memang sedang berhenti untuknya, dan
+             karena itulah satu-satunya hal yang perlu dibaca seluruh meja pada
+             detik itu. --}}
+        <x-silat.verifikasi-hasil />
+
         {{--
             Pita keadaan. Satu tempat untuk semua kabar panel ini —
             galat, pesan, tawaran WMP, dan hasil partai — supaya

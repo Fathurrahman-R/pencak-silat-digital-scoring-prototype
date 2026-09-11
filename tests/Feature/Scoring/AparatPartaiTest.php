@@ -4,6 +4,7 @@ use App\Actions\Turnamen\SusunMasterDataTurnamen;
 use App\Enums\GolonganUsia;
 use App\Enums\JenisKelamin;
 use App\Models\Arena;
+use App\Models\ArenaOfficial;
 use App\Models\Bracket;
 use App\Models\Contingent;
 use App\Models\MatchOfficial;
@@ -17,17 +18,20 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 /**
- * Wasit dan juri hanya berwenang atas partai yang benar-benar ditugaskan
- * kepada mereka. Izin peran saja tidak cukup: dua gelanggang berjalan
- * bersamaan, dan aparat gelanggang sebelah tidak boleh ikut menilai atau
- * menghukum di sini.
+ * Aparat hanya berwenang MENULIS SKOR pada partai yang memang ditugaskan
+ * kepadanya. Izin peran saja tidak cukup: dua gelanggang berjalan bersamaan,
+ * dan aparat gelanggang sebelah tidak boleh ikut menilai atau menghukum di
+ * sini -- angkanya tayang di layar besar.
  *
- * Aparat tingkat kejuaraan -- Dewan Wasit Juri, Ketua Pertandingan -- sengaja
- * TIDAK ikut aturan ini. Mereka memang berwenang lintas gelanggang.
+ * Yang dihitung sebagai "ditugaskan": baris `match_officials` partai ini, ATAU
+ * kursi di `arena_officials` gelanggang tempat partai ini dimainkan. Yang
+ * kedua ada karena penugasan memang hidup di gelanggang sejak September 2026,
+ * dan salinannya ke partai baru lahir saat pengendali menunjuknya.
+ *
+ * MEMBUKA panel tidak dijaga sama sekali: membuka tidak mengubah apa pun, dan
+ * panitia tidak mau dihadang saat mencari layar.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
@@ -45,7 +49,7 @@ beforeEach(function () {
 
     $buatUser = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
@@ -151,8 +155,22 @@ it('menerima hukuman dari wasit yang ditugaskan di partai ini', function () {
     expect($this->match->penalties()->count())->toBe(1);
 });
 
-it('tetap mengizinkan Dewan Wasit Juri menghukum tanpa ditugaskan ke partai', function () {
+/*
+ * Dewan Wasit Juri tidak lagi dikecualikan lewat PERANNYA -- ia lebur ke Ketua
+ * Pertandingan (September 2026), dan peran itu juga dipakai wasit tiap matras,
+ * jadi mengecualikannya berarti mengecualikan semua orang. Yang membedakan
+ * sekarang KURSINYA: dewan yang memegang kursi di gelanggang tempat partai ini
+ * dimainkan tetap boleh menghukum tanpa penugasan per partai, karena
+ * penugasannya memang hidup di gelanggang.
+ */
+it('mengizinkan Dewan Wasit Juri menghukum lewat kursi gelanggangnya', function () {
     ($this->mulaiBabak)();
+
+    ArenaOfficial::create([
+        'arena_id' => $this->match->arena_id,
+        'user_id' => $this->pengawas->id,
+        'role' => 'dewan-juri',
+    ]);
 
     $this->actingAs($this->pengawas)
         ->post(route('admin.turnamen.partai.hukuman', [$this->tournament, $this->match]), [
@@ -233,7 +251,7 @@ it('tetap mengizinkan Ketua Pertandingan mengendalikan timer lintas gelanggang',
  */
 it('mengizinkan pemegang dua peran yang ditugaskan sebagai salah satunya', function () {
     $rangkap = User::factory()->create();
-    $rangkap->syncRoles(['wasit', 'juri']);
+    $rangkap->syncRoles([peranSistem('wasit'), 'juri']);
 
     MatchOfficial::create([
         'match_id' => $this->match->id,
@@ -254,7 +272,7 @@ it('mengizinkan pemegang dua peran yang ditugaskan sebagai salah satunya', funct
 
 it('tetap menolak pemegang dua peran yang tidak ditugaskan sama sekali', function () {
     $rangkap = User::factory()->create();
-    $rangkap->syncRoles(['wasit', 'juri']);
+    $rangkap->syncRoles([peranSistem('wasit'), 'juri']);
 
     ($this->mulaiBabak)();
 

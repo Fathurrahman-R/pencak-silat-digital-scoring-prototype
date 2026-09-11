@@ -66,6 +66,22 @@ class SerahTerimaJadwal
             throw new RuntimeException('Gelanggang tujuan sedang tidak aktif.');
         }
 
+        /*
+         * Satu sudut battle tidak boleh berpindah sendirian.
+         *
+         * Satu battle Jurus dimainkan sebagai DUA penampilan berurutan di
+         * matras yang sama -- biru dulu, lalu merah (Pasal 12.1.d.7).
+         * Memindahkan salah satunya ke gelanggang lain meninggalkan lawannya
+         * sendirian di antrean, dan yang membacanya di panel kendali tidak
+         * punya cara menebak ke mana pasangannya pergi. Yang berpindah harus
+         * battle-nya, lewat halaman Jadwal.
+         */
+        if ($baris instanceof JurusPerformance && $baris->jurus_battle_id !== null) {
+            throw new RuntimeException(
+                'Penampilan ini satu sudut dari sebuah battle — kedua sudutnya harus berpindah bersama lewat halaman Jadwal.',
+            );
+        }
+
         $jenis = $this->jenis($baris);
 
         if ($this->penawaranMenggantung($jenis, $baris->id) !== null) {

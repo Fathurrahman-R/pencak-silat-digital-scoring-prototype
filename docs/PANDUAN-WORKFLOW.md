@@ -48,21 +48,25 @@ Menu di sidebar muncul-hilang mengikuti peran akun yang sedang login. Kalau satu
 
 | Peran | Menu utama yang terbuka | Panel gelanggang |
 |---|---|---|
-| Sekretariat Pertandingan | Kontingen, Verifikasi, Tarif, Bendahara, Timbang badan, Bagan, Jadwal, Rekap & Laporan | — |
+| Operator IT | Seluruh administrasi kejuaraan (Kejuaraan, Gelanggang, Setelan Peraturan, Pengguna, Kontingen, Verifikasi, Tarif, Bendahara, Timbang badan, Bagan, Jadwal, Rekap) + papan tampilan gelanggang, panel Operator Jurus, pengajuan VAR, Overlay Siaran | `…/panel/papan` — tidak memegang timer maupun jalannya partai |
 | Official Kontingen | Kontingen (miliknya sendiri), atlet, pendaftaran, tagihan | — |
 | Pengendali Gelanggang | Panel Kendali: partai aktif, timer, perpindahan babak, buka babak susulan | `/gelanggang/{arena}/panel/kendali` |
-| Ketua Pertandingan | Jadwal, penugasan aparat, keberatan, Kategori Jurus, pengesahan hasil, banding Protes Manajer, ringkasan lintas gelanggang | `…/panel/ketua` |
-| Operator IT | Jadwal, papan tampilan gelanggang, panel Operator Jurus, pengajuan VAR, Overlay Siaran | `…/panel/papan` |
-| Wasit | Papan hukuman dan hitungan teknik | `…/panel/wasit` |
+| Ketua Pertandingan | Jadwal, penugasan aparat, keberatan, Kategori Jurus, pengesahan hasil, banding Protes Manajer, ringkasan lintas gelanggang — **memimpin partai** (pembinaan, teguran, peringatan, hitungan teknik), **meninjau dan membatalkan nilai**, **pengurangan 0.50 Jurus**, dan **memutus protes VAR** | `…/panel/ketua`, `…/panel/wasit`, `…/panel/dewan-juri`, `…/panel/komisi-protes` |
 | Juri | PWA Juri, panel Juri Jurus | `…/panel/juri` |
-| Pengawas / Dewan Wasit Juri | Peninjauan nilai, pembatalan, pengesahan, pengurangan 0.50 Jurus, keputusan VAR | `…/panel/dewan-juri` |
-| Wasit Komisi Protes | Protes VAR dan Protes Manajer | `…/panel/komisi-protes` |
 
-Sembilan peran. Tiga jabatan meja pra-acara — Sekretaris, Bendahara, dan Petugas Timbang Badan — dilebur jadi **Sekretariat Pertandingan**, karena di lapangan ketiganya dipegang orang yang sama dan pekerjaannya berurutan: berkas, tagihan, lalu timbangan. **Delegasi Teknik** dihapus; wewenangnya dipegang Ketua Pertandingan (lihat catatan banding di Tahap 12).
+**Akun adalah kursi, bukan orang.** Sejak penugasan aparat pindah ke gelanggang, satu akun mewakili satu kursi di satu matras sepanjang hari — namailah demikian: "Wasit Gelanggang A", "Juri 1 Gelanggang A", "Dewan Gelanggang B". Siapa pun yang duduk di kursi itu memakai akun itu, dan panitia tidak perlu menugaskan ulang apa pun saat petugasnya bertukar sif.
+
+Lima peran. **Tiga peran matras — Wasit, Dewan Wasit Juri, dan Wasit Komisi Protes — lebur ke Ketua Pertandingan** (September 2026). Ketiganya sudah memegang hampir seluruh kewenangan yang sama dengan Ketua; yang belum cuma satu, `pengurangan-jurus.create`, dan itu ikut pindah. Siapa yang memimpin partai mana ditentukan **penugasan per gelanggang**, bukan perannya — satu kejuaraan tetap menjalankan beberapa wasit sekaligus di matras berbeda, dan nama akunnya yang membedakan ("Wasit Gelanggang A").
+
+**Juri tidak ikut lebur.** Ia menilai, dan yang dinilainya diadu dengan penilaian juri lain; peran yang sekaligus menilai dan mengesahkan hasilnya sendiri membuat konsensus kehilangan artinya.
+
+Tiga jabatan meja pra-acara — Sekretaris, Bendahara, dan Petugas Timbang Badan — dilebur lebih dulu jadi Sekretariat Pertandingan, lalu **Sekretariat itu sendiri lebur ke Operator IT** (September 2026): di kejuaraan yang dilayani aplikasi ini, yang menerima pendaftaran dan yang memasang papan skor orang yang sama, dan dua peran untuk satu orang cuma membuat separuh kewenangannya tertinggal di akun yang salah. **Delegasi Teknik** dihapus; wewenangnya dipegang Ketua Pertandingan (lihat catatan banding di Tahap 12). Peran bawaan boilerplate `admin` dan `user` ikut dibuang — keduanya nol pengguna dan tidak dirujuk kode mana pun.
+
+Yang TIDAK ikut ke Operator IT: menyunting struktur hak akses itu sendiri (Peran, Permission, Resource, Pemetaan Key selain melihat). Peran yang boleh menyunting perannya sendiri bisa menaikkan haknya sampai setara super-admin, dan itu menghapus arti seluruh pembagian ini — yang dipakai akun super-admin.
 
 **Pengendali Gelanggang** adalah peran baru, dan ia mengambil dua hal dari Operator IT: timer beserta perpindahan babak, dan pemilihan partai yang sedang dimainkan gelanggang. Operator IT turun jadi **papan tampilan** — skor, timer, dan nama pesilat untuk layar gelanggang, tanpa kendali. Alasannya satu: sebelum ini tidak ada konsep "partai aktif gelanggang" di basis data, jadi tiap perangkat ikut memutuskan partai mana yang dibuka.
 
-**Panel petugas gelanggang tidak lagi menyebut partai di alamatnya.** Wasit, Juri, Pengawas/Dewan Wasit Juri, Wasit Komisi Protes, dan Ketua Pertandingan membuka alamat *gelanggangnya*, dan isinya berpindah sendiri begitu pengendali mengganti jadwal — tanpa layar antara, tanpa memuat ulang halaman, dan tanpa menyentuh perangkat mana pun. Yang bertugas di **tepat satu** gelanggang bahkan tidak melewati dashboard: login mendaratkannya langsung di panelnya. `?dashboard=1` selalu tersedia bagi yang juga memegang peran lain.
+**Panel petugas gelanggang tidak lagi menyebut partai di alamatnya.** Wasit, Juri, Dewan Wasit Juri, Komisi Protes, dan Ketua Pertandingan membuka alamat *gelanggangnya*, dan isinya berpindah sendiri begitu pengendali mengganti jadwal — tanpa layar antara, tanpa memuat ulang halaman, dan tanpa menyentuh perangkat mana pun. Yang bertugas di **tepat satu** gelanggang bahkan tidak melewati dashboard: login mendaratkannya langsung di panelnya. `?dashboard=1` selalu tersedia bagi yang juga memegang peran lain.
 
 Satu akun boleh memegang lebih dari satu peran — lazim di turnamen kecil, dan tidak perlu akun terpisah untuk tiap topi.
 
@@ -72,7 +76,7 @@ Satu akun boleh memegang lebih dari satu peran — lazim di turnamen kecil, dan 
 
 ## Tahap 1 — Buat kejuaraan
 
-**Siapa:** Admin / Sekretariat Pertandingan · **Menu:** Kejuaraan → Tambah
+**Siapa:** Operator IT · **Menu:** Kejuaraan → Tambah
 
 1. Isi nama, penyelenggara, tanggal mulai–selesai, tempat. Status awal **Draf**.
 2. Simpan, lalu buka kejuaraan itu — ia menjadi **kejuaraan aktif** di sidebar, dan seluruh menu di bawahnya (Peserta, Pertandingan, Keuangan) mengikutinya. Kejuaraan aktif diingat per sesi; bila belum pernah membuka satu pun, sistem memakai kejuaraan berstatus Berjalan atau Draf yang terbaru.
@@ -106,7 +110,7 @@ Tambahkan satu gelanggang per matras yang benar-benar dipakai. **Catat `id` tiap
 
 ## Tahap 2 — Susun tarif
 
-**Siapa:** Sekretariat Pertandingan · **Menu:** Kejuaraan aktif → Tarif
+**Siapa:** Operator IT · **Menu:** Kejuaraan aktif → Tarif
 
 1. Isi matriks **kategori × golongan usia** — misal Tanding Dewasa Rp150.000, Jurus Tunggal Remaja Rp125.000.
 2. Isi **biaya tetap kontingen** bila ada (dikenakan sekali per kontingen, bukan per atlet).
@@ -118,9 +122,9 @@ Tambahkan satu gelanggang per matras yang benar-benar dipakai. **Catat `id` tiap
 
 ## Tahap 3 — Kontingen dan atlet
 
-**Siapa:** Sekretariat Pertandingan (mendaftarkan kontingen) → Official Kontingen (mengisi atlet)
+**Siapa:** Operator IT (mendaftarkan kontingen) → Official Kontingen (mengisi atlet)
 
-1. **Sekretariat** membuka Peserta → Kontingen → Tambah: nama kontingen, daerah, kontak, dan **akun official** yang berhak mengelolanya.
+1. **Operator IT** membuka Peserta → Kontingen → Tambah: nama kontingen, daerah, kontak, dan **akun official** yang berhak mengelolanya.
 2. **Official** login, membuka kontingennya, lalu menambahkan atlet: nama, jenis kelamin, tanggal lahir, berat klaim, foto.
 3. Tiap atlet mengunggah **berkas wajib** — Bukti umur dan Surat keterangan sehat. Format: jpg, jpeg, png, atau pdf.
 
@@ -155,7 +159,7 @@ Kalau ternyata masih ada atlet yang harus ditambahkan, tekan **Batalkan sesi pem
 
 **b. Pembayaran manual** — transfer bank, tunai di sekretariat, atau apa pun di luar sistem.
 
-**Siapa:** Sekretariat Pertandingan · **Menu:** Keuangan → Bendahara → pilih tagihan → **Tandai lunas**
+**Siapa:** Operator IT · **Menu:** Keuangan → Bendahara → pilih tagihan → **Tandai lunas**
 
 Wajib diisi: nominal, keterangan, dan **unggah bukti** (jpg/jpeg/png/pdf). Tercatat di jejak audit dan dibedakan tegas dari pembayaran gateway.
 
@@ -163,7 +167,7 @@ Wajib diisi: nominal, keterangan, dan **unggah bukti** (jpg/jpeg/png/pdf). Terca
 
 ## Tahap 7 — Verifikasi pendaftaran
 
-**Siapa:** Sekretariat Pertandingan · **Menu:** Peserta → Verifikasi
+**Siapa:** Operator IT · **Menu:** Peserta → Verifikasi
 
 Tiap pendaftaran berstatus *Diajukan* ditinjau satu per satu:
 
@@ -175,7 +179,7 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 ## Tahap 8 — Timbang badan
 
-**Siapa:** Sekretariat Pertandingan · **Menu:** Peserta → Timbang badan
+**Siapa:** Operator IT · **Menu:** Peserta → Timbang badan
 
 1. Cari atlet, masukkan berat aktual. Waktu penimbangan distempel server.
 2. Sistem otomatis membandingkan dengan rentang kelas yang didaftarkan: **lolos** atau **gugur**.
@@ -184,7 +188,7 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 ## Tahap 9 — Susun dan kunci bagan
 
-**Siapa:** Sekretariat Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Bagan
+**Siapa:** Operator IT / Ketua Pertandingan · **Menu:** Pertandingan → Bagan
 
 1. Pilih kelas tanding. Sistem menampilkan berapa peserta sah yang tersedia.
 2. Pilih **mode bagan** di sebelah tombol Susun — per kelas, bukan sekali untuk seluruh kejuaraan:
@@ -208,11 +212,12 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 1. **Tetapkan** tiap partai ke gelanggang beserta waktu tayangnya. Partai yang belum punya dua peserta (menunggu pemenang babak sebelumnya) belum bisa dijadwalkan — normal.
 2. Sistem memperingatkan bila satu atlet terjadwal di dua gelanggang pada waktu berdekatan.
-3. Tugaskan aparat **per gelanggang**, bukan per partai: buka Pertandingan → Gelanggang, lalu tetapkan Wasit, Juri 1–3, Pengawas/Dewan Wasit Juri, Wasit Komisi Protes, dan Ketua Pertandingan untuk gelanggang itu. Penugasan berlaku sepanjang hari — petugas yang duduk di kursi yang sama tidak perlu ditugaskan ulang tiap partai.
-4. Baris **`match_officials` tetap ditulis**: saat pengendali menunjuk sebuah partai, penugasan gelanggang disalin ke partai itu. Berita acara tetap menyebut siapa bertugas di partai mana, dan otorisasinya tetap diperiksa per partai.
-5. Menu **Aparat** per partai tetap ada sebagai jalur pengecualian — misalnya aparat khusus untuk partai final. Baris yang sudah ada di sana **tidak ditimpa** oleh salinan dari gelanggang.
+3. Tugaskan aparat **per gelanggang**, dan hanya di sana: buka Pertandingan → Gelanggang → tombol **Aparat**, lalu tetapkan Wasit, Juri 1–3, Dewan Wasit Juri, Komisi Protes, dan Ketua Pertandingan untuk gelanggang itu. Penugasan berlaku sepanjang hari — petugas yang duduk di kursi yang sama tidak perlu ditugaskan ulang tiap partai. Kursi yang orangnya belum datang boleh dikosongkan dan diisi belakangan.
+4. Baris **`match_officials` tetap ditulis**: saat pengendali menunjuk sebuah partai, isi kursi gelanggang disalin ke partai itu. Berita acara tetap menyebut siapa bertugas di partai mana, dan nomor juri pada tiap nilai masuk tetap dibaca dari sana.
+5. **Satu orang, satu kursi, satu gelanggang.** Formulirnya menolak orang yang sudah memegang kursi di gelanggang lain — kursi berlaku sepanjang hari, jadi orang yang sama di dua matras berarti satu kursi pasti kosong begitu keduanya berjalan bersamaan.
+6. Layar penugasan aparat **per partai dibuang** (September 2026). Empat baris penugasan dikali empat puluh partai adalah beban yang tidak menghasilkan apa pun yang tidak sudah dijawab kursi gelanggang.
 
-**Selesai bila:** partai-partai babak pertama sudah punya gelanggang dan waktu, dan tiap gelanggang punya aparat lengkap beserta Pengendali Gelanggangnya.
+**Selesai bila:** partai-partai babak pertama sudah punya gelanggang dan waktu, dan tiap gelanggang punya aparat lengkap beserta Pengendali Gelanggangnya. Lencana di halaman Jadwal membaca kursi gelanggang untuk partai yang belum pernah ditayangkan, jadi "Aparat lengkap" di sana berarti matrasnya siap — bukan partainya sudah ditugaskan satu per satu.
 
 ---
 
@@ -228,10 +233,10 @@ Empat panel berjalan bersamaan untuk satu partai yang sama:
 |---|---|---|
 | Kendali | `…/gelanggang/{arena}/panel/kendali` | Pengendali Gelanggang |
 | Papan tampilan | `…/gelanggang/{arena}/panel/papan` | Operator IT |
-| Wasit | `…/gelanggang/{arena}/panel/wasit` | Wasit |
+| Wasit | `…/gelanggang/{arena}/panel/wasit` | Ketua Pertandingan (peran Wasit lebur ke sana) |
 | Juri (PWA) | `…/gelanggang/{arena}/panel/juri` | Juri 1–3, HP masing-masing |
-| Dewan Wasit Juri | `…/gelanggang/{arena}/panel/dewan-juri` | Pengawas / Dewan Wasit Juri |
-| Komisi Protes | `…/gelanggang/{arena}/panel/komisi-protes` | Wasit Komisi Protes |
+| Dewan Wasit Juri | `…/gelanggang/{arena}/panel/dewan-juri` | Ketua Pertandingan (peran Dewan lebur ke sana) |
+| Komisi Protes | `…/gelanggang/{arena}/panel/komisi-protes` | Ketua Pertandingan (peran Komisi lebur ke sana) |
 | Ketua Pertandingan | `…/gelanggang/{arena}/panel/ketua` | Ketua Pertandingan |
 
 Alamatnya menyebut **gelanggang**, bukan partai — ia tidak pernah basi saat jadwal berganti. Alamat per-partai yang lama tetap hidup dan mengantar sendiri ke panel gelanggangnya; yang tidak dialihkan hanya panel Dewan Wasit Juri per-partai, karena tugasnya justru meninjau partai tertentu yang sudah selesai.
@@ -315,7 +320,7 @@ Pengesahan hasil **diblokir** selama akibat protes yang diterima belum dijalanka
 
 ## Tahap 13 — Rekap dan arsip
 
-**Siapa:** Sekretariat Pertandingan / Ketua Pertandingan · **Menu:** Pertandingan → Rekap & Laporan
+**Siapa:** Operator IT / Ketua Pertandingan · **Menu:** Pertandingan → Rekap & Laporan
 
 Halaman ini menyusun sendiri dari hasil yang sudah disahkan:
 - **Peringkat umum kontingen** — urut emas, perak, perunggu

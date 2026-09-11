@@ -3,7 +3,7 @@
 namespace App\Support\Bagan;
 
 use App\Enums\ModeBagan;
-use App\Models\Bracket;
+use App\Support\Bagan\Contracts\SumberBagan;
 use Illuminate\Support\Collection;
 
 /**
@@ -46,9 +46,9 @@ class PohonBagan
     public const PENGHUBUNG = 40;   // lebar kolom garis antar babak
 
     /** @return array<string, mixed> */
-    public function __invoke(Bracket $bracket): array
+    public function __invoke(SumberBagan $bracket): array
     {
-        $slots = $bracket->slots->sortBy('position')->values();
+        $slots = $bracket->tempatBagan()->sortBy('position')->values();
 
         /*
          * Ukuran bagan selalu pangkat dua, apa pun jumlah baris slot yang
@@ -71,9 +71,9 @@ class PohonBagan
          * dipertandingkan, padahal seluruh alasan mode pemasalan ada justru
          * untuk menghapus bye itu.
          */
-        $ukuran = $bracket->mode === ModeBagan::Pemasalan
-            ? max(2, $slots->count() ?: $bracket->size)
-            : UrutanUnggulan::ukuranBagan(max(2, $slots->count() ?: $bracket->size));
+        $ukuran = $bracket->modeBagan() === ModeBagan::Pemasalan
+            ? max(2, $slots->count() ?: $bracket->ukuranBagan())
+            : UrutanUnggulan::ukuranBagan(max(2, $slots->count() ?: $bracket->ukuranBagan()));
 
         $jumlahBabak = (int) ceil(log($ukuran, 2));
 
@@ -107,7 +107,7 @@ class PohonBagan
             }
         }
 
-        $partaiPerBabak = $bracket->matches->groupBy('round');
+        $partaiPerBabak = $bracket->partaiBagan()->groupBy('round');
         $pasanganBye = $this->pasanganBye($slots, $ukuran);
 
         $kolom = [];

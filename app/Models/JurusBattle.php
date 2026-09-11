@@ -36,6 +36,8 @@ class JurusBattle extends Model implements Terbagankan
         'blue_registration_id',
         'winner_registration_id',
         'win_reason',
+        'keputusan_alasan',
+        'keputusan_oleh',
         'status',
         'arena_id',
         'order_in_arena',
@@ -70,6 +72,25 @@ class JurusBattle extends Model implements Terbagankan
     public function arena(): BelongsTo
     {
         return $this->belongsTo(Arena::class);
+    }
+
+    /** Ketua Pertandingan yang memutuskan battle berskor seri. */
+    public function pemutus(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'keputusan_oleh');
+    }
+
+    /**
+     * Battle babak pertama yang lawannya tidak akan pernah ada.
+     *
+     * Definisinya sama persis dengan SilatMatch::bye(): tepat satu sudut
+     * berpenghuni di ronde pertama. Dipakai PohonBagan untuk menandai slot yang
+     * melenggang tanpa bertanding.
+     */
+    public function bye(): bool
+    {
+        return $this->round === 1
+            && count(array_filter([$this->red_registration_id, $this->blue_registration_id])) === 1;
     }
 
     /** Dua penampilan yang menyusun battle ini -- satu per sudut. */

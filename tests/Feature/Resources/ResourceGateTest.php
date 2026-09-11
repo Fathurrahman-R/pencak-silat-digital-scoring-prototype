@@ -45,7 +45,12 @@ it('menolak tamu yang belum login', function () {
 });
 
 it('meloloskan super admin tanpa permission apa pun', function () {
-    $role = Role::create(['name' => config('resources.super_admin_role')]);
+    /*
+     * firstOrCreate, bukan create: peran super-admin lahir bersama seeder
+     * basis yang kini berjalan sekali per proses uji (Tests\FeatureTestCase),
+     * jadi membuatnya lagi melempar RoleAlreadyExists.
+     */
+    $role = Role::firstOrCreate(['name' => config('resources.super_admin_role'), 'guard_name' => 'web']);
     $user = User::factory()->create()->assignRole($role);
 
     expect(gate()->allows('posts.view', $user))->toBeTrue();

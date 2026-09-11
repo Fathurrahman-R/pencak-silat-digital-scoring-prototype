@@ -14,8 +14,6 @@ use Database\Seeders\SilatRoleSeeder;
  * memberi tahu sistem siapa operator gelanggang mana.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->admin = User::factory()->create();
     $this->admin->syncRoles([config('resources.super_admin_role')]);
 
@@ -68,12 +66,21 @@ it('mengosongkan penugasan bila tidak ada yang dipilih', function () {
 });
 
 it('menolak pengguna yang bukan operator', function () {
-    $sekretariat = User::factory()->create();
-    $sekretariat->syncRoles(['sekretariat']);
+    /*
+     * Official kontingen, bukan sekadar "peran lain".
+     *
+     * Uji ini dulu memakai peran `sekretariat`, dan ketika peran itu lebur ke
+     * `operator-it` (September 2026) ia diam-diam berubah arti: yang dikirim
+     * justru operator sungguhan, jadi penolakannya tidak pernah terjadi dan
+     * ujinya merah. Yang dibutuhkan peran yang memang tidak akan pernah
+     * berdiri di meja operator.
+     */
+    $bukanOperator = User::factory()->create();
+    $bukanOperator->syncRoles(['official-kontingen']);
 
     $this->actingAs($this->admin)
         ->post(route('admin.turnamen.gelanggang.operator', [$this->tournament, $this->gelanggang]), [
-            'operator_id' => [$sekretariat->id],
+            'operator_id' => [$bukanOperator->id],
         ])
         ->assertSessionHasErrors('operator_id.0');
 

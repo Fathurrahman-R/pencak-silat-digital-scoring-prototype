@@ -30,8 +30,6 @@ use Database\Seeders\SilatRoleSeeder;
  * memegang halaman lamanya setelah aplikasi diperbarui.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 
@@ -49,7 +47,7 @@ beforeEach(function () {
 
     $buatUser = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
@@ -199,7 +197,7 @@ it('menolak jatuhan dari wasit yang tidak ditugaskan di partai ini', function ()
     ($this->mulaiBabak)();
 
     $wasitLain = User::factory()->create();
-    $wasitLain->syncRoles(['wasit']);
+    $wasitLain->syncRoles([peranSistem('wasit')]);
 
     $this->actingAs($wasitLain)
         ->postJson(route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]), [

@@ -43,15 +43,45 @@
 
 | Langkah | Siapa | Di mana |
 |---|---|---|
-| Buat penampilan dari pendaftaran terverifikasi | Operator IT | Menu Kategori Jurus → pilih nomor → Buat penampilan |
-| Mulai/hentikan timer penampilan | Operator IT | Panel Operator Jurus |
+| Menetapkan format nomor (`battle` atau peringkat) | Operator IT | Menu Kategori Jurus → pilih nomor → Format |
+| Menyusun bagan gugur (format `battle`) | Operator IT | Menu Kategori Jurus → pilih nomor → Susun bagan; pohonnya di **Lihat pohon bagan** |
+| Membuka kunci bagan yang sudah final | Ketua Pertandingan | Halaman Bagan → Buka kunci. **Bukan** Operator IT: menyusun undian dan membatalkan finalitasnya dua kewenangan berbeda |
+| Mencetak bagan dan jadwal | Operator IT, Ketua Pertandingan | Tombol **Cetak PDF** di halaman Bagan dan halaman Jadwal |
+| Buat penampilan dari pendaftaran terverifikasi (format peringkat) | Operator IT | Menu Kategori Jurus → pilih nomor → Buat penampilan |
+| **Menjadwalkan ke gelanggang** | Ketua Pertandingan | Menu Jadwal → tab **Jurus**. Battle dijadwalkan berpasangan: kedua sudutnya masuk antrean gelanggang berurutan, biru lebih dulu |
+| Menayangkan penampilan berikutnya | Pengendali Gelanggang | Panel Kendali → **Antrean Jurus** → Tayangkan |
+| Mulai/hentikan timer penampilan | Operator IT | Panel gelanggang, alamat yang sama dengan papan Tanding |
 | Memberi nilai 9.00–10.00, mencatat pengurangan 0.01 | Juri Jurus | Panel Juri Jurus |
 | Mencatat pengurangan 0.50, menetapkan diskualifikasi | Pengawas/Dewan Wasit Juri | Panel Operator Jurus (bagian Pengurangan) |
 | **Mengesahkan skor akhir** | Ketua Pertandingan | Panel Operator Jurus |
+| **Menetapkan pemenang battle** | Ketua Pertandingan | Panel Ketua, di bawah perbandingan nilainya |
+
+**Nomor Jurus yang belum dijadwalkan ke gelanggang tidak muncul di panel mana pun.** Kolom gelanggang penampilan diisi dari tab Jurus di menu Jadwal; sebelum itu antrean Jurus di Panel Kendali kosong dan tombol Tayangkan tidak tergambar. Alamat lama per penampilan tetap hidup untuk kejuaraan kecil yang menjalankan Jurus tanpa membaginya ke matras.
+
+**Satu gelanggang menayangkan satu hal, dan alamat panelnya tidak pernah berubah.** Begitu Pengendali menayangkan penampilan Jurus, panel papan, juri, dan ketua di gelanggang itu berganti sendiri ke mode Jurus. Operator IT membuka alamat papan yang sama seperti saat Tanding dan menemukan timer Jurus di sana — kendalinya muncul menurut izin, bukan menurut alamat. Wasit, Dewan Wasit Juri, dan Komisi Protes tidak bertugas di Jurus; panelnya menampilkan layar tunggu yang menyebutkan sebabnya sampai gelanggang kembali menayangkan Tanding.
 
 Pengesahan **ditolak sistem** kalau jumlah juri yang sudah menilai kurang dari setelan turnamen atau jumlahnya ganjil (Pasal 16.1.b) -- kecuali penampilan itu didiskualifikasi. Pengesahan juga menuntut penampilannya sudah **selesai**: timernya dijalankan lalu dihentikan.
 
-Panel Jurus mengikuti siaran, sama seperti panel Tanding: nilai juri, timer, pengurangan, dan pengesahan muncul di panel lain dalam hitungan detik tanpa memuat ulang halaman. Halaman perbandingan battle ikut bergerak, jadi yang menekan "Tetapkan pemenang" tidak pernah membaca satu sisi yang basi. Kalau penanda koneksi di pojok panel menyala **Terputus**, yang terlihat di layar sedang berhenti diperbarui -- periksa jaringan gelanggang sebelum mengambil keputusan dari angkanya.
+Panel Jurus mengikuti siaran, sama seperti panel Tanding: nilai juri, timer, pengurangan, dan pengesahan muncul di panel lain dalam hitungan detik tanpa memuat ulang halaman. Halaman perbandingan battle ikut bergerak, jadi yang menekan "Tetapkan pemenang" tidak pernah membaca satu sisi yang basi.
+
+**Perbandingan nilai kedua sudut muncul sendiri** di papan gelanggang, panel juri, panel operator, dan panel ketua begitu **kedua penampilan disahkan** — bukan begitu keduanya selesai tampil. Sebelum pengesahan angkanya masih bisa berubah oleh pengurangan Pengawas, dan angka yang berganti di depan penonton lebih menyesatkan daripada angka yang belum muncul. Skor akhir yang lebih tinggi menang; kalau **sama persis**, sistem berhenti dan Ketua Pertandingan yang memilih sudut, dengan alasan wajib yang ikut tercetak di berita acara. Kalau penanda koneksi di pojok panel menyala **Terputus**, yang terlihat di layar sedang berhenti diperbarui -- periksa jaringan gelanggang sebelum mengambil keputusan dari angkanya.
+
+## Verifikasi juri di panel operator
+
+Selama verifikasi berjalan pertandingan berhenti, dan operator adalah orang yang ditanyai semua orang di sekitar meja. Panel operator karena itu menampilkannya, meski operator tidak menekan apa pun di sana.
+
+| Kapan | Yang tampil |
+|---|---|
+| Wasit membuka verifikasi | Blok di atas pita keadaan, berjudul **Verifikasi Jatuhan** atau **Verifikasi Pelanggaran** — menyebut apa yang ditanyakan, bukan cuma bahwa ada verifikasi |
+| Juri menjawab satu per satu | Petak tiap juri (yang belum menjawab digambar sebagai tepi putus-putus) dan **hitungan suara tiap sudut** |
+| Suara sudah cukup | Satu baris: "Suara sudah cukup — menunggu Wasit menerapkannya" |
+| **Wasit menekan Terapkan** | **Modal di atas panel skor**: "Jatuhan Valid" / "Pelanggaran Valid", berbidang warna sudut yang menang suara. Menutup sendiri setelah sembilan detik, atau diketuk |
+
+**Hasilnya sengaja tidak muncul sebelum diterapkan.** Sebelumnya ia tumbuh di sudut blok verifikasi begitu ambang suara tercapai — sementara Wasit belum menekan apa pun — dan terbaca sebagai keputusan yang sudah jadi, sehingga yang membacanya di sekitar meja mengumumkannya mendahului Wasitnya sendiri.
+
+Hasil **"tidak ada"** memakai modal berwarna netral dan berbunyi "Jatuhan Tidak Valid" / "Pelanggaran Tidak Valid". Mewarnainya merah atau biru akan menjanjikan sudut yang justru baru saja dinyatakan tidak ada.
+
+Modal hanya muncul untuk penerapan yang terjadi **selagi panelnya terbuka**. Operator yang baru membuka papan di tengah babak ketiga tidak disambut hasil verifikasi dari babak pertama.
 
 ## Protes VAR dan Protes Manajer
 

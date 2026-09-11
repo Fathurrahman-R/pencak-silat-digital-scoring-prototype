@@ -19,15 +19,36 @@
             {{ $arena->name }}
         </p>
 
-        <p class="text-[22px] leading-[1.35] font-semibold tracking-[-0.02em] text-silat-teks">
-            Menunggu pengendali memilih partai
-        </p>
+        {{--
+            Gelanggang yang sedang menayangkan JURUS menyebutkan sebabnya.
 
-        <p class="max-w-[42ch] text-[14px] leading-[1.7] text-silat-teks-redup">
-            Panel ini akan terbuka sendiri begitu partai gelanggang
-            {{ $arena->name }} ditetapkan. Tidak perlu memuat ulang halaman
-            maupun mencari alamatnya.
-        </p>
+            Wasit, Dewan Wasit Juri, dan Komisi Protes tidak bertugas di nomor
+            Jurus. Kalimat "menunggu pengendali memilih partai" di situ keliru
+            dua kali: pengendali SUDAH memilih, dan yang dipilihnya bukan
+            urusan peran ini. Yang membacanya akan menyangka panelnya rusak
+            atau pengendalinya lupa.
+        --}}
+        @if (($config['sebabMenunggu'] ?? null) === 'jurus')
+            <p class="text-[22px] leading-[1.35] font-semibold tracking-[-0.02em] text-silat-teks">
+                Gelanggang ini sedang menayangkan Jurus
+            </p>
+
+            <p class="max-w-[42ch] text-[14px] leading-[1.7] text-silat-teks-redup">
+                Peran ini tidak bertugas di nomor Jurus. Panel akan terbuka sendiri begitu
+                {{ $arena->name }} kembali menayangkan partai Tanding — tidak perlu memuat
+                ulang halaman maupun mencari alamatnya.
+            </p>
+        @else
+            <p class="text-[22px] leading-[1.35] font-semibold tracking-[-0.02em] text-silat-teks">
+                Menunggu pengendali memilih partai
+            </p>
+
+            <p class="max-w-[42ch] text-[14px] leading-[1.7] text-silat-teks-redup">
+                Panel ini akan terbuka sendiri begitu partai gelanggang
+                {{ $arena->name }} ditetapkan. Tidak perlu memuat ulang halaman
+                maupun mencari alamatnya.
+            </p>
+        @endif
 
         <x-silat.indikator-koneksi />
     </div>

@@ -28,9 +28,13 @@ use RuntimeException;
 
 /**
  * Lapisan HTTP mesin scoring Jurus. Sejajar dengan PartaiScoringController,
- * tapi jauh lebih ramping -- satu penampilan berjalan sekali dari awal
- * sampai selesai tanpa babak, sudut, atau konsensus real-time, jadi tidak
- * ada window/threshold untuk dijaga di sini.
+ * tapi jauh lebih ramping -- satu penampilan berjalan sekali dari awal sampai
+ * selesai, tanpa babak dan tanpa konsensus real-time, jadi tidak ada
+ * window/threshold untuk dijaga di sini.
+ *
+ * Yang MEMANG dimiliki Jurus, dan sempat disangkal keterangan lama di berkas
+ * ini: sudut merah dan biru, serta bagan gugur -- pada nomor berformat
+ * `battle` (Pasal 12.1.b.1). Yang tidak dimilikinya cuma babak dan konsensus.
  */
 class JurusScoringController extends Controller
 {
@@ -200,13 +204,41 @@ class JurusScoringController extends Controller
      * Menetapkan pemenang battle dari skor akhir, lalu menaikkannya ke ronde
      * berikutnya -- Pasal 12.1.f.
      */
-    public function putuskanBattle(Tournament $tournament, JurusBattle $jurusBattle): RedirectResponse
+    public function putuskanBattle(Request $request, Tournament $tournament, JurusBattle $jurusBattle): RedirectResponse|JsonResponse
     {
         $this->pastikanMilikBattle($tournament, $jurusBattle);
 
-        $this->jalankan(fn () => app(PutuskanBattle::class)($jurusBattle));
+        /*
+         * Pilihan sudut hanya sah saat skor akhirnya SERI, dan penjagaan itu
+         * tegak di PutuskanBattle -- bukan di sini. Yang dijaga di sini cuma
+         * bentuknya: sudut yang dipilih harus salah satu peserta battle, dan
+         * alasan wajib menyertainya. Alasan yang kosong berarti berita acara
+         * memuat keputusan tanpa dasar tertulis, dan itu yang ditanyakan
+         * pelatih yang mengangkat kartu protes.
+         */
+        $data = $request->validate([
+            'pemenang_registration_id' => [
+                'nullable', 'integer',
+                Rule::in(array_filter([$jurusBattle->red_registration_id, $jurusBattle->blue_registration_id])),
+            ],
+            'alasan' => ['nullable', 'string', 'max:255', 'required_with:pemenang_registration_id'],
+        ], attributes: [
+            'pemenang_registration_id' => 'Sudut pemenang',
+            'alasan' => 'Alasan keputusan',
+        ]);
+
+        $this->jalankan(fn () => app(PutuskanBattle::class)(
+            $jurusBattle,
+            pemenangRegistrationId: $data['pemenang_registration_id'] ?? null,
+            alasan: $data['alasan'] ?? null,
+            oleh: $request->user(),
+        ));
 
         $this->siarkanBattle($jurusBattle, 'keputusan');
+
+        if ($request->expectsJson()) {
+            return response()->json(app(PerbandinganBattle::class)($jurusBattle->refresh()));
+        }
 
         return back()->with('success', "Pemenang battle {$jurusBattle->id} ditetapkan.");
     }
@@ -233,6 +265,7 @@ class JurusScoringController extends Controller
                 // ke sini juga, jadi satu langganan cukup untuk kedua sudut.
                 'battleId' => $jurusBattle->id,
                 'state' => route('admin.turnamen.jurus.battle.state', [$tournament, $jurusBattle]),
+                'putuskan' => route('admin.turnamen.jurus.battle.putuskan', [$tournament, $jurusBattle]),
             ],
         ]);
     }

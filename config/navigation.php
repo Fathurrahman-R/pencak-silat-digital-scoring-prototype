@@ -170,7 +170,13 @@ return [
                 'icon' => 'list-ordered',
                 'route' => 'admin.turnamen.jurus.nomor',
                 'butuh_turnamen' => true,
-                'resource' => rk('penampilan-jurus', ResourceAction::View),
+
+                // Dua penjaga, sama seperti rutenya: Sekretariat menetapkan
+                // format nomor di layar ini tanpa memegang penampilannya.
+                'resource' => [
+                    rk('penampilan-jurus', ResourceAction::View),
+                    rk('nomor-jurus', ResourceAction::View),
+                ],
                 'active' => 'admin/turnamen/*/jurus*',
             ],
         ],

@@ -22,8 +22,6 @@ use Database\Seeders\SilatRoleSeeder;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create();
 
     $this->milik = Arena::factory()->for($this->tournament)->create(['code' => 'A', 'name' => 'Gelanggang A']);

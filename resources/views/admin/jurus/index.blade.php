@@ -37,6 +37,18 @@
                         <x-si.tombol tipe="submit" varian="utama" ukuran="kecil">
                             {{ $battles->isEmpty() ? 'Susun bagan' : 'Susun ulang bagan' }}
                         </x-si.tombol>
+
+                        {{-- Daftar battle di bawah menjawab "siapa lawan siapa"
+                             satu per satu; pohonnya menjawabnya sekaligus, dan
+                             itulah bentuk yang dipaku di papan pengumuman. --}}
+                        @if ($battles->isNotEmpty())
+                            @resource(rk('bagan', ResourceAction::View))
+                                <x-si.tombol :tautan="route('admin.turnamen.jurus.bagan.show', [$tournament, $jurusEvent])"
+                                             varian="kedua" ukuran="kecil">
+                                    Lihat pohon bagan
+                                </x-si.tombol>
+                            @endresource
+                        @endif
                     </form>
                 </x-si.kartu>
             @endresource

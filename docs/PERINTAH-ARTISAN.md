@@ -67,7 +67,7 @@ Seluruhnya berdomain `@silat.test`, kata sandi **`password`**:
 | `ketua@silat.test` | Ketua Pertandingan |
 | `pengawas@silat.test` | Pengawas Wasit Juri |
 | `komisi@silat.test` | Wasit Komisi Protes |
-| `sekretariat@silat.test` | Sekretariat |
+| `sekretariat@silat.test` | Operator IT |
 | `operator@silat.test`, `operator2@silat.test`, … | Operator IT (satu per gelanggang) |
 | `pengendali1@silat.test`, `pengendali2@silat.test`, … | Pengendali Gelanggang (satu per gelanggang) |
 | `wasit1@silat.test`, `wasit2@silat.test`, … | Wasit (satu per gelanggang) |
