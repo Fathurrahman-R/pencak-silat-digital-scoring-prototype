@@ -127,11 +127,17 @@
                         </div>
 
                         <div class="flex shrink-0 items-center gap-2">
-                            @resource(rk('penugasan-aparat', ResourceAction::View))
-                                <a href="{{ route('admin.turnamen.partai.aparat.show', [$tournament, $partai]) }}"
-                                   class="inline-flex h-9 items-center rounded-[var(--radius)] px-3 text-[13px] {{ $lengkap ? 'border border-line bg-surface-raised font-medium text-ink' : 'bg-accent font-semibold text-accent-on' }}">
-                                    {{ $lengkap ? 'Ubah aparat' : 'Lengkapi aparat' }}
-                                </a>
+                            @resource(rk('penugasan-aparat', ResourceAction::Assign))
+                                @unless ($lengkap)
+                                    {{-- Menunjuk ke tempat penugasannya, bukan
+                                         menawarkan layar kedua: aparat
+                                         ditugaskan per gelanggang dan berlaku
+                                         sepanjang hari. --}}
+                                    <a href="{{ route('admin.turnamen.gelanggang.index', $tournament) }}"
+                                       class="inline-flex h-9 items-center rounded-[var(--radius)] bg-accent px-3 text-[13px] font-semibold text-accent-on">
+                                        Lengkapi aparat gelanggang
+                                    </a>
+                                @endunless
                             @endresource
 
                             {{--
@@ -197,13 +203,6 @@
                             · {{ $partai->bracket->namaBabak($partai->round) }}
                         </p>
                     </div>
-
-                    @resource(rk('penugasan-aparat', ResourceAction::View))
-                        <x-si.tombol :tautan="route('admin.turnamen.partai.aparat.show', [$tournament, $partai])"
-                                     varian="kedua" ukuran="kecil">
-                            Aparat
-                        </x-si.tombol>
-                    @endresource
 
                     @resource(rk('jadwal', ResourceAction::Assign))
                         <form method="POST" action="{{ route('admin.turnamen.jadwal.tetapkan', [$tournament, $partai]) }}"

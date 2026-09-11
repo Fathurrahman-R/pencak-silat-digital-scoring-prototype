@@ -58,7 +58,10 @@ class SilatResourceSeeder extends Seeder
                 // Export dipakai tombol ekspor CSV di daftar kejuaraan. Tanpa
                 // aksi ini, key `turnamen.export` tidak punya pemetaan dan
                 // rutenya menolak semua orang kecuali super admin.
-                'actions' => [...$crud, ResourceAction::Manage, ResourceAction::Export],
+                // Tanpa Manage: tidak ada satu pun permukaan yang menjaganya,
+                // dan aksi yang tidak berakibat apa-apa hanya memperbesar
+                // daftar centang di panel peran.
+                'actions' => [...$crud, ResourceAction::Export],
                 'locked' => true,
             ],
             [
@@ -77,19 +80,24 @@ class SilatResourceSeeder extends Seeder
                 'actions' => $crud,
                 'locked' => true,
             ],
-            [
-                'key' => 'kelas-tanding',
-                'label' => 'Kelas Tanding',
-                'group' => 'Penyelenggaraan',
-                'description' => 'Kelas menurut golongan usia, jenis kelamin, dan rentang berat badan.',
-                'actions' => $crud,
-            ],
+            /*
+             * `kelas-tanding` sengaja TIDAK punya resource key.
+             *
+             * Kelas tanding lahir dari naskah 2025 lewat SusunMasterDataTurnamen
+             * dan disunting bersama kejuaraannya, jadi tidak ada satu rute pun
+             * yang menjaganya sendiri. Key-nya dulu ada dan tidak dipakai
+             * siapa pun -- empat baris centang di panel peran yang tidak
+             * berakibat apa-apa. Kalau nanti kelas tanding punya layar
+             * sendiri, key-nya ditambahkan bersama layarnya.
+             */
             [
                 'key' => 'nomor-jurus',
                 'label' => 'Nomor Jurus',
                 'group' => 'Penyelenggaraan',
                 'description' => 'Tunggal, Tunggal Bebas, Ganda, Regu, dan Solo Kreatif.',
-                'actions' => $crud,
+                // Nomornya lahir dari naskah, bukan dibuat tangan: yang ada
+                // cuma melihat daftarnya dan menetapkan formatnya.
+                'actions' => [ResourceAction::View, ResourceAction::Update],
             ],
 
             // ── Peserta ──────────────────────────────────────────────────────
@@ -98,28 +106,30 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Kontingen',
                 'group' => 'Peserta',
                 'description' => 'Daerah atau perguruan peserta beserta officialnya.',
-                'actions' => [...$crud, ResourceAction::Export],
+                // Ekspor peserta berjalan lewat `pendaftaran`, satu-satunya
+                // layar yang punya tombolnya.
+                'actions' => $crud,
             ],
             [
                 'key' => 'atlet',
                 'label' => 'Atlet',
                 'group' => 'Peserta',
                 'description' => 'Data pesilat: identitas, tanggal lahir, foto, dan berkas persyaratan.',
-                'actions' => [...$crud, ResourceAction::Export],
+                'actions' => $crud,
             ],
             [
                 'key' => 'pendaftaran',
                 'label' => 'Pendaftaran',
                 'group' => 'Peserta',
                 'description' => 'Pendaftaran atlet ke kelas tanding atau nomor jurus, beserta verifikasinya.',
-                'actions' => [...$crud, ResourceAction::Approve, ResourceAction::Reject, ResourceAction::Export],
+                'actions' => [...$crud, ResourceAction::Approve, ResourceAction::Reject],
             ],
             [
                 'key' => 'timbang-badan',
                 'label' => 'Timbang Badan',
                 'group' => 'Peserta',
                 'description' => 'Pencatatan berat badan dan penentuan lolos atau gugur terhadap kelas.',
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Export],
+                'actions' => [ResourceAction::View, ResourceAction::Create],
             ],
 
             // ── Keuangan ─────────────────────────────────────────────────────
@@ -135,7 +145,9 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Invoice',
                 'group' => 'Keuangan',
                 'description' => 'Tagihan kontingen, pembayaran Midtrans, dan penandaan lunas manual.',
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Export],
+                // Tanpa Create: tagihan terbit dari pendaftaran, tidak pernah
+                // dibuat tangan.
+                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Export],
             ],
 
             // ── Pertandingan ─────────────────────────────────────────────────
@@ -144,7 +156,9 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Bagan',
                 'group' => 'Pertandingan',
                 'description' => 'Bagan gugur, undian, dan penguncian hasil drawing.',
-                'actions' => [...$crud, ResourceAction::Assign, ResourceAction::Print],
+                // Tanpa Assign: yang menempatkan partai ke gelanggang adalah
+                // `jadwal.assign`, dan bagan tidak punya penempatan sendiri.
+                'actions' => [...$crud, ResourceAction::Print],
                 'locked' => true,
             ],
             [
@@ -152,14 +166,22 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Jadwal Partai',
                 'group' => 'Pertandingan',
                 'description' => 'Penempatan partai ke gelanggang dan urutan tayangnya.',
-                'actions' => [...$crud, ResourceAction::Assign, ResourceAction::Print],
+                /*
+                 * Jadwal tidak dibuat maupun dihapus: partainya lahir dari
+                 * bagan. Yang bisa dilakukan cuma menempatkannya ke gelanggang
+                 * (Assign), melihatnya, dan mencetaknya -- dan itu memang
+                 * satu-satunya bentuk yang dijaga rutenya.
+                 */
+                'actions' => [ResourceAction::View, ResourceAction::Assign, ResourceAction::Print],
             ],
             [
                 'key' => 'penugasan-aparat',
                 'label' => 'Penugasan Aparat',
                 'group' => 'Pertandingan',
-                'description' => 'Penugasan wasit, juri, dan dewan wasit juri per partai.',
-                'actions' => [ResourceAction::View, ResourceAction::Assign],
+                'description' => 'Penempatan wasit, juri bernomor, dewan wasit juri, dan komisi protes di kursi gelanggang. Berlaku sepanjang hari.',
+                // Tanpa View: penugasannya dilihat dan disunting di layar yang
+                // sama (halaman Gelanggang), dan layar itu dijaga Assign.
+                'actions' => [ResourceAction::Assign],
             ],
             [
                 'key' => 'partai',
@@ -180,7 +202,7 @@ class SilatResourceSeeder extends Seeder
                  *          terberat di gelanggang karena ia melonggarkan penjagaan
                  *          babak yang sudah ditutup.
                  */
-                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Assign, ResourceAction::Manage],
+                'actions' => [ResourceAction::View, ResourceAction::Assign, ResourceAction::Manage],
                 'locked' => true,
             ],
             [
@@ -233,7 +255,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Kendali Penampilan Jurus',
                 'group' => 'Pertandingan',
                 'description' => 'Membuat penampilan dari pendaftaran terverifikasi, mengendalikan timer.',
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Manage],
+                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update],
                 'locked' => true,
             ],
             [
@@ -241,7 +263,9 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Pengurangan Nilai Jurus',
                 'group' => 'Pertandingan',
                 'description' => 'Pengurangan 0.50 oleh Pengawas/Dewan Wasit Juri dan penetapan diskualifikasi.',
-                'actions' => [ResourceAction::View, ResourceAction::Create],
+                // Tanpa View: daftar pengurangan dibaca bersama penampilannya,
+                // lewat `penampilan-jurus.view`.
+                'actions' => [ResourceAction::Create],
                 'locked' => true,
             ],
             [
@@ -249,7 +273,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Hasil Jurus',
                 'group' => 'Pertandingan',
                 'description' => 'Koreksi bernotulen dan pengesahan skor akhir penampilan Jurus.',
-                'actions' => [ResourceAction::View, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Print],
+                'actions' => [ResourceAction::Update, ResourceAction::Approve],
                 'locked' => true,
             ],
 
@@ -281,7 +305,7 @@ class SilatResourceSeeder extends Seeder
                  * pertanyaan sendiri bisa memaksa polling atas kejadian yang
                  * menguntungkan sudut yang dinilainya.
                  */
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Reject],
+                'actions' => [ResourceAction::Create, ResourceAction::Update, ResourceAction::Approve, ResourceAction::Reject],
                 'locked' => true,
             ],
             [
@@ -289,7 +313,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Protes VAR',
                 'group' => 'Keberatan',
                 'description' => 'Kartu protes pelatih dan keputusan Wasit Komisi Protes dalam tenggat 5 menit.',
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve],
                 'locked' => true,
             ],
             [
@@ -297,7 +321,7 @@ class SilatResourceSeeder extends Seeder
                 'label' => 'Protes Manajer',
                 'group' => 'Keberatan',
                 'description' => 'Protes tingkat pertama ke Ketua Pertandingan dan banding ke Delegasi Teknik.',
-                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve, ResourceAction::Reject],
+                'actions' => [ResourceAction::View, ResourceAction::Create, ResourceAction::Approve],
                 'locked' => true,
             ],
 

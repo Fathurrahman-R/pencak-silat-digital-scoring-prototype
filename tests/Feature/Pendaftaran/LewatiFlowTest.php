@@ -34,7 +34,7 @@ beforeEach(function () {
     $this->admin->syncRoles([config('resources.super_admin_role')]);
 
     $this->sekretariat = User::factory()->create();
-    $this->sekretariat->syncRoles(['sekretariat']);
+    $this->sekretariat->syncRoles(['operator-it']);
 
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);

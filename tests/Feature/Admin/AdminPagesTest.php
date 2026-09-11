@@ -38,7 +38,9 @@ it('membuka halaman detail dan ubah', function () {
     $resource = Resource::where('key', 'turnamen')->firstOrFail();
     $tournament = Tournament::factory()->create();
     $permission = $resource->mappings->first()->permission;
-    $role = Role::where('name', 'admin')->firstOrFail();
+    // Peran bawaan boilerplate `admin` sudah dibuang; yang dipakai peran
+    // domain yang pasti ada sesudah seeder silat berjalan.
+    $role = Role::where('name', 'operator-it')->firstOrFail();
 
     $this->actingAs($this->superAdmin);
 

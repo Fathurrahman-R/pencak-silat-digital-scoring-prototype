@@ -47,7 +47,7 @@ beforeEach(function () {
     $this->ketua->syncRoles(['ketua-pertandingan']);
 
     $this->wasit = User::factory()->create();
-    $this->wasit->syncRoles(['wasit']);
+    $this->wasit->syncRoles([peranSistem('wasit')]);
     MatchOfficial::create([
         'match_id' => $this->match->id, 'user_id' => $this->wasit->id, 'role' => MatchOfficial::ROLE_WASIT,
     ]);

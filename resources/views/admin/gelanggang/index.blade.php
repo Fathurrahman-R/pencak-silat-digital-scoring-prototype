@@ -59,6 +59,103 @@
                     </x-si.badge>
 
                     <div class="flex gap-1">
+                        {{--
+                            Gerbangnya `penugasan-aparat.assign`, BUKAN
+                            `gelanggang.update`.
+
+                            Menempatkan orang di kursi bukan menyunting
+                            gelanggangnya, dan pemegang kedua kewenangan itu
+                            memang berbeda: Ketua Pertandingan menugaskan
+                            aparat, Operator IT yang menyunting gelanggangnya.
+                            Menaruh tombol ini di dalam gerbang yang salah
+                            membuat satu-satunya orang yang boleh menugaskan
+                            aparat tidak pernah melihat tombolnya -- cacat yang
+                            sama persis dengan `nomor-jurus.update` milik
+                            Sekretariat, dan tertangkap uji yang sama.
+                        --}}
+                        @resource(rk('penugasan-aparat', ResourceAction::Assign))
+                            <x-si.tombol tipe="button" varian="kedua" ukuran="kecil"
+                                         x-on:click="$dispatch('modal-open', 'gelanggang-aparat-{{ $arena->id }}')">
+                                Aparat
+                            </x-si.tombol>
+
+                            {{--
+                                Aparat gelanggang, dan satu-satunya tempat
+                                penugasannya.
+
+                                Kursinya yang ditugaskan, bukan partainya:
+                                orang yang duduk di kursi Juri 1 Gelanggang A
+                                pagi ini duduk di sana sampai sore, dan
+                                menugaskannya ulang tiap partai adalah empat
+                                baris dikali empat puluh partai. Begitu
+                                pengendali menunjuk sebuah partai, isi kursi
+                                di sini disalin ke `match_officials` — jadi
+                                nomor juri, otorisasi tiap tekanan tombol, dan
+                                berita acara tetap tercatat per partai.
+                            --}}
+                            @php
+                                $kursi = $arena->aparat->keyBy(
+                                    fn ($satu) => $satu->role.($satu->number === null ? '' : $satu->number),
+                                );
+                            @endphp
+
+                            <x-si.modal :id="'gelanggang-aparat-'.$arena->id"
+                                        :judul="'Aparat '.$arena->name" ukuran="kecil">
+                                <form method="POST" action="{{ route('admin.turnamen.gelanggang.aparat', [$tournament, $arena]) }}"
+                                      id="aparat-gelanggang-{{ $arena->id }}" class="space-y-3">
+                                    @csrf
+
+                                    <p class="pb-1 text-sm text-ink-muted">
+                                        Penugasan berlaku sepanjang hari. Kursi yang belum ada orangnya boleh
+                                        dikosongkan — isi belakangan tanpa mengubah apa pun yang sudah berjalan.
+                                    </p>
+
+                                    <x-si.pilihan name="wasit_id" label="Wasit"
+                                                  :options="$calonKetua->pluck('name', 'id')"
+                                                  :selected="$kursi->get('wasit')?->user_id"
+                                                  placeholder="— kosong —"
+                                                  :id="'wasit-'.$arena->id" />
+
+                                    @foreach (range(1, $jumlahJuri) as $nomor)
+                                        <x-si.pilihan :name="'juri_id['.($nomor - 1).']'" :label="'Juri '.$nomor"
+                                                      :options="$calonJuri->pluck('name', 'id')"
+                                                      :selected="$kursi->get('juri'.$nomor)?->user_id"
+                                                      placeholder="— kosong —"
+                                                      :id="'juri-'.$arena->id.'-'.$nomor" />
+                                    @endforeach
+
+                                    <x-si.pilihan name="dewan_id" label="Dewan Wasit Juri"
+                                                  :options="$calonKetua->pluck('name', 'id')"
+                                                  :selected="$kursi->get('dewan-juri')?->user_id"
+                                                  placeholder="— kosong —"
+                                                  :id="'dewan-'.$arena->id" />
+
+                                    <x-si.pilihan name="komisi_id" label="Komisi Protes"
+                                                  :options="$calonKetua->pluck('name', 'id')"
+                                                  :selected="$kursi->get('komisi-protes')?->user_id"
+                                                  placeholder="— kosong —"
+                                                  :id="'komisi-'.$arena->id" />
+
+                                    <x-si.pilihan name="ketua_id" label="Ketua Pertandingan"
+                                                  :options="$calonKetua->pluck('name', 'id')"
+                                                  :selected="$kursi->get('ketua-pertandingan')?->user_id"
+                                                  placeholder="— kosong —"
+                                                  :id="'ketua-'.$arena->id" />
+
+                                    @if ($calonKetua->isEmpty() && $calonJuri->isEmpty())
+                                        <x-si.kosong judul="Belum ada akun aparat"
+                                                     syarat="Buat penggunanya lebih dulu di menu Sistem, lalu beri peran Ketua Pertandingan atau Juri." />
+                                    @endif
+                                </form>
+
+                                <x-slot:footer>
+                                    <x-si.tombol varian="kedua" tipe="button"
+                                                 x-on:click="$dispatch('modal-close', 'gelanggang-aparat-{{ $arena->id }}')">Batal</x-si.tombol>
+                                    <x-si.tombol tipe="submit" form="aparat-gelanggang-{{ $arena->id }}">Simpan</x-si.tombol>
+                                </x-slot:footer>
+                            </x-si.modal>
+                        @endresource
+
                         @resource(rk('gelanggang', ResourceAction::Update))
                             {{-- Kata, bukan pensil telanjang: tooltip tidak pernah
                                  muncul di layar sentuh. --}}

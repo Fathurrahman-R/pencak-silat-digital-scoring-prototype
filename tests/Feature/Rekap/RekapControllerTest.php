@@ -22,7 +22,7 @@ beforeEach(function () {
     (new SusunMasterDataTurnamen)($this->tournament);
 
     $this->sekretariat = User::factory()->create();
-    $this->sekretariat->syncRoles(['sekretariat']);
+    $this->sekretariat->syncRoles(['operator-it']);
 });
 
 it('menampilkan halaman rekap', function () {

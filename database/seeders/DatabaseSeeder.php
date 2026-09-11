@@ -23,9 +23,18 @@ class DatabaseSeeder extends Seeder
             SimulasiTurnamenSeeder::class,
         ]);
 
+        /*
+         * Satu akun bawaan saja.
+         *
+         * `admin@example.com` dan `user@example.com` ikut hilang bersama peran
+         * boilerplate-nya (September 2026): keduanya tidak pernah dipakai
+         * siapa pun, dan akun contoh berperan kosong justru membuat orang
+         * mencoba masuk dengannya lalu mengira aplikasinya rusak.
+         *
+         * Akun petugas sungguhan -- ketua, pengendali, operator, juri, wasit,
+         * official -- lahir di SimulasiTurnamenSeeder bersama kejuaraannya.
+         */
         $this->account('Super Admin', 'super@example.com', config('resources.super_admin_role'));
-        $this->account('Administrator', 'admin@example.com', 'admin');
-        $this->account('Pengguna Biasa', 'user@example.com', 'user');
     }
 
     private function account(string $name, string $email, string $role): User

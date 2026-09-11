@@ -235,7 +235,7 @@ it('menolak gelanggang milik kejuaraan lain di alamat', function () {
  */
 it('mempertahankan panel per-partai untuk peninjauan partai lama', function () {
     $dewan = User::factory()->create();
-    $dewan->syncRoles(['pengawas-wasit-juri']);
+    $dewan->syncRoles([peranSistem('pengawas-wasit-juri')]);
 
     $this->actingAs($dewan)
         ->get(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
@@ -299,7 +299,7 @@ it('mengantar alamat papan per-partai ke panel gelanggangnya', function () {
  */
 it('tidak mengalihkan panel dewan wasit juri', function () {
     $dewan = User::factory()->create();
-    $dewan->syncRoles(['pengawas-wasit-juri']);
+    $dewan->syncRoles([peranSistem('pengawas-wasit-juri')]);
 
     $this->actingAs($dewan)
         ->get(route('admin.turnamen.partai.dewan-juri', [$this->tournament, $this->match]))
@@ -348,9 +348,16 @@ it('membuka dan menutup babak susulan lewat panel kendali', function () {
     expect($this->match->fresh()->susulan_round)->toBeNull();
 });
 
-it('menolak wasit membuka babak susulan', function () {
+/*
+ * Juri, bukan wasit.
+ *
+ * Wasit lebur ke Ketua Pertandingan (September 2026), dan Ketua memang
+ * memegang `kendali-gelanggang.manage` -- membuka babak susulan wewenangnya.
+ * Yang masih harus ditolak: peran yang memang tidak mengendalikan gelanggang.
+ */
+it('menolak juri membuka babak susulan', function () {
     $wasit = User::factory()->create();
-    $wasit->syncRoles(['wasit']);
+    $wasit->syncRoles(['juri']);
 
     $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
 
@@ -384,7 +391,7 @@ it('mengirim blok susulan di payload state', function () {
  */
 it('membuka panel komisi protes lewat alamat gelanggang', function () {
     $komisi = User::factory()->create();
-    $komisi->syncRoles(['wasit-komisi-protes']);
+    $komisi->syncRoles([peranSistem('wasit-komisi-protes')]);
 
     $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
 
@@ -427,7 +434,7 @@ it('membuka panel gelanggang ketua pertandingan tanpa membuang ringkasan lintas 
  */
 it('menampilkan blok keberatan di panel dewan wasit juri', function () {
     $dewan = User::factory()->create();
-    $dewan->syncRoles(['pengawas-wasit-juri']);
+    $dewan->syncRoles([peranSistem('pengawas-wasit-juri')]);
 
     $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
 
@@ -439,7 +446,7 @@ it('menampilkan blok keberatan di panel dewan wasit juri', function () {
 
 it('menyiapkan blok keberatan di panel wasit untuk protes yang sedang berjalan', function () {
     $wasit = User::factory()->create();
-    $wasit->syncRoles(['wasit']);
+    $wasit->syncRoles([peranSistem('wasit')]);
 
     $this->pointer->tunjuk($this->arena, $this->match, $this->pengendali);
 

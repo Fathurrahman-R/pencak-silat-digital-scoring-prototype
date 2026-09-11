@@ -40,6 +40,10 @@ Ronde kedua (10 September 2026) menemukan dua lagi, keduanya sekeluarga:
    format nomor mendapat 403 di layar yang menetapkannya, dan menunya pun
    tidak tergambar untuknya. Lapisan ketiga dari keluarga yang sama:
    kewenangan berpemilik, bertombol, tapi layarnya menolak pemiliknya.
+   (Peran Sekretariat sendiri sudah lebur ke Operator IT sesudah audit
+   izin; temuannya tetap ditulis apa adanya karena bentuk cacatnya yang
+   penting, bukan nama perannya. `silat:audit-izin` sekarang menangkapnya
+   tanpa peramban.)
 7. Reverb mati membuat aksi yang BERHASIL terbaca gagal. Seluruh event
    gelanggang `ShouldBroadcastNow` -- tanpa worker antrean, demi latensi --
    jadi siarannya berjalan di dalam permintaan yang menulis perubahannya.

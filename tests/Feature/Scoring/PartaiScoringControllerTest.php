@@ -38,7 +38,7 @@ beforeEach(function () {
 
     $this->buatUser = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
@@ -256,8 +256,15 @@ it('pengendali mengakhiri partai secara manual dengan sebab WMP', function () {
         ->and($partai->winner_registration_id)->toBe($partai->red_registration_id);
 });
 
-it('wasit tidak boleh mengakhiri partai -- itu wewenang manage, bukan create hukuman', function () {
-    $this->actingAs($this->wasit)
+/*
+ * Juri, bukan wasit.
+ *
+ * Wasit lebur ke Ketua Pertandingan (September 2026), dan Ketua memang
+ * memegang `partai.manage` -- mengakhiri partai wewenangnya. Yang masih harus
+ * ditolak peran yang memang tidak memegangnya, dan itu Juri.
+ */
+it('juri tidak boleh mengakhiri partai -- itu wewenang manage, bukan create nilai', function () {
+    $this->actingAs($this->juri1)
         ->post(route('admin.turnamen.partai.akhiri', [$this->tournament, $this->match]), [
             'corner' => 'red', 'sebab' => 'wmp',
         ])
@@ -307,13 +314,18 @@ it('pengawas membatalkan nilai yang sudah terbit tanpa menghapus riwayatnya', fu
         ->and($scoreEvent->fresh()->dibatalkan())->toBeTrue();
 });
 
-it('wasit tidak boleh membatalkan nilai -- itu wewenang dewan juri', function () {
+/*
+ * Sama alasannya: membatalkan nilai dijaga `hasil-partai.update`, yang kini
+ * dipegang Ketua Pertandingan -- peran yang juga dipakai wasit tiap matras.
+ * Yang tetap tidak boleh: Juri membatalkan nilainya sendiri.
+ */
+it('juri tidak boleh membatalkan nilai -- itu wewenang dewan juri', function () {
     $scoreEvent = ScoreEvent::create([
         'match_id' => $this->match->id, 'round' => 1, 'corner' => 'red',
         'point_type' => 'pukulan', 'value' => 1, 'server_ts' => now(),
     ]);
 
-    $this->actingAs($this->wasit)
+    $this->actingAs($this->juri1)
         ->post(route('admin.turnamen.partai.nilai.batal', [$this->tournament, $this->match, $scoreEvent]), [
             'alasan' => 'coba-coba',
         ])

@@ -22,7 +22,7 @@ it('mengizinkan juri bergabung ke channel gelanggang lewat resource penilaian', 
 
 it('mengizinkan wasit bergabung ke channel gelanggang lewat resource hukuman', function () {
     $wasit = User::factory()->create();
-    $wasit->syncRoles(['wasit']);
+    $wasit->syncRoles([peranSistem('wasit')]);
 
     expect($this->authorizer->join($wasit, 1))->not->toBeFalse();
 });

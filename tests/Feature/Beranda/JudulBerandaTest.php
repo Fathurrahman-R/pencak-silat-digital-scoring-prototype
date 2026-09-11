@@ -22,7 +22,7 @@ beforeEach(function () {
 
     $this->masuk = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $this->actingAs($user)->get('/dashboard')->assertOk();
     };
@@ -32,7 +32,7 @@ it('memakai judul Indonesia yang sama dengan menunya', function (string $peran) 
     ($this->masuk)($peran)
         ->assertSee('Beranda')
         ->assertDontSee('Dashboard');
-})->with(['sekretariat', 'juri', 'operator-it', 'ketua-pertandingan']);
+})->with(['juri', 'operator-it', 'ketua-pertandingan']);
 
 it('tetap membedakan panitia dan aparat lewat keterangannya', function () {
     ($this->masuk)('juri')->assertSee('Partai tempat Anda ditugaskan hari ini.');

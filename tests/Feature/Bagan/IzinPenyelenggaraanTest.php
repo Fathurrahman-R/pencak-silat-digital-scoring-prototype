@@ -28,14 +28,14 @@ beforeEach(function () {
 
     $this->berperan = function (string $peran): User {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
 });
 
 it('memberi Sekretariat izin mencetak bagan dan jadwal', function () {
-    $sekretariat = ($this->berperan)('sekretariat');
+    $sekretariat = ($this->berperan)('operator-it');
 
     expect($sekretariat->can(rk('bagan', ResourceAction::Print)))->toBeTrue()
         ->and($sekretariat->can(rk('jadwal', ResourceAction::Print)))->toBeTrue();

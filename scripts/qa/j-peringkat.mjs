@@ -25,8 +25,12 @@ const NOMOR = Number(process.env.QA_NOMOR_PERINGKAT ?? 1);
 
 const browser = await bukaPeramban();
 
-// Format nomor ditetapkan di meja Sekretariat (`nomor-jurus.update`), bukan di
-// gelanggang -- ia mengubah BENTUK pertandingan, bukan menjalankannya.
+/*
+ * Akun `sekretariat@` kini berperan Operator IT: satu meja untuk seluruh
+ * administrasi kejuaraan, sesudah peran Sekretariat lebur ke sana (September
+ * 2026). Alamat surelnya sengaja tidak diganti -- yang duduk di meja itu
+ * mengenalinya.
+ */
 const sekretariat = await masuk(browser, 'sekretariat@silat.test');
 const ketua = await masuk(browser, 'ketua@silat.test');
 const pengendali = await masuk(browser, 'pengendali2@silat.test');

@@ -223,8 +223,19 @@ it('menyatakan partai yang aparatnya belum lengkap', function () {
         ->assertOk();
 
     // Belum ada satu pun aparat: wasit belum ada.
-    $halaman->assertSee('Wasit belum ada')->assertSee('Lengkapi aparat');
+    $halaman->assertSee('Wasit belum ada')->assertSee('Lengkapi aparat gelanggang');
 
+    /*
+     * Tiap partai punya baris kelengkapannya, termasuk yang belum pernah
+     * ditayangkan -- dan untuk yang belum, angkanya dibaca dari KURSI
+     * GELANGGANG.
+     *
+     * Sejak penugasan aparat pindah ke gelanggang (September 2026),
+     * `match_officials` baru terisi saat pengendali menunjuk partainya.
+     * Membaca tabel itu saja membuat seluruh jadwal pagi hari tertulis "Wasit
+     * belum ada" padahal tiap matras sudah lengkap -- peringatan yang salah
+     * setiap hari akan berhenti dibaca justru sebelum hari ia benar.
+     */
     $aparat = $halaman->viewData('aparat');
-    expect($aparat->get($partai->id))->toBeNull();
+    expect($aparat->get($partai->id))->toBe(['wasit' => false, 'juri' => 0]);
 });

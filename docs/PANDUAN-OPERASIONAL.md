@@ -43,10 +43,10 @@
 
 | Langkah | Siapa | Di mana |
 |---|---|---|
-| Menetapkan format nomor (`battle` atau peringkat) | Sekretariat | Menu Kategori Jurus → pilih nomor → Format |
+| Menetapkan format nomor (`battle` atau peringkat) | Operator IT | Menu Kategori Jurus → pilih nomor → Format |
 | Menyusun bagan gugur (format `battle`) | Operator IT | Menu Kategori Jurus → pilih nomor → Susun bagan; pohonnya di **Lihat pohon bagan** |
 | Membuka kunci bagan yang sudah final | Ketua Pertandingan | Halaman Bagan → Buka kunci. **Bukan** Operator IT: menyusun undian dan membatalkan finalitasnya dua kewenangan berbeda |
-| Mencetak bagan dan jadwal | Sekretariat, Ketua Pertandingan | Tombol **Cetak PDF** di halaman Bagan dan halaman Jadwal |
+| Mencetak bagan dan jadwal | Operator IT, Ketua Pertandingan | Tombol **Cetak PDF** di halaman Bagan dan halaman Jadwal |
 | Buat penampilan dari pendaftaran terverifikasi (format peringkat) | Operator IT | Menu Kategori Jurus → pilih nomor → Buat penampilan |
 | **Menjadwalkan ke gelanggang** | Ketua Pertandingan | Menu Jadwal → tab **Jurus**. Battle dijadwalkan berpasangan: kedua sudutnya masuk antrean gelanggang berurutan, biru lebih dulu |
 | Menayangkan penampilan berikutnya | Pengendali Gelanggang | Panel Kendali → **Antrean Jurus** → Tayangkan |

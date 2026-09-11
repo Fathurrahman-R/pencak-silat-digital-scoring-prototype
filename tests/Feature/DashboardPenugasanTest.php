@@ -45,7 +45,7 @@ beforeEach(function () {
 
     $this->tugaskan = function (string $peran, string $roleAparat, ?int $nomor = null): User {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         MatchOfficial::create([
             'match_id' => $this->match->id,

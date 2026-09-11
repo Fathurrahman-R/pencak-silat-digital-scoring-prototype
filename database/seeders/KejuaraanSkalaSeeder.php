@@ -188,16 +188,18 @@ class KejuaraanSkalaSeeder extends Seeder
     {
         $daftar = [
             'ketua' => ['Hendra Wijaya', 'ketua-pertandingan'],
-            'pengawas' => ['Siti Rahayu', 'pengawas-wasit-juri'],
-            'komisi' => ['Agus Salim', 'wasit-komisi-protes'],
-            'sekretariat' => ['Dewi Lestari', 'sekretariat'],
+            'pengawas' => ['Siti Rahayu', 'ketua-pertandingan'],
+            'komisi' => ['Agus Salim', 'ketua-pertandingan'],
+            'sekretariat' => ['Dewi Lestari', 'operator-it'],
         ];
 
         foreach (range(1, $profil['gelanggang']) as $nomor) {
             $kunci = $nomor === 1 ? 'operator' : "operator{$nomor}";
             $daftar[$kunci] = ["Operator Gelanggang {$nomor}", 'operator-it'];
             $daftar["pengendali{$nomor}"] = ["Pengendali Gelanggang {$nomor}", 'pengendali-gelanggang'];
-            $daftar["wasit{$nomor}"] = ["Wasit {$nomor}", 'wasit'];
+            // Wasit lebur ke Ketua Pertandingan (SilatRoleSeeder); kunci
+            // akunnya tetap `wasitN` supaya alamatnya dikenali di matras.
+            $daftar["wasit{$nomor}"] = ["Wasit {$nomor}", 'ketua-pertandingan'];
         }
 
         foreach (range(1, $profil['gelanggang'] * 3) as $nomor) {

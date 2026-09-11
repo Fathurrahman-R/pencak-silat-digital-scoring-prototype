@@ -49,7 +49,7 @@ beforeEach(function () {
 
     $buatUser = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
@@ -199,7 +199,7 @@ it('menolak jatuhan dari wasit yang tidak ditugaskan di partai ini', function ()
     ($this->mulaiBabak)();
 
     $wasitLain = User::factory()->create();
-    $wasitLain->syncRoles(['wasit']);
+    $wasitLain->syncRoles([peranSistem('wasit')]);
 
     $this->actingAs($wasitLain)
         ->postJson(route('admin.turnamen.partai.jatuhan', [$this->tournament, $this->match]), [

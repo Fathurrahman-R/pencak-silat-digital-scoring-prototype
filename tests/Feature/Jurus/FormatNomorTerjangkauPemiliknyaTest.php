@@ -19,11 +19,16 @@ use Spatie\Permission\Models\Role;
  * tanpa "Pindahkan…"). Yang ini: kewenangan berpemilik, bertombol, tapi
  * layarnya membalas 403 kepada pemiliknya sendiri.
  *
- * `nomor-jurus.update` -- pemilih format battle/peringkat -- hanya dimiliki
- * Sekretariat. Pemilih itu berdiri di halaman daftar nomor Jurus, yang dijaga
- * `penampilan-jurus.view`: kewenangan yang justru TIDAK dimiliki Sekretariat.
- * Jadi satu-satunya orang yang boleh menetapkan format nomor tidak bisa
- * membuka layar yang menetapkannya, dan menunya pun tidak tergambar untuknya.
+ * `nomor-jurus.update` -- pemilih format battle/peringkat -- waktu itu hanya
+ * dimiliki Sekretariat. Pemilih itu berdiri di halaman daftar nomor Jurus,
+ * yang dijaga `penampilan-jurus.view`: kewenangan yang justru TIDAK dimiliki
+ * Sekretariat. Jadi satu-satunya orang yang boleh menetapkan format nomor
+ * tidak bisa membuka layar yang menetapkannya, dan menunya pun tidak
+ * tergambar untuknya.
+ *
+ * Sekretariat sudah lebur ke Operator IT sejak itu, tapi ujinya tetap
+ * berguna: yang dikunci di sini BUKAN nama perannya, melainkan aturan bahwa
+ * tiap pemilik `nomor-jurus.update` harus bisa membuka layarnya.
  *
  * Seluruh uji yang sudah ada lolos karena memakai super-admin, yang melewati
  * pemeriksaan lewat Gate::before.
@@ -41,7 +46,7 @@ beforeEach(function () {
 
     $this->sebagai = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         return $user;
     };
@@ -64,8 +69,8 @@ it('membiarkan pemilik nomor-jurus.update membuka layar yang memuat pemilih form
     }
 });
 
-it('menggambar pemilih format untuk Sekretariat, di layar yang bisa ia buka', function () {
-    $this->actingAs(($this->sebagai)('sekretariat'))
+it('menggambar pemilih format untuk pemiliknya, di layar yang bisa ia buka', function () {
+    $this->actingAs(($this->sebagai)('operator-it'))
         ->get(route('admin.turnamen.jurus.nomor', $this->tournament))
         ->assertOk()
         ->assertSee('name="format"', escape: false);
@@ -76,8 +81,8 @@ it('menggambar pemilih format untuk Sekretariat, di layar yang bisa ia buka', fu
  * tertutup: tidak ada satu pun tautan ke halaman ini di luar remah-remah
  * halaman bagan.
  */
-it('menampilkan menu Kategori Jurus untuk Sekretariat', function () {
-    $menu = $this->actingAs(($this->sebagai)('sekretariat'))
+it('menampilkan menu Kategori Jurus untuk pemilik nomor-jurus', function () {
+    $menu = $this->actingAs(($this->sebagai)('operator-it'))
         ->get(route('dashboard'))
         ->assertOk();
 
@@ -85,30 +90,21 @@ it('menampilkan menu Kategori Jurus untuk Sekretariat', function () {
 });
 
 /*
- * Yang dibuka hanya pintunya, bukan seluruh rumah: Sekretariat tetap tidak
- * memegang penampilan, jadi ia tidak diberi tombol menuju layar yang akan
- * menolaknya.
+ * Yang dibuka hanya pintunya, bukan seluruh rumah: tombol menuju layar
+ * penampilan hanya digambar untuk yang memegang `penampilan-jurus.view`.
+ * Tombol yang pasti dijawab 403 lebih buruk daripada tombol yang tidak ada.
+ *
+ * Sejak Sekretariat lebur ke Operator IT (September 2026) pemegang
+ * `nomor-jurus.update` kebetulan juga memegang penampilan, jadi yang diuji di
+ * sini peran yang TIDAK memegang keduanya.
  */
 it('tidak menawarkan "Kelola penampilan" kepada yang tidak memegang penampilan-jurus', function () {
-    $this->actingAs(($this->sebagai)('sekretariat'))
+    $this->actingAs(($this->sebagai)('official-kontingen'))
         ->get(route('admin.turnamen.jurus.nomor', $this->tournament))
-        ->assertOk()
-        ->assertDontSee('Kelola penampilan');
+        ->assertForbidden();
 
     $this->actingAs(($this->sebagai)('ketua-pertandingan'))
         ->get(route('admin.turnamen.jurus.nomor', $this->tournament))
         ->assertOk()
         ->assertSee('Kelola penampilan');
-});
-
-it('tetap menolak Sekretariat di layar penampilan satu nomor', function () {
-    $nomor = $this->tournament->jurusEvents()->first();
-
-    if ($nomor === null) {
-        $this->markTestSkipped('kejuaraan uji tidak menyusun nomor Jurus');
-    }
-
-    $this->actingAs(($this->sebagai)('sekretariat'))
-        ->get(route('admin.turnamen.jurus.index', [$this->tournament, $nomor]))
-        ->assertForbidden();
 });

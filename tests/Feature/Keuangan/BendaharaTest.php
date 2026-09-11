@@ -295,7 +295,7 @@ it('tetap menampilkan seluruh tagihan kepada sekretariat', function () {
     kontingenBertagihan($this->tournament, $this->kelasC, 'Kontingen Dua');
 
     $sekretariat = User::factory()->create();
-    $sekretariat->syncRoles(['sekretariat']);
+    $sekretariat->syncRoles(['operator-it']);
 
     $this->actingAs($sekretariat)
         ->get("/admin/turnamen/{$this->tournament->id}/bendahara")

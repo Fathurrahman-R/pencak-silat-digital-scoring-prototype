@@ -64,7 +64,7 @@ beforeEach(function () {
 
     $this->buatUser = function (string $peran) {
         $user = User::factory()->create();
-        $user->syncRoles([$peran]);
+        $user->syncRoles([peranSistem($peran)]);
 
         match ($peran) {
             'wasit' => MatchOfficial::create([

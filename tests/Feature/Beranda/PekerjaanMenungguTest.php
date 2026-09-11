@@ -23,7 +23,7 @@ beforeEach(function () {
 function masukSebagai(string $role): User
 {
     $user = User::factory()->create();
-    $user->syncRoles([$role]);
+    $user->syncRoles([peranSistem($role)]);
 
     test()->actingAs($user);
 
@@ -127,7 +127,7 @@ it('hanya menampilkan baris yang izinnya dimiliki pengguna', function () {
 
     kontingenNunggak($this->turnamen, $kelas, 'Kontingen Uji');
 
-    masukSebagai('sekretariat');
+    masukSebagai('operator-it');
     $sekretariat = collect(pekerjaan($this->turnamen))->pluck('benda');
 
     masukSebagai('ketua-pertandingan');

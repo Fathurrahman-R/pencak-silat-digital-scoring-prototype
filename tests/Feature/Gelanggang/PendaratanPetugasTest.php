@@ -124,9 +124,9 @@ it('mendaratkan seluruh peran gelanggang langsung di panelnya', function (string
         ->get(route('dashboard'))
         ->assertRedirect(route("admin.turnamen.gelanggang.panel.{$rute}", [$this->tournament, $this->arena]));
 })->with([
-    ['wasit', 'wasit', 'wasit'],
-    ['dewan-juri', 'pengawas-wasit-juri', 'dewan-juri'],
-    ['komisi-protes', 'wasit-komisi-protes', 'komisi-protes'],
+    ['wasit', 'ketua-pertandingan', 'wasit'],
+    ['dewan-juri', 'ketua-pertandingan', 'dewan-juri'],
+    ['komisi-protes', 'ketua-pertandingan', 'komisi-protes'],
     ['ketua-pertandingan', 'ketua-pertandingan', 'ketua'],
 ]);
 

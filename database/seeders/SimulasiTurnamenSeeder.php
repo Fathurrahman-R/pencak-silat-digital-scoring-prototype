@@ -11,6 +11,7 @@ use App\Enums\KategoriPertandingan;
 use App\Enums\StatusPendaftaran;
 use App\Enums\StatusTurnamen;
 use App\Models\Arena;
+use App\Models\ArenaOfficial;
 use App\Models\Athlete;
 use App\Models\Contingent;
 use App\Models\FeeSchedule;
@@ -154,16 +155,18 @@ class SimulasiTurnamenSeeder extends Seeder
      * Gelanggang A dan juri 4-6 Gelanggang B tanpa satu orang pun merangkap.
      *
      * Tiga jabatan pra-acara — Sekretaris, Bendahara, Petugas Timbang Badan —
-     * kini satu peran `sekretariat`, jadi satu akun saja yang menjalankan
-     * verifikasi berkas, penagihan, dan timbang badan.
+     * dan seluruh administrasi kejuaraan kini satu peran `operator-it`, jadi
+     * satu akun saja yang menjalankan verifikasi berkas, penagihan, dan
+     * timbang badan. Akunnya tetap bernama `sekretariat@` supaya orang yang
+     * duduk di meja itu mengenali alamatnya.
      */
     private function buatAkun(): void
     {
         $daftar = [
             'ketua' => ['Hendra Wijaya', 'ketua-pertandingan'],
-            'pengawas' => ['Siti Rahayu', 'pengawas-wasit-juri'],
-            'komisi' => ['Agus Salim', 'wasit-komisi-protes'],
-            'sekretariat' => ['Dewi Lestari', 'sekretariat'],
+            'pengawas' => ['Siti Rahayu', 'ketua-pertandingan'],
+            'komisi' => ['Agus Salim', 'ketua-pertandingan'],
+            'sekretariat' => ['Dewi Lestari', 'operator-it'],
             'operator' => ['Fajar Nugroho', 'operator-it'],
             'operator2' => ['Yudi Hartono', 'operator-it'],
 
@@ -175,8 +178,14 @@ class SimulasiTurnamenSeeder extends Seeder
              */
             'pengendali1' => ['Iwan Setiawan', 'pengendali-gelanggang'],
             'pengendali2' => ['Nur Hidayat', 'pengendali-gelanggang'],
-            'wasit1' => ['Bambang Sutrisno', 'wasit'],
-            'wasit2' => ['Rudi Hermawan', 'wasit'],
+            /*
+             * Wasit lebur ke Ketua Pertandingan (SilatRoleSeeder), jadi yang
+             * memimpin partai di tiap gelanggang memakai peran itu. Kunci
+             * akunnya tetap `wasit1`/`wasit2` supaya yang berdiri di matras
+             * mengenali alamatnya.
+             */
+            'wasit1' => ['Bambang Sutrisno', 'ketua-pertandingan'],
+            'wasit2' => ['Rudi Hermawan', 'ketua-pertandingan'],
         ];
 
         foreach (range(1, 6) as $nomor) {
@@ -580,7 +589,37 @@ class SimulasiTurnamenSeeder extends Seeder
     private function tugaskanAparat(): void
     {
         $jumlahJuri = $this->tournament->peraturan()->jumlah_juri_tanding;
-        $gelanggangPertama = Arena::where('tournament_id', $this->tournament->id)->orderBy('sort_order')->value('id');
+        $gelanggang = Arena::where('tournament_id', $this->tournament->id)->orderBy('sort_order')->get();
+        $gelanggangPertama = $gelanggang->first()?->id;
+
+        /*
+         * Kursi gelanggang lebih dulu, dan itu yang sesungguhnya dipakai
+         * panitia sejak penugasan aparat pindah ke halaman Gelanggang
+         * (September 2026). Baris per partai di bawah tetap dibuat supaya
+         * simulasi punya partai yang sudah "pernah ditayangkan" lengkap dengan
+         * catatan aparatnya -- di kejuaraan sungguhan baris itu lahir sendiri
+         * saat pengendali menunjuk partainya.
+         */
+        foreach ($gelanggang as $satu) {
+            $pertama = $satu->id === $gelanggangPertama;
+
+            ArenaOfficial::where('arena_id', $satu->id)->delete();
+
+            ArenaOfficial::create([
+                'arena_id' => $satu->id,
+                'user_id' => $this->akun[$pertama ? 'wasit1' : 'wasit2']->id,
+                'role' => MatchOfficial::ROLE_WASIT,
+            ]);
+
+            foreach (range(1, $jumlahJuri) as $nomor) {
+                ArenaOfficial::create([
+                    'arena_id' => $satu->id,
+                    'user_id' => $this->akun['juri'.($pertama ? $nomor : $nomor + 3)]->id,
+                    'role' => MatchOfficial::ROLE_JURI,
+                    'number' => $nomor,
+                ]);
+            }
+        }
 
         foreach ($this->partaiSiap()->whereNotNull('arena_id') as $partai) {
             $gelanggangA = $partai->arena_id === $gelanggangPertama;

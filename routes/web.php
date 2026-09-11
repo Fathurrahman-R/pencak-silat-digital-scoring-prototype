@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\ResourceAction;
-use App\Http\Controllers\Admin\AparatController;
 use App\Http\Controllers\Admin\ArenaController;
 use App\Http\Controllers\Admin\AthleteController;
 use App\Http\Controllers\Admin\BracketController;
@@ -172,7 +171,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::controller(ResourceMappingController::class)->prefix('mappings')->name('mappings.')->group(function () {
             Route::get('/', 'index')->name('index')->middleware('resource:'.rk('mappings', ResourceAction::View));
             Route::put('/{mapping}', 'update')->name('update')->middleware('resource:'.rk('mappings', ResourceAction::Update));
-            Route::delete('/{mapping}', 'destroy')->name('destroy')->middleware('resource:'.rk('mappings', ResourceAction::Update));
+            // Memutus pemetaan sebuah key berarti mematikan otorisasi di
+            // baliknya; itu bukan penyuntingan.
+            Route::delete('/{mapping}', 'destroy')->name('destroy')->middleware('resource:'.rk('mappings', ResourceAction::Delete));
             Route::post('/auto', 'autoMap')->name('auto')->middleware('resource:'.rk('mappings', ResourceAction::Update));
         });
 
@@ -310,9 +311,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('tarif.')
                 ->group(function () {
                     Route::get('/', 'index')->name('index')->middleware('resource:'.rk('tarif', ResourceAction::View));
-                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Update));
-                    Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Update));
-                    Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Update));
+                    /*
+                     * Menambah dan menghapus tarif dijaga aksinya sendiri,
+                     * bukan `tarif.update`.
+                     *
+                     * Sebelum ini ketiganya dijaga Update, jadi siapa pun yang
+                     * boleh membetulkan satu angka juga boleh menghapus
+                     * seluruh baris tarif -- dan `tarif.create`/`tarif.delete`
+                     * yang diberikan kepada seseorang tidak berlaku apa-apa.
+                     */
+                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('tarif', ResourceAction::Create));
+                    Route::post('/kontingen', 'storeKontingen')->name('kontingen')->middleware('resource:'.rk('tarif', ResourceAction::Create));
+                    Route::delete('/{feeSchedule}', 'destroy')->name('destroy')->middleware('resource:'.rk('tarif', ResourceAction::Delete));
                 });
 
             Route::controller(VerificationController::class)
@@ -362,6 +372,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     Route::put('/{arena}', 'update')->name('update')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::post('/{arena}/operator', 'simpanOperator')->name('operator')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
                     Route::post('/{arena}/pengendali', 'simpanPengendali')->name('pengendali')->middleware('resource:'.rk('gelanggang', ResourceAction::Update));
+
+                    /*
+                     * Penugasan aparat, dan satu-satunya tempatnya.
+                     *
+                     * Dijaga `penugasan-aparat.assign`, bukan
+                     * `gelanggang.update`: yang dilakukan di sini menempatkan
+                     * ORANG di kursi, bukan menyunting gelanggangnya. Kunci
+                     * itu dulu menjaga layar penugasan per partai, yang
+                     * dibuang bersama perubahan ini.
+                     */
+                    Route::post('/{arena}/aparat', 'simpanAparat')->name('aparat')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
                     Route::delete('/{arena}', 'destroy')->name('destroy')->middleware('resource:'.rk('gelanggang', ResourceAction::Delete));
                 });
 
@@ -428,13 +449,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     });
                 });
 
-            Route::controller(AparatController::class)
-                ->prefix('{tournament}/partai/{match}/aparat')
-                ->name('partai.aparat.')
-                ->group(function () {
-                    Route::get('/', 'show')->name('show')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::View));
-                    Route::post('/', 'store')->name('store')->middleware('resource:'.rk('penugasan-aparat', ResourceAction::Assign));
-                });
+            /*
+             * Penugasan aparat PER PARTAI dibuang, September 2026.
+             *
+             * Aparat ditugaskan ke gelanggang dan berlaku sepanjang hari
+             * (`gelanggang.aparat`); `match_officials` tetap terisi lewat
+             * salinan saat pengendali menunjuk partainya, jadi nomor juri,
+             * otorisasi, dan berita acara tidak berubah sedikit pun. Yang
+             * hilang cuma satu layar yang menuntut empat baris penugasan
+             * dikali empat puluh partai.
+             */
 
             /*
              * Mesin scoring Tanding. `akhiri` dijaga resource Manage

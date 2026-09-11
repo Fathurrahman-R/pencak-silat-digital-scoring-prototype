@@ -61,3 +61,23 @@ function bacaConfigTanpaEnv(string $berkas, string $kunciEnv): array
         $bangunUlang();
     }
 }
+
+/*
+ * Nama peran SISTEM untuk sebuah jabatan di matras.
+ *
+ * Peran domain kadang lebur -- Wasit lebur ke Ketua Pertandingan (September
+ * 2026), Sekretariat lebur ke Operator IT sebelumnya. Uji tetap menyebut
+ * jabatannya ("wasit"), karena itulah yang dibicarakan orang di gelanggang,
+ * dan penerjemahannya berdiri di satu tempat ini saja. Tanpa itu, satu
+ * peleburan berarti menyisir puluhan berkas uji dan menukar arti sebagiannya
+ * tanpa sengaja -- persis yang terjadi pada uji "menolak pengguna yang bukan
+ * operator", yang diam-diam berubah jadi mengirim operator sungguhan.
+ */
+function peranSistem(string $jabatan): string
+{
+    return match ($jabatan) {
+        'wasit', 'pengawas-wasit-juri', 'wasit-komisi-protes' => 'ketua-pertandingan',
+        'sekretariat' => 'operator-it',
+        default => $jabatan,
+    };
+}

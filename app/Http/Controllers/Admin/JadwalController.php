@@ -13,6 +13,7 @@ use App\Support\Bagan\PenjadwalJurus;
 use App\Support\Bagan\PenjadwalPartai;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -42,7 +43,7 @@ class JadwalController extends Controller
             'bracket.weightClass',
         ]);
 
-        $arenas = $tournament->arenas()->aktif()->get()
+        $arenas = $tournament->arenas()->aktif()->with('aparat')->get()
             ->map(function (Arena $arena) use ($muatan) {
                 $arena->setRelation(
                     'matches',
@@ -76,10 +77,35 @@ class JadwalController extends Controller
             ->get()
             ->groupBy('match_id');
 
-        $aparat = $terpasang->map(fn ($baris) => [
-            'wasit' => $baris->firstWhere('role', MatchOfficial::ROLE_WASIT)?->user_id !== null,
-            'juri' => $baris->where('role', MatchOfficial::ROLE_JURI)->whereNotNull('user_id')->count(),
+        /*
+         * Kelengkapan dibaca dari GELANGGANG untuk partai yang belum pernah
+         * ditayangkan.
+         *
+         * Sejak penugasan aparat pindah ke gelanggang, `match_officials` baru
+         * terisi saat pengendali menunjuk partainya. Membaca tabel itu saja
+         * membuat SELURUH jadwal pagi hari tertulis "Wasit belum ada" padahal
+         * tiap gelanggang sudah punya aparat lengkap -- peringatan yang salah
+         * setiap hari akan berhenti dibaca justru sebelum hari ia benar.
+         */
+        $aparatGelanggang = $arenas->mapWithKeys(fn ($arena) => [
+            $arena->id => [
+                'wasit' => $arena->aparat->firstWhere('role', MatchOfficial::ROLE_WASIT) !== null,
+                'juri' => $arena->aparat->where('role', MatchOfficial::ROLE_JURI)->count(),
+            ],
         ]);
+
+        $aparat = $arenas->flatMap->matches->mapWithKeys(function ($partai) use ($terpasang, $aparatGelanggang) {
+            $baris = $terpasang->get($partai->id);
+
+            if ($baris === null) {
+                return [$partai->id => $aparatGelanggang[$partai->arena_id] ?? ['wasit' => false, 'juri' => 0]];
+            }
+
+            return [$partai->id => [
+                'wasit' => $baris->firstWhere('role', MatchOfficial::ROLE_WASIT)?->user_id !== null,
+                'juri' => $baris->where('role', MatchOfficial::ROLE_JURI)->whereNotNull('user_id')->count(),
+            ]];
+        });
 
         return view('admin.jadwal.index', [
             'tournament' => $tournament,
@@ -378,7 +404,7 @@ class JadwalController extends Controller
         )->orderBy('jurus_event_id')->orderBy('id')->get();
     }
 
-    /** @param  \Illuminate\Database\Eloquent\Builder<JurusPerformance>  $query */
+    /** @param  Builder<JurusPerformance>  $query */
     private function muatanPenampilan($query)
     {
         return $query->with([
