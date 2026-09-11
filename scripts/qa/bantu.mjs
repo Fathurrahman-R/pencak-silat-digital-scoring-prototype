@@ -86,7 +86,7 @@ export function pastikan(syarat, pesan) {
 }
 
 /** Konteks peramban yang sudah login sebagai satu peran. */
-export async function masuk(browser, email, { iphone = false } = {}) {
+export async function masuk(browser, email, { iphone = false, asal = ASAL } = {}) {
     const konteks = await browser.newContext({
         ...(iphone ? devices['iPhone 14'] : {}),
         ignoreHTTPSErrors: true,
@@ -94,7 +94,9 @@ export async function masuk(browser, email, { iphone = false } = {}) {
 
     const halaman = await konteks.newPage();
 
-    await halaman.goto(`${ASAL}/login`, { waitUntil: 'domcontentloaded', timeout: 40_000 });
+    // `asal` bisa ditimpa: uji multi-server masuk ke NODE LAIN, bukan ke
+    // alamat bawaan rangkaian ini.
+    await halaman.goto(`${asal}/login`, { waitUntil: 'domcontentloaded', timeout: 40_000 });
     await halaman.fill('input[name="email"]', email);
     await halaman.fill('input[name="password"]', SANDI);
     await Promise.all([

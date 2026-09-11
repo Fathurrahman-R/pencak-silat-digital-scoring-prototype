@@ -80,6 +80,8 @@ node scripts/qa/g-verifikasi.mjs             # modal hasil verifikasi, 9 case
 node scripts/qa/h-bagan-bertingkat.mjs       # bye + promosi ronde, 6 case
 node scripts/qa/i-serah-jurus.mjs            # serah-terima jadwal Jurus, 6 case
 node scripts/qa/j-peringkat.mjs              # nomor berformat peringkat, 10 case
+node scripts/qa/k-multinode.mjs              # dua node: token, pemasangan, kursor, 10 case
+node scripts/qa/k2-satu-penulis.mjs          # aturan satu penulis dan arah balik, 3 case
 node scripts/qa/f-safari-ios.mjs             # WebKit profil iPhone
 ```
 
@@ -105,6 +107,29 @@ Semua alamat dan id lewat env, dengan bawaan yang masuk akal:
 `i-serah-jurus.mjs` menuntut gelanggang asal berisi **satu penampilan Jurus
 tanpa battle**, dan sebaiknya juga satu sudut battle supaya I-05 benar-benar
 diuji, bukan dilewati.
+
+`k-multinode.mjs` dan `k2-satu-penulis.mjs` menuntut **dua node sungguhan**.
+Node kedua disiapkan di mesin yang sama:
+
+```bash
+# 1. basis data kosong untuk node gelanggang
+php -r "(new PDO('mysql:host=127.0.0.1','root',''))->exec('CREATE DATABASE digiscoring_gelanggang_b');"
+
+# 2. .env.gelanggangb: DB_DATABASE=digiscoring_gelanggang_b, SINKRON_PERAN=gelanggang,
+#    SINKRON_NODE=gelanggang-b, SINKRON_ARENA=B, SINKRON_PEER="global|http://127.0.0.2:8000|<token>"
+# 3. .env node ini: SINKRON_PERAN=global, SINKRON_NODE=global, SINKRON_ARENA= (kosong),
+#    SINKRON_PEER="gelanggang-b|http://127.0.0.4:8010|<token>"
+
+APP_ENV=gelanggangb php artisan migrate --force      # skema saja, TANPA --seed
+APP_ENV=gelanggangb php artisan serve --host=127.0.0.4 --port=8010
+
+QA_SINKRON_TOKEN=<token> node scripts/qa/k-multinode.mjs
+```
+
+`APP_ENV=gelanggangb` itulah yang membuat Laravel membaca `.env.gelanggangb`,
+jadi dua node berjalan dari satu salinan kode. Cadangkan `.env` sebelum
+mengubah perannya, dan kembalikan sesudah selesai: node yang tertinggal
+berperan `global` tidak memiliki gelanggang mana pun.
 
 `j-peringkat.mjs` menuntut nomor sasaran punya **>= 2 pendaftaran sah dan nol
 penampilan** -- ia mengubah formatnya sendiri di J-00, dan ubah format memang
