@@ -16,8 +16,6 @@ use Database\Seeders\SilatRoleSeeder;
  * di judulnya.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     Tournament::factory()->create(['starts_on' => '2026-09-01']);
 
     $this->masuk = function (string $peran) {

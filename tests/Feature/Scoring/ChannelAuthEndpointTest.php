@@ -28,8 +28,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->broadcaster = Broadcast::driver('reverb');
     $this->broadcaster->channel('arena.{arenaId}', ArenaChannelAuthorizer::class);
 

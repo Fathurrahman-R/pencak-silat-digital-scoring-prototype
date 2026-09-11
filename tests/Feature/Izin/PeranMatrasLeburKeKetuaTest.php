@@ -28,8 +28,6 @@ use Spatie\Permission\Models\Role;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->ketua = User::factory()->create();
     $this->ketua->syncRoles(['ketua-pertandingan']);
 });

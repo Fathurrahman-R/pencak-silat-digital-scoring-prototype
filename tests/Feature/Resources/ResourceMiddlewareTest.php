@@ -52,7 +52,12 @@ it('memperlakukan koma sebagai DAN', function () {
 });
 
 it('meloloskan super admin ke semua route', function () {
-    $role = Role::create(['name' => config('resources.super_admin_role')]);
+    /*
+     * firstOrCreate, bukan create: peran super-admin lahir bersama seeder
+     * basis yang kini berjalan sekali per proses uji (Tests\FeatureTestCase),
+     * jadi membuatnya lagi melempar RoleAlreadyExists.
+     */
+    $role = Role::firstOrCreate(['name' => config('resources.super_admin_role'), 'guard_name' => 'web']);
     $user = User::factory()->create()->assignRole($role);
 
     $this->actingAs($user)->get('/uji/dan')->assertOk();

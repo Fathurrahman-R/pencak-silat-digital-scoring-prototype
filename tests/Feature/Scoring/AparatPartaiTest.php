@@ -32,8 +32,6 @@ use Database\Seeders\SilatRoleSeeder;
  * panitia tidak mau dihadang saat mencari layar.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
     (new SusunMasterDataTurnamen)($this->tournament);
 

@@ -35,8 +35,6 @@ use Illuminate\Support\Facades\DB;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     config([
         'sinkron.peran' => 'gelanggang',
         'sinkron.arena' => 'A',

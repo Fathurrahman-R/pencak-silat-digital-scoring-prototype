@@ -14,8 +14,6 @@ use Database\Seeders\SilatRoleSeeder;
  * memberi tahu sistem siapa operator gelanggang mana.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->admin = User::factory()->create();
     $this->admin->syncRoles([config('resources.super_admin_role')]);
 

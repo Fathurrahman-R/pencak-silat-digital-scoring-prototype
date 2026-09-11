@@ -10,8 +10,6 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->superAdmin = User::factory()->create(['email_verified_at' => now()])
         ->assignRole(config('resources.super_admin_role'));
 });

@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Artisan;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
 });
 
 it('tidak menyisakan resource key yang tidak terdaftar di peta', function () {

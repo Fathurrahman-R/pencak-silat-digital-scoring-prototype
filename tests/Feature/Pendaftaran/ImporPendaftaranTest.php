@@ -27,8 +27,6 @@ use Illuminate\Http\UploadedFile;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->admin = User::factory()->create();
     $this->admin->syncRoles([config('resources.super_admin_role')]);
 

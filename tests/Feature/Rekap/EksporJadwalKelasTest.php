@@ -22,8 +22,6 @@ use Database\Seeders\SilatRoleSeeder;
  * padahal ekspor peserta sudah benar menulis golongan dan jenis kelaminnya.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->panitia = User::factory()->create();
     $this->panitia->syncRoles([config('resources.super_admin_role')]);
 

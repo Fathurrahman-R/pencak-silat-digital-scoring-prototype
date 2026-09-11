@@ -28,8 +28,6 @@ use Database\Seeders\SilatRoleSeeder;
  * tayangnya bagian dari catatan hasil yang masuk berita acara.
  */
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->ketua = User::factory()->create();
     $this->ketua->syncRoles(['ketua-pertandingan']);
 

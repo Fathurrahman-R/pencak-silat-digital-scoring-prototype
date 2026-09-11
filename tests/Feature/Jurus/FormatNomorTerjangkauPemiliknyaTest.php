@@ -35,8 +35,6 @@ use Spatie\Permission\Models\Role;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->tournament = Tournament::factory()->create(['starts_on' => '2026-09-01']);
 
     // Nomor Jurus lahir dari naskah 2025, dan tanpa satu pun nomor halaman

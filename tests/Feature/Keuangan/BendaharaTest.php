@@ -22,8 +22,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->bendahara = User::factory()->create();
     $this->bendahara->syncRoles([config('resources.super_admin_role')]);
 

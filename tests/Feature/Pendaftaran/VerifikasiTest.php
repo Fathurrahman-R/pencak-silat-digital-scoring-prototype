@@ -20,8 +20,6 @@ use Database\Seeders\SilatResourceSeeder;
 use Database\Seeders\SilatRoleSeeder;
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->sekretariat = User::factory()->create();
     $this->sekretariat->syncRoles(['operator-it']);
 

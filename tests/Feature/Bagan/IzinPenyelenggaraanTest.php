@@ -24,8 +24,6 @@ use Database\Seeders\SilatRoleSeeder;
  */
 
 beforeEach(function () {
-    $this->seed([ResourceSeeder::class, RoleSeeder::class, SilatResourceSeeder::class, SilatRoleSeeder::class]);
-
     $this->berperan = function (string $peran): User {
         $user = User::factory()->create();
         $user->syncRoles([peranSistem($peran)]);
