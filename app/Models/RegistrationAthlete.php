@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Baris pivot pendaftaran-atlet, sebagai model.
@@ -21,4 +22,25 @@ class RegistrationAthlete extends Pivot
     protected $table = 'registration_athlete';
 
     public $incrementing = true;
+
+    /**
+     * Mencari id-nya sendiri sebelum dihapus.
+     *
+     * `detach()` menyusun model pivot dari dua kolom kuncinya saja -- id-nya
+     * tidak ikut. Catatan sinkron menunjuk baris lewat id, jadi penghapusan
+     * yang lewat begitu saja tercatat menunjuk ke kosong: node lain menerima
+     * perintah hapus tanpa tahu baris mana, dan atlet yang dicabut dari
+     * pendaftaran tetap berdiri di gelanggang.
+     */
+    public function delete(): int
+    {
+        if (! isset($this->attributes['id'])) {
+            $this->attributes['id'] = DB::table($this->table)
+                ->where('registration_id', $this->getAttribute('registration_id'))
+                ->where('athlete_id', $this->getAttribute('athlete_id'))
+                ->value('id');
+        }
+
+        return parent::delete();
+    }
 }

@@ -232,6 +232,11 @@ sudah dijadwalkan ke gelanggang tersebut. Kepemilikan menjaga PEMBARUAN —
 supaya salinan basi tidak menimpa hasil pertandingan — bukan penghapusan,
 yang hulunya memang sudah tidak ada.
 
+Penghapusan **merambat ke baris turunannya**, mengikuti apa yang sudah
+tertulis di skema: pendaftaran yang dibatalkan membawa serta pivot atletnya,
+partai yang dibongkar membawa nilai dan hukumannya. Barisnya tidak dikirim
+satu per satu — yang dikirim penghapusan induknya saja.
+
 ## Yang berubah sifatnya
 
 - **Panel Ketua Pertandingan** melihat seluruh gelanggang, tapi kini sejauh
@@ -242,9 +247,5 @@ yang hulunya memang sudah tidak ada.
 
 ## Yang belum ditangani
 
-- **Atlet yang dilepas dari pendaftaran** (detach) belum tercatat. Tidak ada
-  layar yang melakukannya hari ini; pendaftaran yang dihapus utuh tetap
-  terbawa. Pivot yang ditempelkan (attach) dan perubahan peran sudah ikut
-  tersinkron sesudah pemasangan.
 - **Sinkron lewat berkas** (flashdisk) belum ada. Format paketnya sudah
   serialisable, jadi jalur itu bisa ditambah tanpa merombak.

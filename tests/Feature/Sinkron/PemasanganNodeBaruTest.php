@@ -194,6 +194,41 @@ it('mencatat atlet yang ditempelkan ke pendaftaran sesudah penyemaian', function
 });
 
 /*
+ * Mencabut atlet dari pendaftaran. `detach()` menyusun baris pivotnya dari dua
+ * kolom kunci saja, tanpa id -- dan catatan sinkron menunjuk baris lewat id.
+ * Tanpa penjagaan, perintah hapusnya tercatat menunjuk ke kosong, dan atlet
+ * yang sudah dicabut tetap berdiri di daftar gelanggang.
+ */
+it('mencatat atlet yang dicabut dari pendaftaran, lengkap dengan penandanya', function () {
+    $kontingen = Contingent::factory()->for($this->tournament)->create();
+    $pendaftaran = App\Models\Registration::factory()->for($kontingen)->create();
+    $atlet = App\Models\Athlete::factory()->for($kontingen)->create();
+    $pendaftaran->athletes()->attach($atlet, ['position' => 1]);
+
+    $pivotId = (string) DB::table('registration_athlete')
+        ->where('registration_id', $pendaftaran->id)
+        ->where('athlete_id', $atlet->id)
+        ->value('id');
+
+    DB::table('sinkron_keluar')->delete();
+    DB::table('sinkron_kursor')->delete();
+    app(CatatanKeluar::class)->semai();
+
+    $sebelum = DB::table('sinkron_keluar')->max('id');
+
+    $pendaftaran->athletes()->detach($atlet);
+
+    $catatan = DB::table('sinkron_keluar')
+        ->where('id', '>', $sebelum)
+        ->where('tabel', 'registration_athlete')
+        ->get(['baris_id', 'aksi']);
+
+    expect($catatan)->toHaveCount(1)
+        ->and($catatan->first()->aksi)->toBe(CatatanKeluar::HAPUS)
+        ->and($catatan->first()->baris_id)->toBe($pivotId);
+});
+
+/*
  * Node gelanggang yang menulis data kejuaraan menghasilkan data hantu: hidup
  * di satu laptop, tidak pernah tercatat untuk dikirim, dan id-nya akan
  * bertabrakan dengan baris yang kelak lahir di node global.

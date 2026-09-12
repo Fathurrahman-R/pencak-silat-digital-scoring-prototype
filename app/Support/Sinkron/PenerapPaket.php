@@ -59,6 +59,9 @@ class PenerapPaket
         /** @var list<array{string, string, string}> $diteruskan */
         $diteruskan = [];
 
+        /** @var list<array{string, array<string, mixed>}> $penghapusan */
+        $penghapusan = [];
+
         /*
          * Pemeriksaan foreign key ditangguhkan selama satu potongan.
          *
@@ -82,7 +85,7 @@ class PenerapPaket
         }
 
         try {
-            DB::transaction(function () use ($baris, &$ringkasan, &$partaiTersentuh, &$pemenangTiba, &$diteruskan) {
+            DB::transaction(function () use ($baris, $mysql, &$ringkasan, &$partaiTersentuh, &$pemenangTiba, &$diteruskan, &$penghapusan) {
                 /** @var array<string, list<array<string, mixed>>> $kumpulan */
                 $kumpulan = [];
 
@@ -154,7 +157,12 @@ class PenerapPaket
                             continue;
                         }
 
-                        DB::table($tabel)->where($klausa)->delete();
+                        /*
+                         * Dikumpulkan, tidak langsung dihapus: penghapusan
+                         * dikerjakan sesudah pemeriksaan foreign key dinyalakan
+                         * lagi, supaya ia merambat ke barisnya sendiri.
+                         */
+                        $penghapusan[] = [$tabel, $klausa];
                         $ringkasan['dihapus']++;
                         $diteruskan[] = [$tabel, (string) $satu['id'], CatatanKeluar::HAPUS];
 
@@ -233,6 +241,29 @@ class PenerapPaket
                             array_keys($sepotong[0]),
                         );
                     }
+                }
+
+                /*
+                 * Penghapusan dikerjakan paling akhir, dengan pemeriksaan
+                 * foreign key MENYALA lagi.
+                 *
+                 * Pemeriksaan yang mati membuat penghapusan berhenti di baris
+                 * yang disebut paket: baris turunannya tertinggal menunjuk
+                 * induk yang sudah tidak ada. Pendaftaran yang dibatalkan di
+                 * node global meninggalkan pivot atletnya di gelanggang, dan
+                 * partai yang dibongkar meninggalkan nilai dan hukumannya --
+                 * tidak terlihat sampai ada yang menghitung rekap.
+                 *
+                 * Skema sudah menuliskan perambatannya lewat `cascadeOnDelete`;
+                 * yang perlu dilakukan cuma membiarkan basis data menjalankan
+                 * apa yang sudah tertulis di sana.
+                 */
+                if ($mysql) {
+                    DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                }
+
+                foreach ($penghapusan as [$tabel, $klausa]) {
+                    DB::table($tabel)->where($klausa)->delete();
                 }
             });
         } finally {
