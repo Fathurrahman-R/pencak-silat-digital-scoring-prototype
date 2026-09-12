@@ -87,10 +87,23 @@ await jalankan('K-05', 'Penarikan pertama membawa akun dari node global', async 
 
     await halaman.locator('button:has-text("Tarik data dari peer ini")').first().click();
 
+    /*
+     * Menunggu SELESAI atau GALAT, mana yang lebih dulu.
+     *
+     * Menunggu "Penarikan selesai" saja pernah membuat satu kegagalan yang
+     * sudah tergambar di layar -- peer tidak terjangkau -- terbaca sebagai
+     * sepuluh menit menunggu lalu "tidak pernah selesai". Blok galat halaman
+     * ini berlatar `bg-danger-soft`; begitu ia muncul, pesannya yang
+     * dilaporkan.
+     */
     await halaman.waitForFunction(
-        () => /Penarikan selesai/i.test(document.body.innerText),
+        () => /Penarikan selesai/i.test(document.body.innerText)
+            || document.querySelector('.bg-danger-soft') !== null,
         null, { timeout: 600_000 },
-    ).catch(() => { throw new Error('penarikan tidak pernah selesai dalam 10 menit'); });
+    ).catch(() => { throw new Error('penarikan tidak selesai dan tidak menyebut galat dalam 10 menit'); });
+
+    const galat = await halaman.locator('.bg-danger-soft').first().innerText().catch(() => '');
+    pastikan(galat === '', `halaman pemasangan menyebut galat: ${galat.slice(0, 200)}`);
 
     const teks = await halaman.innerText('body');
     const diterapkan = Number(/(\d+)\s+diterapkan/i.exec(teks)?.[1] ?? 0);

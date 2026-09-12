@@ -197,13 +197,10 @@ class PetaSinkron
     /**
      * Tabel yang punya model Eloquent, dipetakan ke kelasnya.
      *
-     * Dipakai memasang SinkronObserver. Tidak semua tabel yang disinkronkan
-     * ada di sini: tabel pivot murni (registration_athlete, model_has_roles,
-     * dan kerabatnya) tidak punya model, jadi perubahannya tidak tertangkap
-     * observer. Itu keterbatasan yang disengaja untuk saat ini -- pivot hanya
-     * berubah saat sekretariat menyunting pendaftaran dan peran, yaitu di node
-     * global sebelum hari-H, dan ia ikut terbawa pada penarikan penuh pertama.
-     * Yang belum tertangani adalah perubahan pivot SETELAH penarikan pertama.
+     * Dipakai memasang SinkronObserver. Pivot pendaftaran-atlet punya model
+     * pivot sendiri (RegistrationAthlete) supaya `attach()` terdengar. Pivot
+     * peran Spatie (model_has_roles dan kerabatnya) tidak punya model; yang
+     * mencatat perubahannya CatatPivotPeran, lewat event Spatie.
      *
      * @var array<string, class-string<Model>>
      */
@@ -226,6 +223,7 @@ class PetaSinkron
         'contingents' => Contingent::class,
         'athletes' => Athlete::class,
         'registrations' => Registration::class,
+        'registration_athlete' => \App\Models\RegistrationAthlete::class,
         'registration_documents' => RegistrationDocument::class,
         'weight_ins' => WeightIn::class,
         'fee_schedules' => FeeSchedule::class,

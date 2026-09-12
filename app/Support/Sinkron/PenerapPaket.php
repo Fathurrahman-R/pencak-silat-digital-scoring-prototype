@@ -2,6 +2,11 @@
 
 namespace App\Support\Sinkron;
 
+use App\Models\JurusBattle;
+use App\Models\SilatMatch;
+use App\Support\Bagan\Contracts\Terbagankan;
+use App\Support\Bagan\PromosiPemenang;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -48,6 +53,12 @@ class PenerapPaket
         $ringkasan = ['diterapkan' => 0, 'dihapus' => 0, 'ditolak' => 0, 'dilewati' => 0];
         $partaiTersentuh = [];
 
+        /** @var array<string, list<int|string>> $pemenangTiba */
+        $pemenangTiba = [];
+
+        /** @var list<array{string, string, string}> $diteruskan */
+        $diteruskan = [];
+
         /*
          * Pemeriksaan foreign key ditangguhkan selama satu potongan.
          *
@@ -71,7 +82,7 @@ class PenerapPaket
         }
 
         try {
-            DB::transaction(function () use ($baris, &$ringkasan, &$partaiTersentuh) {
+            DB::transaction(function () use ($baris, &$ringkasan, &$partaiTersentuh, &$pemenangTiba, &$diteruskan) {
                 /** @var array<string, list<array<string, mixed>>> $kumpulan */
                 $kumpulan = [];
 
@@ -123,6 +134,7 @@ class PenerapPaket
 
                         DB::table($tabel)->where($klausa)->delete();
                         $ringkasan['dihapus']++;
+                        $diteruskan[] = [$tabel, (string) $satu['id'], CatatanKeluar::HAPUS];
 
                         continue;
                     }
@@ -183,6 +195,12 @@ class PenerapPaket
                     if (isset($data['match_id'])) {
                         $partaiTersentuh[(string) $data['match_id']] = true;
                     }
+
+                    if (isset(self::BERBAGAN[$tabel]) && ($data['winner_registration_id'] ?? null) !== null) {
+                        $pemenangTiba[$tabel][] = $data['id'];
+                    }
+
+                    $diteruskan[] = [$tabel, (string) $satu['id'], CatatanKeluar::SIMPAN];
                 }
 
                 foreach ($kumpulan as $tabel => $baris) {
@@ -202,8 +220,108 @@ class PenerapPaket
         }
 
         $this->batalkanSnapshot(array_keys($partaiTersentuh));
+        $this->teruskan($diteruskan);
+        $this->naikkanPemenangYangTiba($pemenangTiba);
 
         return $ringkasan;
+    }
+
+    /**
+     * Node global meneruskan keadaan partai yang ia terima dari gelanggang.
+     *
+     * Dokumen menganjurkan tiap laptop gelanggang cukup mengenal node global.
+     * Di topologi itu, hasil partai babak satu di gelanggang A hanya bisa
+     * sampai ke gelanggang B -- yang menjadwalkan babak duanya -- lewat node
+     * global. Tapi penerapan menulis lewat query builder, jadi baris yang
+     * diterima tidak pernah tercatat di `sinkron_keluar` node global, dan B
+     * menunggu selamanya: KesiapanHulu menolak menayangkan partainya karena
+     * hulunya tidak pernah disahkan di sini.
+     *
+     * Hanya node global, dan hanya tabel penghubung. Nilai dan hukuman milik
+     * gelanggang tidak dibutuhkan gelanggang lain, dan node gelanggang yang
+     * meneruskan kiriman node global cuma memantulkannya kembali.
+     *
+     * Pemiliknya sendiri akan menerima kembali barisnya dan menolaknya -- itu
+     * pemutus lingkaran yang bekerja sebagaimana mestinya, bukan kegagalan.
+     *
+     * @param  list<array{string, string, string}>  $diteruskan
+     */
+    private function teruskan(array $diteruskan): void
+    {
+        if (! $this->kepemilikan->nodeGlobal()) {
+            return;
+        }
+
+        $catatan = new CatatanKeluar($this->kepemilikan);
+
+        foreach ($diteruskan as [$tabel, $penanda, $aksi]) {
+            if (in_array($tabel, PetaSinkron::PENGHUBUNG, true)) {
+                $catatan->catatPenanda($tabel, $penanda, $aksi);
+            }
+        }
+    }
+
+    /**
+     * Tabel bagan yang pemenangnya naik ke partai berikutnya.
+     *
+     * @var array<string, class-string<Terbagankan&Model>>
+     */
+    private const BERBAGAN = [
+        'matches' => SilatMatch::class,
+        'jurus_battles' => JurusBattle::class,
+    ];
+
+    /**
+     * Menaikkan pemenang yang hasilnya baru tiba dari gelanggang lain.
+     *
+     * Bagan tidak berhenti di batas gelanggang: partai babak satu di A,
+     * partai babak duanya di B. Gelanggang A menaikkan pemenangnya di
+     * basis datanya sendiri, tapi partai babak dua itu milik B -- A tidak
+     * mencatatnya untuk dikirim, dan B menolaknya kalau pun terkirim. Yang
+     * sampai ke B cuma hasil partai babak satu.
+     *
+     * Sebelum ini tidak ada yang menurunkan siapa yang naik dari hasil itu.
+     * Sudut partai babak dua kosong selamanya, sementara KesiapanHulu melihat
+     * hulu yang sudah disahkan dan menyatakan partainya siap ditayangkan.
+     *
+     * Letak tujuan dihitung dari aritmetika bagan yang sama dengan
+     * PromosiPemenang, jadi tiap node sampai ke jawaban yang sama tanpa perlu
+     * saling mengirim. Yang menulis cuma PEMILIK partai tujuan: dialah yang
+     * mengirimkan keadaan partai itu ke semua node lain. Lewat model, supaya
+     * SinkronObserver mencatatnya.
+     *
+     * Sudut yang sudah benar tidak disentuh. `update()` pada model yang tidak
+     * berubah tetap menembakkan `saved`, dan tiap penarikan akan menerbitkan
+     * satu catatan keluar baru yang dikirim berkeliling tanpa isi.
+     *
+     * @param  array<string, list<int|string>>  $pemenangTiba
+     */
+    private function naikkanPemenangYangTiba(array $pemenangTiba): void
+    {
+        $promosi = new PromosiPemenang;
+
+        foreach ($pemenangTiba as $tabel => $id) {
+            $model = self::BERBAGAN[$tabel];
+
+            foreach ($model::query()->whereKey($id)->whereNotNull('winner_registration_id')->get() as $hulu) {
+                $hilir = $hulu->sesamaBagan()
+                    ->where('round', $hulu->round + 1)
+                    ->where('position', $hulu->posisiBerikutnya())
+                    ->first();
+
+                if ($hilir === null || ! $this->kepemilikan->milikNodeIni($tabel, $hilir->getAttributes())) {
+                    continue;
+                }
+
+                $sudut = $hulu->sudutBerikutnya().'_registration_id';
+
+                if ((int) $hilir->{$sudut} === (int) $hulu->winner_registration_id) {
+                    continue;
+                }
+
+                $promosi($hulu);
+            }
+        }
     }
 
     /**

@@ -209,6 +209,22 @@ mendapat pesan yang **menyebut gelanggang mana** yang ditunggu. Kalau hasilnya
 sudah pasti dan jaringan tidak bisa ditunggu, pemindahan paksa tetap tersedia
 — jalan yang sama dengan meninggalkan partai yang belum diakhiri.
 
+Begitu hasil partai hulu tiba, **laptop pemilik partai berikutnya menaikkan
+pemenangnya sendiri**, dengan aritmetika bagan yang sama. Laptop A memang
+menaikkan pemenang di basis datanya sendiri, tapi partai babak berikutnya
+milik B: A tidak mengirimnya, dan B menolaknya kalau pun terkirim. Yang sampai
+ke B cuma hasil partai hulu, jadi B yang menurunkan sudutnya. Partai hilir
+yang belum dijadwalkan dimiliki node global, dan node global yang
+menurunkannya.
+
+Di topologi yang dianjurkan (gelanggang hanya mengenal node global), hasil
+partai dari A sampai ke B **lewat node global**: node global meneruskan
+keadaan partai yang ia terima dari satu gelanggang ke gelanggang lainnya.
+Urutannya: A ditarik node global, lalu B menarik dari node global. Laptop A
+yang kemudian menarik dari node global akan melihat partainya sendiri
+dikirim kembali dan menolaknya. Angka "ditolak" di ringkasannya itu wajar,
+itulah pemutus lingkaran yang bekerja.
+
 ## Yang berubah sifatnya
 
 - **Panel Ketua Pertandingan** melihat seluruh gelanggang, tapi kini sejauh
@@ -219,10 +235,9 @@ sudah pasti dan jaringan tidak bisa ditunggu, pemindahan paksa tetap tersedia
 
 ## Yang belum ditangani
 
-- **Tabel pivot murni** (`registration_athlete`, `model_has_roles`,
-  `role_has_permissions`) tidak punya model Eloquent, jadi perubahannya tidak
-  tertangkap observer. Ia ikut terbawa pada penarikan penuh pertama; yang
-  belum tertangani adalah perubahan pivot **sesudah** itu. Praktisnya: kunci
-  pendaftaran dan peran di node global sebelum hari pertama.
+- **Atlet yang dilepas dari pendaftaran** (detach) belum tercatat. Tidak ada
+  layar yang melakukannya hari ini; pendaftaran yang dihapus utuh tetap
+  terbawa. Pivot yang ditempelkan (attach) dan perubahan peran sudah ikut
+  tersinkron sesudah pemasangan.
 - **Sinkron lewat berkas** (flashdisk) belum ada. Format paketnya sudah
   serialisable, jadi jalur itu bisa ditambah tanpa merombak.

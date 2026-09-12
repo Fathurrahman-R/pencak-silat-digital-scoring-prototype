@@ -82,6 +82,8 @@ node scripts/qa/i-serah-jurus.mjs            # serah-terima jadwal Jurus, 6 case
 node scripts/qa/j-peringkat.mjs              # nomor berformat peringkat, 10 case
 node scripts/qa/k-multinode.mjs              # dua node: token, pemasangan, kursor, 10 case
 node scripts/qa/k2-satu-penulis.mjs          # aturan satu penulis dan arah balik, 3 case
+node scripts/qa/k3-hari-pertandingan.mjs     # satu partai penuh di node gelanggang, 6 case
+node scripts/qa/k4-perubahan-susulan.mjs     # perubahan global sesudah pemasangan, 4 case
 node scripts/qa/f-safari-ios.mjs             # WebKit profil iPhone
 ```
 
@@ -125,6 +127,20 @@ APP_ENV=gelanggangb php artisan serve --host=127.0.0.4 --port=8010
 
 QA_SINKRON_TOKEN=<token> node scripts/qa/k-multinode.mjs
 ```
+
+`k3-hari-pertandingan.mjs` dijalankan sesudah `k-multinode.mjs` (node B sudah
+terpasang). Ia butuh id akun aparat di node global, misalnya
+`QA_ID_AKUN='{"wasit":10,"juri":[14,15,16]}'`, plus `QA_ARENA_B` (bawaan 2)
+dan `QA_PARTAI_B` (bawaan 2), yaitu partai **terjadwal** di Gelanggang B.
+Partai itu dimainkan sampai sah, jadi kembalikan keadaannya sesudah selesai.
+
+`k4-perubahan-susulan.mjs` menuntut perubahan di node global sudah ditulis
+lebih dulu (atlet diganti nama, akun juri baru, kontingen uji yang sudah
+tiba di node B), lalu diberi tahu lewat `QA_HARAPAN` (JSON: `turnamen`,
+`kontingen`, `atlet`, `namaLama`, `namaBaru`, `akunBaru`, `arena`,
+`kontingenDihapus`). K-25 menghapus kontingen itu sendiri lewat tinker.
+Kontingen memakai soft delete, jadi ringkasan penarikan menulis
+"diterapkan", bukan "dihapus".
 
 `APP_ENV=gelanggangb` itulah yang membuat Laravel membaca `.env.gelanggangb`,
 jadi dua node berjalan dari satu salinan kode. Cadangkan `.env` sebelum

@@ -56,7 +56,8 @@ class Registration extends Model
         // "athlete_registration", sedangkan tabelnya bernama sesuai urutan yang
         // dibaca manusia — pendaftaran dulu, baru atletnya.
         return $this->belongsToMany(Athlete::class, 'registration_athlete')
-            ->withPivot('position')
+            ->using(RegistrationAthlete::class)
+            ->withPivot('id', 'position')
             ->withTimestamps()
             ->orderByPivot('position');
     }

@@ -48,7 +48,8 @@ class Athlete extends Model
     public function registrations(): BelongsToMany
     {
         return $this->belongsToMany(Registration::class, 'registration_athlete')
-            ->withPivot('position')
+            ->using(RegistrationAthlete::class)
+            ->withPivot('id', 'position')
             ->withTimestamps();
     }
 

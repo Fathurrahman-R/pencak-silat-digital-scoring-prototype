@@ -162,6 +162,38 @@ it('mencatat perubahan peran yang terjadi sesudah penyemaian', function () {
 });
 
 /*
+ * Pendaftaran yang lahir sesudah laptop gelanggang terpasang. Barisnya
+ * tercatat lewat observer, tapi atletnya menempel lewat pivot -- dan pivot
+ * tanpa model tidak pernah terdengar. Yang tiba di gelanggang: pendaftaran
+ * tanpa satu atlet pun, sudut partai tanpa nama.
+ */
+it('mencatat atlet yang ditempelkan ke pendaftaran sesudah penyemaian', function () {
+    DB::table('sinkron_keluar')->delete();
+    DB::table('sinkron_kursor')->delete();
+    app(CatatanKeluar::class)->semai();
+
+    $kontingen = Contingent::factory()->for($this->tournament)->create();
+    $pendaftaran = App\Models\Registration::factory()->for($kontingen)->create();
+    $atlet = App\Models\Athlete::factory()->for($kontingen)->create();
+
+    $sebelum = DB::table('sinkron_keluar')->max('id');
+
+    $pendaftaran->athletes()->attach($atlet, ['position' => 1]);
+
+    $pivotId = DB::table('registration_athlete')
+        ->where('registration_id', $pendaftaran->id)
+        ->where('athlete_id', $atlet->id)
+        ->value('id');
+
+    $tercatat = DB::table('sinkron_keluar')
+        ->where('id', '>', $sebelum)
+        ->where('tabel', 'registration_athlete')
+        ->pluck('baris_id');
+
+    expect($tercatat->all())->toBe([(string) $pivotId]);
+});
+
+/*
  * Node gelanggang yang menulis data kejuaraan menghasilkan data hantu: hidup
  * di satu laptop, tidak pernah tercatat untuk dikirim, dan id-nya akan
  * bertabrakan dengan baris yang kelak lahir di node global.
