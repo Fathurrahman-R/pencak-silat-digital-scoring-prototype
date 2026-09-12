@@ -225,6 +225,13 @@ yang kemudian menarik dari node global akan melihat partainya sendiri
 dikirim kembali dan menolaknya. Angka "ditolak" di ringkasannya itu wajar,
 itulah pemutus lingkaran yang bekerja.
 
+Bagan yang **disusun sesudah** sebuah node terpasang ikut terkirim seperti
+perubahan lain. Begitu pula pembongkarannya: partai yang dihapus di node
+global hilang dari gelanggang pada penarikan berikutnya, walau partai itu
+sudah dijadwalkan ke gelanggang tersebut. Kepemilikan menjaga PEMBARUAN —
+supaya salinan basi tidak menimpa hasil pertandingan — bukan penghapusan,
+yang hulunya memang sudah tidak ada.
+
 ## Yang berubah sifatnya
 
 - **Panel Ketua Pertandingan** melihat seluruh gelanggang, tapi kini sejauh

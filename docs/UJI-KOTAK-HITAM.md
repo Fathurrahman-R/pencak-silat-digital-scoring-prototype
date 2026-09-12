@@ -84,6 +84,7 @@ node scripts/qa/k-multinode.mjs              # dua node: token, pemasangan, kurs
 node scripts/qa/k2-satu-penulis.mjs          # aturan satu penulis dan arah balik, 3 case
 node scripts/qa/k3-hari-pertandingan.mjs     # satu partai penuh di node gelanggang, 6 case
 node scripts/qa/k4-perubahan-susulan.mjs     # perubahan global sesudah pemasangan, 4 case
+node scripts/qa/k5-promosi-lintas.mjs        # pemenang naik melintasi batas node, 7 case
 node scripts/qa/f-safari-ios.mjs             # WebKit profil iPhone
 ```
 
@@ -141,6 +142,19 @@ tiba di node B), lalu diberi tahu lewat `QA_HARAPAN` (JSON: `turnamen`,
 `kontingenDihapus`). K-25 menghapus kontingen itu sendiri lewat tinker.
 Kontingen memakai soft delete, jadi ringkasan penarikan menulis
 "diterapkan", bukan "dihapus".
+
+`k5-promosi-lintas.mjs` menuntut satu kelas berisi **empat** pendaftaran sah
+yang bagannya BELUM tersusun (`QA_KELAS`), beserta kontingennya
+(`QA_KONTINGEN`). Ia menyusun bagannya sendiri, menjadwalkan kedua semifinal
+ke Gelanggang B, dan sengaja membiarkan finalnya tanpa gelanggang — partai
+seperti itu dimiliki node global, dan di situlah pemenang harus diturunkan.
+Menjalankannya dua kali menuntut bagan kelas itu dibongkar lebih dulu:
+`QA_AKSI=bersihkan QA_KELAS=<id> php artisan tinker scripts/qa/k5-data.php`.
+
+Data disiapkan lewat `scripts/qa/k5-data.php`, bukan `tinker --execute`:
+perintah panjang berisi tanda kutip harus melewati cmd.exe milik Node di
+Windows dan luruh di tengah jalan, lalu gagal dengan pesan yang menyebut
+perintahnya sendiri, bukan sebabnya.
 
 `APP_ENV=gelanggangb` itulah yang membuat Laravel membaca `.env.gelanggangb`,
 jadi dua node berjalan dari satu salinan kode. Cadangkan `.env` sebelum

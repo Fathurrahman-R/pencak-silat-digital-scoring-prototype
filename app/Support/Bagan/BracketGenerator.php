@@ -225,7 +225,30 @@ class BracketGenerator
             ];
         }
 
-        $bracket->slots()->insert($baris);
+        $this->simpanLewatModel($bracket->slots(), $baris);
+    }
+
+    /**
+     * Menyimpan baris satu per satu lewat model, bukan sekali lewat insert.
+     *
+     * Penyisipan massal melewati observer, dan salah satu observer itu yang
+     * mencatat perubahan untuk dikirim ke node lain. Bagan yang disusun
+     * SESUDAH laptop gelanggang terpasang karena itu tidak pernah sampai ke
+     * sana: partainya ada di node global, tidak tercatat, dan tidak terkirim.
+     * Yang tampak di gelanggang bukan galat melainkan kelas yang bagannya
+     * seolah belum pernah disusun.
+     *
+     * Harganya puluhan penyisipan, bukan satu -- bagan terbesar pun di bawah
+     * seratus baris, dan disusun sekali per kelas di luar hari pertandingan.
+     *
+     * @param  \Illuminate\Database\Eloquent\Relations\HasMany<covariant Model, Model>  $relasi
+     * @param  list<array<string, mixed>>  $baris
+     */
+    private function simpanLewatModel($relasi, array $baris): void
+    {
+        foreach ($baris as $satu) {
+            $relasi->getRelated()->newInstance()->forceFill($satu)->save();
+        }
     }
 
     /**
@@ -265,7 +288,7 @@ class BracketGenerator
             }
         }
 
-        SilatMatch::insert($baris);
+        $this->simpanLewatModel($bracket->matches(), $baris);
 
         $tempat = $bracket->slots()->orderBy('position')->get();
 

@@ -126,7 +126,29 @@ class PenerapPaket
                             continue;
                         }
 
-                        if ($this->kepemilikan->milikNodeIni($tabel, (array) $lokal)) {
+                        /*
+                         * Penghapusan baris penghubung tetap diterima walau
+                         * barisnya milik gelanggang ini.
+                         *
+                         * Partai disisipkan node global dan diperbarui
+                         * gelanggangnya; yang MENGHAPUSNYA cuma node global,
+                         * saat bagan dibongkar dan disusun ulang -- alur yang
+                         * memang ada, lewat tombol buka kunci. Menolaknya
+                         * berarti partai yang sudah tidak ada di node global
+                         * tetap berdiri di antrean gelanggang, dan pengendali
+                         * menayangkan partai hantu: pointer tayangnya
+                         * menunjuk ke sana, dan partai sungguhan berikutnya
+                         * ditolak karena "masih ada partai berjalan".
+                         * Terlihat begitu di node B, 12 September 2026.
+                         *
+                         * Yang dijaga kepemilikan adalah PEMBARUAN, supaya
+                         * salinan basi tidak menimpa hasil pertandingan.
+                         * Penghapusan tidak punya salinan basi: barisnya
+                         * memang sudah tidak ada di hulunya.
+                         */
+                        $penghubung = in_array($tabel, PetaSinkron::PENGHUBUNG, true);
+
+                        if (! $penghubung && $this->kepemilikan->milikNodeIni($tabel, (array) $lokal)) {
                             $ringkasan['ditolak']++;
 
                             continue;
