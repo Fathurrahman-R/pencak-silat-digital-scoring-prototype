@@ -47,7 +47,7 @@ flowchart TB
         Juri["PWA Juri — 3 HP/tablet"]
         Wasit["Panel Wasit — 1 HP/tablet"]
         Kendali["Panel Pengendali Gelanggang"]
-        Dewan["Panel Dewan Wasit Juri"]
+        Dewan["Panel Ketua Pertandingan"]
         Papan["Papan tampilan gelanggang"]
         vMix["vMix Web Browser Input ×5"]
 
@@ -154,7 +154,7 @@ Ini bagian paling penting untuk keamanan, dan paling mudah dirusak tanpa sadar.
 | HP/tablet juri | 3 | Tanding. Layar 375 px sudah diuji |
 | HP/tablet wasit | 1 | |
 | Perangkat Pengendali Gelanggang | 1 | Boleh laptop server itu sendiri |
-| Perangkat Dewan Wasit Juri | 1 | |
+| Perangkat Ketua Pertandingan | 1 | Meninjau nilai, mengesahkan hasil, memutus protes |
 | Layar papan skor gelanggang | 1 | Boleh monitor kedua laptop server |
 | Power bank / stopkontak | secukupnya | Panel juri menyala sepanjang hari |
 
@@ -312,7 +312,7 @@ PENDAFTARAN_LEWATI_PEMBAYARAN=false # nyalakan kalau uang diurus manual
 ```
 
 Dua yang pertama menentukan apakah channel `public-live.*` ikut disiarkan. Panel juri, wasit,
-operator, dan dewan wasit juri **tidak terpengaruh sama sekali** oleh keduanya.
+operator, dan ketua **tidak terpengaruh sama sekali** oleh keduanya.
 
 Halaman turnamen, medali, dan bagan publik tetap hidup apa pun saklarnya — tidak satu pun memakai
 WebSocket, jadi mematikannya tidak menghemat apa-apa sementara penonton tetap butuh melihat hasil.
@@ -542,11 +542,17 @@ delapan proses `php-cgi` selama seluruh penarikan.
 - **Konflik penugasan aparat lintas gelanggang** baru terdeteksi setelah sinkron. **Kunci
   penugasan aparat di node global sebelum hari-H.**
 - **Rekap medali** hanya lengkap setelah semua node ditarik.
-- **Pendaftaran dan peran wajib dikunci di node global sebelum hari pertama.** Tabel pivot murni
-  (`registration_athlete`, `model_has_roles`, `role_has_permissions`) tidak punya model Eloquent,
-  jadi perubahannya tidak tertangkap observer — ia ikut pada penarikan penuh pertama saja.
 - **Bagan lintas gelanggang ditahan sistem.** Pengendali yang mencoba menayangkan partai yang
   hulunya belum ditarik mendapat pesan yang menyebut gelanggang mana yang ditunggu.
+- **Pemenang naik sendiri melintasi batas gelanggang.** Begitu hasil partai hulu tiba, laptop
+  pemilik partai berikutnya mengisi sudutnya dengan aritmetika bagan yang sama. Partai yang belum
+  dijadwalkan dimiliki node global, dan node global yang mengisinya.
+- **Node global meneruskan.** Hasil dari gelanggang A sampai ke gelanggang B lewat node global;
+  tiap laptop gelanggang cukup mengenal node global sebagai peer. Gelanggang asal akan menerima
+  kembali barisnya sendiri dan menolaknya — angka "ditolak" di ringkasan penarikan itu wajar.
+- **Perubahan sesudah pemasangan ikut menyusul**, termasuk bagan yang baru disusun, pendaftaran
+  baru beserta atletnya, akun dan perannya. Penghapusan pun: partai yang dibongkar hilang dari
+  gelanggang beserta nilai dan hukumannya.
 
 Rincian: [`MULTI-GELANGGANG.md`](MULTI-GELANGGANG.md) dan [`ARSIP-BUKTI.md`](ARSIP-BUKTI.md).
 
@@ -663,7 +669,7 @@ Urutannya, dan urutan ini penting:
    seluruh perangkat.
 
 Pergantian partai dipegang **satu perangkat**: Pengendali Gelanggang. Begitu ia memindahkan jadwal,
-panel juri, wasit, dan dewan wasit juri ikut berpindah sendiri — tidak ada perangkat lain yang
+panel juri, wasit, papan, dan ketua ikut berpindah sendiri — tidak ada perangkat lain yang
 perlu disentuh.
 
 Alur operasional lengkap per peran: [`PANDUAN-OPERASIONAL.md`](PANDUAN-OPERASIONAL.md).

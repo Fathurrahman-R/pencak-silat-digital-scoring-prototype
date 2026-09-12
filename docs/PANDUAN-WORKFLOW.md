@@ -212,7 +212,7 @@ Sistem menolak persetujuan kalau tagihan belum lunas atau berkas atlet belum len
 
 1. **Tetapkan** tiap partai ke gelanggang beserta waktu tayangnya. Partai yang belum punya dua peserta (menunggu pemenang babak sebelumnya) belum bisa dijadwalkan — normal.
 2. Sistem memperingatkan bila satu atlet terjadwal di dua gelanggang pada waktu berdekatan.
-3. Tugaskan aparat **per gelanggang**, dan hanya di sana: buka Pertandingan → Gelanggang → tombol **Aparat**, lalu tetapkan Wasit, Juri 1–3, Dewan Wasit Juri, Komisi Protes, dan Ketua Pertandingan untuk gelanggang itu. Penugasan berlaku sepanjang hari — petugas yang duduk di kursi yang sama tidak perlu ditugaskan ulang tiap partai. Kursi yang orangnya belum datang boleh dikosongkan dan diisi belakangan.
+3. Tugaskan aparat **per gelanggang**, dan hanya di sana: buka Pertandingan → Gelanggang → tombol **Aparat**, lalu tetapkan Wasit, Juri (sebanyak `jumlah_juri_tanding` di setelan peraturan, bawaannya tiga), Dewan Wasit Juri, Komisi Protes, dan Ketua Pertandingan untuk gelanggang itu. Kursi Wasit, Dewan, Komisi, dan Ketua semuanya diisi akun berperan **Ketua Pertandingan**; kursi Juri diisi akun berperan **Juri**. Satu orang tidak bisa menduduki dua kursi di gelanggang yang sama. Penugasan berlaku sepanjang hari — petugas yang duduk di kursi yang sama tidak perlu ditugaskan ulang tiap partai. Kursi yang orangnya belum datang boleh dikosongkan dan diisi belakangan.
 4. Baris **`match_officials` tetap ditulis**: saat pengendali menunjuk sebuah partai, isi kursi gelanggang disalin ke partai itu. Berita acara tetap menyebut siapa bertugas di partai mana, dan nomor juri pada tiap nilai masuk tetap dibaca dari sana.
 5. **Satu orang, satu kursi, satu gelanggang.** Formulirnya menolak orang yang sudah memegang kursi di gelanggang lain — kursi berlaku sepanjang hari, jadi orang yang sama di dua matras berarti satu kursi pasti kosong begitu keduanya berjalan bersamaan.
 6. Layar penugasan aparat **per partai dibuang** (September 2026). Empat baris penugasan dikali empat puluh partai adalah beban yang tidak menghasilkan apa pun yang tidak sudah dijawab kursi gelanggang.
@@ -257,7 +257,7 @@ Pasang panelnya sebagai **PWA** di layar utama HP: tiap peran punya manifest sen
    - Peringatan berlaku seluruh partai dan tidak pernah mereset. **Peringatan III = diskualifikasi**, partai langsung berakhir.
    - Hitungan teknik: hitungan 9 disusul Teguran I, tiga hitungan beruntun dalam satu babak berarti lawan menang teknik, hitungan 10 berarti menang mutlak.
    - **Kedua pesilat jatuh dan tidak bangkit** (Pasal 11.6.c huruf b) dicatat lewat tombol "Keduanya jatuh" — bukan dua tekanan hitungan biasa. Hitungan serentak tidak menjatuhkan Teguran dan tidak mengakhiri partai; sistem justru **menawarkan** penyelesaian yang benar di panel papan: berat badan teringan bila keduanya belum bernilai di babak I, nilai terbanyak bila sudah. Yang menekan tombol akhiri tetap manusia.
-   - **Protes VAR yang sedang berjalan** muncul sebagai pita satu baris di atas panel wasit, lengkap dengan sisa tenggatnya — Pasal 15 ayat 3 huruf d menyuruh Wasit ikut memutuskannya bersama Wasit Komisi Protes dan Pengawas/Dewan Wasit Juri. Tangga hukuman **tetap bisa ditekan**: pertandingan tidak selalu berhenti selama protes ditinjau. Kartu penuh berikut tombol Sah/Tidak Sah ada di panel Komisi Protes, panel Dewan Wasit Juri, dan panel Ketua Pertandingan.
+   - **Protes VAR yang sedang berjalan** muncul sebagai pita satu baris di atas panel wasit, lengkap dengan sisa tenggatnya — Pasal 15 ayat 3 huruf d menyuruh Wasit ikut memutuskannya bersama Komisi Protes dan Pengawas/Dewan Wasit Juri — ketiga kursi itu kini dipegang peran Ketua Pertandingan. Tangga hukuman **tetap bisa ditekan**: pertandingan tidak selalu berhenti selama protes ditinjau. Kartu penuh berikut tombol Sah/Tidak Sah ada di panel Komisi Protes, panel Dewan Wasit Juri, dan panel Ketua Pertandingan.
 4. **Pengendali** menekan Selesai babak, lalu Mulai babak berikutnya setelah istirahat. Atau mengakhiri partai lebih awal dengan sebab khusus: KO, TKO, WMP, mutlak, undur diri, cedera, WO.
 
    **Nilai atau hukuman yang terlewat di babak sebelumnya** dicatat lewat "Catat susulan babak N" di panel kendali. Babak berjalan dijeda selama itu, dan seluruh panel gelanggang beralih serentak — panel juri menampilkan spanduk amber besar dan mencetak nomor babak di dalam label tiap tombol nilai. Babak berjalan TIDAK menerima input selama susulan terbuka.
@@ -267,7 +267,7 @@ Pasang panelnya sebagai **PWA** di layar utama HP: tiap peran punya manifest sen
 
 ## Tahap 12 — Pengesahan hasil
 
-**Siapa:** Dewan Juri meninjau, **Ketua Pertandingan mengesahkan** · **Panel:** Dewan Juri
+**Siapa:** Ketua Pertandingan — meninjau dan mengesahkan · **Panel:** Dewan Juri
 
 1. Tinjau seluruh nilai dan hukuman yang tercatat, lengkap dengan jam dan juri pembentuknya.
 2. Nilai atau hukuman yang keliru **dibatalkan**, bukan disunting — sistem membuat baris pembatal beserta alasannya, dan riwayat aslinya tetap utuh.
@@ -283,7 +283,7 @@ Pasang panelnya sebagai **PWA** di layar utama HP: tiap peran punya manifest sen
 1. **Operator IT** menekan **Buat penampilan** — sistem membuat satu penampilan per pendaftaran terverifikasi di nomor itu.
 2. Buka panel Operator penampilan, jalankan timer saat pesilat mulai.
 3. **Juri Jurus** (minimal 4, wajib genap) memasukkan nilai **9.00–10.00** dari panelnya, dan mencatat pengurangan **0.01** untuk kesalahan rincian gerak, urutan, gerakan tertinggal, atau senjata terlepas tanpa menyentuh matras.
-4. **Pengawas / Dewan Wasit Juri** mencatat pengurangan **0.50** dari panel Operator: waktu lewat toleransi, keluar gelanggang, senjata jatuh menyentuh lantai, pakaian tidak sesuai, menahan gerakan lebih dari 5 detik. Diskualifikasi dicatat di panel yang sama dan menghasilkan skor **0,00**.
+4. **Ketua Pertandingan** (kursi Pengawas/Dewan Wasit Juri) mencatat pengurangan **0.50** dari panel Operator: waktu lewat toleransi, keluar gelanggang, senjata jatuh menyentuh lantai, pakaian tidak sesuai, menahan gerakan lebih dari 5 detik. Diskualifikasi dicatat di panel yang sama dan menghasilkan skor **0,00**.
 5. **Ketua Pertandingan** mengesahkan skor akhir.
 
 Skor akhir = **median seluruh nilai juri** (untuk jumlah genap, rata-rata dua nilai tengah) dikurangi hukuman. Bukan buang tertinggi-terendah lalu jumlahkan — itu aturan edisi lama.
@@ -294,7 +294,7 @@ Skor akhir = **median seluruh nilai juri** (untuk jumlah genap, rata-rata dua ni
 
 1. Pelatih mengangkat kartu protes di pinggir gelanggang — **fisik, di luar sistem**. Jatah: 2 kartu per pertandingan Tanding, 1 kartu per penampilan Jurus.
 2. **Operator IT atau Ketua Pertandingan** memasukkan protes ke sistem: pilih sudut, tuliskan kejadian yang disengketakan. Sistem menstempel waktu pertandingannya supaya rekaman video mudah ditemukan.
-3. **Wasit Komisi Protes** meninjau dalam **hitung mundur 5 menit** yang ditampilkan sistem, lalu menetapkan **Sah** atau **Tidak Sah**.
+3. **Ketua Pertandingan** (kursi Komisi Protes) meninjau dalam **hitung mundur 5 menit** yang ditampilkan sistem, lalu menetapkan **Sah** atau **Tidak Sah**.
 4. Hasil "Tidak Sah" **membatalkan nilai atau hukuman yang disengketakan lewat baris pembatal** — skor terkoreksi sendiri, riwayat input juri tetap utuh.
 5. Lewat tenggat 5 menit, sistem hanya menampilkan peringatan; prosesnya dilanjutkan manual lewat verifikasi juri yang dipimpin Ketua Pertandingan.
 

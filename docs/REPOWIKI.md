@@ -210,7 +210,7 @@ Jalur terpisah dari Tanding, model dan controller sendiri:
 | Kelas | Tanggung jawab |
 |---|---|
 | [`JurusTimer`](../app/Support/Jurus/JurusTimer.php) | Timer penampilan, server-authoritative sama seperti Tanding |
-| [`JurusScoreCalculator`](../app/Support/Jurus/JurusScoreCalculator.php) | Nilai 9.00–10.00, pengurangan 0.01 (juri) dan 0.50 (dewan wasit juri) |
+| [`JurusScoreCalculator`](../app/Support/Jurus/JurusScoreCalculator.php) | Nilai 9.00–10.00, pengurangan 0.01 (juri) dan 0.50 (kursi Pengawas/Dewan, peran Ketua Pertandingan) |
 | [`PerbandinganBattle`](../app/Support/Jurus/PerbandinganBattle.php) / [`PutuskanBattle`](../app/Support/Jurus/PutuskanBattle.php) | Format battle (adu langsung antar dua penampilan) |
 
 Pengesahan **ditolak sistem** kalau jumlah juri yang menilai kurang dari setelan turnamen atau
@@ -256,7 +256,7 @@ Ditambah tiga event di luar kelima itu: `gelanggang.partai` (`Events\Gelanggang\
 
 | Channel | Siapa | Otorisasi |
 |---|---|---|
-| `presence-arena.{arenaId}` | Panel juri, wasit, operator, dewan wasit juri | `App\Broadcasting\ArenaChannelAuthorizer` lewat `Broadcast::channel('arena.{arenaId}', …)` |
+| `presence-arena.{arenaId}` | Panel juri, wasit, kendali, papan, ketua | `App\Broadcasting\ArenaChannelAuthorizer` lewat `Broadcast::channel('arena.{arenaId}', …)` |
 | `public-live.{arena}` | Overlay vMix, live score publik | **Tanpa** otorisasi — namanya sengaja tidak berawalan `private-`/`presence-` |
 
 `public-live.*` hanya disertakan selama `OVERLAY_ENABLED` **atau** `LIVE_SCORE_ENABLED` menyala
@@ -410,6 +410,17 @@ Kode: `app/Support/Sinkron/` — `PetaSinkron` (tabel mana milik siapa), `Kepemi
 **Perulangan penarikan sengaja di browser**, satu potongan per permintaan (bawaan 500 baris). Satu
 permintaan yang menarik sampai habis akan menahan satu dari delapan proses `php-cgi` selama seluruh
 penarikan — proses yang juga melayani tekanan tombol juri.
+
+**Pemenang diturunkan di sisi penerima.** Partai babak berikutnya bisa dijadwalkan di gelanggang
+lain, dan pemiliknya yang berhak menulisnya — jadi begitu hasil partai hulu tiba, node pemilik
+partai tujuan menghitung sendiri siapa yang naik, dengan aritmetika `PromosiPemenang` yang sama.
+Partai yang belum dijadwalkan dimiliki node global. **Node global juga meneruskan** baris
+penghubung yang ia terima, karena tiap laptop gelanggang cuma mengenal node global sebagai peer.
+
+**Penghapusan dikerjakan paling akhir, dengan foreign key menyala lagi**, supaya ia merambat ke
+baris turunannya; pemeriksaan yang dimatikan selama penerapan hanya melindungi urutan potongan.
+Pivot pendaftaran-atlet punya model sendiri (`RegistrationAthlete`) supaya `attach()`/`detach()`
+terdengar observer — tanpa itu pendaftaran baru tiba di gelanggang tanpa satu atlet pun.
 
 **Kursor disimpan setelah penerapan berhasil**, bukan sebelum. Kursor yang maju lebih dulu berarti
 perubahan yang gagal diterapkan dianggap sudah masuk dan tidak pernah ditarik lagi — hilang tanpa

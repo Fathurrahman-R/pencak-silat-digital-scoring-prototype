@@ -20,7 +20,7 @@
 2. **Operator IT** tiap gelanggang membuka panel Operator di laptop gelanggangnya masing-masing (`/admin/turnamen/{id}/partai/{match}/operator` untuk partai pertama).
 3. Juri dan wasit login di HP masing-masing. **Yang bertugas di satu gelanggang mendarat langsung di panelnya** — tidak lewat dashboard sama sekali. Yang memegang dua gelanggang tetap melihat dashboard, karena sistem tidak punya dasar memilih salah satunya. Tambahkan panelnya ke layar utama (PWA): alamatnya per GELANGGANG, jadi ikonnya tidak pernah basi saat jadwal berganti.
 
-   Pergantian partai dipegang **satu perangkat**: Pengendali Gelanggang. Begitu ia memindahkan jadwal, panel juri, wasit, dan dewan wasit juri ikut berpindah sendiri — tidak ada satu pun perangkat yang perlu disentuh.
+   Pergantian partai dipegang **satu perangkat**: Pengendali Gelanggang. Begitu ia memindahkan jadwal, panel juri, wasit, papan, dan ketua ikut berpindah sendiri — tidak ada satu pun perangkat yang perlu disentuh.
 4. Uji satu nilai percobaan sebelum partai pertama sungguhan dimulai -- indikator koneksi harus hijau di seluruh perangkat.
 
 ## Alur satu partai Tanding
@@ -34,10 +34,10 @@
 | Mengakhiri partai (KO, WMP, mutlak, dst.) | **Pengendali Gelanggang** | Panel Kendali |
 | Meninggalkan partai yang terlanjur dimulai dan tidak jadi dimainkan | **Pengendali Gelanggang** | Panel Kendali → pilih partai lain (atau "Kosongkan gelanggang"), lalu tombol **Pindah paksa** yang muncul di pesan penolakan |
 | Menayangkan skor di gelanggang | Operator IT | Papan tampilan (`/gelanggang/{arena}/panel/papan`) |
-| Meninjau riwayat, membatalkan nilai/hukuman keliru, **mengesahkan hasil** | Dewan Juri | Panel Dewan Juri |
-| Mencetak berita acara | Ketua Pertandingan / Dewan Juri | Tombol "Berita acara (PDF)" di Panel Dewan Juri |
+| Meninjau riwayat, membatalkan nilai/hukuman keliru, **mengesahkan hasil** | Ketua Pertandingan | Panel Dewan Juri (`/gelanggang/{arena}/panel/dewan-juri`) |
+| Mencetak berita acara | Ketua Pertandingan | Tombol "Berita acara (PDF)" di Panel Dewan Juri |
 
-**Hasil partai belum final sebelum disahkan dewan juri.** `winner_registration_id` yang muncul sebelum pengesahan bersifat sementara dan masih bisa dikoreksi.
+**Hasil partai belum final sebelum disahkan Ketua Pertandingan.** `winner_registration_id` yang muncul sebelum pengesahan bersifat sementara dan masih bisa dikoreksi.
 
 ## Alur satu penampilan Jurus
 
@@ -52,7 +52,7 @@
 | Menayangkan penampilan berikutnya | Pengendali Gelanggang | Panel Kendali → **Antrean Jurus** → Tayangkan |
 | Mulai/hentikan timer penampilan | Operator IT | Panel gelanggang, alamat yang sama dengan papan Tanding |
 | Memberi nilai 9.00–10.00, mencatat pengurangan 0.01 | Juri Jurus | Panel Juri Jurus |
-| Mencatat pengurangan 0.50, menetapkan diskualifikasi | Pengawas/Dewan Wasit Juri | Panel Operator Jurus (bagian Pengurangan) |
+| Mencatat pengurangan 0.50, menetapkan diskualifikasi | Ketua Pertandingan (kursi Pengawas) | Panel Operator Jurus (bagian Pengurangan) |
 | **Mengesahkan skor akhir** | Ketua Pertandingan | Panel Operator Jurus |
 | **Menetapkan pemenang battle** | Ketua Pertandingan | Panel Ketua, di bawah perbandingan nilainya |
 
@@ -87,7 +87,7 @@ Modal hanya muncul untuk penerapan yang terjadi **selagi panelnya terbuka**. Ope
 
 1. Pelatih mengangkat kartu protes VAR di pinggir gelanggang (fisik, di luar sistem).
 2. **Operator IT atau Ketua Pertandingan** memasukkan protes ke sistem lewat Panel Keberatan (`/admin/turnamen/{id}/partai/{match}/keberatan`), memilih sudut dan menuliskan kejadian yang disengketakan.
-3. **Wasit Komisi Protes** meninjau dalam tenggat 5 menit yang ditampilkan sistem, lalu menetapkan Sah/Tidak Sah dari panel yang sama.
+3. **Ketua Pertandingan** (kursi Komisi Protes) meninjau dalam tenggat 5 menit yang ditampilkan sistem, lalu menetapkan Sah/Tidak Sah dari panel yang sama.
 4. Lewat tenggat, sistem hanya menampilkan peringatan -- prosesnya dilanjutkan secara manual lewat verifikasi juri yang dipimpin Ketua Pertandingan (di luar sistem).
 5. Protes Manajer (setelah hasil diumumkan) diajukan dan diputus dari panel yang sama, tingkat pertama oleh Ketua Pertandingan. Naskah menyerahkan banding kepada Delegasi Teknik bersama Tim Medis dan satu anggota eksekutif PB IPSI (Pasal 15 ayat 4 huruf c); sistem ini melebur Delegasi Teknik ke peran Ketua Pertandingan, jadi bandingnya diputus dari akun itu dan bersifat final.
 6. Protes yang **diterima wajib memilih akibatnya** sebelum tombol Terima bisa berhasil: mengubah hasil, menambah satu babak (Tanding), atau penampilan kembali (Jurus). Pengesahan hasil tertahan sampai akibatnya dijalankan.

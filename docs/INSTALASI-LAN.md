@@ -165,7 +165,7 @@ Dua saklar, dan keduanya bawaannya **mati**:
 
 Yang dihemat bukan halamannya, melainkan siarannya. Selama salah satu saklar menyala, kelima event siaran (`timer.berubah`, `skor.terbit`, `hukuman.terbit`, `partai.berubah`, `juri.input`) mendorong muatannya ke **dua** channel Reverb sekaligus: satu untuk panel juri/wasit/operator, satu lagi `public-live.*` untuk overlay dan live score. Saat kedua saklar mati, channel kedua itu tidak lagi disertakan sama sekali -- satu dorongan per event, bukan dua, pada tiap penekanan tombol juri.
 
-Panel juri, wasit, operator, dan Dewan Wasit Juri **tidak terpengaruh sama sekali**. Yang dicabut hanya channel publiknya.
+Panel juri, wasit, kendali, papan, dan ketua **tidak terpengaruh sama sekali**. Yang dicabut hanya channel publiknya.
 
 Yang ikut mati saat saklarnya dimatikan hanya halaman yang memang realtime:
 

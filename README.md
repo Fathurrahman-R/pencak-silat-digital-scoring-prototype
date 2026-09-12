@@ -10,7 +10,7 @@ Sumber kebenaran seluruh aturan pertandingan: **Peraturan Pertandingan Pencak Si
 
 ## Prinsip rancangan
 
-- **Gelanggang tidak pernah butuh internet.** Seluruh jalur pertandingan — panel juri/wasit/operator/dewan juri, timer, mesin konsensus, overlay siaran — berjalan penuh di LAN lokal lewat Laravel Reverb. Internet hanya dipakai dua hal yang keduanya boleh mati tanpa mengganggu gelanggang: menerbitkan live score publik lewat tunnel, dan pembayaran pendaftaran pra-acara lewat Midtrans.
+- **Gelanggang tidak pernah butuh internet.** Seluruh jalur pertandingan — panel juri/wasit/kendali/ketua, timer, mesin konsensus, overlay siaran — berjalan penuh di LAN lokal lewat Laravel Reverb. Internet hanya dipakai dua hal yang keduanya boleh mati tanpa mengganggu gelanggang: menerbitkan live score publik lewat tunnel, dan pembayaran pendaftaran pra-acara lewat Midtrans.
 - **`judge_inputs` tidak pernah diubah atau dihapus.** Setiap tekanan tombol juri Tanding tersimpan mentah, selamanya. Koreksi dewan juri memakai baris pembatal (`voided_at`/`voided_by`/`void_reason`), bukan menyunting riwayat — pola yang sama dipakai ulang di VAR dan pengurangan nilai Jurus.
 - **Waktu resmi selalu milik server.** Timer partai dan penampilan Jurus dihitung dari `started_at`/`accumulated_ms` di database; jam perangkat juri atau operator tidak pernah dipercaya.
 - **Yang bisa dihitung tidak disimpan.** Skor, golongan usia dari kelas, posisi bagan berikutnya — semuanya dihitung on-the-fly dari data mentah, supaya tidak ada dua salinan angka yang bisa diam-diam bergeser satu sama lain.
@@ -78,7 +78,7 @@ Buka `http://127.0.0.1:8000`. Akun bawaan seeder (kata sandi semuanya `password`
 | `admin@example.com` | admin | Kelola pengguna |
 | `user@example.com` | user | Akun tanpa hak kelola, untuk menguji batas akses |
 
-Peran domain silat (Ketua Pertandingan, Wasit, Juri, Operator IT, dst. — lihat Pasal 13) didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat. Tapi untuk uji coba, seluruh akun itu sudah disiapkan seeder simulasi di bawah.
+Lima peran domain silat — **Ketua Pertandingan** (melebur Delegasi Teknik, Wasit, Dewan Wasit Juri, dan Komisi Protes), **Juri**, **Pengendali Gelanggang**, **Operator IT** (melebur Sekretariat), dan **Official Kontingen** — didaftarkan `SilatRoleSeeder`, dibuatkan lewat panel **Manajemen Akses → Pengguna** setelah turnamen dibuat. Tapi untuk uji coba, seluruh akun itu sudah disiapkan seeder simulasi di bawah.
 
 Untuk instalasi LAN Windows tanpa internet setelah dependensi terunduh (NFR-08) — arsitektur jaringan, `php.ini`, firewall, dan dua proses hari-H — ikuti [`docs/PANDUAN-SISTEM.md`](docs/PANDUAN-SISTEM.md); rinciannya di [`docs/INSTALASI-LAN.md`](docs/INSTALASI-LAN.md).
 
@@ -114,7 +114,7 @@ Dua gelanggang (A dan B) masing-masing punya pengendali dan operatornya sendiri,
 | `wasit1@silat.test`, `wasit2@silat.test` | Wasit |
 | `juri1@silat.test` … `juri6@silat.test` | Juri (1–3 Gelanggang A, 4–6 Gelanggang B) |
 | `ketua@silat.test` | Ketua Pertandingan (pengesahan hasil, VAR, putusan protes) |
-| `pengawas@silat.test`, `komisi@silat.test` | Pengawas / Dewan Wasit Juri, Wasit Komisi Protes |
+| `pengawas@silat.test`, `komisi@silat.test` | Ketua Pertandingan (kursi Pengawas/Dewan Wasit Juri dan kursi Komisi Protes) |
 | `sekretariat@silat.test` | Sekretariat Pertandingan (berkas, tagihan, timbang badan) |
 | `official1@silat.test` … `official10@silat.test` | Official kontingen |
 
